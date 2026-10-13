@@ -1,0 +1,48 @@
+[gd_scene format=3 uid="uid://bmqd4ii6sfee0"]
+
+[ext_resource type="Script" uid="uid://citm6wrehftti" path="res://overlays/pause_menu.gd" id="1_jg4i2"]
+
+[node name="PauseMenu" type="Control" unique_id=1980306724 node_paths=PackedStringArray("default_focus")]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_jg4i2")
+default_focus = NodePath("CenterContainer/PanelContainer/VBoxContainer/ResumeButton")
+
+[node name="ColorRect" type="ColorRect" parent="." unique_id=814703108]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.49803922)
+
+[node name="CenterContainer" type="CenterContainer" parent="." unique_id=1475055579]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="PanelContainer" type="PanelContainer" parent="CenterContainer" unique_id=1031123480]
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CenterContainer/PanelContainer" unique_id=402838495]
+layout_mode = 2
+
+[node name="ResumeButton" type="Button" parent="CenterContainer/PanelContainer/VBoxContainer" unique_id=272386916]
+layout_mode = 2
+text = "Resume"
+
+[node name="SettingsButton" type="Button" parent="CenterContainer/PanelContainer/VBoxContainer" unique_id=1760519708]
+layout_mode = 2
+text = "Settings"
+
+[node name="QuitButton" type="Button" parent="CenterContainer/PanelContainer/VBoxContainer" unique_id=78612495]
+layout_mode = 2
+text = "Quit to Menu"

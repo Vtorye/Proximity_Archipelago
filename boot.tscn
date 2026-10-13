@@ -1,0 +1,42 @@
+[gd_scene format=3 uid="uid://cmi2xupeb2itr"]
+
+[ext_resource type="Script" uid="uid://ouv7hhpk3hny" path="res://_shell/boot.gd" id="1_segco"]
+[ext_resource type="Resource" uid="uid://cf8dni8ap0fca" path="res://manifest.tres" id="2_m6jb1"]
+[ext_resource type="Script" uid="uid://cxw3su7d13xdv" path="res://_shell/menu_stack.gd" id="3_xf3if"]
+[ext_resource type="Script" uid="uid://df7j5f5gbexd3" path="res://_shell/fade.gd" id="4_dm40k"]
+
+[node name="Boot" type="Node" unique_id=1979993973]
+script = ExtResource("1_segco")
+manifest = ExtResource("2_m6jb1")
+
+[node name="ScreenLayer" type="Node" parent="." unique_id=1990021178]
+unique_name_in_owner = true
+
+[node name="OverlayLayer" type="CanvasLayer" parent="." unique_id=390152716]
+process_mode = 3
+layer = 10
+
+[node name="MenuStack" type="Control" parent="OverlayLayer" unique_id=44627453]
+unique_name_in_owner = true
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("3_xf3if")
+
+[node name="Fade" type="CanvasLayer" parent="." unique_id=884029600]
+unique_name_in_owner = true
+layer = 100
+script = ExtResource("4_dm40k")
+
+[node name="ColorRect" type="ColorRect" parent="Fade" unique_id=1756560692]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 1)

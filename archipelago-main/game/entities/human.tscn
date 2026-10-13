@@ -1,0 +1,15 @@
+[gd_scene format=3 uid="uid://c6y7xv8tmtn8m"]
+
+[ext_resource type="Texture2D" uid="uid://drkghncmqx32g" path="res://game/assets/human.png" id="1_u7b8m"]
+[ext_resource type="Script" uid="uid://cvhpvpglyh6of" path="res://game/entities/human.gd" id="2_00xmh"]
+
+[node name="Human" type="Node2D" unique_id=1002514298]
+script = ExtResource("2_00xmh")
+
+[node name="NavigationAgent2D" type="NavigationAgent2D" parent="." unique_id=551681990]
+path_desired_distance = 2.0
+target_desired_distance = 2.0
+
+[node name="Sprite" type="Sprite2D" parent="." unique_id=1836508855]
+position = Vector2(0, -2)
+texture = ExtResource("1_u7b8m")

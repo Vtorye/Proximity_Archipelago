@@ -1,0 +1,35 @@
+[gd_scene format=3 uid="uid://cne1ax73twcgx"]
+
+[ext_resource type="Script" uid="uid://be1grw07dbeiw" path="res://screens/main_menu.gd" id="1_ng3km"]
+
+[node name="MainMenu" type="Control" unique_id=1857945860]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_ng3km")
+
+[node name="CenterContainer" type="CenterContainer" parent="." unique_id=1930519372]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CenterContainer" unique_id=1704261921]
+layout_mode = 2
+
+[node name="PlayButton" type="Button" parent="CenterContainer/VBoxContainer" unique_id=2098000283]
+layout_mode = 2
+text = "Play"
+
+[node name="SettingsButton" type="Button" parent="CenterContainer/VBoxContainer" unique_id=1941337976]
+layout_mode = 2
+text = "Settings"
+
+[node name="QuitButton" type="Button" parent="CenterContainer/VBoxContainer" unique_id=999644694]
+layout_mode = 2
+text = "Quit"
