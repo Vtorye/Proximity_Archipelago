@@ -3,6 +3,20 @@
 [ext_resource type="Texture2D" uid="uid://dy10o7un4edt6" path="res://game/assets/atlas.png" id="1_fy75k"]
 [ext_resource type="Texture2D" uid="uid://se5im0b15jyd" path="res://game/assets/house.png" id="2_xnkwq"]
 [ext_resource type="PackedScene" uid="uid://c6y7xv8tmtn8m" path="res://game/entities/human.tscn" id="3_vsk53"]
+[ext_resource type="Resource" uid="uid://de5f1e5g5jyvs" path="res://game/building/options/building.tres" id="building"]
+[ext_resource type="Script" uid="uid://cdmimrfnsanfy" path="res://game/building/build_option.gd" id="build_option"]
+[ext_resource type="Script" uid="uid://61u1015oq8mh" path="res://game/entities/canteen.gd" id="canteen_script"]
+[ext_resource type="Resource" uid="uid://bwanb45ketron" path="res://game/building/options/ground.tres" id="ground"]
+[ext_resource type="Script" uid="uid://dohq4yj0b3afb" path="res://game/resources/resource_amount.gd" id="resource_amount"]
+[ext_resource type="Resource" uid="uid://b3bspiavx16wa" path="res://game/building/options/road.tres" id="road"]
+[ext_resource type="Resource" path="res://game/resources/wood.tres" id="wood"]
+[ext_resource type="Script" uid="uid://5i2ccfep0xxn" path="res://game/entities/basic_workplace.gd" id="workplace_script"]
+[ext_resource type="Script" uid="uid://b5xnctodqs6m0" path="res://game/wolrd.gd" id="world_script"]
+
+[sub_resource type="Resource" id="starting_wood"]
+script = ExtResource("resource_amount")
+type = ExtResource("wood")
+amount = 100
 
 [sub_resource type="NavigationPolygon" id="NavigationPolygon_co6jx"]
 vertices = PackedVector2Array(8, 8, -8, 8, -8, -8, 8, -8)
@@ -35,6 +49,9 @@ sources/3 = SubResource("TileSetAtlasSource_qyjhd")
 tile_proxies/coords_level = [[0, Vector2i(0, 0)], [3, Vector2i(0, 0)], [1, Vector2i(0, 0)], [3, Vector2i(1, 0)], [2, Vector2i(0, 0)], [3, Vector2i(2, 0)]]
 
 [node name="Wolrd0" type="Node2D" unique_id=1844405457]
+script = ExtResource("world_script")
+starting_resources = Array[ExtResource("resource_amount")]([SubResource("starting_wood")])
+build_options = Array[ExtResource("build_option")]([ExtResource("road"), ExtResource("ground"), ExtResource("building")])
 
 [node name="Map" type="TileMapLayer" parent="." unique_id=198608342]
 tile_map_data = PackedByteArray("AAAAAAAAAwABAAAAAAAAAAEAAwABAAAAAAAAAAIAAwABAAAAAAAAAAMAAwABAAAAAAAAAAQAAwABAAAAAAAAAAUAAwABAAAAAAAAAAYAAwABAAAAAAAAAAcAAwABAAAAAAAAAAgAAwABAAAAAAAAAAkAAwABAAAAAAAAAAoAAwABAAAAAAABAAAAAwABAAAAAAABAAEAAwABAAAAAAABAAIAAwABAAAAAAABAAMAAwABAAAAAAABAAQAAwABAAAAAAABAAUAAwABAAAAAAABAAYAAwABAAAAAAABAAcAAwABAAAAAAABAAgAAwABAAAAAAABAAkAAwABAAAAAAABAAoAAwABAAAAAAACAAAAAwABAAAAAAACAAEAAwABAAAAAAACAAIAAwABAAAAAAACAAMAAwABAAAAAAACAAQAAwABAAAAAAACAAUAAwABAAAAAAACAAYAAwABAAAAAAACAAcAAwABAAAAAAACAAgAAwABAAAAAAACAAkAAwABAAAAAAACAAoAAwABAAAAAAADAAAAAwABAAAAAAADAAEAAwABAAAAAAADAAIAAwABAAAAAAADAAMAAwABAAAAAAADAAQAAwABAAAAAAADAAUAAwABAAAAAAADAAYAAwABAAAAAAADAAcAAwABAAAAAAADAAgAAwABAAAAAAADAAkAAwABAAAAAAADAAoAAwABAAAAAAAEAAAAAwABAAAAAAAEAAEAAwABAAAAAAAEAAIAAwABAAAAAAAEAAMAAwABAAAAAAAEAAQAAwABAAAAAAAEAAUAAwABAAAAAAAEAAYAAwABAAAAAAAEAAcAAwABAAAAAAAEAAgAAwABAAAAAAAEAAkAAwABAAAAAAAEAAoAAwABAAAAAAAFAAAAAwABAAAAAAAFAAEAAwABAAAAAAAFAAIAAwABAAAAAAAFAAMAAwABAAAAAAAFAAQAAwABAAAAAAAFAAUAAwABAAAAAAAFAAYAAwABAAAAAAAFAAcAAwABAAAAAAAFAAgAAwABAAAAAAAFAAkAAwABAAAAAAAFAAoAAwABAAAAAAAGAAAAAwABAAAAAAAGAAEAAwABAAAAAAAGAAIAAwABAAAAAAAGAAMAAwABAAAAAAAGAAQAAwAAAAAAAAAGAAUAAwAAAAAAAAAGAAYAAwAAAAAAAAAGAAcAAwAAAAAAAAAGAAgAAwABAAAAAAAGAAkAAwABAAAAAAAGAAoAAwABAAAAAAAHAAAAAwABAAAAAAAHAAEAAwABAAAAAAAHAAIAAwABAAAAAAAHAAMAAwAAAAAAAAAHAAQAAwAAAAAAAAAHAAUAAwAAAAAAAAAHAAYAAwAAAAAAAAAHAAcAAwAAAAAAAAAHAAgAAwAAAAAAAAAHAAkAAwABAAAAAAAHAAoAAwABAAAAAAAIAAAAAwABAAAAAAAIAAEAAwABAAAAAAAIAAIAAwABAAAAAAAIAAMAAwAAAAAAAAAIAAQAAwAAAAAAAAAIAAUAAwAAAAAAAAAIAAYAAwAAAAAAAAAIAAcAAwAAAAAAAAAIAAgAAwAAAAAAAAAIAAkAAwABAAAAAAAIAAoAAwABAAAAAAAJAAAAAwABAAAAAAAJAAEAAwABAAAAAAAJAAIAAwABAAAAAAAJAAMAAwAAAAAAAAAJAAQAAwAAAAAAAAAJAAUAAwAAAAAAAAAJAAYAAwAAAAAAAAAJAAcAAwAAAAAAAAAJAAgAAwAAAAAAAAAJAAkAAwABAAAAAAAJAAoAAwABAAAAAAAKAAAAAwABAAAAAAAKAAEAAwABAAAAAAAKAAIAAwABAAAAAAAKAAMAAwAAAAAAAAAKAAQAAwAAAAAAAAAKAAUAAwAAAAAAAAAKAAYAAwAAAAAAAAAKAAcAAwAAAAAAAAAKAAgAAwAAAAAAAAAKAAkAAwABAAAAAAAKAAoAAwABAAAAAAALAAAAAwABAAAAAAALAAEAAwABAAAAAAALAAIAAwABAAAAAAALAAMAAwAAAAAAAAALAAQAAwAAAAAAAAALAAUAAwAAAAAAAAALAAYAAwAAAAAAAAALAAcAAwAAAAAAAAALAAgAAwAAAAAAAAALAAkAAwABAAAAAAALAAoAAwABAAAAAAAMAAAAAwABAAAAAAAMAAEAAwABAAAAAAAMAAIAAwABAAAAAAAMAAMAAwAAAAAAAAAMAAQAAwABAAAAAAAMAAUAAwABAAAAAAAMAAYAAwABAAAAAAAMAAcAAwABAAAAAAAMAAgAAwABAAAAAAAMAAkAAwABAAAAAAAMAAoAAwABAAAAAAANAAAAAwABAAAAAAANAAEAAwABAAAAAAANAAIAAwABAAAAAAANAAMAAwAAAAAAAAANAAQAAwAAAAAAAAANAAYAAwACAAAAAAANAAcAAwAAAAAAAAANAAgAAwABAAAAAAANAAkAAwABAAAAAAANAAoAAwABAAAAAAAOAAAAAwABAAAAAAAOAAEAAwABAAAAAAAOAAIAAwABAAAAAAAOAAMAAwABAAAAAAAOAAQAAwAAAAAAAAAOAAUAAwAAAAAAAAAOAAYAAwAAAAAAAAAOAAcAAwAAAAAAAAAOAAgAAwABAAAAAAAOAAkAAwABAAAAAAAOAAoAAwABAAAAAAAPAAAAAwABAAAAAAAPAAEAAwABAAAAAAAPAAIAAwABAAAAAAAPAAMAAwABAAAAAAAPAAQAAwABAAAAAAAPAAUAAwABAAAAAAAPAAYAAwABAAAAAAAPAAcAAwABAAAAAAAPAAgAAwABAAAAAAAPAAkAAwABAAAAAAAPAAoAAwABAAAAAAAQAAAAAwABAAAAAAAQAAEAAwABAAAAAAAQAAIAAwABAAAAAAAQAAMAAwABAAAAAAAQAAQAAwABAAAAAAAQAAUAAwABAAAAAAAQAAYAAwABAAAAAAAQAAcAAwABAAAAAAAQAAgAAwABAAAAAAAQAAkAAwABAAAAAAAQAAoAAwABAAAAAAARAAAAAwABAAAAAAARAAEAAwABAAAAAAARAAIAAwABAAAAAAARAAMAAwABAAAAAAARAAQAAwABAAAAAAARAAUAAwABAAAAAAARAAYAAwABAAAAAAARAAcAAwABAAAAAAARAAgAAwABAAAAAAARAAkAAwABAAAAAAARAAoAAwABAAAAAAASAAAAAwABAAAAAAASAAEAAwABAAAAAAASAAIAAwABAAAAAAASAAMAAwABAAAAAAASAAQAAwABAAAAAAASAAUAAwABAAAAAAASAAYAAwABAAAAAAASAAcAAwABAAAAAAASAAgAAwABAAAAAAASAAkAAwABAAAAAAASAAoAAwABAAAAAAATAAAAAwABAAAAAAATAAEAAwABAAAAAAATAAIAAwABAAAAAAATAAMAAwABAAAAAAATAAQAAwABAAAAAAATAAUAAwABAAAAAAATAAYAAwABAAAAAAATAAcAAwABAAAAAAATAAgAAwABAAAAAAATAAkAAwABAAAAAAATAAoAAwABAAAAAAAAAAsAAwABAAAAAAABAAsAAwABAAAAAAACAAsAAwABAAAAAAADAAsAAwABAAAAAAAEAAsAAwABAAAAAAAFAAsAAwABAAAAAAAGAAsAAwABAAAAAAAHAAsAAwABAAAAAAAIAAsAAwABAAAAAAAJAAsAAwABAAAAAAAKAAsAAwABAAAAAAALAAsAAwABAAAAAAAMAAsAAwABAAAAAAANAAsAAwABAAAAAAAOAAsAAwABAAAAAAAPAAsAAwABAAAAAAAQAAsAAwABAAAAAAARAAsAAwABAAAAAAASAAsAAwABAAAAAAATAAsAAwABAAAAAAANAAUAAwAAAAAAAAA=")
@@ -49,98 +66,14 @@ texture = ExtResource("2_xnkwq")
 modulate = Color(0.4609375, 0.49435055, 1, 1)
 position = Vector2(136, 72)
 texture = ExtResource("2_xnkwq")
+script = ExtResource("workplace_script")
 
 [node name="Food" type="Sprite2D" parent="." unique_id=662730675]
 modulate = Color(0.9703431, 1, 0.05098039, 1)
 position = Vector2(216, 104)
 texture = ExtResource("2_xnkwq")
+script = ExtResource("canteen_script")
 
-[node name="Human" parent="." unique_id=1002514298 node_paths=PackedStringArray("home", "work", "food") instance=ExtResource("3_vsk53")]
+[node name="Human" parent="." unique_id=1002514298 node_paths=PackedStringArray("home") instance=ExtResource("3_vsk53")]
 position = Vector2(165, 122)
 home = NodePath("../Home")
-work = NodePath("../Work")
-food = NodePath("../Food")
-
-[node name="Human2" parent="." unique_id=1687583170 node_paths=PackedStringArray("home", "work", "food") instance=ExtResource("3_vsk53")]
-position = Vector2(172, 123)
-home = NodePath("../Home")
-work = NodePath("../Work")
-food = NodePath("../Food")
-
-[node name="Human3" parent="." unique_id=1902193131 node_paths=PackedStringArray("home", "work", "food") instance=ExtResource("3_vsk53")]
-position = Vector2(167, 128)
-home = NodePath("../Home")
-work = NodePath("../Work")
-food = NodePath("../Food")
-
-[node name="Human4" parent="." unique_id=601079539 node_paths=PackedStringArray("home", "work", "food") instance=ExtResource("3_vsk53")]
-position = Vector2(156, 116)
-home = NodePath("../Home")
-work = NodePath("../Work")
-food = NodePath("../Food")
-
-[node name="Human5" parent="." unique_id=314079988 node_paths=PackedStringArray("home", "work", "food") instance=ExtResource("3_vsk53")]
-position = Vector2(163, 117)
-home = NodePath("../Home")
-work = NodePath("../Work")
-food = NodePath("../Food")
-
-[node name="Human6" parent="." unique_id=949097056 node_paths=PackedStringArray("home", "work", "food") instance=ExtResource("3_vsk53")]
-position = Vector2(158, 122)
-home = NodePath("../Home")
-work = NodePath("../Work")
-food = NodePath("../Food")
-
-[node name="Human7" parent="." unique_id=1900804213 node_paths=PackedStringArray("home", "work", "food") instance=ExtResource("3_vsk53")]
-position = Vector2(178, 117)
-home = NodePath("../Home")
-work = NodePath("../Work")
-food = NodePath("../Food")
-
-[node name="Human8" parent="." unique_id=907151296 node_paths=PackedStringArray("home", "work", "food") instance=ExtResource("3_vsk53")]
-position = Vector2(185, 118)
-home = NodePath("../Home")
-work = NodePath("../Work")
-food = NodePath("../Food")
-
-[node name="Human9" parent="." unique_id=1616858051 node_paths=PackedStringArray("home", "work", "food") instance=ExtResource("3_vsk53")]
-position = Vector2(180, 123)
-home = NodePath("../Home")
-work = NodePath("../Work")
-food = NodePath("../Food")
-
-[node name="Human10" parent="." unique_id=751666345 node_paths=PackedStringArray("home", "work", "food") instance=ExtResource("3_vsk53")]
-position = Vector2(173, 130)
-home = NodePath("../Home")
-work = NodePath("../Work")
-food = NodePath("../Food")
-
-[node name="Human11" parent="." unique_id=1882747523 node_paths=PackedStringArray("home", "work", "food") instance=ExtResource("3_vsk53")]
-position = Vector2(180, 131)
-home = NodePath("../Home")
-work = NodePath("../Work")
-food = NodePath("../Food")
-
-[node name="Human12" parent="." unique_id=1599623289 node_paths=PackedStringArray("home", "work", "food") instance=ExtResource("3_vsk53")]
-position = Vector2(175, 136)
-home = NodePath("../Home")
-work = NodePath("../Work")
-food = NodePath("../Food")
-
-[node name="Human13" parent="." unique_id=1838206644 node_paths=PackedStringArray("home", "work", "food") instance=ExtResource("3_vsk53")]
-position = Vector2(156, 130)
-home = NodePath("../Home")
-work = NodePath("../Work")
-food = NodePath("../Food")
-
-[node name="Human14" parent="." unique_id=1404939016 node_paths=PackedStringArray("home", "work", "food") instance=ExtResource("3_vsk53")]
-position = Vector2(163, 131)
-home = NodePath("../Home")
-work = NodePath("../Work")
-food = NodePath("../Food")
-
-[node name="Human15" parent="." unique_id=595109993 node_paths=PackedStringArray("home", "work", "food") instance=ExtResource("3_vsk53")]
-position = Vector2(158, 136)
-home = NodePath("../Home")
-work = NodePath("../Work")
-food = NodePath("../Food")

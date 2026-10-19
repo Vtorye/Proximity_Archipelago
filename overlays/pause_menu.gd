@@ -11,7 +11,7 @@ func _ready() -> void:
 
 func _open_settings() -> void:
 	# Nested overlay: sits on top of the pause menu
-	var settings := Router.push_overlay(&"settings")
+	var settings = Router.push_overlay(&"settings")
 	if settings:
 		settings.closed.connect(func(): pass)  # optional hook
 
