@@ -1,6 +1,6 @@
 @abstract
 class_name Workplace
-extends Node2D
+extends Building
 
 @export_range(1, 1000) var work_slots: int = 1
 var workers: Array[Node2D] = []

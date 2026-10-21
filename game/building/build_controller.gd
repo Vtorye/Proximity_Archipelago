@@ -96,7 +96,7 @@ func try_build(option: BuildOption, cell: Vector2i) -> bool:
 			if scene_option.blocks_movement:
 				_blocked[target] = true
 		buildings.add_child(instance)
-	HumanNavigation.generate(map, blocked_cells())
+	HumanNavigation.generate(map, blocked_cells()) # вроде это просто надо закоментить чтобы 
 	_committing = false
 	inventory.changed.emit()
 	built.emit(option, cell)

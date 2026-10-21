@@ -21,7 +21,7 @@ var food_left: int
 var status: Status = Status.HOME
 var current_workplace: Workplace
 var current_canteen: Canteen
-var _destination: Node2D
+var _destination: Building # maybe remove current_canteen and current_workplace and just check if _destination if on needed class...? but ok, ok, ok this approach is good as well 
 var _path: PackedVector2Array = PackedVector2Array()
 var _path_index := 0
 var _timer := 0.0
@@ -66,7 +66,7 @@ func _physics_process(delta: float) -> void:
 			animate_eating(delta)
 			if _timer <= 0.0:
 				if is_instance_valid(current_canteen) and current_canteen.has_food():
-					current_canteen.consume_food(1)
+					current_canteen.try_consume_food(1)
 					food_left += eat_bonus
 					current_canteen = null
 					_go_home()

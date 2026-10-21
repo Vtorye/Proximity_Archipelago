@@ -9,7 +9,7 @@
 [ext_resource type="Resource" uid="uid://bwanb45ketron" path="res://game/building/options/ground.tres" id="ground"]
 [ext_resource type="Script" uid="uid://dohq4yj0b3afb" path="res://game/resources/resource_amount.gd" id="resource_amount"]
 [ext_resource type="Resource" uid="uid://b3bspiavx16wa" path="res://game/building/options/road.tres" id="road"]
-[ext_resource type="Resource" path="res://game/resources/wood.tres" id="wood"]
+[ext_resource type="Resource" path="res://game/resources/dot_treses/wood.tres" id="wood"]
 [ext_resource type="Script" uid="uid://5i2ccfep0xxn" path="res://game/entities/basic_workplace.gd" id="workplace_script"]
 [ext_resource type="Script" uid="uid://b5xnctodqs6m0" path="res://game/wolrd.gd" id="world_script"]
 
