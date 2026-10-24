@@ -15,6 +15,12 @@ func _ready() -> void:
 	add_child(inventory)
 	if not inventory.configure(starting_resources):
 		return
+	var units := Node2D.new()
+	units.name = "Units"
+	add_child(units)
+	units.add_to_group(&"units_root")
+	# Buildings added later are drawn above units by tree order; keep units on top.
+	units.z_index = 1
 	var buildings := Node2D.new()
 	buildings.name = "Buildings"
 	add_child(buildings)
@@ -22,8 +28,15 @@ func _ready() -> void:
 	build_controller.name = "BuildController"
 	add_child(build_controller)
 	build_controller.configure(map, buildings, inventory, build_options)
+	# All setup() calls must finish before navigation is generated,
+	# otherwise units spawned by houses would appear before the grid exists.
 	for child in get_children():
-		if child is Node2D and (child.name == &"Home" or child is Workplace or child is Canteen):
+		if child is Building:
+			var building := child as Building
+			var origin := map.local_to_map(map.to_local(building.global_position))
+			building.setup(inventory, origin, null)
+			build_controller.reserve_existing(building)
+		elif child is Workplace or child is Canteen:
 			build_controller.reserve_existing(child)
 	HumanNavigation.generate(map)
 

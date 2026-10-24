@@ -15,7 +15,7 @@ enum Status { HOME, WALKING, WORKING, EATING, WAITING_FOR_FOOD, DEAD }
 @export var eat_bonus: int = 3
 @export var food_wait_limit: float = 10.0
 
-@export var home: Node2D
+@export var home: House
 
 var food_left: int
 var status: Status = Status.HOME
@@ -80,7 +80,7 @@ func _physics_process(delta: float) -> void:
 				status = Status.EATING
 				_timer = _random_range(eat_time_range)
 			elif _timer <= 0.0:
-				_die()
+				die()
 
 
 func _seek_workplace() -> void:
@@ -127,19 +127,27 @@ func _go_home() -> void:
 	if is_instance_valid(home):
 		_site_offset = _random_site_offset()
 		_travel_to(home)
+	else:
+		status = Status.HOME
+		_schedule_home_thinking()
 
 
-func _travel_to(destination: Node2D) -> void:
+func _travel_to(destination: Building) -> void:
+	if not is_instance_valid(destination):
+		_destination = null
+		status = Status.HOME
+		_schedule_home_thinking()
+		return
 	_destination = destination
 	_path = HumanNavigation.get_path_world_positions(global_position, destination.global_position)
 	_path_index = 0
 	if _path.is_empty():
-		if destination == current_workplace and is_instance_valid(current_workplace):
+		if is_instance_valid(current_workplace) and destination == current_workplace:
 			current_workplace.release_worker(self)
 			current_workplace = null
 		_destination = null
 		status = Status.HOME
-		if destination == home:
+		if is_instance_valid(home) and destination == home:
 			_schedule_home_thinking()
 		return
 	status = Status.WALKING
@@ -159,6 +167,7 @@ func _move_along_path(delta: float) -> void:
 		global_position = global_position.move_toward(waypoint, speed * delta)
 		return
 	if not is_instance_valid(_destination):
+		_destination = null
 		status = Status.HOME
 		_schedule_home_thinking()
 		return
@@ -170,30 +179,41 @@ func _move_along_path(delta: float) -> void:
 
 
 func _arrive() -> void:
-	if _destination == home:
+	if is_instance_valid(home) and _destination == home:
 		_destination = null
 		status = Status.HOME
+		global_position = home.global_position
 		_site_offset = Vector2.ZERO
 		_schedule_home_thinking()
-	elif _destination == current_workplace:
+	elif is_instance_valid(current_workplace) and _destination == current_workplace:
 		_destination = null
 		status = Status.WORKING
 		_timer = work_time
 		animate_working(0.0)
-	elif _destination == current_canteen:
+	elif is_instance_valid(current_canteen) and _destination == current_canteen:
 		_destination = null
 		status = Status.EATING
 		_timer = _random_range(eat_time_range)
 		animate_eating(0.0)
 	else:
+		_destination = null
 		status = Status.HOME
 		_schedule_home_thinking()
 
 
-func _die() -> void:
+## Removes the unit from the game. No further consequences.
+func die() -> void:
+	if status == Status.DEAD:
+		return
+	if is_instance_valid(home):
+		home.remove_resident(self)
 	if is_instance_valid(current_workplace):
 		current_workplace.release_worker(self)
+	current_workplace = null
+	current_canteen = null
+	_destination = null
 	status = Status.DEAD
+	remove_from_group("humans")
 	animate_dying()
 	died.emit(self)
 	queue_free()

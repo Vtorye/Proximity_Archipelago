@@ -55,11 +55,17 @@ func unavailable_reason(option: BuildOption, cell: Vector2i) -> String:
 			return "Outside the map"
 		if option.allow_when_occupied:
 			continue
-		if _occupied.has(target):
+		var occupant: Node2D = _occupied.get(target)
+		if occupant != null and not _can_replace(option, occupant):
+			if occupant is House and _builds_house(option):
+				return "House already here"
 			return "Cell occupied"
 		# Without the override, people also occupy their cells.
 		for human in get_tree().get_nodes_in_group("humans"):
 			if human.get_viewport() == map.get_viewport() and map.local_to_map(map.to_local(human.global_position)) == target:
+				# Residents of a building that is about to be replaced do not block it.
+				if occupant != null and human.get("home") == occupant:
+					continue
 				return "Person on cell"
 	return ""
 
@@ -71,13 +77,13 @@ func can_build(option: BuildOption, cell: Vector2i) -> bool:
 func try_build(option: BuildOption, cell: Vector2i) -> bool:
 	if not can_build(option, cell):
 		return false
-	var instance: Node2D
+	var instance: Building
 	if option is SceneBuildOption:
 		var candidate := (option as SceneBuildOption).scene.instantiate()
-		if not candidate is Node2D:
+		if not candidate is Building:
 			candidate.free()
 			return false
-		instance = candidate as Node2D
+		instance = candidate as Building
 	# No awaits or notifications until the world and inventory agree.
 	_committing = true
 	if not inventory.try_spend(option.cost, false):
@@ -90,12 +96,16 @@ func try_build(option: BuildOption, cell: Vector2i) -> bool:
 		map.set_cell(cell, tile.source_id, tile.atlas_coords, tile.alternative_tile)
 	else:
 		var scene_option := option as SceneBuildOption
+		var footprint := _footprint(option, cell)
+		for old in _occupants_of(footprint):
+			_clear_occupant(old)
 		instance.position = buildings.to_local(map.to_global(map.map_to_local(cell)))
-		for target in _footprint(option, cell):
+		buildings.add_child(instance)
+		for target in footprint:
 			_occupied[target] = instance
 			if scene_option.blocks_movement:
 				_blocked[target] = true
-		buildings.add_child(instance)
+		instance.setup(inventory, cell, option)
 	HumanNavigation.generate(map, blocked_cells()) # вроде это просто надо закоментить чтобы 
 	_committing = false
 	inventory.changed.emit()
@@ -112,3 +122,43 @@ func _footprint(option: BuildOption, origin: Vector2i) -> Array[Vector2i]:
 	else:
 		cells.append(origin)
 	return cells
+
+
+## Unique buildings currently registered on the given cells.
+func _occupants_of(cells: Array[Vector2i]) -> Array[Node2D]:
+	var found: Array[Node2D] = []
+	for target in cells:
+		var occupant: Node2D = _occupied.get(target)
+		if occupant != null and not found.has(occupant):
+			found.append(occupant)
+	return found
+
+
+## Removes a building and every cell record that points to it.
+func _clear_occupant(old: Node2D) -> void:
+	for key in _occupied.keys():
+		if _occupied[key] == old:
+			_occupied.erase(key)
+			_blocked.erase(key)
+	if old is Building:
+		(old as Building).demolish()
+	else:
+		old.queue_free()
+
+
+func _can_replace(option: BuildOption, occupant: Node2D) -> bool:
+	if not option is SceneBuildOption or not occupant is Building:
+		return false
+	return not (occupant is House and _builds_house(option))
+
+
+func _builds_house(option: BuildOption) -> bool:
+	if not option is SceneBuildOption:
+		return false
+	var scene := (option as SceneBuildOption).scene
+	if scene == null:
+		return false
+	var probe := scene.instantiate()
+	var is_house := probe is House
+	probe.free()
+	return is_house
