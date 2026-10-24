@@ -40,31 +40,16 @@ type = ExtResource("5_ojnm1")
 amount = 10
 metadata/_custom_type_script = "uid://dohq4yj0b3afb"
 
-[sub_resource type="NavigationPolygon" id="NavigationPolygon_co6jx"]
-vertices = PackedVector2Array(8, 8, -8, 8, -8, -8, 8, -8)
-polygons = Array[PackedInt32Array]([PackedInt32Array(0, 1, 2, 3)])
-outlines = Array[PackedVector2Array]([PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)])
-agent_radius = 0.0
-
-[sub_resource type="NavigationPolygon" id="NavigationPolygon_hadmg"]
-vertices = PackedVector2Array(8, 8, -8, 8, -8, -8, 8, -8)
-polygons = Array[PackedInt32Array]([PackedInt32Array(0, 1, 2, 3)])
-outlines = Array[PackedVector2Array]([PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)])
-agent_radius = 0.0
-
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_qyjhd"]
 texture = ExtResource("1_edyhd")
 0:0/0 = 0
-0:0/0/navigation_layer_0/polygon = SubResource("NavigationPolygon_co6jx")
 0:0/0/custom_data_0 = 1.0
 1:0/0 = 0
 1:0/0/custom_data_0 = 2.0
 2:0/0 = 0
-2:0/0/navigation_layer_0/polygon = SubResource("NavigationPolygon_hadmg")
 2:0/0/custom_data_0 = 0.5
 
 [sub_resource type="TileSet" id="TileSet_4at0p"]
-navigation_layer_0/layers = 1
 custom_data_layer_0/name = "move_cost"
 custom_data_layer_0/type = 3
 sources/3 = SubResource("TileSetAtlasSource_qyjhd")
