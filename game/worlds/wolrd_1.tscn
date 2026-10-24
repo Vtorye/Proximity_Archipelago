@@ -16,6 +16,7 @@
 [ext_resource type="Resource" path="res://game/resources/dot_treses/stone.tres" id="stone"]
 [ext_resource type="PackedScene" path="res://game/entities/house.tscn" id="house_scene"]
 [ext_resource type="Resource" path="res://game/building/options/house.tres" id="house_option"]
+[ext_resource type="Script" path="res://game/test/debug_probe.gd" id="debug_probe_script"]
 
 [sub_resource type="Resource" id="starting_wood"]
 script = ExtResource("resource_amount")
@@ -100,4 +101,7 @@ script = ExtResource("canteen_script")
 [node name="Sprite" type="Sprite2D" parent="Food" unique_id=662730676]
 modulate = Color(0.9703431, 1, 0.05098039, 1)
 texture = ExtResource("2_rlqxc")
+
+[node name="DebugProbe" type="Node" parent="."]
+script = ExtResource("debug_probe_script")
 
