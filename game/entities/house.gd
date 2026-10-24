@@ -53,6 +53,10 @@ func _populate() -> void:
 	if units == null:
 		push_error("House %s: no node in group units_root" % name)
 		return
+	var route_service := get_tree().get_first_node_in_group(&"route_service") as RouteService
+	if route_service == null:
+		push_error("House %s: no node in group route_service" % name)
+		return
 	_prune()
 	for _i in range(capacity - residents.size()):
 		var human = human_scene.instantiate()
@@ -62,6 +66,7 @@ func _populate() -> void:
 				human.free()
 			return
 		human.set("home", self)
+		human.route_service = route_service
 		units.add_child(human)
 		human.global_position = global_position
 		add_resident(human)

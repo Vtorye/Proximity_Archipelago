@@ -6,6 +6,7 @@ class_name World
 
 var inventory: WorldInventory
 var build_controller: BuildController
+var route_service: RouteService
 
 
 func _ready() -> void:
@@ -13,6 +14,11 @@ func _ready() -> void:
 	inventory = WorldInventory.new()
 	inventory.name = "Inventory"
 	add_child(inventory)
+	route_service = RouteService.new()
+	route_service.name = "RouteService"
+	add_child(route_service)
+	route_service.setup(map)
+	route_service.add_to_group(&"route_service")
 	if not inventory.configure(starting_resources):
 		return
 	var units := Node2D.new()
@@ -28,6 +34,7 @@ func _ready() -> void:
 	buildings.child_entered_tree.connect(_subscribe_workplace)
 	build_controller = BuildController.new()
 	build_controller.name = "BuildController"
+	build_controller.route_service = route_service
 	add_child(build_controller)
 	build_controller.configure(map, buildings, inventory, build_options)
 	# All setup() calls must finish before navigation is generated,
@@ -39,7 +46,7 @@ func _ready() -> void:
 			building.setup(origin, null)
 			_subscribe_workplace(building)
 			build_controller.reserve_existing(building)
-	HumanNavigation.generate(map)
+	route_service.rebuild(build_controller.blocked_cells())
 
 
 ## Connects a workplace's output to the world inventory. Safe to call more than once.

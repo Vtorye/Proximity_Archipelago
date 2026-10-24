@@ -24,15 +24,15 @@ var status: Status = Status.HOME
 var current_workplace: Workplace
 var current_canteen: Canteen
 var _destination: Building # maybe remove current_canteen and current_workplace and just check if _destination if on needed class...? but ok, ok, ok this approach is good as well 
-var _path: PackedVector2Array = PackedVector2Array()
-var _path_index := 0
+var route_service: RouteService
+var _route: Route = null
 var _timer := 0.0
 var _site_offset := Vector2.ZERO
 
 
 func _ready() -> void:
 	add_to_group("humans")
-	HumanNavigation.navigation_changed.connect(_on_navigation_changed)
+	route_service.navigation_changed.connect(_on_navigation_changed)
 	assert(is_instance_valid(home), "Human " + str(name) + " has no home")
 	food_left = randi_range(1, maxi(1, starting_food))
 	# global_position = home.global_position
@@ -95,7 +95,7 @@ func _seek_workplace() -> void:
 	for candidate in get_tree().get_nodes_in_group("workplaces"):
 		if not candidate is Workplace or not candidate.has_free_slot():
 			continue
-		var cost := HumanNavigation.get_path_cost(global_position, candidate.global_position)
+		var cost := route_service.get_path_cost(route_service.world_to_cell(global_position), route_service.world_to_cell(candidate.global_position))
 		if cost < best_cost:
 			best_cost = cost
 			best = candidate
@@ -116,7 +116,7 @@ func _seek_canteen() -> void:
 	for candidate in get_tree().get_nodes_in_group("canteens"):
 		if not candidate is Canteen:
 			continue
-		var cost := HumanNavigation.get_path_cost(global_position, candidate.global_position)
+		var cost := route_service.get_path_cost(route_service.world_to_cell(global_position), route_service.world_to_cell(candidate.global_position))
 		if cost < best_cost:
 			best_cost = cost
 			best = candidate
@@ -145,9 +145,11 @@ func _travel_to(destination: Building) -> void:
 		_schedule_home_thinking()
 		return
 	_destination = destination
-	_path = HumanNavigation.get_path_world_positions(global_position, destination.global_position)
-	_path_index = 0
-	if _path.is_empty():
+	var from_cell := route_service.world_to_cell(global_position)
+	var to_cell := route_service.world_to_cell(destination.global_position)
+	_route = route_service.request_route(from_cell, to_cell)
+	if not _route.is_valid():
+		_route = null
 		if is_instance_valid(current_workplace) and destination == current_workplace:
 			current_workplace.release_worker(self)
 			current_workplace = null
@@ -176,17 +178,16 @@ func _abort_trip() -> void:
 	current_workplace = null
 	current_canteen = null
 	_destination = null
-	_path = PackedVector2Array()
-	_path_index = 0
+	_route = null
 	status = Status.HOME
 	_timer = 0.0
 
 
 func _move_along_path(delta: float) -> void:
-	if _path_index < _path.size():
-		var waypoint := _path[_path_index]
+	if _route != null and _route.is_valid() and not _route.is_finished():
+		var waypoint := route_service.cell_to_world(_route.next_cell())
 		if global_position.distance_to(waypoint) <= 1.5:
-			_path_index += 1
+			_route.advance()
 			return
 		global_position = global_position.move_toward(waypoint, speed * delta)
 		return

@@ -6,6 +6,7 @@ signal built(option: BuildOption, cell: Vector2i)
 var map: TileMapLayer
 var buildings: Node2D
 var inventory: WorldInventory
+var route_service: RouteService
 var options: Array[BuildOption] = []
 var _occupied: Dictionary[Vector2i, Node2D] = {}
 var _blocked: Dictionary[Vector2i, bool] = {}
@@ -106,7 +107,7 @@ func try_build(option: BuildOption, cell: Vector2i) -> bool:
 			if scene_option.blocks_movement:
 				_blocked[target] = true
 		instance.setup(cell, option)
-	HumanNavigation.generate(map, blocked_cells()) # вроде это просто надо закоментить чтобы 
+	route_service.rebuild(blocked_cells())
 	_committing = false
 	inventory.changed.emit()
 	built.emit(option, cell)
@@ -137,7 +138,7 @@ func demolish_at(cell: Vector2i) -> bool:
 	_committing = true
 	_refund_for_demolish(building.option)
 	_clear_occupant(building)
-	HumanNavigation.generate(map, blocked_cells())
+	route_service.rebuild(blocked_cells())
 	_committing = false
 	inventory.changed.emit()
 	return true
