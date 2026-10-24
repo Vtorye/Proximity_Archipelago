@@ -28,6 +28,7 @@ mouse_filter = 2
 script = ExtResource("3_xf3if")
 
 [node name="Fade" type="CanvasLayer" parent="." unique_id=884029600]
+process_mode = 3
 unique_name_in_owner = true
 layer = 100
 script = ExtResource("4_dm40k")

@@ -11,6 +11,10 @@ var payload: Variant = null
 ## Set in the Inspector. If null, the first focusable control is used
 @export var default_focus: Control
 
+## When false, ui_cancel (Esc here) and the pause key cannot close this menu.
+## Only the menu itself or a Router navigation removes it.
+var dismissable := true
+
 func grab_focus_default() -> void:
 	if is_instance_valid(default_focus):
 		default_focus.grab_focus()
@@ -24,7 +28,7 @@ func grab_focus_default() -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	# Hidden menus must not react to input
-	if not visible:
+	if not visible or not dismissable:
 		return
 	if event.is_action_pressed(&"ui_cancel"):
 		close_requested.emit(self)

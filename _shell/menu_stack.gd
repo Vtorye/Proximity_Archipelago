@@ -46,6 +46,9 @@ func has_menus() -> bool:
 func count() -> int:
 	return _stack.size()
 
+func top() -> MenuBase:
+	return _stack.back() if not _stack.is_empty() else null
+
 ## Only the topmost meny may pop itself
 ## This guards against a hidden menu emitting close_requested by accident
 func _on_close_requested(menu: MenuBase) -> void:
