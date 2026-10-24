@@ -17,6 +17,8 @@
 [ext_resource type="PackedScene" path="res://game/entities/house.tscn" id="house_scene"]
 [ext_resource type="Resource" path="res://game/building/options/house.tres" id="house_option"]
 [ext_resource type="Script" path="res://game/test/debug_probe.gd" id="debug_probe_script"]
+[ext_resource type="Texture2D" path="res://game/assets/tree.png" id="tree_tex"]
+[ext_resource type="Texture2D" path="res://game/assets/rock.png" id="rock_tex"]
 
 [sub_resource type="Resource" id="starting_wood"]
 script = ExtResource("resource_amount")
@@ -80,20 +82,22 @@ position = Vector2(168, 120)
 [node name="Workplace" type="Node2D" parent="." unique_id=1394307724]
 position = Vector2(136, 72)
 script = ExtResource("11_848ph")
+work_slots = 20
 output = ExtResource("wood")
 
 [node name="Sprite" type="Sprite2D" parent="Workplace" unique_id=1394307725]
 modulate = Color(0.21394253, 0.65506256, 0.8040454, 1)
-texture = ExtResource("2_rlqxc")
+texture = ExtResource("tree_tex")
 
 [node name="Workplace2" type="Node2D" parent="." unique_id=339688897]
 position = Vector2(216, 72)
 script = ExtResource("11_848ph")
-work_slots = 4
+work_slots = 20
+output = ExtResource("stone")
 
 [node name="Sprite" type="Sprite2D" parent="Workplace2" unique_id=339688898]
 modulate = Color(0.21394253, 0.65506256, 0.8040454, 1)
-texture = ExtResource("2_rlqxc")
+texture = ExtResource("rock_tex")
 
 [node name="Food" type="Node2D" parent="." unique_id=662730675]
 position = Vector2(216, 104)
