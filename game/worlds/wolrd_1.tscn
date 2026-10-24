@@ -21,6 +21,7 @@
 [ext_resource type="Script" path="res://game/test/debug_probe.gd" id="debug_probe_script"]
 [ext_resource type="Texture2D" path="res://game/assets/tree.png" id="tree_tex"]
 [ext_resource type="Texture2D" path="res://game/assets/rock.png" id="rock_tex"]
+[ext_resource type="Script" path="res://game/match/match_controller.gd" id="match_controller_script"]
 
 [sub_resource type="Resource" id="starting_wood"]
 script = ExtResource("resource_amount")
@@ -112,4 +113,10 @@ position = Vector2(168, 72)
 
 [node name="DebugProbe" type="Node" parent="."]
 script = ExtResource("debug_probe_script")
+
+[node name="MatchController" type="Node" parent="."]
+script = ExtResource("match_controller_script")
+match_duration = 300.0
+target_amount = 100
+tracked_types = Array[ExtResource("4_848ph")]([ExtResource("wood"), ExtResource("stone"), ExtResource("5_ojnm1")])
 
