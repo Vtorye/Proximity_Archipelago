@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="TileBuildOption" format=3 uid="uid://b3bspiavx16wa"]
+
+[ext_resource type="Script" uid="uid://dohq4yj0b3afb" path="res://game/resources/resource_amount.gd" id="amount"]
+[ext_resource type="Script" uid="uid://d5tyd72woa2w" path="res://game/building/tile_build_option.gd" id="option"]
+[ext_resource type="Resource" path="res://game/resources/dot_treses/wood.tres" id="wood"]
+
+[sub_resource type="Resource" id="cost"]
+script = ExtResource("amount")
+type = ExtResource("wood")
+amount = 2
+
+[resource]
+script = ExtResource("option")
+atlas_coords = Vector2i(2, 0)
+id = &"road"
+display_name = "Road"
+cost = SubResource("cost")
+allow_when_occupied = true

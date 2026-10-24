@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="SceneBuildOption" format=3 uid="uid://buu6g5wpbtgif"]
+
+[ext_resource type="Script" uid="uid://dohq4yj0b3afb" path="res://game/resources/resource_amount.gd" id="amount"]
+[ext_resource type="Resource" uid="uid://bc4vd8o7qyldd" path="res://game/resources/dot_treses/food.tres" id="food"]
+[ext_resource type="Script" uid="uid://ctb7np3cfufgu" path="res://game/building/scene_build_option.gd" id="option"]
+[ext_resource type="PackedScene" path="res://game/entities/apple_tree.tscn" id="scene"]
+
+[sub_resource type="Resource" id="cost"]
+script = ExtResource("amount")
+type = ExtResource("food")
+amount = 5
+
+[resource]
+script = ExtResource("option")
+scene = ExtResource("scene")
+blocks_movement = false
+id = &"apple_tree"
+display_name = "Apple tree"
+cost = SubResource("cost")

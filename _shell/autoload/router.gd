@@ -98,6 +98,9 @@ func _swap_screen(key: StringName, payload: Variant) -> void:
 # Overlays
 
 func push_overlay(key: StringName, payload: Variant = null) -> MenuBase:
+	if _manifest == null or not is_instance_valid(_overlay):
+		push_error("Router: not booted yet; run the game from the main scene (F5), not the screen on its own")
+		return null
 	if not _manifest.overlays.has(key):
 		push_error("Router: overlay '%s' is not registered" % key)
 		return null
@@ -115,6 +118,9 @@ func pop_overlay() -> void:
 
 func has_overlay() -> bool:
 	return _overlay.has_menus()
+
+func top_overlay() -> MenuBase:
+	return _overlay.top() if is_instance_valid(_overlay) else null
 
 func current_screen_key() -> StringName:
 	return _current_key

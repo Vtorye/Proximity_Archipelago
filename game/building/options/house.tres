@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="SceneBuildOption" format=3 uid="uid://bi3bebyyyf4kk"]
+
+[ext_resource type="Script" uid="uid://dohq4yj0b3afb" path="res://game/resources/resource_amount.gd" id="amount"]
+[ext_resource type="Script" uid="uid://ctb7np3cfufgu" path="res://game/building/scene_build_option.gd" id="option"]
+[ext_resource type="PackedScene" path="res://game/entities/house.tscn" id="scene"]
+[ext_resource type="Resource" path="res://game/resources/dot_treses/wood.tres" id="wood"]
+
+[sub_resource type="Resource" id="cost"]
+script = ExtResource("amount")
+type = ExtResource("wood")
+amount = 20
+
+[resource]
+script = ExtResource("option")
+scene = ExtResource("scene")
+blocks_movement = false
+id = &"house"
+display_name = "House"
+cost = SubResource("cost")

@@ -4,6 +4,8 @@
 [ext_resource type="PackedScene" uid="uid://cne1ax73twcgx" path="res://screens/main_menu.tscn" id="2_1jkm1"]
 [ext_resource type="PackedScene" uid="uid://be2ypvwrx3kfg" path="res://screens/match.tscn" id="3_sk4hq"]
 [ext_resource type="Script" uid="uid://bo82larywjxfv" path="res://_shell/manifest.gd" id="4_oj60a"]
+[ext_resource type="PackedScene" uid="uid://0w4ys4rb6n2u" path="res://overlays/build_menu.tscn" id="build_menu"]
+[ext_resource type="PackedScene" path="res://overlays/match_result.tscn" id="match_result"]
 
 [resource]
 resource_name = "Manifest"
@@ -14,6 +16,8 @@ screens = Dictionary[StringName, PackedScene]({
 &"match": ExtResource("3_sk4hq")
 })
 overlays = Dictionary[StringName, PackedScene]({
+&"build": ExtResource("build_menu"),
+&"match_result": ExtResource("match_result"),
 &"pause": ExtResource("1_oj60a")
 })
 metadata/_custom_type_script = "uid://bo82larywjxfv"
