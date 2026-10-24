@@ -1,0 +1,13 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://game/entities/basic_workplace.gd" id="1_workplace"]
+[ext_resource type="Texture2D" path="res://game/assets/apple.png" id="2_apple"]
+[ext_resource type="Resource" path="res://game/resources/dot_treses/food.tres" id="3_food"]
+
+[node name="AppleTree" type="Node2D"]
+script = ExtResource("1_workplace")
+work_slots = 3
+output = ExtResource("3_food")
+
+[node name="Sprite" type="Sprite2D" parent="."]
+texture = ExtResource("2_apple")
