@@ -86,7 +86,6 @@ work_slots = 20
 output = ExtResource("wood")
 
 [node name="Sprite" type="Sprite2D" parent="Workplace" unique_id=1394307725]
-modulate = Color(0.21394253, 0.65506256, 0.8040454, 1)
 texture = ExtResource("tree_tex")
 
 [node name="Workplace2" type="Node2D" parent="." unique_id=339688897]
@@ -96,7 +95,6 @@ work_slots = 20
 output = ExtResource("stone")
 
 [node name="Sprite" type="Sprite2D" parent="Workplace2" unique_id=339688898]
-modulate = Color(0.21394253, 0.65506256, 0.8040454, 1)
 texture = ExtResource("rock_tex")
 
 [node name="Food" type="Node2D" parent="." unique_id=662730675]
