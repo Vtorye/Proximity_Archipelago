@@ -55,7 +55,7 @@ func _physics_process(delta: float) -> void:
 			if _timer <= 0.0:
 				food_left -= 1
 				if is_instance_valid(current_workplace):
-					current_workplace.work_complete(self)
+					current_workplace.complete_cycle(self)
 				work_completed.emit(self, current_workplace)
 				if is_instance_valid(current_workplace):
 					current_workplace.release_worker(self)

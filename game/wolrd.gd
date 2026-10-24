@@ -24,6 +24,8 @@ func _ready() -> void:
 	var buildings := Node2D.new()
 	buildings.name = "Buildings"
 	add_child(buildings)
+	# Workplaces built later through BuildController enter the tree under this node.
+	buildings.child_entered_tree.connect(_subscribe_workplace)
 	build_controller = BuildController.new()
 	build_controller.name = "BuildController"
 	add_child(build_controller)
@@ -34,11 +36,24 @@ func _ready() -> void:
 		if child is Building:
 			var building := child as Building
 			var origin := map.local_to_map(map.to_local(building.global_position))
-			building.setup(inventory, origin, null)
+			building.setup(origin, null)
+			_subscribe_workplace(building)
 			build_controller.reserve_existing(building)
-		elif child is Workplace or child is Canteen:
-			build_controller.reserve_existing(child)
 	HumanNavigation.generate(map)
+
+
+## Connects a workplace's output to the world inventory. Safe to call more than once.
+func _subscribe_workplace(node: Node) -> void:
+	if not node is Workplace:
+		return
+	var workplace := node as Workplace
+	if not workplace.produced.is_connected(_on_workplace_produced):
+		workplace.produced.connect(_on_workplace_produced)
+
+
+func _on_workplace_produced(type: ResourceType, amount: int) -> void:
+	if not inventory.add(type, amount):
+		push_warning("World could not store %d of %s" % [amount, type.id])
 
 
 func _unhandled_input(event: InputEvent) -> void:

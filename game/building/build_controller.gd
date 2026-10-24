@@ -105,7 +105,7 @@ func try_build(option: BuildOption, cell: Vector2i) -> bool:
 			_occupied[target] = instance
 			if scene_option.blocks_movement:
 				_blocked[target] = true
-		instance.setup(inventory, cell, option)
+		instance.setup(cell, option)
 	HumanNavigation.generate(map, blocked_cells()) # вроде это просто надо закоментить чтобы 
 	_committing = false
 	inventory.changed.emit()

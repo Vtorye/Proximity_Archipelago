@@ -3,7 +3,6 @@ class_name Building
 
 signal demolished(building: Building)
 
-var inventory: WorldInventory
 var cell: Vector2i
 ## May be null for buildings placed in the scene from the start.
 var option: BuildOption
@@ -11,12 +10,11 @@ var _is_setup := false
 
 
 ## Called once. Fills the fields and then calls _on_setup().
-func setup(stock: WorldInventory, origin: Vector2i, build_option: BuildOption) -> void:
+func setup(origin: Vector2i, build_option: BuildOption) -> void:
 	if _is_setup:
 		push_error("Building %s was already set up" % name)
 		return
 	_is_setup = true
-	inventory = stock
 	cell = origin
 	option = build_option
 	_on_setup()

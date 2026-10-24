@@ -125,7 +125,7 @@ func _log_building_setup(building: Building) -> void:
 	var extra := ""
 	if building is House:
 		var house := building as House
-		extra = " residents=%d/%d inventory_set=%s" % [house.residents.size(), house.capacity, house.inventory != null]
+		extra = " residents=%d/%d" % [house.residents.size(), house.capacity]
 	_log("setup", "%s cell=%s option=%s%s" % [building.name, building.cell, _option_id(building), extra])
 	if building is House and _units != null:
 		var count := 0

@@ -62,17 +62,21 @@ modulate = Color(0.8984375, 0.45749903, 0.24215698, 1)
 position = Vector2(168, 120)
 texture = ExtResource("2_xnkwq")
 
-[node name="Work" type="Sprite2D" parent="." unique_id=1625233066]
-modulate = Color(0.4609375, 0.49435055, 1, 1)
+[node name="Work" type="Node2D" parent="." unique_id=1625233066]
 position = Vector2(136, 72)
-texture = ExtResource("2_xnkwq")
 script = ExtResource("workplace_script")
 
-[node name="Food" type="Sprite2D" parent="." unique_id=662730675]
-modulate = Color(0.9703431, 1, 0.05098039, 1)
-position = Vector2(216, 104)
+[node name="Sprite" type="Sprite2D" parent="Work" unique_id=1625233067]
+modulate = Color(0.4609375, 0.49435055, 1, 1)
 texture = ExtResource("2_xnkwq")
+
+[node name="Food" type="Node2D" parent="." unique_id=662730675]
+position = Vector2(216, 104)
 script = ExtResource("canteen_script")
+
+[node name="Sprite" type="Sprite2D" parent="Food" unique_id=662730676]
+modulate = Color(0.9703431, 1, 0.05098039, 1)
+texture = ExtResource("2_xnkwq")
 
 [node name="Human" parent="." unique_id=1002514298 node_paths=PackedStringArray("home") instance=ExtResource("3_vsk53")]
 position = Vector2(165, 122)

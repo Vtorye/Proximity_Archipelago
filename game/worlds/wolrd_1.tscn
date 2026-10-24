@@ -80,6 +80,7 @@ position = Vector2(168, 120)
 [node name="Workplace" type="Node2D" parent="." unique_id=1394307724]
 position = Vector2(136, 72)
 script = ExtResource("11_848ph")
+output = ExtResource("wood")
 
 [node name="Sprite" type="Sprite2D" parent="Workplace" unique_id=1394307725]
 modulate = Color(0.21394253, 0.65506256, 0.8040454, 1)

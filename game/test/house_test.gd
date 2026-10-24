@@ -11,7 +11,7 @@ func _ready() -> void:
 	add_child(house)
 
 	# Ручной вызов setup, как это будет делать BuildController
-	house.setup(WorldInventory.new(), Vector2i.ZERO, null)
+	house.setup(Vector2i.ZERO, null)
 
 	print("жильцов: ", house.residents.size(), " (ожидаем 5)")
 	print("has_space: ", house.has_space(), " (ожидаем false)")
