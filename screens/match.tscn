@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://bae58hdbvhrdg" path="res://screens/match.gd" id="1_aobiy"]
 [ext_resource type="PackedScene" uid="uid://cxuj0y1ptlvgr" path="res://game/worlds/wolrd_1.tscn" id="2_7e16n"]
+[ext_resource type="PackedScene" path="res://game/match/match_timer_hud.tscn" id="3_hud"]
 
 [node name="Match" type="Control" unique_id=1422858534]
 layout_mode = 3
@@ -23,6 +24,8 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.87890625, 0.58032274, 0.010299683, 1)
+
+[node name="MatchTimerHud" parent="." instance=ExtResource("3_hud")]
 
 [node name="SubViewportContainer" type="SubViewportContainer" parent="." unique_id=700946046]
 layout_mode = 1

@@ -6,6 +6,9 @@ extends Node
 ## Defeat: the timer reaches 0 without victory.
 ## Only one result is ever produced per match.
 
+## Group used by HUD and PauseController to find the active match.
+const GROUP := &"match_controller"
+
 enum Result { WIN, LOSS }
 enum Reason { TARGET_REACHED, TIME_UP }
 
@@ -27,6 +30,7 @@ var _inventory: WorldInventory
 
 func _ready() -> void:
 	set_process(false)
+	add_to_group(GROUP)
 	# Parent World creates its inventory in its own _ready(), which runs after this one.
 	_start.call_deferred()
 
@@ -34,6 +38,7 @@ func _ready() -> void:
 func _exit_tree() -> void:
 	_started = false
 	set_process(false)
+	remove_from_group(GROUP)
 	if is_instance_valid(_inventory) and _inventory.changed.is_connected(_on_inventory_changed):
 		_inventory.changed.disconnect(_on_inventory_changed)
 	_inventory = null

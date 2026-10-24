@@ -116,7 +116,7 @@ script = ExtResource("debug_probe_script")
 
 [node name="MatchController" type="Node" parent="."]
 script = ExtResource("match_controller_script")
-match_duration = 300.0
+match_duration = 180.0
 target_amount = 100
 tracked_types = Array[ExtResource("4_848ph")]([ExtResource("wood"), ExtResource("stone"), ExtResource("5_ojnm1")])
 
