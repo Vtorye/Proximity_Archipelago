@@ -2,8 +2,10 @@ extends Node2D
 
 const UNIT_SIZE: int = 16
 
+enum DeathCause { STARVATION, DEMOLISHED, OTHER }
+
 signal work_completed(human: Node2D, workplace: Node2D)
-signal died(human: Node2D)
+signal died(human: Node2D, cause: DeathCause)
 
 enum Status { HOME, WALKING, WORKING, EATING, WAITING_FOR_FOOD, DEAD }
 
@@ -50,6 +52,10 @@ func _physics_process(delta: float) -> void:
 			animate_walking(delta)
 			_move_along_path(delta)
 		Status.WORKING:
+			if not is_instance_valid(current_workplace):
+				# Workplace was demolished mid-shift: no output, go home.
+				_abort_trip()
+				return
 			_timer -= delta
 			animate_working(delta)
 			if _timer <= 0.0:
@@ -80,7 +86,7 @@ func _physics_process(delta: float) -> void:
 				status = Status.EATING
 				_timer = _random_range(eat_time_range)
 			elif _timer <= 0.0:
-				die()
+				die(DeathCause.STARVATION)
 
 
 func _seek_workplace() -> void:
@@ -154,8 +160,26 @@ func _travel_to(destination: Building) -> void:
 
 
 func _on_navigation_changed() -> void:
-	if status == Status.WALKING and is_instance_valid(_destination):
+	if status != Status.WALKING:
+		return
+	if is_instance_valid(_destination):
 		_travel_to(_destination)
+	else:
+		_abort_trip()
+
+
+## Drops the current trip (destination removed) and re-decides immediately:
+## the HOME state picks a new workplace or canteen on the next physics frame.
+func _abort_trip() -> void:
+	if is_instance_valid(current_workplace):
+		current_workplace.release_worker(self)
+	current_workplace = null
+	current_canteen = null
+	_destination = null
+	_path = PackedVector2Array()
+	_path_index = 0
+	status = Status.HOME
+	_timer = 0.0
 
 
 func _move_along_path(delta: float) -> void:
@@ -202,7 +226,7 @@ func _arrive() -> void:
 
 
 ## Removes the unit from the game. No further consequences.
-func die() -> void:
+func die(cause: DeathCause = DeathCause.OTHER) -> void:
 	if status == Status.DEAD:
 		return
 	if is_instance_valid(home):
@@ -215,7 +239,7 @@ func die() -> void:
 	status = Status.DEAD
 	remove_from_group("humans")
 	animate_dying()
-	died.emit(self)
+	died.emit(self, cause)
 	queue_free()
 
 

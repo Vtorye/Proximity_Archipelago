@@ -11,6 +11,7 @@ var _refresh_timer := 0.0
 @onready var _inventory_label: Label = $CenterContainer/PanelContainer/VBoxContainer/InventoryLabel
 @onready var _option_list: VBoxContainer = $CenterContainer/PanelContainer/VBoxContainer/ScrollContainer/VBoxContainer
 @onready var _message: Label = $CenterContainer/PanelContainer/VBoxContainer/MessageLabel
+@onready var _demolish: Button = $CenterContainer/PanelContainer/VBoxContainer/DemolishButton
 @onready var _close: Button = $CenterContainer/PanelContainer/VBoxContainer/Button
 
 func _ready() -> void:
@@ -28,6 +29,7 @@ func _ready() -> void:
 		button.pressed.connect(_choose.bind(option))
 		_option_list.add_child(button)
 		_buttons.append(button)
+	_demolish.pressed.connect(_on_demolish_pressed)
 	_close.pressed.connect(func(): close_requested.emit(self))
 	if default_focus == null:
 		default_focus = _close
@@ -59,6 +61,9 @@ func _refresh() -> void:
 		button.text = "%s — %s" % [option.display_name, price]
 		button.tooltip_text = _controller.unavailable_reason(option, _cell)
 		button.disabled = not button.tooltip_text.is_empty()
+	var demolish_reason := _controller.can_demolish(_cell)
+	_demolish.tooltip_text = demolish_reason
+	_demolish.disabled = not demolish_reason.is_empty()
 
 
 func _choose(option: BuildOption) -> void:
@@ -66,6 +71,14 @@ func _choose(option: BuildOption) -> void:
 		close_requested.emit(self)
 	else:
 		_message.text = "Cannot build here. Choose another option."
+		_refresh()
+
+
+func _on_demolish_pressed() -> void:
+	if _controller.demolish_at(_cell):
+		close_requested.emit(self)
+	else:
+		_message.text = "Cannot demolish here."
 		_refresh()
 
 

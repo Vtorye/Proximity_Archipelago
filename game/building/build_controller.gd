@@ -113,6 +113,45 @@ func try_build(option: BuildOption, cell: Vector2i) -> bool:
 	return true
 
 
+## Share of the build cost returned on demolition. 0 = no refund; raise to enable refunds.
+const DEMOLISH_REFUND_RATIO := 0.0
+
+
+## Empty string if the building on this cell can be demolished, otherwise the reason.
+func can_demolish(cell: Vector2i) -> String:
+	if _committing:
+		return "Construction in progress"
+	var occupant: Node2D = _occupied.get(cell)
+	if occupant == null:
+		return "Nothing to demolish"
+	if not occupant is Building:
+		return "Cannot demolish this"
+	return ""
+
+
+## Demolishes the building on the cell. No confirmation; residents die with DEMOLISHED.
+func demolish_at(cell: Vector2i) -> bool:
+	if not can_demolish(cell).is_empty():
+		return false
+	var building := _occupied[cell] as Building
+	_committing = true
+	_refund_for_demolish(building.option)
+	_clear_occupant(building)
+	HumanNavigation.generate(map, blocked_cells())
+	_committing = false
+	inventory.changed.emit()
+	return true
+
+
+## Returns part of the build cost. Buildings without an option (placed in the scene) refund nothing.
+func _refund_for_demolish(option: BuildOption) -> void:
+	if option == null or option.cost == null or option.cost.type == null:
+		return
+	var amount := floori(option.cost.amount * DEMOLISH_REFUND_RATIO)
+	if amount > 0:
+		inventory.add(option.cost.type, amount)
+
+
 func _footprint(option: BuildOption, origin: Vector2i) -> Array[Vector2i]:
 	var cells: Array[Vector2i] = []
 	if option is SceneBuildOption:
@@ -142,6 +181,7 @@ func _clear_occupant(old: Node2D) -> void:
 			_blocked.erase(key)
 	if old is Building:
 		(old as Building).demolish()
+		old.free()
 	else:
 		old.queue_free()
 

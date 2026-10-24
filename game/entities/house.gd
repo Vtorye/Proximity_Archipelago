@@ -1,6 +1,8 @@
 class_name House
 extends Building
 
+const HUMAN_SCRIPT := preload("res://game/entities/human.gd")
+
 @export var capacity: int = 5
 @export var human_scene: PackedScene
 
@@ -39,7 +41,7 @@ func _on_demolish() -> void:
 	var snapshot := residents.duplicate()
 	for resident in snapshot:
 		if is_instance_valid(resident):
-			resident.die()
+			resident.die(HUMAN_SCRIPT.DeathCause.DEMOLISHED)
 	residents.clear()
 
 

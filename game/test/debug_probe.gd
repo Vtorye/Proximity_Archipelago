@@ -77,7 +77,7 @@ func _on_unit_entered(node: Node) -> void:
 	_log("unit", "spawned %s home=%s home_valid=%s" % [node.name, _home_name(home), is_instance_valid(home)])
 
 
-func _on_unit_died(human: Node2D) -> void:
+func _on_unit_died(human: Node2D, cause: int) -> void:
 	var home = human.get("home")
 	var last := "unknown"
 	if _last_status.has(human.get_instance_id()):
@@ -85,8 +85,8 @@ func _on_unit_died(human: Node2D) -> void:
 	var residents := "-"
 	if is_instance_valid(home) and home is House:
 		residents = "%d/%d" % [(home as House).residents.size(), (home as House).capacity]
-	_log("DEATH", "%s last_status=%s pos=%s home=%s home_residents=%s" % [
-		human.name, last, human.global_position, _home_name(home), residents])
+	_log("DEATH", "%s cause=%s last_status=%s pos=%s home=%s home_residents=%s" % [
+		human.name, _death_cause_name(cause), last, human.global_position, _home_name(home), residents])
 
 
 func _check_statuses() -> void:
@@ -183,6 +183,11 @@ func _is_human(node: Node) -> bool:
 func _status_name(status: int) -> String:
 	var names: Array = HUMAN_SCRIPT.Status.keys()
 	return String(names[status]) if status >= 0 and status < names.size() else "UNKNOWN(%d)" % status
+
+
+func _death_cause_name(cause: int) -> String:
+	var names: Array = HUMAN_SCRIPT.DeathCause.keys()
+	return String(names[cause]) if cause >= 0 and cause < names.size() else "UNKNOWN(%d)" % cause
 
 
 func _home_name(home) -> String:

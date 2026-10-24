@@ -20,11 +20,17 @@ func setup(origin: Vector2i, build_option: BuildOption) -> void:
 	_on_setup()
 
 
-## Removes the building: calls _on_demolish(), emits demolished, then frees the node.
+## Takes the building out of play immediately: calls _on_demolish(), emits demolished,
+## leaves all groups and detaches from the tree. The caller must free() the node after this
+## returns (a node cannot free itself while one of its methods is running).
 func demolish() -> void:
 	_on_demolish()
 	demolished.emit(self)
-	queue_free()
+	for group in get_groups():
+		remove_from_group(group)
+	var parent := get_parent()
+	if parent != null:
+		parent.remove_child(self)
 
 
 ## Hook for subclasses. Runs once after setup() has filled the fields.

@@ -52,6 +52,10 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 10
 autowrap_mode = 2
 
+[node name="DemolishButton" type="Button" parent="CenterContainer/PanelContainer/VBoxContainer" unique_id=923110456]
+layout_mode = 2
+text = "Demolish"
+
 [node name="Button" type="Button" parent="CenterContainer/PanelContainer/VBoxContainer" unique_id=134420004]
 layout_mode = 2
 text = "Close"
