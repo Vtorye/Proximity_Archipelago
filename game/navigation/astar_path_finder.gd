@@ -1,44 +1,55 @@
-extends "res://game/navigation/path_finder.gd"
-## A* search over a 4-neighbour grid, backed by AStarGrid2D.
+extends "res://game/navigation/path_algorithm.gd"
+## A* over a 4-neighbour grid, backed by AStarGrid2D.
 
 var _astar := AStarGrid2D.new()
+var _costs: Dictionary = {} # Vector2i -> float, copied from the grid in build()
 
 
-func build(move_costs: Dictionary) -> void:
+func build(grid: TileGrid) -> void:
 	_astar.clear()
-	if move_costs.is_empty():
+	_costs.clear()
+
+	var cells := grid.walkable_cells()
+	var rect := grid.rect()
+	if cells.is_empty() or rect.size == Vector2i.ZERO:
 		return
 
-	var min_cell := Vector2i(move_costs.keys()[0])
-	var max_cell := min_cell
 	var min_cost := INF
-	for cell in move_costs:
-		min_cell = Vector2i(mini(min_cell.x, cell.x), mini(min_cell.y, cell.y))
-		max_cell = Vector2i(maxi(max_cell.x, cell.x), maxi(max_cell.y, cell.y))
-		min_cost = minf(min_cost, float(move_costs[cell]))
+	for cell in cells:
+		var move_cost := grid.cost(cell)
+		_costs[cell] = move_cost
+		min_cost = minf(min_cost, move_cost)
 
-	var region := Rect2i(min_cell, max_cell - min_cell + Vector2i.ONE)
-	_astar.region = region
+	_astar.region = rect
 	_astar.cell_size = Vector2.ONE
 	_astar.diagonal_mode = AStarGrid2D.DIAGONAL_MODE_NEVER
 	_astar.update()
 
 	# AStarGrid2D defaults to open cells, so close everything first.
-	_astar.fill_solid_region(region, true)
-	for cell in move_costs:
+	_astar.fill_solid_region(rect, true)
+	for cell in cells:
 		_astar.set_point_solid(cell, false)
 		# Scale so the built-in distance heuristic stays admissible
 		# even when the cheapest tile costs less than 1.
-		_astar.set_point_weight_scale(cell, float(move_costs[cell]) / min_cost)
+		_astar.set_point_weight_scale(cell, float(_costs[cell]) / min_cost)
 
 
-func find_path(start: Vector2i, goal: Vector2i) -> Array[Vector2i]:
+func find_path(from_cell: Vector2i, to_cell: Vector2i) -> Array[Vector2i]:
 	var result: Array[Vector2i] = []
-	if not _astar.is_in_boundsv(start) or not _astar.is_in_boundsv(goal):
-		return result
-	if _astar.is_point_solid(start) or _astar.is_point_solid(goal):
+	if not _costs.has(from_cell) or not _costs.has(to_cell):
 		return result
 
-	for cell in _astar.get_id_path(start, goal):
+	for cell in _astar.get_id_path(from_cell, to_cell):
 		result.append(Vector2i(cell))
 	return result
+
+
+func get_cost(from_cell: Vector2i, to_cell: Vector2i) -> float:
+	var path := find_path(from_cell, to_cell)
+	if path.is_empty():
+		return INF
+
+	var total := 0.0
+	for index in range(1, path.size()):
+		total += float(_costs[path[index]])
+	return total

@@ -1,31 +1,26 @@
-extends "res://game/navigation/path_finder.gd"
+extends "res://game/navigation/path_algorithm.gd"
 ## Dijkstra search over a 4-neighbour grid.
 ## Simple version: the frontier is a plain array scanned for the minimum.
-## Each step pays the cost of the destination cell, the same as the A* version.
+## Each step pays the entry cost of the destination cell, the same as the A* version.
 
-const NEIGHBOURS: Array[Vector2i] = [
-	Vector2i.LEFT,
-	Vector2i.RIGHT,
-	Vector2i.UP,
-	Vector2i.DOWN,
-]
-
-var _move_costs: Dictionary = {}
+var _costs: Dictionary = {} # Vector2i -> float, copied from the grid in build()
 
 
-func build(move_costs: Dictionary) -> void:
-	_move_costs = move_costs.duplicate()
+func build(grid: TileGrid) -> void:
+	_costs.clear()
+	for cell in grid.walkable_cells():
+		_costs[cell] = grid.cost(cell)
 
 
-func find_path(start: Vector2i, goal: Vector2i) -> Array[Vector2i]:
+func find_path(from_cell: Vector2i, to_cell: Vector2i) -> Array[Vector2i]:
 	var result: Array[Vector2i] = []
-	if not _move_costs.has(start) or not _move_costs.has(goal):
+	if not _costs.has(from_cell) or not _costs.has(to_cell):
 		return result
 
-	var distance: Dictionary = {start: 0.0}
+	var distance: Dictionary = {from_cell: 0.0}
 	var came_from: Dictionary = {}
 	var settled: Dictionary = {}
-	var frontier: Array[Vector2i] = [start]
+	var frontier: Array[Vector2i] = [from_cell]
 
 	while not frontier.is_empty():
 		# Take the frontier cell with the smallest known distance.
@@ -37,21 +32,40 @@ func find_path(start: Vector2i, goal: Vector2i) -> Array[Vector2i]:
 		frontier.remove_at(best_index)
 		settled[current] = true
 
-		if current == goal:
-			return _reconstruct_path(came_from, goal)
+		if current == to_cell:
+			return _reconstruct_path(came_from, to_cell)
 
-		for offset in NEIGHBOURS:
-			var next: Vector2i = current + offset
-			if not _move_costs.has(next) or settled.has(next):
+		for next in _neighbors(current):
+			if settled.has(next):
 				continue
 
-			var candidate: float = distance[current] + float(_move_costs[next])
+			var candidate: float = distance[current] + float(_costs[next])
 			if not distance.has(next) or candidate < distance[next]:
 				distance[next] = candidate
 				came_from[next] = current
 				if not frontier.has(next):
 					frontier.append(next)
 
+	return result
+
+
+func get_cost(from_cell: Vector2i, to_cell: Vector2i) -> float:
+	var path := find_path(from_cell, to_cell)
+	if path.is_empty():
+		return INF
+
+	var total := 0.0
+	for index in range(1, path.size()):
+		total += float(_costs[path[index]])
+	return total
+
+
+func _neighbors(cell: Vector2i) -> Array[Vector2i]:
+	var result: Array[Vector2i] = []
+	for offset in [Vector2i.RIGHT, Vector2i.LEFT, Vector2i.DOWN, Vector2i.UP]:
+		var candidate: Vector2i = cell + offset
+		if _costs.has(candidate):
+			result.append(candidate)
 	return result
 
 
