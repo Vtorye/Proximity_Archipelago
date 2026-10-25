@@ -8,6 +8,7 @@ signal work_completed(human: Node2D, workplace: Node2D)
 signal died(human: Node2D, cause: DeathCause)
 signal status_changed(status: Status)
 signal cell_changed(old: Vector2i, next: Vector2i)
+signal waiting_changed
 
 @export var speed := 24.0
 @export var work_time := 3.0
@@ -27,6 +28,12 @@ var _carrying := false
 var _angle := 0.0
 var _animation_time := 0.0
 var _last_direction := Vector2.UP
+var _waiting_for_work := false
+var _waiting_reason: WorkPlan.WaitReason = WorkPlan.WaitReason.NONE
+var waiting_reason: WorkPlan.WaitReason:
+	get: return _waiting_reason
+var _reconsider_queued := false
+var _navigation_pending := false
 
 func configure(nest: House, policy: TripPlanner, navigation: RouteService) -> void:
 	home = nest
@@ -41,6 +48,7 @@ func _ready() -> void:
 		sprite.queue_free()
 	route_service.navigation_changed.connect(_on_navigation_changed)
 	route_service.food_sources_changed.connect(_on_food_sources_changed)
+	planner.opportunities_changed.connect(_on_work_opportunities_changed)
 	_timer = departure_delay + randf_range(0.3, 0.5)
 	_meal = planner.reserve_meal()
 
@@ -109,17 +117,29 @@ func _physics_process(delta: float) -> void:
 func _decide() -> void:
 	if _meal == null or not _meal.active:
 		_meal = planner.reserve_meal()
-	_plan = planner.plan_work(self, home, needs, speed, work_time, _meal)
+	_plan = planner.plan_work(self, home, needs, speed, work_time, _meal, current_workplace)
 	if _plan != null and _plan.waiting_for_slot:
-		_set_status(Status.HOME)
-		_timer = 0.75
+		_waiting_for_work = true
+		_set_waiting_reason(_plan.waiting_reason)
+		_release_work()
+		if global_position.distance_squared_to(route_service.cell_to_world(planner.accessible_entry(home))) > 0.01:
+			_go_home()
+		else:
+			_set_status(Status.HOME)
+			_timer = 0.75
 	elif _plan != null:
+		_waiting_for_work = false
+		_set_waiting_reason(WorkPlan.WaitReason.NONE)
 		current_workplace = _plan.workplace
 		_walk(_plan.outward, &"work")
 	else:
+		_waiting_for_work = false
+		_set_waiting_reason(WorkPlan.WaitReason.NONE)
 		_seek_food()
 
 func _seek_food() -> void:
+	_waiting_for_work = false
+	_set_waiting_reason(WorkPlan.WaitReason.NONE)
 	_release_work()
 	if _meal == null or not _meal.active:
 		_meal = planner.reserve_meal()
@@ -154,7 +174,7 @@ func _arrive() -> void:
 	match _destination:
 		&"work":
 			var cell: Vector2i = route_service.world_to_cell(global_position)
-			if not is_instance_valid(current_workplace) or not planner.can_finish_work(cell, needs, speed, work_time):
+			if not is_instance_valid(current_workplace) or not planner.can_finish_work(cell, needs, speed, work_time) or not current_workplace.begin_work(self):
 				_seek_food()
 				return
 			_set_status(Status.WORKING)
@@ -168,19 +188,45 @@ func _arrive() -> void:
 			_timer = 0.5
 
 func _on_navigation_changed() -> void:
-	if status == Status.WORKING:
-		if not planner.can_finish_work(route_service.world_to_cell(global_position), needs, speed, _timer):
-			_seek_food()
-	elif status == Status.WALKING:
-		var escape: float = planner.escape_energy(route_service.world_to_cell(global_position), speed)
-		if route_service.route_affected(motion.route) or not needs.can_afford(escape + 3.0):
-			_seek_food()
+	_queue_reconsideration(true)
 
 func _on_food_sources_changed() -> void:
-	if status == Status.WALKING and _destination == &"food" or status == Status.EATING:
-		_seek_food()
-	else:
-		_on_navigation_changed()
+	_queue_reconsideration(true)
+
+func _on_work_opportunities_changed() -> void:
+	if status == Status.HOME and _waiting_for_work:
+		_timer = 0.0
+	elif status == Status.WALKING and _destination == &"work":
+		_queue_reconsideration(false)
+
+func _queue_reconsideration(navigation_changed: bool) -> void:
+	_navigation_pending = _navigation_pending or navigation_changed
+	if not _reconsider_queued:
+		_reconsider_queued = true
+		_reconsider_route.call_deferred()
+
+func _reconsider_route() -> void:
+	# Registry and navigation notifications can arrive inside one build command.
+	# Wait for its commit and combine the notifications into one decision.
+	var geometry_changed: bool = _navigation_pending
+	_navigation_pending = false
+	_reconsider_queued = false
+	if status == Status.DEAD:
+		return
+	var cell: Vector2i = route_service.world_to_cell(global_position)
+	if status == Status.WORKING:
+		if geometry_changed and not planner.can_finish_work(cell, needs, speed, _timer):
+			_seek_food()
+	elif status == Status.EATING:
+		if not route_service.is_food_cell(cell):
+			_seek_food()
+	elif status == Status.WALKING:
+		if _destination == &"work":
+			_decide()
+		elif geometry_changed and _destination == &"home":
+			_go_home()
+		elif geometry_changed and _destination == &"food":
+			_seek_food()
 
 func workplace_removed(workplace: Workplace) -> void:
 	if current_workplace == workplace:
@@ -191,6 +237,11 @@ func _release_work() -> void:
 	if is_instance_valid(current_workplace):
 		current_workplace.release_worker(self)
 	current_workplace = null
+
+func _set_waiting_reason(reason: WorkPlan.WaitReason) -> void:
+	if _waiting_reason != reason:
+		_waiting_reason = reason
+		waiting_changed.emit()
 
 func _set_status(value: Status) -> void:
 	if status != value:

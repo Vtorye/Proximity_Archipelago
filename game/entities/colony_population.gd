@@ -38,6 +38,8 @@ func _on_building_added(building: Building) -> void:
 		units.add_child(ant)
 		ant.global_position = navigation.cell_to_world(entry)
 		ant.cell_changed.connect(func(old: Vector2i, next: Vector2i): cell_changed.emit(old, next))
+		ant.status_changed.connect(func(_status: AntAgent.Status): changed.emit())
+		ant.waiting_changed.connect(func(): changed.emit())
 		ant.died.connect(func(_ant: Node2D, _cause: int): changed.emit())
 		spawned.emit(ant)
 	changed.emit()
