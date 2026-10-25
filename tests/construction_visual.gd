@@ -9,6 +9,9 @@ func _run() -> void:
 	await click(Router._current.controls[&"play"])
 	await frames(45)
 	screen = Router._current
+	for id in screen.hud.stock_chips:
+		var icon: TextureRect = screen.hud.stock_chips[id].get_child(0)
+		print("RESOURCE ICON ", id, " ", icon.get_global_rect(), " MIN ", icon.custom_minimum_size, " SCALE ", icon.scale)
 	expect(screen.world.map_size == Vector2i(50, 50) and screen.camera.bounds.size == Vector2(800, 800), "gameplay and camera both use the fifty-cell map")
 	screen.camera.set_level(0)
 	screen.camera.pan(Vector2(100000, 100000))
@@ -119,6 +122,7 @@ func _check_ui_scales() -> void:
 	expect(AppSettings.ui_scale == 1.0 and settings.controls[&"ui_scale_plus"].disabled, "settings apply the largest supported UI scale immediately")
 	expect(get_viewport().get_visible_rect().encloses(settings.controls[&"done"].get_global_rect()), "largest settings scale keeps its close action visible")
 	await capture("09-settings-scale-100")
+	preload("res://tests/pixel_font_checks.gd").verify(self, settings)
 	await click(settings.controls[&"done"])
 	await key(KEY_B)
 	var menu: ConstructionMenu = Router.top_overlay() as ConstructionMenu
@@ -133,6 +137,7 @@ func _check_ui_scales() -> void:
 	var config := ConfigFile.new()
 	expect(config.load(AppSettings.PATH) == OK and config.get_value("interface", "scale", 0.0) == 0.5, "UI scale persists in the settings file")
 	await capture("11-settings-scale-50")
+	preload("res://tests/pixel_font_checks.gd").verify(self, settings)
 	await click(settings.controls[&"done"])
 	await key(KEY_B)
 	menu = Router.top_overlay() as ConstructionMenu
@@ -189,6 +194,7 @@ func _pan() -> void:
 	await frames(3)
 
 func _validate_palette(menu: ConstructionMenu) -> void:
+	preload("res://tests/pixel_font_checks.gd").verify(self, menu)
 	print("PALETTE ", menu.panel.get_global_rect(), " MIN ", menu.panel.get_combined_minimum_size())
 	expect(get_viewport().get_visible_rect().encloses(menu.panel.get_global_rect()), "construction palette fits the viewport")
 	expect(menu.panel.get_global_rect().size.y <= get_viewport().get_visible_rect().size.y * 0.22, "compact palette occupies less than a quarter of the screen height")
