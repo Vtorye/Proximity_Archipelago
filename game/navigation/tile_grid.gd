@@ -4,63 +4,61 @@ extends RefCounted
 ## Algorithms query cells through this class and never touch the TileMapLayer.
 
 var _rect := Rect2i()
-var _costs: Dictionary = {} # Vector2i -> float, walkable cells only
-
+var _costs := PackedFloat32Array()
 
 ## Replace the snapshot completely. Cells without a tile, with a non-positive
 ## `move_cost`, or listed in `blocked_cells` are not walkable.
 func setup(map: TileMapLayer, blocked_cells: Array[Vector2i]) -> void:
-	_rect = Rect2i()
-	_costs.clear()
+	_rect = map.get_used_rect() if is_instance_valid(map) else Rect2i()
+	_costs.resize(_rect.size.x * _rect.size.y)
+	_costs.fill(0.0)
 	if not is_instance_valid(map) or map.tile_set == null:
 		return
-
-	_rect = map.get_used_rect()
-
-	var blocked: Dictionary = {}
-	for cell in blocked_cells:
-		blocked[cell] = true
-
 	for cell in map.get_used_cells():
-		if blocked.has(cell):
-			continue
-		var tile_data := map.get_cell_tile_data(cell)
-		if tile_data == null:
-			continue
-		var cost_value: Variant = tile_data.get_custom_data("move_cost")
-		var move_cost := float(cost_value) if cost_value is float or cost_value is int else 0.0
-		if move_cost > 0.0:
-			_costs[cell] = move_cost
+		var data: TileData = map.get_cell_tile_data(cell)
+		if data != null:
+			var value: Variant = data.get_custom_data("move_cost")
+			if value is float or value is int:
+				_costs[index(cell)] = maxf(0.0, float(value))
+	for cell in blocked_cells:
+		if in_bounds(cell):
+			_costs[index(cell)] = 0.0
 
+func configure(region: Rect2i, costs: PackedFloat32Array) -> void:
+	assert(costs.size() == region.size.x * region.size.y)
+	_rect = region
+	_costs = costs.duplicate()
+
+func index(cell: Vector2i) -> int:
+	var local: Vector2i = cell - _rect.position
+	return local.y * _rect.size.x + local.x
+
+func cell_at(id: int) -> Vector2i:
+	return _rect.position + Vector2i(id % _rect.size.x, id / _rect.size.x)
 
 func size() -> Vector2i:
 	return _rect.size
 
-
 func rect() -> Rect2i:
 	return _rect
-
 
 func in_bounds(cell: Vector2i) -> bool:
 	return _rect.has_point(cell)
 
-
 func walkable(cell: Vector2i) -> bool:
-	return _costs.has(cell)
-
+	return in_bounds(cell) and _costs[index(cell)] > 0.0
 
 ## Cost of entering `cell`, or INF if it is not walkable.
 func cost(cell: Vector2i) -> float:
-	return float(_costs.get(cell, INF))
-
+	return _costs[index(cell)] if walkable(cell) else INF
 
 ## All walkable cells, in no particular order.
 func walkable_cells() -> Array[Vector2i]:
-	var result: Array[Vector2i] = []
-	for cell in _costs:
-		result.append(cell)
-	return result
-
+	var cells: Array[Vector2i] = []
+	for id in range(_costs.size()):
+		if _costs[id] > 0.0:
+			cells.append(cell_at(id))
+	return cells
 
 ## Walkable 4-neighbours of `cell`.
 func neighbors(cell: Vector2i) -> Array[Vector2i]:
