@@ -132,7 +132,7 @@ func demolish_at(cell: Vector2i) -> bool:
 		return false
 	var building: Building = registry.at(cell)
 	# Removing the last feeding point while ants are alive would invalidate every safe plan.
-	if building is Canteen and registry.canteens().size() <= 1 and population.count() > 0:
+	if not _can_remove_food(building):
 		last_result = PlacementCheck.result(PlacementCheck.Code.NO_ESCAPE)
 		return false
 	_committing = true
@@ -164,19 +164,31 @@ func _footprint(option: BuildOption, origin: Vector2i) -> Array[Vector2i]:
 	return cells
 
 func _preserves_escape(option: BuildOption, cell: Vector2i) -> bool:
-	if not option is SceneBuildOption or not option.blocks_movement:
+	var preview: TileGrid
+	if option is SceneBuildOption and option.blocks_movement:
+		var blocked: Array[Vector2i] = registry.blocked_cells()
+		blocked.append_array(_footprint(option, cell))
+		preview = TileGrid.new()
+		preview.setup(map, blocked)
+	elif option is TileBuildOption:
+		var source: TileSetAtlasSource = map.tile_set.get_source(option.source_id) as TileSetAtlasSource
+		var value: float = float(source.get_tile_data(option.atlas_coords, option.alternative_tile).get_custom_data("move_cost"))
+		if value <= route_service.entry_cost(cell):
+			return true
+		preview = route_service.snapshot().with_cost(cell, value)
+	else:
 		return true
-	var blocked: Array[Vector2i] = registry.blocked_cells()
-	blocked.append_array(_footprint(option, cell))
-	var preview := TileGrid.new()
-	preview.setup(map, blocked)
 	var foods: Array[Vector2i] = []
 	for canteen in registry.canteens():
 		foods.append_array(canteen.entry_cells())
 	var field: NavigationField = GridSearch.build(preview, foods, true)
-	for offset in option.entry_offsets:
-		if not preview.walkable(cell + offset) or not is_finite(field.cost(cell + offset)):
-			return false
+	if option is SceneBuildOption:
+		for offset in option.entry_offsets:
+			if not preview.walkable(cell + offset) or not is_finite(field.cost(cell + offset)):
+				return false
+	return _agents_can_escape(field)
+
+func _agents_can_escape(field: NavigationField) -> bool:
 	for ant in population.agents():
 		var cost: float = field.cost(route_service.world_to_cell(ant.global_position))
 		var energy: float = cost * route_service.cell_size() / (ant.speed * TripPlanner.CARRY_SPEED_RATIO) + AntNeeds.MEAL_SECONDS
@@ -184,3 +196,11 @@ func _preserves_escape(option: BuildOption, cell: Vector2i) -> bool:
 			return false
 	return true
 
+func _can_remove_food(building: Building) -> bool:
+	if not building is Canteen:
+		return true
+	var remaining: Array[Vector2i] = []
+	for canteen in registry.canteens():
+		if canteen != building:
+			remaining.append_array(canteen.entry_cells())
+	return _agents_can_escape(GridSearch.build(route_service.snapshot(), remaining, true))

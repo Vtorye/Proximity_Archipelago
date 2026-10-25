@@ -208,6 +208,13 @@ func _test_worlds() -> void:
 	slow.spawn_speed = 1.0
 	options.append(slow)
 	expect(first.build_controller.check(slow, Vector2i(74, 50)).code == PlacementCheck.Code.NO_ESCAPE, "nest outside its movement profile budget rejected")
+	# A slower tile must not consume a hungry ant's last safe escape budget.
+	ant.needs.satiety = 13.3
+	var ground: BuildOption = load("res://game/building/options/ground.tres")
+	var before_terrain: Vector2i = (first.get_node("Map") as TileMapLayer).get_cell_atlas_coords(Vector2i(51, 50))
+	expect(not first.build_controller.try_build(ground, Vector2i(51, 50)) and first.build_controller.last_result.code == PlacementCheck.Code.NO_ESCAPE, "terrain change cannot strand a hungry ant")
+	expect((first.get_node("Map") as TileMapLayer).get_cell_atlas_coords(Vector2i(51, 50)) == before_terrain, "unsafe terrain edit leaves map unchanged")
+	ant.needs.eat()
 	var saved_available: int = first.inventory.available(food)
 	first.inventory.try_spend(entry(food, saved_available))
 	expect(first.build_controller.check(far, Vector2i(51, 53)).code == PlacementCheck.Code.SPAWN_FOOD, "nest needs food for its residents")

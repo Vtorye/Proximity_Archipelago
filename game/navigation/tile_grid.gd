@@ -72,3 +72,11 @@ func neighbors(cell: Vector2i) -> Array[Vector2i]:
 func packed_costs() -> PackedFloat32Array:
 	# Packed arrays use copy-on-write; a caller cannot mutate this snapshot through the returned value.
 	return _costs
+
+func with_cost(cell: Vector2i, value: float) -> TileGrid:
+	var changed: PackedFloat32Array = _costs.duplicate()
+	if in_bounds(cell):
+		changed[index(cell)] = maxf(0.0, value)
+	var result := TileGrid.new()
+	result.configure(_rect, changed)
+	return result
