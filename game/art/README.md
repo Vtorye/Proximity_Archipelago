@@ -1,6 +1,6 @@
 # Замена графики
 
-Текущие восемь игровых PNG имеют размер **16×16**. Они находятся в `game/assets/tiles/` и `game/assets/sprites/`.
+Текущие девять игровых PNG имеют размер **16×16**. Они находятся в `game/assets/tiles/` и `game/assets/sprites/`.
 
 ## Быстрая замена
 
@@ -22,7 +22,7 @@
 
 ## Происхождение текущего набора
 
-Использован встроенный инструмент imagegen. Созданы два исходных атласа. Четверти каждого механически уменьшены до 16×16 с BOX-фильтром и сохранены отдельными PNG. Исходные большие изображения не импортируются игрой. Анимация муравья и белые уголки рисуются кодом и не требуют замены текстур.
+Использован встроенный инструмент imagegen. Созданы два исходных атласа и отдельный спрайт столовой. Четверти каждого механически уменьшены до 16×16 с BOX-фильтром и сохранены отдельными PNG. Исходные большие изображения не импортируются игрой. Анимация муравья и белые уголки рисуются кодом и не требуют замены текстур.
 
 ### Запрос для материалов
 
@@ -34,5 +34,11 @@ Generate a production game terrain texture atlas for a top-down pixel-art ant co
 
 ```text
 Use case: stylized-concept. Asset type: transparent game sprite atlas. Create a square 2x2 sprite sheet for a top-down pixel-art ant colony strategy game, four equally sized cells with NO grid lines or captions. Each subject centered with generous transparent padding and no pixels crossing cell boundaries. TOP LEFT: rounded anthill nest of warm earthen soil with one dark tunnel opening, tiny grass tufts, pebble highlights and small root details; an actual ant nest, no human houses. TOP RIGHT: a low berry bush with dark sage and moss green leaves and a handful of warm red berries, readable overhead silhouette. BOTTOM LEFT: fallen short timber branch and small wood chips, rich honey and chestnut browns, readable overhead silhouette. BOTTOM RIGHT: cluster of pale blue-gray flint stones and small rock chips, readable overhead silhouette. All four objects drawn from perfectly overhead, charming crafted indie strategy-game sprites with crisp square pixel clusters, restricted cohesive earthy palette, warm upper-left light, subtle compact ground contact shadows. Treat each cell as a low-resolution 32x32 sprite enlarged with crisp nearest-neighbor pixels. No gradients, no anti-aliasing, no letters, no background material, no frames. Transparent background around each isolated object. Each object fills about 70 percent of its cell.
+```
+
+### Запрос для столовой
+
+```text
+Create one transparent top-down pixel-art game sprite: an ant colony feeding station, a wide fresh green leaf used as a shallow platter, holding two small red berries and a few warm golden seeds, a tiny hollow acorn cup at one side. The silhouette must be a readable green oval plate with red and honey-colored food. Perfect overhead view, no perspective, no furniture, no humans, no buildings, no background, no text. Match a cozy forest ant-colony strategy game with moss greens, chestnut brown and amber highlights, crisp low-resolution pixel clusters, no anti-aliasing or gradients. Compose this as exactly a 16x16 logical-pixel sprite enlarged on a square canvas. Keep the object compact, about 80 percent of the canvas, centered with transparent padding. This sprite must remain recognizable after conversion to a real 16x16 PNG.
 ```
 
