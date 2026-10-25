@@ -6,5 +6,6 @@ extends Resource
 @export var icon: Texture2D
 @export var cost: ResourceAmount
 
-## Allow placement in cells occupied by buildings or humans.
+## Allows terrain below existing structures and placement around units.
+## Replacing a building always requires an explicit demolition command.
 @export var allow_when_occupied: bool = false

@@ -59,7 +59,7 @@ func check(option: BuildOption, cell: Vector2i) -> PlacementCheck:
 	for target in _footprint(option, cell):
 		if map.get_cell_source_id(target) == -1 or not route_service.walkable(target):
 			return PlacementCheck.result(PlacementCheck.Code.OUTSIDE_MAP)
-		if option is SceneBuildOption and registry.at(target) != null:
+		if registry.at(target) != null and (option is SceneBuildOption or not option.allow_when_occupied):
 			return PlacementCheck.result(PlacementCheck.Code.OCCUPIED)
 		if not option.allow_when_occupied and population != null:
 			for ant in population.agents():
