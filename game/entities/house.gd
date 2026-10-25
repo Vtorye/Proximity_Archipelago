@@ -34,6 +34,11 @@ func validate_definition() -> Array[String]:
 	var errors: Array[String] = []
 	if capacity < 1 or human_scene == null:
 		errors.append("Nest needs a positive capacity and an ant scene")
+	elif human_scene != null:
+		var probe: Node = human_scene.instantiate()
+		if not probe is AntAgent:
+			errors.append("Nest resident scene must have an AntAgent root")
+		probe.free()
 	return errors
 
 func _prune() -> void:

@@ -16,10 +16,11 @@ func setup(origin: Vector2i, build_option: BuildOption) -> bool:
 		return false
 	if not validate_definition().is_empty():
 		return false
-	_is_setup = true
 	cell = origin
 	option = build_option
-	_on_setup()
+	if not _on_setup():
+		return false
+	_is_setup = true
 	return true
 
 
@@ -37,8 +38,8 @@ func demolish() -> void:
 
 
 ## Hook for subclasses. Runs once after setup() has filled the fields.
-func _on_setup() -> void:
-	pass
+func _on_setup() -> bool:
+	return true
 
 
 ## Hook for subclasses. Runs before the node is freed.

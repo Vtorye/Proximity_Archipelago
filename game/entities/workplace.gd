@@ -7,32 +7,36 @@ signal produced(type: ResourceType, amount: int)
 ## Resource produced at the end of each work cycle. Leave empty for no output.
 @export var output: ResourceType
 @export var output_amount: int = 1
-var workers: Array[Node2D] = []
+var _workers: Array[Node2D] = []
+var workers: Array[Node2D]:
+	get:
+		_prune_workers()
+		return _workers.duplicate()
 
 
 func has_free_slot() -> bool:
 	_prune_workers()
-	return workers.size() < work_slots
+	return _workers.size() < work_slots
 
 
 ## Drops freed units. Written as a loop: a typed lambda cannot receive a freed Object.
 func _prune_workers() -> void:
 	var alive: Array[Node2D] = []
-	for worker in workers:
+	for worker in _workers:
 		if is_instance_valid(worker):
 			alive.append(worker)
-	workers = alive
+	_workers = alive
 
 
 func reserve_worker(human: Node2D) -> bool:
-	if not is_instance_valid(human) or workers.has(human) or not has_free_slot():
+	if not is_instance_valid(human) or _workers.has(human) or not has_free_slot():
 		return false
-	workers.append(human)
+	_workers.append(human)
 	return true
 
 
 func release_worker(human: Node2D) -> void:
-	workers.erase(human)
+	_workers.erase(human)
 
 
 func work_complete(_human: Node2D) -> void:
@@ -41,7 +45,7 @@ func work_complete(_human: Node2D) -> void:
 
 ## Called by the worker when a work cycle finishes. Runs work_complete() and emits produced() if output is set.
 func complete_cycle(human: Node2D) -> void:
-	if not workers.has(human):
+	if not _workers.has(human):
 		return
 	work_complete(human)
 	if output != null:
