@@ -4,9 +4,10 @@ extends Button
 var option: BuildOption
 var art: ArtCatalog
 var cost_label: Label
+var card_width := 176
 
 func _ready() -> void:
-	custom_minimum_size = Vector2(176, 44)
+	custom_minimum_size = Vector2(card_width, 44)
 	var margin := MarginContainer.new()
 	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)

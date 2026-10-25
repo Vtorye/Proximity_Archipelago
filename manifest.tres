@@ -8,6 +8,7 @@
 [ext_resource type="PackedScene" path="res://overlays/match_result.tscn" id="match_result"]
 
 [ext_resource type="PackedScene" path="res://overlays/settings_menu.tscn" id="settings"]
+[ext_resource type="PackedScene" path="res://overlays/construction_menu.tscn" id="construction"]
 
 [resource]
 resource_name = "Manifest"
@@ -19,6 +20,7 @@ screens = Dictionary[StringName, PackedScene]({
 })
 overlays = Dictionary[StringName, PackedScene]({
 &"build": ExtResource("build_menu"),
+&"construction": ExtResource("construction"),
 &"match_result": ExtResource("match_result"),
 &"pause": ExtResource("1_oj60a"),
 &"settings": ExtResource("settings")

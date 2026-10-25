@@ -2,6 +2,7 @@ class_name MatchHud
 extends Control
 signal pause_requested
 signal settings_requested
+signal construction_requested
 signal zoom_in_requested
 signal zoom_out_requested
 var world: World
@@ -18,6 +19,7 @@ var _warning: Label
 var _waiting: Label
 var _zoom_level := 2
 var _objectives: PanelContainer
+var _bottom: PanelContainer
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -108,6 +110,7 @@ func _ready() -> void:
 	_waiting.hide()
 	goals.add_child(_waiting)
 	var bottom := PanelContainer.new()
+	_bottom = bottom
 	var compact_panel: StyleBoxTexture = ColonyStyle.box()
 	compact_panel.content_margin_top = 2
 	compact_panel.content_margin_bottom = 2
@@ -121,9 +124,13 @@ func _ready() -> void:
 	var hints := HBoxContainer.new()
 	hints.add_theme_constant_override("separation", 6)
 	bottom.add_child(hints)
-	var help: Label = ColonyStyle.label("ЛКМ: камера  ПКМ: стройка  WASD", 8, ColonyStyle.MUTED)
+	var help: Label = ColonyStyle.label("ЛКМ: камера  ПКМ: тайл", 8, ColonyStyle.MUTED)
 	help.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	hints.add_child(help)
+	var build: Button = ColonyStyle.button("Стройка [B]")
+	build.pressed.connect(func(): construction_requested.emit())
+	hints.add_child(build)
+	controls[&"build"] = build
 	for key in [&"zoom_out", &"zoom_in"]:
 		var button: Button = _square_button("-" if key == &"zoom_out" else "+", 24, 12)
 		button.pressed.connect(func():
@@ -205,6 +212,11 @@ func toast(message: String, danger: bool = false) -> void:
 	_toast.add_theme_color_override("font_color", ColonyStyle.DANGER if danger else ColonyStyle.TEXT)
 	_toast_time = 3.0
 	_toast.show()
+
+func set_construction_mode(active: bool) -> void:
+	_bottom.visible = not active
+	_toast.hide()
+	controls[&"pause"].tooltip_text = "Применить план и продолжить" if active else "Пауза (Esc)"
 
 func _process(delta: float) -> void:
 	if _toast_time > 0.0:
