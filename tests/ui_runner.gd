@@ -230,8 +230,8 @@ func _run() -> void:
 	menu = await select_cell(Vector2i(53, 51))
 	expect(menu.controls[&"demolish"].disabled, "last feeding point is protected")
 	await capture("17-feeding-point-protected")
-	await key(KEY_ESCAPE)
 	await click(screen.hud.controls[&"pause"])
+	expect(not screen.selection.selected and not Router.top_overlay() is BuildMenu, "pause closes construction with a single click")
 	await frames(8)
 	var paused_time: float = screen.world.match_controller.time_remaining
 	var satiety: float = screen.world.population.agents()[0].needs.satiety

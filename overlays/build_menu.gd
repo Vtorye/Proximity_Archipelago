@@ -93,6 +93,14 @@ func _process(_delta: float) -> void:
 	if context != null and _panel != null and visible:
 		reposition()
 
+func contains_point(point: Vector2) -> bool:
+	return _panel != null and _panel.get_global_rect().has_point(point)
+
+func retarget(cell: Vector2i, anchor: Rect2) -> void:
+	context.cell = cell
+	context.anchor = anchor
+	_cancel_confirmation()
+
 func reposition() -> void:
 	var viewport: Vector2 = get_viewport_rect().size
 	var safe := Rect2(8, 60, viewport.x - 16, viewport.y - 92)

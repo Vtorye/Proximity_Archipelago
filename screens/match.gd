@@ -65,10 +65,13 @@ func _input(event: InputEvent) -> void:
 		return
 	var top: MenuBase = Router.top_overlay()
 	if top is BuildMenu and event is InputEventMouseButton and event.pressed:
-		var inside: bool = top._panel.get_global_rect().has_point(event.position)
+		var inside: bool = top.contains_point(event.position)
 		if event.button_index == MOUSE_BUTTON_RIGHT or event.button_index == MOUSE_BUTTON_LEFT and not inside:
 			_close_build()
 			if event.button_index == MOUSE_BUTTON_LEFT:
+				for key in [&"pause", &"settings"]:
+					if hud.controls[key].get_global_rect().has_point(event.position):
+						return
 				camera.dragging = true
 			get_viewport().set_input_as_handled()
 			return
@@ -99,9 +102,7 @@ func select_cell(cell: Vector2i) -> void:
 	camera.enabled_input = false
 	selection.select(cell)
 	if is_instance_valid(_build_menu) and not _build_menu.is_queued_for_deletion():
-		_build_menu.context.cell = cell
-		_build_menu.context.anchor = selection.screen_rect()
-		_build_menu._cancel_confirmation()
+		_build_menu.retarget(cell, selection.screen_rect())
 		return
 	var context := BuildMenuContext.new()
 	context.controller = world.build_controller
