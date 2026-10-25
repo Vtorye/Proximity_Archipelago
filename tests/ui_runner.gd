@@ -322,14 +322,13 @@ func _layout_only() -> void:
 	expect(not get_tree().paused and Router.current_screen_key() == &"main_menu", "layout navigation remains usable")
 
 func _finish() -> void:
-	var report := {"assertions": assertions, "failures": failures, "captures": captures, "render_size": str(get_viewport().get_texture().get_size()), "window_size": str(get_window().size)}
-	var file := FileAccess.open(_output.path_join("ui-report.json"), FileAccess.WRITE)
-	file.store_string(JSON.stringify(report, "  "))
-	print("UI REPORT ", JSON.stringify(report))
-	print("UI TESTS PASS" if failures.is_empty() else "UI TESTS FAIL")
 	if failures.is_empty() and Router.current_screen_key() == &"main_menu":
-		# Exercise the real quit button after writing the report.
+		# Exercise the real quit button; application shutdown also retires audio playback.
 		var point: Vector2 = Router._current.controls[&"quit"].get_global_rect().get_center()
+		var motion := InputEventMouseMotion.new()
+		motion.position = point
+		motion.global_position = point
+		get_viewport().push_input(motion, true)
 		for pressed in [true, false]:
 			var event := InputEventMouseButton.new()
 			event.position = point
@@ -337,4 +336,11 @@ func _finish() -> void:
 			event.button_index = MOUSE_BUTTON_LEFT
 			event.pressed = pressed
 			get_viewport().push_input(event, true)
-	get_tree().quit(0 if failures.is_empty() else 1)
+		expect(AppSettings.quitting, "quit button requests application shutdown")
+	var report := {"assertions": assertions, "failures": failures, "captures": captures, "render_size": str(get_viewport().get_texture().get_size()), "window_size": str(get_window().size)}
+	var file := FileAccess.open(_output.path_join("ui-report.json"), FileAccess.WRITE)
+	file.store_string(JSON.stringify(report, "  "))
+	print("UI REPORT ", JSON.stringify(report))
+	print("UI TESTS PASS" if failures.is_empty() else "UI TESTS FAIL")
+	if not failures.is_empty():
+		get_tree().quit(1)

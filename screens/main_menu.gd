@@ -36,8 +36,8 @@ func _ready() -> void:
 	settings.pressed.connect(func(): Router.push_overlay(&"settings"))
 	content.add_child(settings)
 	controls[&"settings"] = settings
-	var quit: Button = ColonyStyle.button("Выйти из игры")
-	quit.pressed.connect(func(): get_tree().quit())
+	var quit: Button = ColonyStyle.button("Выйти из игры", false, false)
+	quit.pressed.connect(AppSettings.quit_game)
 	content.add_child(quit)
 	controls[&"quit"] = quit
 	var footer: Label = ColonyStyle.label("ЛКМ / ПКМ — выбрать клетку     ·     Esc — пауза", 14, ColonyStyle.MUTED)

@@ -61,3 +61,22 @@ func reset_defaults() -> void:
 func play_click() -> void:
 	if _click != null and master_volume > 0.0:
 		_click.play()
+
+var quitting := false
+
+func stop_audio() -> void:
+	if is_instance_valid(_click):
+		_click.stop()
+		_click.stream = null
+
+func quit_game() -> void:
+	if quitting:
+		return
+	quitting = true
+	stop_audio()
+	# Let the audio server retire queued playback before destroying the application.
+	await get_tree().create_timer(0.05, true).timeout
+	get_tree().quit()
+
+func _exit_tree() -> void:
+	stop_audio()

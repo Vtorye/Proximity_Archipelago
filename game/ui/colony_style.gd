@@ -51,14 +51,15 @@ static func label(text: String, font_size: int = 18, color: Color = TEXT) -> Lab
 	result.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return result
 
-static func button(text: String, primary: bool = false) -> Button:
+static func button(text: String, primary: bool = false, feedback: bool = true) -> Button:
 	var result := Button.new()
 	result.text = text
 	result.custom_minimum_size.y = 44
 	result.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	if primary:
 		result.add_theme_stylebox_override("normal", box(Color("665234"), ACCENT))
-	result.pressed.connect(func(): AppSettings.play_click())
+	if feedback:
+		result.pressed.connect(func(): AppSettings.play_click())
 	return result
 
 static func fill(control: Control) -> void:
