@@ -29,12 +29,27 @@ func blocked_cells() -> Array[Vector2i]:
 	return registry.blocked_cells()
 
 func check(option: BuildOption, cell: Vector2i) -> PlacementCheck:
+	var placement: PlacementCheck = placement_check(option, cell)
+	if not placement.allowed():
+		return placement
+	if not inventory.can_afford_all(option.costs):
+		return PlacementCheck.result(PlacementCheck.Code.RESOURCES)
+	if option is SceneBuildOption and option.spawn_count > 0:
+		var food: ResourceType = inventory.type_by_id(&"food")
+		if inventory.available(food) - option.cost_amount(food) < option.spawn_count:
+			return PlacementCheck.result(PlacementCheck.Code.SPAWN_FOOD)
+		var escape_units: float = route_service.food_field().cost(cell)
+		var energy: float = escape_units * route_service.cell_size() / option.spawn_speed * 2.25 + AntNeeds.MEAL_SECONDS + AntNeeds.SAFETY_MARGIN
+		if energy > AntNeeds.CAPACITY:
+			return PlacementCheck.result(PlacementCheck.Code.NO_ESCAPE)
+	return PlacementCheck.new()
+
+## Geometry-only check for a draft. The final command validates its entire budget and grid.
+func placement_check(option: BuildOption, cell: Vector2i) -> PlacementCheck:
 	if _committing:
 		return PlacementCheck.result(PlacementCheck.Code.BUSY)
 	if option == null or not options.has(option):
 		return PlacementCheck.result(PlacementCheck.Code.INVALID_OPTION)
-	if not inventory.can_afford_all(option.costs):
-		return PlacementCheck.result(PlacementCheck.Code.RESOURCES)
 	if option is TileBuildOption:
 		var tile: TileBuildOption = option as TileBuildOption
 		var source: TileSetAtlasSource = map.tile_set.get_source(tile.source_id) as TileSetAtlasSource if map.tile_set.has_source(tile.source_id) else null
@@ -43,16 +58,8 @@ func check(option: BuildOption, cell: Vector2i) -> PlacementCheck:
 		if map.get_cell_source_id(cell) == tile.source_id and map.get_cell_atlas_coords(cell) == tile.atlas_coords:
 			return PlacementCheck.result(PlacementCheck.Code.ALREADY_PLACED)
 	elif option is SceneBuildOption:
-		if option.scene == null or option.occupied_cells.is_empty() or not option.occupied_cells.has(Vector2i.ZERO):
+		if option.scene == null or option.occupied_cells.is_empty() or not option.occupied_cells.has(Vector2i.ZERO) or option.spawn_count < 0 or option.spawn_speed <= 0.0:
 			return PlacementCheck.result(PlacementCheck.Code.INVALID_BUILDING)
-		if option.spawn_count > 0:
-			var food: ResourceType = inventory.type_by_id(&"food")
-			if inventory.available(food) - option.cost_amount(food) < option.spawn_count:
-				return PlacementCheck.result(PlacementCheck.Code.SPAWN_FOOD)
-			var escape_units: float = route_service.food_field().cost(cell)
-			var energy: float = escape_units * route_service.cell_size() / option.spawn_speed * 2.25 + AntNeeds.MEAL_SECONDS + AntNeeds.SAFETY_MARGIN
-			if energy > AntNeeds.CAPACITY:
-				return PlacementCheck.result(PlacementCheck.Code.NO_ESCAPE)
 		if option.blocks_movement and option.entry_offsets.is_empty():
 			return PlacementCheck.result(PlacementCheck.Code.INVALID_BUILDING)
 	else:
@@ -72,45 +79,87 @@ func can_build(option: BuildOption, cell: Vector2i) -> bool:
 	return check(option, cell).allowed()
 
 func try_build(option: BuildOption, cell: Vector2i) -> bool:
-	last_result = check(option, cell)
-	if not last_result.allowed():
+	return try_build_batch({cell: option})
+
+## All placements either commit together or leave stock, buildings, and navigation untouched.
+func try_build_batch(commands: Dictionary[Vector2i, BuildOption]) -> bool:
+	last_result = PlacementCheck.new()
+	if _committing:
+		last_result = PlacementCheck.result(PlacementCheck.Code.BUSY)
 		return false
-	var instance: Building
-	if option is SceneBuildOption:
-		var candidate: Node = option.scene.instantiate()
-		if not candidate is Building:
-			candidate.free()
-			last_result = PlacementCheck.result(PlacementCheck.Code.INVALID_BUILDING)
-			return false
-		instance = candidate as Building
-		if not instance.setup(cell, option):
-			instance.free()
-			last_result = PlacementCheck.result(PlacementCheck.Code.INVALID_BUILDING)
-			return false
-	if not _preserves_escape(option, cell):
-		if instance != null:
-			instance.free()
+	if commands.is_empty():
+		return true
+	var costs: Array[ResourceAmount] = []
+	var cells: Array[Vector2i] = []
+	var candidates: Array[Building] = []
+	var spawn_count := 0
+	for cell in commands:
+		var option: BuildOption = commands[cell]
+		last_result = placement_check(option, cell)
+		if not last_result.allowed():
+			break
+		for target in _footprint(option, cell):
+			if cells.has(target):
+				last_result = PlacementCheck.result(PlacementCheck.Code.OCCUPIED)
+				break
+			cells.append(target)
+		if not last_result.allowed():
+			break
+		costs.append_array(option.costs)
+		if option is SceneBuildOption:
+			var candidate: Node = option.scene.instantiate()
+			if not candidate is Building:
+				candidate.free()
+				last_result = PlacementCheck.result(PlacementCheck.Code.INVALID_BUILDING)
+				break
+			var building: Building = candidate as Building
+			candidates.append(building)
+			if not building.setup(cell, option):
+				last_result = PlacementCheck.result(PlacementCheck.Code.INVALID_BUILDING)
+				break
+			if building is House:
+				spawn_count += building.capacity
+	if last_result.allowed() and not inventory.can_afford_all(costs):
+		last_result = PlacementCheck.result(PlacementCheck.Code.RESOURCES)
+	if last_result.allowed():
+		var food: ResourceType = inventory.type_by_id(&"food")
+		var food_cost := 0
+		for cost in costs:
+			if food != null and cost.type.id == food.id: food_cost += cost.amount
+		if inventory.available(food) - food_cost < spawn_count:
+			last_result = PlacementCheck.result(PlacementCheck.Code.SPAWN_FOOD)
+	if last_result.allowed() and not _batch_preserves_escape(commands, candidates):
 		last_result = PlacementCheck.result(PlacementCheck.Code.NO_ESCAPE)
+	if not last_result.allowed():
+		for candidate in candidates: candidate.free()
 		return false
 	# No awaits or notifications until the world and inventory agree.
 	_committing = true
 	inventory.begin_update()
-	if not inventory.try_spend_all(option.costs):
-		if instance != null:
-			instance.free()
+	if not inventory.try_spend_all(costs):
+		for candidate in candidates: candidate.free()
+		last_result = PlacementCheck.result(PlacementCheck.Code.RESOURCES)
 		_committing = false
 		inventory.end_update()
 		return false
-	if option is TileBuildOption:
-		map.set_cell(cell, option.source_id, option.atlas_coords, option.alternative_tile)
-	else:
-		instance.position = buildings.to_local(route_service.cell_to_world(cell))
-		buildings.add_child(instance)
-		registry.register(instance)
-	route_service.update_cells(_footprint(option, cell), registry.blocked_cells())
+	for cell in commands:
+		var option: BuildOption = commands[cell]
+		if option is TileBuildOption:
+			map.set_cell(cell, option.source_id, option.atlas_coords, option.alternative_tile)
+	var blocked: Array[Vector2i] = registry.blocked_cells()
+	for candidate in candidates:
+		if candidate.option.blocks_movement:
+			blocked.append_array(candidate.footprint())
+	# New residents must see the final grid when the registry announces their home.
+	route_service.update_cells(cells, blocked)
+	for candidate in candidates:
+		candidate.position = buildings.to_local(route_service.cell_to_world(candidate.cell))
+		buildings.add_child(candidate)
+		registry.register(candidate)
 	_committing = false
 	inventory.end_update()
-	built.emit(option, cell)
+	for cell in commands:
+		built.emit(commands[cell], cell)
 	changed.emit()
 	return true
 
@@ -167,28 +216,37 @@ func _footprint(option: BuildOption, origin: Vector2i) -> Array[Vector2i]:
 		cells.append(origin)
 	return cells
 
-func _preserves_escape(option: BuildOption, cell: Vector2i) -> bool:
-	var preview: TileGrid
-	if option is SceneBuildOption and option.blocks_movement:
-		var blocked: Array[Vector2i] = registry.blocked_cells()
-		blocked.append_array(_footprint(option, cell))
-		preview = TileGrid.new()
-		preview.setup(map, blocked)
-	elif option is TileBuildOption:
-		var source: TileSetAtlasSource = map.tile_set.get_source(option.source_id) as TileSetAtlasSource
-		var value: float = float(source.get_tile_data(option.atlas_coords, option.alternative_tile).get_custom_data("move_cost"))
-		if value > 0.0 and value <= route_service.entry_cost(cell):
-			return true
-		preview = route_service.snapshot().with_cost(cell, value)
-	else:
+func _batch_preserves_escape(commands: Dictionary[Vector2i, BuildOption], candidates: Array[Building]) -> bool:
+	var values: Dictionary[Vector2i, float] = {}
+	var needs_check := false
+	for candidate in candidates:
+		needs_check = needs_check or candidate is House or candidate.option.blocks_movement
+	for cell in commands:
+		var option: BuildOption = commands[cell]
+		if option is TileBuildOption:
+			var source: TileSetAtlasSource = map.tile_set.get_source(option.source_id) as TileSetAtlasSource
+			var value: float = float(source.get_tile_data(option.atlas_coords, option.alternative_tile).get_custom_data("move_cost"))
+			values[cell] = value
+			needs_check = needs_check or value <= 0.0 or value > route_service.entry_cost(cell)
+		elif option.blocks_movement:
+			for target in _footprint(option, cell): values[target] = 0.0
+	if not needs_check:
 		return true
+	var preview: TileGrid = route_service.snapshot().with_costs(values)
 	var foods: Array[Vector2i] = []
-	for canteen in registry.canteens():
-		foods.append_array(canteen.entry_cells())
+	for canteen in registry.canteens(): foods.append_array(canteen.entry_cells())
+	for candidate in candidates:
+		if candidate is Canteen: foods.append_array(candidate.entry_cells())
 	var field: NavigationField = GridSearch.build(preview, foods, true)
-	if option is SceneBuildOption:
-		for offset in option.entry_offsets:
-			if not preview.walkable(cell + offset) or not is_finite(field.cost(cell + offset)):
+	for candidate in candidates:
+		var nearest_food := INF
+		for entry in candidate.entry_cells():
+			if not preview.walkable(entry) or not is_finite(field.cost(entry)):
+				return false
+			nearest_food = minf(nearest_food, field.cost(entry))
+		if candidate is House:
+			var energy: float = nearest_food * route_service.cell_size() / candidate.option.spawn_speed * 2.25 + AntNeeds.MEAL_SECONDS + AntNeeds.SAFETY_MARGIN
+			if energy > AntNeeds.CAPACITY:
 				return false
 	return _agents_can_escape(field)
 
