@@ -14,5 +14,5 @@ script = ExtResource("option")
 atlas_coords = Vector2i(2, 0)
 id = &"road"
 display_name = "Тропинка"
-cost = SubResource("cost")
+costs = Array[ExtResource("amount")]([SubResource("cost")])
 allow_when_occupied = true

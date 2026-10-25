@@ -33,7 +33,7 @@ func check(option: BuildOption, cell: Vector2i) -> PlacementCheck:
 		return PlacementCheck.result(PlacementCheck.Code.BUSY)
 	if option == null or not options.has(option):
 		return PlacementCheck.result(PlacementCheck.Code.INVALID_OPTION)
-	if not inventory.can_afford(option.cost):
+	if not inventory.can_afford_all(option.costs):
 		return PlacementCheck.result(PlacementCheck.Code.RESOURCES)
 	if option is TileBuildOption:
 		var tile: TileBuildOption = option as TileBuildOption
@@ -46,7 +46,8 @@ func check(option: BuildOption, cell: Vector2i) -> PlacementCheck:
 		if option.scene == null or option.occupied_cells.is_empty() or not option.occupied_cells.has(Vector2i.ZERO):
 			return PlacementCheck.result(PlacementCheck.Code.INVALID_BUILDING)
 		if option.spawn_count > 0:
-			if inventory.available(inventory.type_by_id(&"food")) < option.spawn_count:
+			var food: ResourceType = inventory.type_by_id(&"food")
+			if inventory.available(food) - option.cost_amount(food) < option.spawn_count:
 				return PlacementCheck.result(PlacementCheck.Code.SPAWN_FOOD)
 			var escape_units: float = route_service.food_field().cost(cell)
 			var energy: float = escape_units * route_service.cell_size() / option.spawn_speed * 2.25 + AntNeeds.MEAL_SECONDS + AntNeeds.SAFETY_MARGIN
@@ -94,7 +95,7 @@ func try_build(option: BuildOption, cell: Vector2i) -> bool:
 	# No awaits or notifications until the world and inventory agree.
 	_committing = true
 	inventory.begin_update()
-	if not inventory.try_spend(option.cost):
+	if not inventory.try_spend_all(option.costs):
 		if instance != null:
 			instance.free()
 		_committing = false
@@ -149,10 +150,12 @@ func demolish_at(cell: Vector2i) -> bool:
 
 ## Returns part of the build cost. Buildings without an option (placed in the scene) refund nothing.
 func _refund_for_demolish(option: BuildOption) -> void:
-	if option != null and option.cost != null:
-		var amount: int = floori(option.cost.amount * DEMOLISH_REFUND_RATIO)
+	if option == null:
+		return
+	for type in inventory.registered_types():
+		var amount: int = floori(option.cost_amount(type) * DEMOLISH_REFUND_RATIO)
 		if amount > 0:
-			inventory.add(option.cost.type, amount)
+			inventory.add(type, amount)
 
 func _footprint(option: BuildOption, origin: Vector2i) -> Array[Vector2i]:
 	var cells: Array[Vector2i] = []
