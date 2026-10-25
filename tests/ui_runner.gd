@@ -320,5 +320,12 @@ func _finish() -> void:
 	print("UI TESTS PASS" if failures.is_empty() else "UI TESTS FAIL")
 	if failures.is_empty() and Router.current_screen_key() == &"main_menu":
 		# Exercise the real quit button after writing the report.
-		await click(Router._current.controls[&"quit"])
+		var point: Vector2 = Router._current.controls[&"quit"].get_global_rect().get_center()
+		for pressed in [true, false]:
+			var event := InputEventMouseButton.new()
+			event.position = point
+			event.global_position = point
+			event.button_index = MOUSE_BUTTON_LEFT
+			event.pressed = pressed
+			get_viewport().push_input(event, true)
 	get_tree().quit(0 if failures.is_empty() else 1)
