@@ -52,6 +52,7 @@ static func apply(control: Control) -> void:
 			theme.set_stylebox(state, type, state_box("button" if state == "normal" else state))
 		theme.set_color("font_color", type, TEXT)
 		theme.set_color("font_hover_color", type, ACCENT)
+		theme.set_color("font_focus_color", type, ACCENT)
 		theme.set_color("font_pressed_color", type, Color.WHITE)
 		theme.set_color("font_disabled_color", type, Color("696969"))
 		theme.set_color("icon_disabled_color", type, Color(1, 1, 1, 0.35))
@@ -121,6 +122,9 @@ static func modal(root: Control, width: float = 248.0) -> VBoxContainer:
 	root.add_child(center)
 	fill(center)
 	var panel := PanelContainer.new()
+	var opaque_panel: StyleBoxTexture = box()
+	opaque_panel.modulate_color.a = 1.0
+	panel.add_theme_stylebox_override("panel", opaque_panel)
 	panel.custom_minimum_size.x = minf(width * 2, 608)
 	center.add_child(panel)
 	var content := VBoxContainer.new()
