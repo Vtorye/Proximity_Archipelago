@@ -42,3 +42,11 @@ Use case: stylized-concept. Asset type: transparent game sprite atlas. Create a 
 Create one transparent top-down pixel-art game sprite: an ant colony feeding station, a wide fresh green leaf used as a shallow platter, holding two small red berries and a few warm golden seeds, a tiny hollow acorn cup at one side. The silhouette must be a readable green oval plate with red and honey-colored food. Perfect overhead view, no perspective, no furniture, no humans, no buildings, no background, no text. Match a cozy forest ant-colony strategy game with moss greens, chestnut brown and amber highlights, crisp low-resolution pixel clusters, no anti-aliasing or gradients. Compose this as exactly a 16x16 logical-pixel sprite enlarged on a square canvas. Keep the object compact, about 80 percent of the canvas, centered with transparent padding. This sprite must remain recognizable after conversion to a real 16x16 PNG.
 ```
 
+
+## Пиксельный интерфейс и шрифты
+
+`game/assets/ui/` содержит шесть исходных SVG размером 16×16. Они используются как `StyleBoxTexture` с фиксированными краями в общей теме `ColonyStyle`. Это исходная пиксельная геометрия; она не зависит от генератора изображений. Для полупрозрачности задан отдельный `fill-opacity`, чтобы SVG корректно импортировались Godot.
+
+`game/assets/fonts/BoldPixels.ttf` и `Pixuf.ttf` предоставлены пользователем. Основной шрифт — BoldPixels размером 16 px, заголовки — 24 px. Сглаживание, субпиксельное позиционирование и mipmaps выключены; oversampling равен 1. Вся тема назначается программно из `ColonyStyle`, поэтому замена `FONT` меняет шрифт всех меню и HUD.
+
+При увеличении разрешения текстур базовый viewport и масштаб камеры можно настроить отдельно. Текстура 32×32 сохранит размер клетки, но при сильном отдалении камеры часть детализации естественно теряется.
