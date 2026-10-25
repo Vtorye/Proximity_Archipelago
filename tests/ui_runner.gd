@@ -6,6 +6,7 @@ var captures: Array[String] = []
 var screen: Node
 var _output: String
 var nested_viewport := false
+var display_size := Vector2i.ZERO
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -14,12 +15,13 @@ func _ready() -> void:
 			if argument.begins_with("--virtual-resolution="):
 				var dimensions: PackedStringArray = argument.get_slice("=", 1).split("x")
 				var viewport := SubViewport.new()
-				viewport.size = Vector2i(int(dimensions[0]), int(dimensions[1]))
+				viewport.size = Vector2i(640, 360)
 				viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 				viewport.handle_input_locally = true
 				add_child(viewport)
 				var child: Node = get_script().new()
 				child.nested_viewport = true
+				child.display_size = Vector2i(int(dimensions[0]), int(dimensions[1]))
 				viewport.add_child(child)
 				return
 	_output = OS.get_environment("COLONY_EVIDENCE_DIR")
@@ -40,6 +42,13 @@ func capture(label: String, linger: int = 12) -> Image:
 	await RenderingServer.frame_post_draw
 	var path: String = _output.path_join(label + ".png")
 	var image: Image = get_viewport().get_texture().get_image()
+	var target: Vector2i = display_size if display_size != Vector2i.ZERO else get_window().size
+	var factor: int = maxi(1, mini(target.x / image.get_width(), target.y / image.get_height()))
+	image.resize(image.get_width() * factor, image.get_height() * factor, Image.INTERPOLATE_NEAREST)
+	var canvas := Image.create(target.x, target.y, false, Image.FORMAT_RGBA8)
+	canvas.fill(Color.BLACK)
+	canvas.blit_rect(image, Rect2i(Vector2i.ZERO, image.get_size()), (target - image.get_size()) / 2)
+	image = canvas
 	image.save_png(path)
 	captures.append(label)
 	print("CAPTURE ", label)
@@ -79,7 +88,7 @@ func cell_point(cell: Vector2i) -> Vector2:
 	return map.get_global_transform_with_canvas() * map.map_to_local(cell)
 
 func select_cell(cell: Vector2i) -> BuildMenu:
-	await click_at(cell_point(cell))
+	await click_at(cell_point(cell), MOUSE_BUTTON_RIGHT)
 	await frames(6)
 	var menu: BuildMenu = Router.top_overlay() as BuildMenu
 	expect(menu != null and screen.selection.selected and screen.selection.cell == cell, "mouse selects the requested map cell")
@@ -92,7 +101,7 @@ func validate_popup(menu: BuildMenu) -> void:
 	var viewport: Rect2 = get_viewport().get_visible_rect()
 	expect(viewport.encloses(rect), "build menu stays fully inside viewport")
 	expect(not rect.intersects(screen.selection.screen_rect().grow(-1)), "build menu does not cover selected cell")
-	expect(rect.position.y >= 100 and rect.end.y <= viewport.end.y - 54, "build menu keeps permanent controls accessible")
+	expect(rect.position.y >= 60 and rect.end.y <= viewport.end.y - 32, "build menu keeps permanent controls accessible")
 
 func _run() -> void:
 	seed(20261025)
@@ -130,11 +139,24 @@ func _run() -> void:
 	await click(Router._current.controls[&"play"])
 	await frames(60)
 	screen = Router._current
-	expect(Router.current_screen_key() == &"match" and screen.world.population.count() == 10, "play enters a live colony")
+	expect(Router.current_screen_key() == &"match" and screen.world.population.count() == 5, "play enters a live colony")
+	expect((screen.world.registry.at(Vector2i(49, 50)) as House).residents.size() == 5, "starter nest owns five residents")
+	expect(screen.world.population.agents().any(func(ant: AntAgent): return ant.status == AntAgent.Status.WALKING), "starter ants visibly leave home")
 	await capture("06-colony")
+	await click_at(Vector2(320, 200))
+	expect(not Router.has_overlay(), "left click never opens construction")
 	var cell := Vector2i(51, 50)
 	var menu: BuildMenu = await select_cell(cell)
 	validate_popup(menu)
+	var locked_level: int = screen.camera.level
+	await click_at(Vector2(20, 280), MOUSE_BUTTON_WHEEL_UP)
+	expect(screen.camera.level == locked_level and Router.top_overlay() == menu, "wheel cannot zoom while construction is open")
+	await click_at(cell_point(Vector2i(52, 50)), MOUSE_BUTTON_RIGHT)
+	expect(not Router.has_overlay() and not screen.selection.selected, "second right click only closes construction")
+	menu = await select_cell(cell)
+	await click_at(Vector2(20, 280))
+	expect(not Router.has_overlay(), "left click outside closes construction")
+	menu = await select_cell(cell)
 	var motion := InputEventMouseMotion.new()
 	motion.position = menu.controls[&"road"].get_global_rect().get_center()
 	motion.global_position = motion.position
@@ -149,7 +171,7 @@ func _run() -> void:
 	await frames(18)
 	var dim: Image = await capture("08-selection-dim")
 	_check_brackets(bright, dim, screen.selection.screen_rect())
-	for item in [["left", Vector2(42, 390)], ["right", Vector2(1234, 390)], ["top", Vector2(800, 136)], ["bottom", Vector2(700, 630)]]:
+	for item in [["left", Vector2(24, 196)], ["right", Vector2(616, 196)], ["top", Vector2(400, 84)], ["bottom", Vector2(350, 308)]]:
 		await key(KEY_ESCAPE)
 		var desired: Vector2 = item[1]
 		var viewport: Vector2 = get_viewport().get_visible_rect().size
@@ -164,34 +186,34 @@ func _run() -> void:
 	screen.camera.force_update_scroll()
 	await frames(4)
 	await click(screen.hud.controls[&"zoom_in"])
-	expect(screen.camera.level == 4, "zoom in button")
+	expect(screen.camera.level == 3, "zoom in button")
 	await capture("10-zoom-in")
 	await click(screen.hud.controls[&"zoom_out"])
-	expect(screen.camera.level == 3, "zoom out button")
-	await click_at(Vector2(640, 360), MOUSE_BUTTON_WHEEL_DOWN)
-	expect(screen.camera.level == 2, "mouse wheel changes zoom")
+	expect(screen.camera.level == 2, "zoom out button")
+	await click_at(Vector2(320, 200), MOUSE_BUTTON_WHEEL_DOWN)
+	expect(screen.camera.level == 1, "mouse wheel changes zoom")
 	await capture("11-zoom-out")
-	screen.camera.set_level(3)
+	screen.camera.set_level(2)
 	await frames(3)
 	menu = await select_cell(Vector2i(55, 54))
 	expect(menu != null and not menu.controls[&"house"].disabled, "empty safe cell permits a nest")
 	await capture("12-build-choices")
 	await click(menu.controls[&"house"])
 	await frames(8)
-	expect(screen.world.population.count() == 15 and not Router.has_overlay(), "nest builds and creates configured population")
+	expect(screen.world.population.count() == 10 and not Router.has_overlay(), "nest builds and creates configured population")
 	await capture("13-nest-built")
 	menu = await select_cell(Vector2i(55, 54))
 	expect(menu.controls[&"house"].disabled, "occupied nest cell rejects replacement")
 	await click(menu.controls[&"demolish"])
 	await capture("14-demolition-confirmation")
-	expect(menu._confirming and screen.world.population.count() == 15, "demolition waits for confirmation")
+	expect(menu._confirming and screen.world.population.count() == 10, "demolition waits for confirmation")
 	await click(menu.controls[&"cancel_demolish"])
-	expect(not menu._confirming and screen.world.population.count() == 15, "cancel preserves the building and residents")
+	expect(not menu._confirming and screen.world.population.count() == 10, "cancel preserves the building and residents")
 	await capture("15-demolition-cancelled")
 	await click(menu.controls[&"demolish"])
 	await click(menu.controls[&"demolish"])
 	await frames(8)
-	expect(screen.world.population.count() == 10 and screen.world.registry.at(Vector2i(55, 54)) == null, "confirmed demolition removes exactly that nest")
+	expect(screen.world.population.count() == 5 and screen.world.registry.at(Vector2i(55, 54)) == null, "confirmed demolition removes exactly that nest")
 	await capture("16-demolition-complete")
 	menu = await select_cell(Vector2i(53, 51))
 	expect(menu.controls[&"demolish"].disabled, "last feeding point is protected")
@@ -222,18 +244,18 @@ func _run() -> void:
 	# A real camera drag must move the map, not activate a cell.
 	var old_position: Vector2 = screen.camera.position
 	var press := InputEventMouseButton.new()
-	press.button_index = MOUSE_BUTTON_MIDDLE
+	press.button_index = MOUSE_BUTTON_LEFT
 	press.pressed = true
-	press.position = Vector2(640, 360)
+	press.position = Vector2(320, 200)
 	get_viewport().push_input(press, true)
 	var drag := InputEventMouseMotion.new()
-	drag.position = Vector2(690, 390)
-	drag.relative = Vector2(50, 30)
+	drag.position = Vector2(360, 220)
+	drag.relative = Vector2(40, 20)
 	get_viewport().push_input(drag, true)
 	press.pressed = false
 	get_viewport().push_input(press, true)
 	await frames(5)
-	expect(screen.camera.position != old_position, "middle-mouse drag pans the map")
+	expect(screen.camera.position != old_position, "held left mouse pans without opening construction")
 	await capture("22-camera-pan")
 	# Select a water tile by centering its neighborhood in the live camera.
 	screen.camera.position = Vector2(50 * 16 + 8, 20 * 16 + 8)
@@ -249,7 +271,7 @@ func _run() -> void:
 	var stock: WorldInventory = screen.world.inventory
 	stock.begin_update()
 	for type in stock.registered_types():
-		stock.add(type, maxi(0, 120 - stock.quantity(type)))
+		stock.add(type, maxi(0, screen.world.match_controller.target_amount - stock.quantity(type)))
 	stock.end_update()
 	await frames(8)
 	expect(get_tree().paused and Router.top_overlay() != null and not Router.top_overlay().dismissable, "victory presents a final paused result")
@@ -259,7 +281,7 @@ func _run() -> void:
 	await click(Router.top_overlay().controls[&"again"])
 	await frames(50)
 	screen = Router._current
-	expect(Router.current_screen_key() == &"match" and not get_tree().paused and screen.world.population.count() == 10, "restart creates a clean session")
+	expect(Router.current_screen_key() == &"match" and not get_tree().paused and screen.world.population.count() == 5, "restart creates a clean session")
 	screen.world.match_controller._process(500.0)
 	await frames(8)
 	await capture("25-defeat")
@@ -280,12 +302,14 @@ func _run() -> void:
 
 func _check_brackets(bright: Image, dim: Image, rect: Rect2) -> void:
 	# Four independent pixel regions verify both presence and visible animation.
-	var scale: Vector2 = Vector2(bright.get_size()) / get_viewport().get_visible_rect().size
+	var factor: float = floorf(minf(float(bright.get_width()) / 640.0, float(bright.get_height()) / 360.0))
+	var scale := Vector2.ONE * factor
+	var offset: Vector2 = (Vector2(bright.get_size()) - Vector2(640, 360) * factor) / 2.0
 	for corner in [rect.position, Vector2(rect.end.x, rect.position.y), rect.end, Vector2(rect.position.x, rect.end.y)]:
 		var a := 0.0
 		var b := 0.0
 		var difference := 0.0
-		var pixel: Vector2i = Vector2i(corner * scale)
+		var pixel: Vector2i = Vector2i(corner * scale + offset)
 		for y in range(-4, 5):
 			for x in range(-4, 5):
 				var point: Vector2i = pixel + Vector2i(x, y)
@@ -299,7 +323,8 @@ func _check_brackets(bright: Image, dim: Image, rect: Rect2) -> void:
 		expect(difference > 0.1, "corner bracket visibly blinks")
 
 func _layout_only() -> void:
-	var tag: String = "layout-%dx%d-" % [int(get_viewport().get_visible_rect().size.x), int(get_viewport().get_visible_rect().size.y)]
+	var dimensions: Vector2i = display_size if display_size != Vector2i.ZERO else get_window().size
+	var tag: String = "layout-%dx%d-" % [dimensions.x, dimensions.y]
 	await capture(tag + "main")
 	await click(Router._current.controls[&"settings"])
 	await frames(10)
@@ -335,7 +360,7 @@ func _finish() -> void:
 			event.pressed = pressed
 			get_viewport().push_input(event, true)
 		expect(AppSettings.quitting, "quit button requests application shutdown")
-	var report := {"source_revision": OS.get_environment("COLONY_SOURCE_REVISION"), "assertions": assertions, "failures": failures, "captures": captures, "render_size": str(get_viewport().get_texture().get_size()), "window_size": str(get_window().size)}
+	var report := {"source_revision": OS.get_environment("COLONY_SOURCE_REVISION"), "assertions": assertions, "failures": failures, "captures": captures, "render_size": str(get_viewport().get_texture().get_size()), "window_size": str(get_window().size), "display_size": str(display_size)}
 	var file := FileAccess.open(_output.path_join("ui-report.json"), FileAccess.WRITE)
 	file.store_string(JSON.stringify(report, "  "))
 	print("UI REPORT ", JSON.stringify(report))
