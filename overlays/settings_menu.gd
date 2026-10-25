@@ -2,6 +2,7 @@ extends MenuBase
 ## The same settings panel opens from the main menu or an active paused session.
 var controls: Dictionary[StringName, Control] = {}
 var _saved: Label
+var _volume_value: Label
 
 func _ready() -> void:
 	if Router.current_screen_is_pausable():
@@ -26,6 +27,7 @@ func _ready() -> void:
 	volume_row.add_child(slider)
 	var volume_value: Label = ColonyStyle.label("%d%%" % slider.value, 16, ColonyStyle.ACCENT)
 	volume_value.custom_minimum_size.x = 48
+	_volume_value = volume_value
 	volume_row.add_child(volume_value)
 	slider.value_changed.connect(func(value: float):
 		AppSettings.master_volume = value
@@ -83,6 +85,7 @@ func _reset() -> void:
 	(controls[&"volume"] as HSlider).set_value_no_signal(AppSettings.master_volume)
 	for key in [&"fullscreen", &"vsync", &"show_grid", &"reduced_motion"]:
 		(controls[key] as CheckButton).set_pressed_no_signal(bool(AppSettings.get(key)))
+	_volume_value.text = "%d%%" % AppSettings.master_volume
 	_store()
 
 func _exit_tree() -> void:

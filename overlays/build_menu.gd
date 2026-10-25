@@ -32,7 +32,7 @@ func _ready() -> void:
 	_description = ColonyStyle.label("", 13, ColonyStyle.MUTED)
 	content.add_child(_description)
 	var scroll := ScrollContainer.new()
-	scroll.custom_minimum_size = Vector2(256, 230)
+	scroll.custom_minimum_size = Vector2(256, 278)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	content.add_child(scroll)
 	var options := VBoxContainer.new()
@@ -44,6 +44,7 @@ func _ready() -> void:
 			continue
 		var button: Button = ColonyStyle.button("")
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		button.add_theme_font_size_override("font_size", 16)
 		button.custom_minimum_size.y = 50
 		button.icon = _icon(option.id)
 		button.expand_icon = true
@@ -111,7 +112,7 @@ func _refresh() -> void:
 	for option in _buttons:
 		var button: Button = _buttons[option]
 		var cost: ResourceAmount = option.cost
-		button.text = "%s\n%d %s" % [option.display_name, cost.amount, cost.type.display_name] if cost != null and cost.type != null else option.display_name
+		button.text = "%s\n%s: %d" % [option.display_name, cost.type.display_name, cost.amount] if cost != null and cost.type != null else option.display_name
 		var result: PlacementCheck = context.controller.check(option, context.cell)
 		button.disabled = not result.allowed() or _confirming
 		button.tooltip_text = PlacementMessages.text(result.code)
