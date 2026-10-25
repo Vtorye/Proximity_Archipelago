@@ -7,6 +7,7 @@ signal zoom_out_requested
 var world: World
 var controls: Dictionary[StringName, Button] = {}
 var stock_labels: Dictionary[StringName, Label] = {}
+var stock_chips: Dictionary[StringName, Control] = {}
 var progress: Dictionary[StringName, ProgressBar] = {}
 var _timer: Label
 var _ants: Label
@@ -38,14 +39,17 @@ func _ready() -> void:
 		var chip := HBoxContainer.new()
 		chip.custom_minimum_size.x = 148
 		chip.add_theme_constant_override("separation", 9)
+		stock_chips[type.id] = chip
 		var icon := TextureRect.new()
+		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		icon.texture = _resource_icon(type.id)
 		icon.custom_minimum_size = Vector2(32, 32)
 		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		chip.add_child(icon)
 		var numbers := VBoxContainer.new()
-		numbers.add_child(ColonyStyle.label(type.display_name, 12, ColonyStyle.MUTED))
+		numbers.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		numbers.add_child(ColonyStyle.label(type.display_name + (" / доступно" if type.id == &"food" else ""), 12, ColonyStyle.MUTED))
 		var amount: Label = ColonyStyle.label("0", 22)
 		numbers.add_child(amount)
 		stock_labels[type.id] = amount
@@ -148,8 +152,8 @@ func _resource_icon(id: StringName) -> Texture2D:
 
 func refresh() -> void:
 	for type in world.inventory.registered_types():
-		stock_labels[type.id].text = str(world.inventory.quantity(type))
-		stock_labels[type.id].tooltip_text = "Свободно: %d · Зарезервировано: %d" % [world.inventory.available(type), world.inventory.quantity(type) - world.inventory.available(type)]
+		stock_labels[type.id].text = "%d / %d" % [world.inventory.quantity(type), world.inventory.available(type)] if type.id == &"food" else str(world.inventory.quantity(type))
+		stock_chips[type.id].tooltip_text = "Свободно: %d · Зарезервировано: %d" % [world.inventory.available(type), world.inventory.quantity(type) - world.inventory.available(type)]
 		if progress.has(type.id):
 			progress[type.id].value = world.inventory.quantity(type)
 	_ants.text = str(world.population.agents().size())
