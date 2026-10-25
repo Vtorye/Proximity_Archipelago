@@ -13,6 +13,7 @@ var _demolish: Button
 var _cancel: Button
 var _confirming := false
 var _choices: ScrollContainer
+var _observed_workplace: Workplace
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -32,6 +33,7 @@ func _ready() -> void:
 	heading.add_theme_constant_override("separation", 4)
 	content.add_child(heading)
 	_title = ColonyStyle.label("")
+	_title.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	heading.add_child(_title)
 	var close: Button = ColonyStyle.button("X")
@@ -142,8 +144,12 @@ func _refresh() -> void:
 	_choices.visible = not _confirming
 	_title.text = "%d:%d" % [context.cell.x, context.cell.y]
 	var occupant: Building = context.controller.registry.at(context.cell)
+	_observe_workplace(occupant as Workplace)
 	_description.text = "Строительство"
-	if occupant != null:
+	if occupant is Workplace:
+		_title.text = occupant.display_title()
+		_description.text = "Работают+идут: %d+%d/%d" % [occupant.working_count(), occupant.incoming_count(), occupant.work_slots]
+	elif occupant != null:
 		_description.text = occupant.display_title()
 	elif not context.controller.route_service.walkable(context.cell):
 		_description.text = "Вода"
@@ -159,6 +165,15 @@ func _refresh() -> void:
 	_demolish.disabled = not demolition.allowed()
 	_demolish.tooltip_text = PlacementMessages.text(demolition.code)
 	reposition()
+
+func _observe_workplace(workplace: Workplace) -> void:
+	if is_instance_valid(_observed_workplace) and _observed_workplace == workplace:
+		return
+	if is_instance_valid(_observed_workplace) and _observed_workplace.load_changed.is_connected(_refresh):
+		_observed_workplace.load_changed.disconnect(_refresh)
+	_observed_workplace = workplace
+	if _observed_workplace != null:
+		_observed_workplace.load_changed.connect(_refresh)
 
 func _set_message(text: String) -> void:
 	_message.text = text
