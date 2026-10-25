@@ -20,7 +20,7 @@ func _capture() -> void:
 			values["font"] = control.get_theme_font_size("font_size")
 		for key in ["separation", "h_separation", "margin_left", "margin_right", "margin_top", "margin_bottom", "outline_size"]:
 			if control.has_theme_constant_override(key): values["constants"][key] = control.get_theme_constant(key)
-		if not control.get_parent() is Container and not control.has_meta(&"ui_manual_layout"):
+		if not (control.get_parent() is Container) and not control.has_meta(&"ui_manual_layout"):
 			values["offsets"] = [control.offset_left, control.offset_top, control.offset_right, control.offset_bottom]
 		for key in ["panel", "normal", "background", "fill"]:
 			if control.has_theme_stylebox_override(key): _capture_style(control.get_theme_stylebox(key))
@@ -47,8 +47,11 @@ func _resize() -> void:
 	var factor: float = AppSettings.ui_scale
 	target.scale = Vector2.ONE
 	target.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	target.theme.default_font_size = maxi(8, roundi(16 * factor))
-	target.theme.set_font_size("font_size", "TooltipLabel", maxi(8, roundi(16 * factor)))
+	var body: Dictionary = ColonyStyle.pixel_font(16, factor)
+	target.theme.default_font = body["font"]
+	target.theme.default_font_size = body["size"]
+	target.theme.set_font("font", "TooltipLabel", body["font"])
+	target.theme.set_font_size("font_size", "TooltipLabel", body["size"])
 	for type in _constants:
 		for key in _constants[type]: target.theme.set_constant(key, type, roundi(_constants[type][key] * factor))
 	for style in _styles:
@@ -58,7 +61,10 @@ func _resize() -> void:
 	for control in _controls:
 		if not is_instance_valid(control): continue
 		var values: Dictionary = _controls[control]
-		if values.has("font"): control.add_theme_font_size_override("font_size", maxi(8, roundi(values["font"] * factor)))
+		if values.has("font"):
+			var font: Dictionary = ColonyStyle.pixel_font(values["font"], factor)
+			control.add_theme_font_override("font", font["font"])
+			control.add_theme_font_size_override("font_size", font["size"])
 		for key in values["constants"]: control.add_theme_constant_override(key, roundi(values["constants"][key] * factor))
 		control.custom_minimum_size = (values["minimum"] * factor).round()
 		if values.has("offsets"):

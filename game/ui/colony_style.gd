@@ -101,6 +101,13 @@ static func label(text: String, font_size: int = 8, color: Color = TEXT) -> Labe
 	result.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return result
 
+## BoldPixels uses a 16px grid; Pixuf provides a complete 8px Cyrillic face for small UI.
+static func pixel_font(base_size: int, factor: float) -> Dictionary:
+	var desired: float = base_size * factor
+	if desired < 16.0 and base_size < 24:
+		return {"font": SECONDARY_FONT, "size": 8}
+	return {"font": FONT, "size": maxi(16, floori(desired / 16.0) * 16)}
+
 static func button(text: String, primary: bool = false, feedback: bool = true) -> Button:
 	var result := Button.new()
 	result.text = text
