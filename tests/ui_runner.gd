@@ -66,6 +66,12 @@ func click_at(point: Vector2, button: MouseButton = MOUSE_BUTTON_LEFT) -> void:
 func click(control: Control) -> void:
 	expect(is_instance_valid(control) and control.is_visible_in_tree(), "clicked control is visible")
 	if is_instance_valid(control):
+		var ancestor: Node = control.get_parent()
+		while ancestor != null:
+			if ancestor is ScrollContainer:
+				ancestor.ensure_control_visible(control)
+				await frames(2)
+			ancestor = ancestor.get_parent()
 		await click_at(control.get_global_rect().get_center())
 
 func key(code: Key) -> void:
