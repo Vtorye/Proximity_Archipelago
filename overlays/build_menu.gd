@@ -103,21 +103,24 @@ func retarget(cell: Vector2i, anchor: Rect2) -> void:
 	_cancel_confirmation()
 
 func reposition() -> void:
-	var viewport: Vector2 = get_viewport_rect().size
+	var viewport: Vector2 = size
+	var inverse: Transform2D = get_global_transform_with_canvas().affine_inverse()
+	var anchor: Rect2 = inverse * context.anchor
 	var safe := Rect2(8, 60, viewport.x - 16, viewport.y - 132)
 	var popup: Vector2 = _panel.get_combined_minimum_size()
 	_panel.size = popup
-	var candidates: Array[float] = [context.anchor.end.x + 6, context.anchor.position.x - popup.x - 6]
+	var candidates: Array[float] = [anchor.end.x + 6, anchor.position.x - popup.x - 6]
 	for obstacle in context.obstacles:
-		candidates.append(obstacle.end.x + 6)
-		candidates.append(obstacle.position.x - popup.x - 6)
-	var y: float = clampf(context.anchor.position.y, safe.position.y, maxf(safe.position.y, safe.end.y - popup.y))
+		var local: Rect2 = inverse * obstacle
+		candidates.append(local.end.x + 6)
+		candidates.append(local.position.x - popup.x - 6)
+	var y: float = clampf(anchor.position.y, safe.position.y, maxf(safe.position.y, safe.end.y - popup.y))
 	for x in candidates:
 		var position := Vector2(clampf(x, safe.position.x, maxf(safe.position.x, safe.end.x - popup.x)), y).round()
 		var rect := Rect2(position, popup)
-		var blocked: bool = rect.intersects(context.anchor.grow(-1))
+		var blocked: bool = rect.intersects(anchor.grow(-1))
 		for obstacle in context.obstacles:
-			blocked = blocked or rect.intersects(obstacle)
+			blocked = blocked or rect.intersects(inverse * obstacle)
 		if not blocked:
 			_panel.position = position
 			return

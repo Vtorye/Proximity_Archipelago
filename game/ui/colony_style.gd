@@ -85,6 +85,11 @@ static func apply(control: Control) -> void:
 	theme.set_icon("grabber_highlight", "HSlider", knob_texture)
 	control.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	control.theme = theme
+	if not control.has_node("UiScale"):
+		var binding := UiScaleBinding.new()
+		binding.name = "UiScale"
+		binding.target = control
+		control.add_child(binding)
 
 static func label(text: String, font_size: int = 8, color: Color = TEXT) -> Label:
 	var result := Label.new()
