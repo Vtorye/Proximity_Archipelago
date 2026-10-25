@@ -56,13 +56,9 @@ func _ready() -> void:
 	for option in context.controller.options:
 		if option == null:
 			continue
-		var button: Button = ColonyStyle.button(option.display_name)
-		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		button.custom_minimum_size.y = 30
-		button.icon = _icon(option)
-		button.expand_icon = true
-		button.add_theme_constant_override("icon_max_width", 20)
-		button.add_theme_constant_override("h_separation", 4)
+		var button := BuildChoiceButton.new()
+		button.option = option
+		button.art = context.art
 		button.pressed.connect(_choose.bind(option))
 		button.mouse_entered.connect(_show_help.bind(option))
 		button.focus_entered.connect(_show_help.bind(option))
@@ -127,16 +123,6 @@ func reposition() -> void:
 			return
 	_panel.position = Vector2(safe.position.x, y)
 
-func _icon(option: BuildOption) -> Texture2D:
-	if option.icon != null:
-		return option.icon
-	match option.id:
-		&"road": return context.art.road
-		&"ground": return context.art.soil
-		&"house": return context.art.nest
-		&"apple_tree": return context.art.berries
-	return context.art.stone
-
 func _refresh() -> void:
 	if not is_instance_valid(context.controller):
 		close_requested.emit(self)
@@ -155,8 +141,6 @@ func _refresh() -> void:
 		_description.text = "Вода"
 	for option in _buttons:
 		var button: Button = _buttons[option]
-		var cost: ResourceAmount = option.cost
-		button.text = "%s %d" % [option.display_name, cost.amount] if cost != null else option.display_name
 		var result: PlacementCheck = context.controller.check(option, context.cell)
 		button.disabled = not result.allowed() or _confirming
 		button.tooltip_text = ""
@@ -185,8 +169,7 @@ func _show_help(option: BuildOption) -> void:
 	var result: PlacementCheck = context.controller.check(option, context.cell)
 	var help: String = PlacementMessages.text(result.code)
 	if result.allowed():
-		var cost: ResourceAmount = option.cost
-		help = "%s: %d %s" % [option.display_name, cost.amount, cost.type.display_name] if cost != null else option.display_name
+		help = "%s: %s" % [option.display_name, BuildCostText.format(option.costs)]
 		if option is SceneBuildOption and option.spawn_count > 0:
 			help += ". +%d муравьёв; нужно %d порций." % [option.spawn_count, option.spawn_count]
 	_set_message(help)
