@@ -36,6 +36,7 @@ func _run() -> void:
 	_test_resident_pruning()
 	await _test_worlds()
 	await _test_assignment_lifecycle()
+	await preload("res://tests/planning_regressions.gd").new().run(self)
 	await _test_assignment_load()
 	await _test_rules()
 	await _test_art_resolution()
@@ -351,6 +352,7 @@ func _test_simulation() -> void:
 				for y in range(item.y, item.z + 1): network.append(Vector2i(item.x, y))
 			for cell in network:
 				expect(world.build_controller.try_build(road, cell), "safe road network can be built from starting stock")
+			expect(world.build_controller.try_build(load("res://game/building/options/house.tres"), Vector2i(54, 47)), "player can place another nest near the stone workplace")
 		var deaths: Array[int] = [0]
 		var work: Array[int] = [0]
 		for ant in world.population.agents():
@@ -365,8 +367,8 @@ func _test_simulation() -> void:
 			world.match_controller._process(1.0 / 60.0)
 			if step % 60 == 0: await get_tree().process_frame
 			if world.match_controller.is_finished(): break
-		expect(deaths[0] == 0 and world.population.count() == 5, "full match has no starvation deaths")
-		expect(outcomes.size() == 1 and outcomes[0].won == roads, "idle loses; investing in roads wins within three minutes")
+		expect(deaths[0] == 0 and world.population.count() == (10 if roads else 5), "full match has no starvation deaths")
+		expect(outcomes.size() == 1 and outcomes[0].won == roads, "idle loses; roads and purposeful nest placement win within three minutes")
 		var stock := {}
 		for type in world.inventory.registered_types(): stock[String(type.id)] = world.inventory.quantity(type)
 		scenarios["roads" if roads else "idle"] = {"seconds": 180.0 - world.match_controller.time_remaining, "ants": world.population.count(), "deaths": deaths[0], "completed_cycles": work[0], "stock": stock, "won": not outcomes.is_empty() and outcomes[0].won, "wall_ms": (Time.get_ticks_usec() - started) / 1000.0, "searches": world.route_service.search_count, "cache_hits": world.route_service.cache_hits}
