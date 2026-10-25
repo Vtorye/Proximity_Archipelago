@@ -173,7 +173,7 @@ func _preserves_escape(option: BuildOption, cell: Vector2i) -> bool:
 	elif option is TileBuildOption:
 		var source: TileSetAtlasSource = map.tile_set.get_source(option.source_id) as TileSetAtlasSource
 		var value: float = float(source.get_tile_data(option.atlas_coords, option.alternative_tile).get_custom_data("move_cost"))
-		if value <= route_service.entry_cost(cell):
+		if value > 0.0 and value <= route_service.entry_cost(cell):
 			return true
 		preview = route_service.snapshot().with_cost(cell, value)
 	else:
