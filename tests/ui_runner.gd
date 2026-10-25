@@ -127,6 +127,7 @@ func _run() -> void:
 	var settings: MenuBase = Router.top_overlay()
 	expect(settings != null and not get_tree().paused, "main-menu settings open without pausing a session")
 	await capture("03-main-settings")
+	preload("res://tests/pixel_font_checks.gd").verify(self, settings)
 	await click(settings.controls[&"volume"])
 	await click(settings.controls[&"vsync"])
 	await click(settings.controls[&"show_grid"])
@@ -151,6 +152,7 @@ func _run() -> void:
 	expect(not Router.has_overlay(), "left click never opens construction")
 	var cell := Vector2i(26, 25)
 	var menu: BuildMenu = await select_cell(cell)
+	preload("res://tests/pixel_font_checks.gd").verify(self, menu)
 	validate_popup(menu)
 	var locked_level: int = screen.camera.level
 	await click_at(Vector2(20, 280), MOUSE_BUTTON_WHEEL_UP)
