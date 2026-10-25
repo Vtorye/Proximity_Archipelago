@@ -19,3 +19,7 @@ extends RefCounted
 ## Return the total cost of the least-cost path, or INF if no path exists.
 ## The start cell is not paid for; each subsequent cell pays its entry cost.
 @abstract func get_cost(from_cell: Vector2i, to_cell: Vector2i) -> float
+
+## Optional incremental update. Algorithms without mutable state can reuse build().
+func update_grid(grid: TileGrid, _changed_cells: Array[Vector2i]) -> void:
+	build(grid)

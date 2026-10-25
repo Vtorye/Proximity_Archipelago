@@ -80,3 +80,19 @@ func with_cost(cell: Vector2i, value: float) -> TileGrid:
 	var result := TileGrid.new()
 	result.configure(_rect, changed)
 	return result
+
+## Copy only changed terrain values; readers keep their previous snapshot.
+func with_map_cells(map: TileMapLayer, cells: Array[Vector2i], blocked: Array[Vector2i]) -> TileGrid:
+	var result := TileGrid.new()
+	result.configure(_rect, _costs)
+	for cell in cells:
+		if not in_bounds(cell):
+			result.setup(map, blocked)
+			return result
+		var data: TileData = map.get_cell_tile_data(cell)
+		var value := 0.0
+		if data != null and not blocked.has(cell):
+			var custom: Variant = data.get_custom_data("move_cost")
+			if custom is int or custom is float: value = maxf(0.0, float(custom))
+		result._costs[index(cell)] = value
+	return result

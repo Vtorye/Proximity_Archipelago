@@ -106,7 +106,7 @@ func try_build(option: BuildOption, cell: Vector2i) -> bool:
 		instance.position = buildings.to_local(route_service.cell_to_world(cell))
 		buildings.add_child(instance)
 		registry.register(instance)
-	route_service.rebuild(registry.blocked_cells())
+	route_service.update_cells(_footprint(option, cell), registry.blocked_cells())
 	_committing = false
 	inventory.end_update()
 	built.emit(option, cell)
@@ -138,9 +138,10 @@ func demolish_at(cell: Vector2i) -> bool:
 	_committing = true
 	inventory.begin_update()
 	_refund_for_demolish(building.option)
+	var changed_cells: Array[Vector2i] = building.footprint()
 	building.demolish()
 	building.free()
-	route_service.rebuild(registry.blocked_cells())
+	route_service.update_cells(changed_cells, registry.blocked_cells())
 	_committing = false
 	inventory.end_update()
 	changed.emit()

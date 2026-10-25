@@ -2,6 +2,7 @@ extends "res://game/navigation/path_algorithm.gd"
 ## A* over a 4-neighbour grid, backed by AStarGrid2D.
 
 var _astar := AStarGrid2D.new()
+var _minimum_cost := INF
 var _costs: Dictionary = {} # Vector2i -> float, copied from the grid in build()
 
 
@@ -20,6 +21,7 @@ func build(grid: TileGrid) -> void:
 		_costs[cell] = move_cost
 		min_cost = minf(min_cost, move_cost)
 
+	_minimum_cost = min_cost
 	_astar.region = rect
 	_astar.cell_size = Vector2.ONE
 	_astar.diagonal_mode = AStarGrid2D.DIAGONAL_MODE_NEVER
@@ -54,3 +56,22 @@ func get_cost(from_cell: Vector2i, to_cell: Vector2i) -> float:
 	for index in range(1, path.size()):
 		total += float(_costs[path[index]])
 	return total
+
+func update_grid(grid: TileGrid, changed_cells: Array[Vector2i]) -> void:
+	if grid.rect() != _astar.region:
+		build(grid)
+		return
+	for cell in changed_cells:
+		if grid.walkable(cell):
+			_costs[cell] = grid.cost(cell)
+		else:
+			_costs.erase(cell)
+	var next_minimum: float = float(_costs.values().min()) if not _costs.is_empty() else INF
+	if not is_equal_approx(next_minimum, _minimum_cost):
+		# A new cheapest material changes every normalized A* weight.
+		build(grid)
+		return
+	for cell in changed_cells:
+		_astar.set_point_solid(cell, not grid.walkable(cell))
+		if grid.walkable(cell):
+			_astar.set_point_weight_scale(cell, grid.cost(cell) / _minimum_cost)

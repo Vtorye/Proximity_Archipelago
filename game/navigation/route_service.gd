@@ -135,3 +135,23 @@ func snapshot() -> TileGrid:
 
 func is_food_cell(cell: Vector2i) -> bool:
 	return _food_cells.has(cell)
+
+## Construction supplies its footprint, avoiding a full TileMap scan for each command.
+func update_cells(cells: Array[Vector2i], blocked: Array[Vector2i]) -> void:
+	var next: TileGrid = _grid.with_map_cells(_map, cells, blocked)
+	if next.rect() != _grid.rect():
+		rebuild(blocked)
+		return
+	last_changed.clear()
+	for cell in cells:
+		if not is_equal_approx(next.cost(cell), _grid.cost(cell)):
+			last_changed.append(cell)
+	if last_changed.is_empty():
+		return
+	_grid = next
+	_algorithm.update_grid(_grid, last_changed)
+	revision += 1
+	_fields.clear()
+	_order.clear()
+	_food_field = null
+	navigation_changed.emit()
