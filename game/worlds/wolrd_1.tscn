@@ -36,10 +36,10 @@ starting_resources = Array[ExtResource("amount")]([SubResource("wood_stock"), Su
 build_options = Array[ExtResource("build_option")]([ExtResource("road"), ExtResource("ground"), ExtResource("nest_option"), ExtResource("berry_option")])
 [node name="Map" type="TileMapLayer" parent="."]
 [node name="Home" parent="." instance=ExtResource("nest")]
-position = Vector2(792, 808)
+position = Vector2(392, 408)
 option = ExtResource("nest_option")
 [node name="Workplace" type="Node2D" parent="."]
-position = Vector2(744, 760)
+position = Vector2(344, 360)
 script = ExtResource("workplace")
 title = "Участок древесины"
 work_slots = 4
@@ -48,7 +48,7 @@ output_amount = 2
 [node name="Sprite" type="Sprite2D" parent="Workplace"]
 texture = ExtResource("timber_art")
 [node name="Workplace2" type="Node2D" parent="."]
-position = Vector2(872, 744)
+position = Vector2(472, 344)
 script = ExtResource("workplace")
 title = "Каменная россыпь"
 work_slots = 4
@@ -57,18 +57,18 @@ output_amount = 2
 [node name="Sprite" type="Sprite2D" parent="Workplace2"]
 texture = ExtResource("stone_art")
 [node name="Food" type="Node2D" parent="."]
-position = Vector2(856, 824)
+position = Vector2(456, 424)
 script = ExtResource("canteen")
 title = "Столовая"
 [node name="Sprite" type="Sprite2D" parent="Food"]
 texture = ExtResource("nest_art")
 modulate = Color(1, 0.82, 0.52, 1)
 [node name="AppleTree" parent="." instance=ExtResource("berries")]
-position = Vector2(792, 744)
+position = Vector2(392, 344)
 option = ExtResource("berry_option")
 output_amount = 3
 [node name="AppleTree2" parent="." instance=ExtResource("berries")]
-position = Vector2(888, 840)
+position = Vector2(488, 440)
 option = ExtResource("berry_option")
 output_amount = 3
 [node name="MatchController" type="Node" parent="."]
