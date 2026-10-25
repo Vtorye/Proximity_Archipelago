@@ -208,6 +208,8 @@ func debug_snapshot() -> Dictionary:
 
 func _draw() -> void:
 	# Pixel-native ant art remains crisp at every integer camera zoom.
+	if status == Status.HOME or status == Status.DEAD:
+		return
 	var forward: Vector2 = _last_direction
 	var side := Vector2(-forward.y, forward.x)
 	var leg_phase: float = sin(_animation_time * 22.0) if status == Status.WALKING else 0.0
