@@ -109,7 +109,10 @@ func _decide() -> void:
 	if _meal == null or not _meal.active:
 		_meal = planner.reserve_meal()
 	_plan = planner.plan_work(self, home, needs, speed, work_time, _meal)
-	if _plan != null:
+	if _plan != null and _plan.waiting_for_slot:
+		_set_status(Status.HOME)
+		_timer = 0.75
+	elif _plan != null:
 		current_workplace = _plan.workplace
 		_walk(_plan.outward, &"work")
 	else:

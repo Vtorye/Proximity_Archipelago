@@ -45,14 +45,18 @@ func plan_work(agent: Node2D, home: Building, needs: AntNeeds, speed: float, wor
 	var food_after_home: float = escape_energy(home_cell, speed)
 	var best_score := INF
 	var best: WorkPlan
+	var feasible_busy := false
+	var possible_after_meal := false
 	for workplace in registry.workplaces():
-		if not workplace.has_free_slot():
-			continue
 		for entry in workplace.entry_cells():
 			var to_work: float = travel_energy(outward.cost(entry), speed)
 			var back_home: float = travel_energy(home_field.cost(entry), speed * CARRY_SPEED_RATIO)
 			var energy: float = to_work + work_time * AntNeeds.WORK_RATE + back_home + food_after_home + 2.0
+			possible_after_meal = possible_after_meal or energy + AntNeeds.SAFETY_MARGIN <= AntNeeds.CAPACITY
 			if not needs.can_afford(energy):
+				continue
+			if not workplace.has_free_slot():
+				feasible_busy = true
 				continue
 			var stock_level: float = inventory.quantity(workplace.output) if workplace.output != null else 100000.0
 			var score: float = stock_level / maxf(1.0, workplace.output_amount) + to_work * 0.25
@@ -65,7 +69,10 @@ func plan_work(agent: Node2D, home: Building, needs: AntNeeds, speed: float, wor
 				best.home_cell = home_cell
 				best.estimated_energy = energy
 				best.navigation_revision = navigation.revision
-	if best != null and not best.workplace.reserve_worker(agent):
+	if best == null and (feasible_busy or not possible_after_meal and needs.can_afford(food_after_home + 2.0)):
+		best = WorkPlan.new()
+		best.waiting_for_slot = true
+	if best != null and not best.waiting_for_slot and not best.workplace.reserve_worker(agent):
 		return null
 	return best
 
