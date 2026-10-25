@@ -23,6 +23,7 @@ func _ready() -> void:
 		close_requested.emit.call_deferred(self)
 		return
 	_panel = PanelContainer.new()
+	_panel.set_meta(&"ui_manual_layout", true)
 	_panel.add_theme_stylebox_override("panel", ColonyStyle.dialog_box())
 	_panel.custom_minimum_size.x = 216
 	add_child(_panel)
@@ -104,16 +105,17 @@ func retarget(cell: Vector2i, anchor: Rect2) -> void:
 
 func reposition() -> void:
 	var viewport: Vector2 = size
+	var factor: float = AppSettings.ui_scale
 	var inverse: Transform2D = get_global_transform_with_canvas().affine_inverse()
 	var anchor: Rect2 = inverse * context.anchor
-	var safe := Rect2(8, 60, viewport.x - 16, viewport.y - 132)
+	var safe := Rect2(8 * factor, 60 * factor, viewport.x - 16 * factor, viewport.y - 132 * factor)
 	var popup: Vector2 = _panel.get_combined_minimum_size()
 	_panel.size = popup
-	var candidates: Array[float] = [anchor.end.x + 6, anchor.position.x - popup.x - 6]
+	var candidates: Array[float] = [anchor.end.x + 6 * factor, anchor.position.x - popup.x - 6 * factor]
 	for obstacle in context.obstacles:
 		var local: Rect2 = inverse * obstacle
-		candidates.append(local.end.x + 6)
-		candidates.append(local.position.x - popup.x - 6)
+		candidates.append(local.end.x + 6 * factor)
+		candidates.append(local.position.x - popup.x - 6 * factor)
 	var y: float = clampf(anchor.position.y, safe.position.y, maxf(safe.position.y, safe.end.y - popup.y))
 	for x in candidates:
 		var position := Vector2(clampf(x, safe.position.x, maxf(safe.position.x, safe.end.x - popup.x)), y).round()

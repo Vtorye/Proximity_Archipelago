@@ -30,6 +30,7 @@ func _ready() -> void:
 	_preview.z_index = 3
 	context.controller.map.get_parent().add_child(_preview)
 	panel = PanelContainer.new()
+	panel.set_meta(&"ui_manual_layout", true)
 	panel.add_theme_stylebox_override("panel", ColonyStyle.dialog_box())
 	add_child(panel)
 	panel.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
@@ -228,7 +229,10 @@ func _update_hover(point: Vector2) -> void:
 
 func _process(delta: float) -> void:
 	if not visible: return
-	panel.offset_top = -panel.get_combined_minimum_size().y - 6
+	panel.offset_left = roundf(8 * AppSettings.ui_scale)
+	panel.offset_right = -roundf(8 * AppSettings.ui_scale)
+	panel.offset_bottom = -roundf(6 * AppSettings.ui_scale)
+	panel.offset_top = -panel.get_combined_minimum_size().y - roundf(6 * AppSettings.ui_scale)
 	if not _painting:
 		var direction := Vector2(float(Input.is_physical_key_pressed(KEY_D)) - float(Input.is_physical_key_pressed(KEY_A)), float(Input.is_physical_key_pressed(KEY_S)) - float(Input.is_physical_key_pressed(KEY_W)))
 		if not direction.is_zero_approx():
