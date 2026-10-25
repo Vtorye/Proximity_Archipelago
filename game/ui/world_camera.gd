@@ -1,7 +1,7 @@
 class_name WorldCamera
 extends Camera2D
 signal zoom_changed(level: int)
-const ZOOMS := [0.25, 0.5, 1.0, 2.0, 3.0]
+const ZOOMS := [0.5, 1.0, 2.0, 4.0, 6.0]
 var level := 2
 var enabled_input := true
 var bounds := Rect2(0, 0, 1600, 1600)

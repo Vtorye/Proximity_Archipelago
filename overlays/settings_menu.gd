@@ -10,19 +10,19 @@ func _ready() -> void:
 	var content: VBoxContainer = ColonyStyle.modal(self, 256)
 	content.add_child(ColonyStyle.label("Настройки", 12))
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 4)
+	row.add_theme_constant_override("separation", 8)
 	var title: Label = ColonyStyle.label("Громкость")
-	title.custom_minimum_size.x = 90
+	title.custom_minimum_size.x = 180
 	row.add_child(title)
 	var slider := HSlider.new()
 	slider.max_value = 100
 	slider.step = 1
 	slider.value = AppSettings.master_volume
-	slider.custom_minimum_size = Vector2(80, 12)
+	slider.custom_minimum_size = Vector2(160, 24)
 	slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(slider)
 	_volume_value = ColonyStyle.label("%d%%" % slider.value)
-	_volume_value.custom_minimum_size.x = 22
+	_volume_value.custom_minimum_size.x = 44
 	row.add_child(_volume_value)
 	slider.value_changed.connect(func(value: float):
 		AppSettings.master_volume = value
@@ -38,7 +38,7 @@ func _ready() -> void:
 	_saved = ColonyStyle.label("Сохранено", 8, ColonyStyle.MUTED)
 	content.add_child(_saved)
 	var actions := HBoxContainer.new()
-	actions.add_theme_constant_override("separation", 4)
+	actions.add_theme_constant_override("separation", 8)
 	var reset: Button = ColonyStyle.button("Сбросить")
 	reset.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	reset.pressed.connect(_reset)
@@ -60,7 +60,7 @@ func _add_toggle(content: VBoxContainer, key: StringName, text: String, value: b
 	var toggle: Button = ColonyStyle.button("[X]" if value else "[ ]")
 	toggle.toggle_mode = true
 	toggle.button_pressed = value
-	toggle.custom_minimum_size = Vector2(24, 14)
+	toggle.custom_minimum_size = Vector2(48, 28)
 	toggle.toggled.connect(func(enabled: bool):
 		toggle.text = "[X]" if enabled else "[ ]"
 		AppSettings.set(key, enabled)

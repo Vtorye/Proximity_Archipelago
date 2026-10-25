@@ -24,22 +24,22 @@ func _ready() -> void:
 	var top := PanelContainer.new()
 	add_child(top)
 	top.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
-	top.offset_left = 4
-	top.offset_right = -4
-	top.offset_top = 4
-	top.offset_bottom = 28
+	top.offset_left = 8
+	top.offset_right = -8
+	top.offset_top = 8
+	top.offset_bottom = 56
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 4)
+	row.add_theme_constant_override("separation", 8)
 	top.add_child(row)
 	for type in world.inventory.registered_types():
 		var chip := HBoxContainer.new()
-		chip.custom_minimum_size.x = 50
-		chip.add_theme_constant_override("separation", 2)
+		chip.custom_minimum_size.x = 100
+		chip.add_theme_constant_override("separation", 4)
 		stock_chips[type.id] = chip
 		var icon := TextureRect.new()
 		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		icon.texture = _resource_icon(type.id)
-		icon.custom_minimum_size = Vector2(16, 16)
+		icon.custom_minimum_size = Vector2(32, 32)
 		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		chip.add_child(icon)
@@ -56,36 +56,36 @@ func _ready() -> void:
 	row.add_child(_ants)
 	row.add_child(ColonyStyle.label("м.", 8, ColonyStyle.MUTED))
 	_timer = ColonyStyle.label("3:00", 8, ColonyStyle.ACCENT)
-	_timer.custom_minimum_size.x = 24
+	_timer.custom_minimum_size.x = 48
 	row.add_child(_timer)
 	var pause: Button = ColonyStyle.button("||")
-	pause.custom_minimum_size = Vector2(14, 14)
+	pause.custom_minimum_size = Vector2(28, 28)
 	pause.tooltip_text = "Пауза (Esc)"
 	pause.pressed.connect(func(): pause_requested.emit())
 	row.add_child(pause)
 	controls[&"pause"] = pause
 	var settings: Button = ColonyStyle.button("...")
-	settings.custom_minimum_size = Vector2(16, 14)
+	settings.custom_minimum_size = Vector2(32, 28)
 	settings.tooltip_text = "Настройки"
 	settings.pressed.connect(func(): settings_requested.emit())
 	row.add_child(settings)
 	controls[&"settings"] = settings
 	var objectives := PanelContainer.new()
-	objectives.position = Vector2(4, 32)
-	objectives.custom_minimum_size = Vector2(84, 0)
+	objectives.position = Vector2(8, 64)
+	objectives.custom_minimum_size = Vector2(168, 0)
 	add_child(objectives)
 	var goals := VBoxContainer.new()
-	goals.add_theme_constant_override("separation", 1)
+	goals.add_theme_constant_override("separation", 2)
 	objectives.add_child(goals)
 	goals.add_child(ColonyStyle.label("Цель: по %d" % world.match_controller.target_amount, 8, ColonyStyle.MUTED))
 	for type in world.match_controller.tracked_types:
 		var line := HBoxContainer.new()
-		line.add_theme_constant_override("separation", 2)
+		line.add_theme_constant_override("separation", 4)
 		var caption: Label = ColonyStyle.label(type.display_name)
-		caption.custom_minimum_size.x = 42
+		caption.custom_minimum_size.x = 84
 		line.add_child(caption)
 		var bar := ProgressBar.new()
-		bar.custom_minimum_size = Vector2(28, 3)
+		bar.custom_minimum_size = Vector2(56, 6)
 		bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		bar.show_percentage = false
@@ -97,24 +97,24 @@ func _ready() -> void:
 		goals.add_child(line)
 	_warning = ColonyStyle.label("", 8, ColonyStyle.DANGER)
 	_warning.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_warning.custom_minimum_size.x = 72
+	_warning.custom_minimum_size.x = 144
 	goals.add_child(_warning)
 	var bottom := PanelContainer.new()
 	add_child(bottom)
 	bottom.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
-	bottom.offset_left = 4
-	bottom.offset_right = -4
-	bottom.offset_top = -14
-	bottom.offset_bottom = -3
+	bottom.offset_left = 8
+	bottom.offset_right = -8
+	bottom.offset_top = -28
+	bottom.offset_bottom = -6
 	var hints := HBoxContainer.new()
-	hints.add_theme_constant_override("separation", 3)
+	hints.add_theme_constant_override("separation", 6)
 	bottom.add_child(hints)
 	var help: Label = ColonyStyle.label("ЛКМ: камера  ПКМ: стройка  WASD", 8, ColonyStyle.MUTED)
 	help.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	hints.add_child(help)
 	for key in [&"zoom_out", &"zoom_in"]:
 		var button: Button = ColonyStyle.button("-" if key == &"zoom_out" else "+")
-		button.custom_minimum_size = Vector2(12, 10)
+		button.custom_minimum_size = Vector2(24, 20)
 		button.pressed.connect(func():
 			if key == &"zoom_out": zoom_out_requested.emit()
 			else: zoom_in_requested.emit())
@@ -128,10 +128,10 @@ func _ready() -> void:
 	_toast.add_theme_stylebox_override("normal", ColonyStyle.box())
 	add_child(_toast)
 	_toast.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
-	_toast.offset_left = 4
-	_toast.offset_right = -4
-	_toast.offset_top = -32
-	_toast.offset_bottom = -17
+	_toast.offset_left = 8
+	_toast.offset_right = -8
+	_toast.offset_top = -64
+	_toast.offset_bottom = -34
 	_toast.hide()
 	world.inventory.changed.connect(refresh)
 	world.population.changed.connect(refresh)

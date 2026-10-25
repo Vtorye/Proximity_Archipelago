@@ -13,7 +13,7 @@ func _process(delta: float) -> void:
 		queue_redraw()
 
 func _draw() -> void:
-	var tile := 16.0
+	var tile := 32.0
 	var columns: int = ceili(size.x / tile)
 	var rows: int = ceili(size.y / tile)
 	for y in range(rows):
@@ -25,7 +25,7 @@ func _draw() -> void:
 				texture = art.soil
 			draw_texture_rect(texture, Rect2(Vector2(x, y) * tile, Vector2.ONE * tile), false)
 	for item in [[Vector2(0.15, 0.24), art.berries], [Vector2(0.78, 0.18), art.timber], [Vector2(0.82, 0.76), art.stone], [Vector2(0.17, 0.75), art.nest], [Vector2(0.73, 0.54), art.canteen]]:
-		draw_texture_rect(item[1], Rect2((size * item[0]).floor(), Vector2(24, 24)), false)
+		draw_texture_rect(item[1], Rect2((size * item[0]).floor(), Vector2(32, 32)), false)
 	for index in range(28):
 		var t: float = fmod(_time * 0.035 + index / 28.0, 1.0)
 		var position: Vector2

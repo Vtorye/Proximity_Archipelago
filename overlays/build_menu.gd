@@ -21,19 +21,19 @@ func _ready() -> void:
 		close_requested.emit.call_deferred(self)
 		return
 	_panel = PanelContainer.new()
-	_panel.custom_minimum_size.x = 108
+	_panel.custom_minimum_size.x = 216
 	add_child(_panel)
 	var content := VBoxContainer.new()
-	content.add_theme_constant_override("separation", 2)
+	content.add_theme_constant_override("separation", 4)
 	_panel.add_child(content)
 	var heading := HBoxContainer.new()
-	heading.add_theme_constant_override("separation", 2)
+	heading.add_theme_constant_override("separation", 4)
 	content.add_child(heading)
 	_title = ColonyStyle.label("")
 	_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	heading.add_child(_title)
 	var close: Button = ColonyStyle.button("X")
-	close.custom_minimum_size = Vector2(12, 12)
+	close.custom_minimum_size = Vector2(24, 24)
 	close.pressed.connect(func(): close_requested.emit(self))
 	heading.add_child(close)
 	controls[&"close"] = close
@@ -41,23 +41,23 @@ func _ready() -> void:
 	_description = ColonyStyle.label("", 8, ColonyStyle.MUTED)
 	content.add_child(_description)
 	var scroll := ScrollContainer.new()
-	scroll.custom_minimum_size = Vector2(100, 68)
+	scroll.custom_minimum_size = Vector2(200, 136)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	content.add_child(scroll)
 	var options := VBoxContainer.new()
 	options.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	options.add_theme_constant_override("separation", 1)
+	options.add_theme_constant_override("separation", 2)
 	scroll.add_child(options)
 	for option in context.controller.options:
 		if option == null:
 			continue
 		var button: Button = ColonyStyle.button(option.display_name)
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		button.custom_minimum_size.y = 16
+		button.custom_minimum_size.y = 32
 		button.icon = _icon(option)
 		button.expand_icon = true
-		button.add_theme_constant_override("icon_max_width", 12)
-		button.add_theme_constant_override("h_separation", 2)
+		button.add_theme_constant_override("icon_max_width", 24)
+		button.add_theme_constant_override("h_separation", 4)
 		button.pressed.connect(_choose.bind(option))
 		button.mouse_entered.connect(_show_help.bind(option))
 		button.focus_entered.connect(_show_help.bind(option))
@@ -69,10 +69,10 @@ func _ready() -> void:
 	_message.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	add_child(_message)
 	_message.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
-	_message.offset_left = 4
-	_message.offset_right = -4
-	_message.offset_top = -33
-	_message.offset_bottom = -17
+	_message.offset_left = 8
+	_message.offset_right = -8
+	_message.offset_top = -66
+	_message.offset_bottom = -34
 	_message.hide()
 	_demolish = ColonyStyle.button("Снести")
 	_demolish.pressed.connect(_on_demolish_pressed)
@@ -95,12 +95,12 @@ func _process(_delta: float) -> void:
 
 func reposition() -> void:
 	var viewport: Vector2 = get_viewport_rect().size
-	var safe := Rect2(4, 30, viewport.x - 8, viewport.y - 46)
+	var safe := Rect2(8, 60, viewport.x - 16, viewport.y - 92)
 	var popup: Vector2 = _panel.get_combined_minimum_size()
 	_panel.size = popup
-	var x: float = context.anchor.end.x + 3
+	var x: float = context.anchor.end.x + 6
 	if x + popup.x > safe.end.x:
-		x = context.anchor.position.x - popup.x - 3
+		x = context.anchor.position.x - popup.x - 6
 	_panel.position = Vector2(clampf(x, safe.position.x, maxf(safe.position.x, safe.end.x - popup.x)), clampf(context.anchor.position.y, safe.position.y, maxf(safe.position.y, safe.end.y - popup.y))).round()
 
 func _icon(option: BuildOption) -> Texture2D:
