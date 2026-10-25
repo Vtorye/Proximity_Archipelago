@@ -35,16 +35,10 @@ func travel_energy(cost: float, speed: float) -> float:
 func plan_work(agent: Node2D, home: Building, needs: AntNeeds, speed: float, work_time: float, ticket: StockReservation) -> WorkPlan:
 	if ticket == null or not ticket.active or not is_instance_valid(home):
 		return null
-	if _revision != navigation.revision:
-		_home_fields.clear()
-		_revision = navigation.revision
 	var home_cell: Vector2i = accessible_entry(home)
 	if not navigation.walkable(home_cell):
 		return null
-	if not _home_fields.has(home_cell):
-		if _home_fields.size() >= 8:
-			_home_fields.erase(_home_fields.keys()[0])
-		_home_fields[home_cell] = navigation.reverse_field([home_cell])
+	prepare_home(home)
 	var home_field: NavigationField = _home_fields[home_cell]
 	var from_cell: Vector2i = navigation.world_to_cell(agent.global_position)
 	var outward: NavigationField = navigation.distances_from(from_cell)
@@ -86,3 +80,23 @@ func food_route(from_cell: Vector2i) -> Route:
 
 func can_finish_work(cell: Vector2i, needs: AntNeeds, speed: float, remaining_work: float) -> bool:
 	return needs.can_afford(remaining_work * AntNeeds.WORK_RATE + escape_energy(cell, speed * CARRY_SPEED_RATIO))
+
+func prepare_home(home: Building) -> void:
+	if _revision != navigation.revision:
+		_home_fields.clear()
+		_revision = navigation.revision
+	var cell: Vector2i = accessible_entry(home)
+	if not navigation.walkable(cell):
+		return
+	if not _home_fields.has(cell):
+		if _home_fields.size() >= 8:
+			_home_fields.erase(_home_fields.keys()[0])
+		_home_fields[cell] = navigation.reverse_field([cell])
+	navigation.distances_from(cell)
+
+func home_route(home: Building, from_cell: Vector2i) -> Route:
+	prepare_home(home)
+	var cell: Vector2i = accessible_entry(home)
+	if not _home_fields.has(cell):
+		return Route.invalid()
+	return navigation.make_route(_home_fields[cell].path(from_cell))

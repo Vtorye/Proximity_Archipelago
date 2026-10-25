@@ -135,7 +135,7 @@ func _go_home() -> void:
 		_seek_food()
 		return
 	var entry: Vector2i = planner.accessible_entry(home)
-	var route: Route = route_service.request_route(route_service.world_to_cell(global_position), entry)
+	var route: Route = planner.home_route(home, route_service.world_to_cell(global_position))
 	if not route.is_valid() or not needs.can_afford(planner.travel_energy(route.cost, speed * TripPlanner.CARRY_SPEED_RATIO) + planner.escape_energy(entry, speed)):
 		_seek_food()
 		return
