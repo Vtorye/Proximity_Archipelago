@@ -191,7 +191,10 @@ func _on_navigation_changed() -> void:
 	_queue_reconsideration(true)
 
 func _on_food_sources_changed() -> void:
-	_queue_reconsideration(true)
+	if status == Status.WALKING and _destination == &"food" or status == Status.EATING:
+		_seek_food()
+	else:
+		_on_navigation_changed()
 
 func _on_work_opportunities_changed() -> void:
 	if status == Status.HOME and _waiting_for_work:
@@ -216,9 +219,6 @@ func _reconsider_route() -> void:
 	var cell: Vector2i = route_service.world_to_cell(global_position)
 	if status == Status.WORKING:
 		if geometry_changed and not planner.can_finish_work(cell, needs, speed, _timer):
-			_seek_food()
-	elif status == Status.EATING:
-		if not route_service.is_food_cell(cell):
 			_seek_food()
 	elif status == Status.WALKING:
 		if _destination == &"work":
