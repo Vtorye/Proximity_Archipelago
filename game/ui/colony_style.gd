@@ -32,6 +32,11 @@ static func box(background: Color = PANEL, border: Color = BORDER, width: int = 
 		style.modulate_color = Color.WHITE
 	return style
 
+static func dialog_box() -> StyleBoxTexture:
+	var style: StyleBoxTexture = box()
+	style.texture = preload("res://game/assets/ui/dialog.svg")
+	return style
+
 static func state_box(name: String) -> StyleBoxTexture:
 	var style: StyleBoxTexture = box()
 	style.texture = load("res://game/assets/ui/%s.svg" % name) as Texture2D
@@ -122,7 +127,7 @@ static func modal(root: Control, width: float = 248.0) -> VBoxContainer:
 	root.add_child(center)
 	fill(center)
 	var panel := PanelContainer.new()
-	var opaque_panel: StyleBoxTexture = box()
+	var opaque_panel: StyleBoxTexture = dialog_box()
 	opaque_panel.modulate_color.a = 1.0
 	panel.add_theme_stylebox_override("panel", opaque_panel)
 	panel.custom_minimum_size.x = minf(width * 2, 608)
