@@ -46,16 +46,18 @@ func _ready() -> void:
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		button.add_theme_font_size_override("font_size", 16)
 		button.custom_minimum_size.y = 50
-		button.icon = _icon(option.id)
+		button.icon = _icon(option)
 		button.expand_icon = true
 		button.add_theme_constant_override("icon_max_width", 32)
 		button.add_theme_constant_override("h_separation", 12)
 		button.pressed.connect(_choose.bind(option))
+		button.mouse_entered.connect(_show_help.bind(option))
+		button.focus_entered.connect(_show_help.bind(option))
 		options.add_child(button)
 		_buttons[option] = button
 		controls[option.id] = button
 	_message = ColonyStyle.label("", 13, ColonyStyle.DANGER)
-	_message.custom_minimum_size.x = 250
+	_message.custom_minimum_size = Vector2(250, 42)
 	_message.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	content.add_child(_message)
 	_demolish = ColonyStyle.button("Снести здание")
@@ -92,8 +94,10 @@ func reposition() -> void:
 		x = context.anchor.position.x - popup.x - 12
 	_panel.position = Vector2(clampf(x, safe.position.x, maxf(safe.position.x, safe.end.x - popup.x)), clampf(context.anchor.position.y, safe.position.y, maxf(safe.position.y, safe.end.y - popup.y)))
 
-func _icon(id: StringName) -> Texture2D:
-	match id:
+func _icon(option: BuildOption) -> Texture2D:
+	if option.icon != null:
+		return option.icon
+	match option.id:
 		&"road": return context.art.road
 		&"ground": return context.art.soil
 		&"house": return context.art.nest
@@ -117,11 +121,19 @@ func _refresh() -> void:
 		button.text = "%s\n%s: %d" % [option.display_name, cost.type.display_name, cost.amount] if cost != null and cost.type != null else option.display_name
 		var result: PlacementCheck = context.controller.check(option, context.cell)
 		button.disabled = not result.allowed() or _confirming
-		button.tooltip_text = PlacementMessages.text(result.code)
+		button.tooltip_text = ""
 	var demolition: PlacementCheck = context.controller.demolition_check(context.cell)
 	_demolish.disabled = not demolition.allowed()
 	_demolish.tooltip_text = PlacementMessages.text(demolition.code)
 	reposition()
+
+func _show_help(option: BuildOption) -> void:
+	if _confirming or _message == null:
+		return
+	var result: PlacementCheck = context.controller.check(option, context.cell)
+	_message.text = PlacementMessages.text(result.code)
+	if result.allowed() and option is SceneBuildOption and option.spawn_count > 0:
+		_message.text = "Новые жители: %d. Нужны свободные порции пищи: %d." % [option.spawn_count, option.spawn_count]
 
 func _on_cell_changed(old: Vector2i, next: Vector2i) -> void:
 	if old == context.cell or next == context.cell:
