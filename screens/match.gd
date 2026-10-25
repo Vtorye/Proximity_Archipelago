@@ -118,6 +118,7 @@ func _process(_delta: float) -> void:
 	if camera == null:
 		return
 	camera.enabled_input = not Router.has_overlay()
+	hud.lock_zoom(Router.has_overlay())
 	if is_instance_valid(_build_menu) and not _build_menu.is_queued_for_deletion():
 		_build_menu.context.anchor = selection.screen_rect()
 
