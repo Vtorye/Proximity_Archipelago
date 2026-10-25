@@ -28,6 +28,9 @@ func reserve_existing(node: Node2D) -> void:
 func blocked_cells() -> Array[Vector2i]:
 	return registry.blocked_cells()
 
+func footprint_at(option: BuildOption, cell: Vector2i) -> Array[Vector2i]:
+	return _footprint(option, cell)
+
 func check(option: BuildOption, cell: Vector2i) -> PlacementCheck:
 	var placement: PlacementCheck = placement_check(option, cell)
 	if not placement.allowed():
