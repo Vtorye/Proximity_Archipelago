@@ -1,5 +1,5 @@
 {
-  "assertions": 55,
+  "assertions": 176,
   "captures": [
     "00-smaller-map-overview",
     "01-centered-menu-dots",
@@ -9,11 +9,15 @@
     "05-composite-plan-total",
     "06-applied-road-and-nest",
     "07-unaffordable-plan",
-    "08-occupied-cell-feedback"
+    "08-occupied-cell-feedback",
+    "09-settings-scale-100",
+    "10-toolbar-scale-100",
+    "11-settings-scale-50",
+    "12-toolbar-scale-50"
   ],
   "display_size": "(0, 0)",
   "failures": [],
-  "render_size": "(640.0, 360.0)",
-  "source_revision": "d2e8a1189015e6b7283896ffec8520de4d513b1c",
+  "render_size": "(640, 360)",
+  "source_revision": "f562f6f790c02bfe859e761c9a92be983e600828",
   "window_size": "(960, 600)"
 }

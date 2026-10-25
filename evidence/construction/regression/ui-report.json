@@ -1,5 +1,5 @@
 {
-  "assertions": 127,
+  "assertions": 160,
   "captures": [
     "01-main-menu",
     "02-keyboard-focus",
@@ -38,7 +38,7 @@
   ],
   "display_size": "(0, 0)",
   "failures": [],
-  "render_size": "(640.0, 360.0)",
-  "source_revision": "d2e8a1189015e6b7283896ffec8520de4d513b1c",
+  "render_size": "(1280, 720)",
+  "source_revision": "f562f6f790c02bfe859e761c9a92be983e600828",
   "window_size": "(1280, 720)"
 }

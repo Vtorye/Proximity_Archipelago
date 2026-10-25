@@ -5,13 +5,13 @@
     "assignment_load": {
       "new_searches": 0,
       "requests": 1000,
-      "wall_ms": 548.374,
+      "wall_ms": 519.924,
       "workplaces": 103
     },
     "navigation_100x100": {
-      "10000_cached_reads_ms": 8.03,
+      "10000_cached_reads_ms": 7.429,
       "cache_limit": 8,
-      "cold_field_ms": 32.233,
+      "cold_field_ms": 30.855,
       "field_bytes": 50000
     },
     "navigation_50x50": {
@@ -31,7 +31,7 @@
           "stone": 40,
           "wood": 88
         },
-        "wall_ms": 258.691,
+        "wall_ms": 228.502,
         "won": false
       },
       "roads": {
@@ -46,11 +46,11 @@
           "stone": 290,
           "wood": 100
         },
-        "wall_ms": 364.268,
+        "wall_ms": 267.047,
         "won": true
       }
     }
   },
-  "source_revision": "a6c96e8f4b83b30f996e9914b2fe0778fe54fc3b",
-  "note": "Final domain code; subsequent changes affect UI feedback, camera GUI coverage, resource UIDs and documentation."
+  "source_revision": "36efc2b27dca093409d9748cf8bbee81e46cbe56",
+  "note": "Subsequent changes adjust pixel font selection and UI checks only; domain code unchanged."
 }
