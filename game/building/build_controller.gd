@@ -94,6 +94,7 @@ func try_build_batch(commands: Dictionary[Vector2i, BuildOption]) -> bool:
 		return true
 	var costs: Array[ResourceAmount] = []
 	var cells: Array[Vector2i] = []
+	var occupied: Dictionary[Vector2i, bool] = {}
 	var candidates: Array[Building] = []
 	var spawn_count := 0
 	for cell in commands:
@@ -102,10 +103,11 @@ func try_build_batch(commands: Dictionary[Vector2i, BuildOption]) -> bool:
 		if not last_result.allowed():
 			break
 		for target in _footprint(option, cell):
-			if cells.has(target):
+			if occupied.has(target):
 				last_result = PlacementCheck.result(PlacementCheck.Code.OCCUPIED)
 				break
 			cells.append(target)
+			occupied[target] = true
 		if not last_result.allowed():
 			break
 		costs.append_array(option.costs)

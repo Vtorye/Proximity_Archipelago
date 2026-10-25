@@ -5,6 +5,7 @@ signal changed
 var controller: BuildController
 var last_result := PlacementCheck.new()
 var _commands: Dictionary[Vector2i, BuildOption] = {}
+var _occupied: Dictionary[Vector2i, Vector2i] = {}
 var _history: Array[Dictionary] = []
 var _stroke: Dictionary[Vector2i, BuildOption] = {}
 var _painting := false
@@ -29,6 +30,7 @@ func end_stroke() -> void:
 func paint(option: BuildOption, cell: Vector2i) -> bool:
 	last_result = controller.placement_check(option, cell)
 	if last_result.code == PlacementCheck.Code.ALREADY_PLACED and _commands.has(cell):
+		_unindex(cell)
 		_commands.erase(cell)
 		last_result = PlacementCheck.new()
 		changed.emit()
@@ -38,13 +40,13 @@ func paint(option: BuildOption, cell: Vector2i) -> bool:
 	if _commands.get(cell) == option:
 		return true
 	var footprint: Array[Vector2i] = controller.footprint_at(option, cell)
-	for origin in _commands:
-		if origin == cell: continue
-		for target in controller.footprint_at(_commands[origin], origin):
-			if footprint.has(target):
-				last_result = PlacementCheck.result(PlacementCheck.Code.OCCUPIED)
-				return false
+	for target in footprint:
+		if _occupied.has(target) and _occupied[target] != cell:
+			last_result = PlacementCheck.result(PlacementCheck.Code.OCCUPIED)
+			return false
+	_unindex(cell)
 	_commands[cell] = option
+	for target in footprint: _occupied[target] = cell
 	changed.emit()
 	return true
 
@@ -52,6 +54,9 @@ func undo() -> void:
 	end_stroke()
 	if _history.is_empty(): return
 	_commands.assign(_history.pop_back())
+	_occupied.clear()
+	for cell in _commands:
+		for target in controller.footprint_at(_commands[cell], cell): _occupied[target] = cell
 	last_result = PlacementCheck.new()
 	changed.emit()
 
@@ -60,6 +65,7 @@ func can_undo() -> bool:
 
 func clear() -> void:
 	_commands.clear()
+	_occupied.clear()
 	_history.clear()
 	_stroke.clear()
 	_painting = false
@@ -92,4 +98,8 @@ func commit() -> bool:
 		return false
 	clear()
 	return true
+
+func _unindex(cell: Vector2i) -> void:
+	if not _commands.has(cell): return
+	for target in controller.footprint_at(_commands[cell], cell): _occupied.erase(target)
 
