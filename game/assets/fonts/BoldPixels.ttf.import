@@ -1,9 +1,14 @@
 [remap]
+
 importer="font_data_dynamic"
 type="FontFile"
+uid="uid://cn3d3orcarq4o"
+path="res://.godot/imported/BoldPixels.ttf-4b1dc50a563878ab0e402639a07fe04c.fontdata"
 
 [deps]
+
 source_file="res://game/assets/fonts/BoldPixels.ttf"
+dest_files=["res://.godot/imported/BoldPixels.ttf-4b1dc50a563878ab0e402639a07fe04c.fontdata"]
 
 [params]
 

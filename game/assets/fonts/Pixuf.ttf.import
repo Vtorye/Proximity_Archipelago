@@ -1,9 +1,14 @@
 [remap]
+
 importer="font_data_dynamic"
 type="FontFile"
+uid="uid://c5kwgiwldeiaj"
+path="res://.godot/imported/Pixuf.ttf-ad7849f3fba4aa4630dd0de267144e6e.fontdata"
 
 [deps]
+
 source_file="res://game/assets/fonts/Pixuf.ttf"
+dest_files=["res://.godot/imported/Pixuf.ttf-ad7849f3fba4aa4630dd0de267144e6e.fontdata"]
 
 [params]
 
