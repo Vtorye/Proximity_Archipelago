@@ -32,7 +32,7 @@ func rebuild(blocked_cells: Array[Vector2i] = []) -> void:
 	for cell in _grid.walkable_cells():
 		if not next.walkable(cell):
 			last_changed.append(cell)
-	if last_changed.is_empty() and revision > 0:
+	if last_changed.is_empty() and revision > 0 and next.rect() == _grid.rect():
 		return
 	_grid = next
 	_algorithm.build(_grid)
