@@ -8,6 +8,10 @@ func _ready() -> void:
 	resume.pressed.connect(PauseController.resume)
 	content.add_child(resume)
 	controls[&"resume"] = resume
+	var restart: Button = ColonyStyle.button("Заново")
+	restart.pressed.connect(_restart)
+	content.add_child(restart)
+	controls[&"restart"] = restart
 	var settings: Button = ColonyStyle.button("Настройки")
 	settings.pressed.connect(_open_settings)
 	content.add_child(settings)
@@ -21,6 +25,9 @@ func _ready() -> void:
 func _open_settings() -> void:
 	# Nested overlay: sits on top of the pause menu
 	Router.push_overlay(&"settings")
+
+func _restart() -> void:
+	Router.goto(&"match")
 
 func _quit_to_menu() -> void:
 	# Explicitly unpause before navigating away through the owning pause boundary.
