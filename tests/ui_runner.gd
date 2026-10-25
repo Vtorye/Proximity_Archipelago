@@ -95,7 +95,11 @@ func validate_popup(menu: BuildMenu) -> void:
 	var viewport: Rect2 = get_viewport().get_visible_rect()
 	expect(viewport.encloses(rect), "build menu stays fully inside viewport")
 	expect(not rect.intersects(screen.selection.screen_rect().grow(-1)), "build menu does not cover selected cell")
-	expect(rect.position.y >= 60 and rect.end.y <= viewport.end.y - 32, "build menu keeps permanent controls accessible")
+	for obstacle in menu.context.obstacles:
+		expect(not rect.intersects(obstacle), "build menu does not cover objectives")
+	if menu._message.visible:
+		expect(not rect.intersects(menu._message.get_global_rect()), "help never covers construction choices")
+	expect(rect.position.y >= 60 and rect.end.y <= viewport.end.y - 72, "build menu keeps permanent controls accessible")
 
 func _run() -> void:
 	seed(20261025)
@@ -157,6 +161,7 @@ func _run() -> void:
 	get_viewport().push_input(motion, true)
 	await frames(3)
 	expect(not menu._message.text.is_empty(), "disabled placement explains its reason inline")
+	validate_popup(menu)
 	await capture("07-placement-help")
 	await key(KEY_ESCAPE)
 	menu = await select_cell(cell)
@@ -217,6 +222,7 @@ func _run() -> void:
 	menu = await select_cell(Vector2i(55, 54))
 	expect(menu.controls[&"house"].disabled, "occupied nest cell rejects replacement")
 	await click(menu.controls[&"demolish"])
+	validate_popup(menu)
 	await capture("14-demolition-confirmation")
 	expect(menu._confirming and screen.world.population.count() == 10, "demolition waits for confirmation")
 	await click(menu.controls[&"cancel_demolish"])

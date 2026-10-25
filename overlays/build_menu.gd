@@ -12,6 +12,7 @@ var _message: Label
 var _demolish: Button
 var _cancel: Button
 var _confirming := false
+var _choices: ScrollContainer
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -21,6 +22,7 @@ func _ready() -> void:
 		close_requested.emit.call_deferred(self)
 		return
 	_panel = PanelContainer.new()
+	_panel.add_theme_stylebox_override("panel", ColonyStyle.dialog_box())
 	_panel.custom_minimum_size.x = 216
 	add_child(_panel)
 	var content := VBoxContainer.new()
@@ -41,7 +43,8 @@ func _ready() -> void:
 	_description = ColonyStyle.label("", 8, ColonyStyle.MUTED)
 	content.add_child(_description)
 	var scroll := ScrollContainer.new()
-	scroll.custom_minimum_size = Vector2(200, 136)
+	_choices = scroll
+	scroll.custom_minimum_size = Vector2(200, 128)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	content.add_child(scroll)
 	var options := VBoxContainer.new()
@@ -53,10 +56,10 @@ func _ready() -> void:
 			continue
 		var button: Button = ColonyStyle.button(option.display_name)
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		button.custom_minimum_size.y = 32
+		button.custom_minimum_size.y = 30
 		button.icon = _icon(option)
 		button.expand_icon = true
-		button.add_theme_constant_override("icon_max_width", 24)
+		button.add_theme_constant_override("icon_max_width", 20)
 		button.add_theme_constant_override("h_separation", 4)
 		button.pressed.connect(_choose.bind(option))
 		button.mouse_entered.connect(_show_help.bind(option))
@@ -66,7 +69,7 @@ func _ready() -> void:
 		controls[option.id] = button
 	_message = ColonyStyle.label("", 8, ColonyStyle.TEXT)
 	_message.add_theme_stylebox_override("normal", ColonyStyle.box())
-	_message.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_message.autowrap_mode = TextServer.AUTOWRAP_OFF
 	add_child(_message)
 	_message.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
 	_message.offset_left = 8
@@ -103,13 +106,24 @@ func retarget(cell: Vector2i, anchor: Rect2) -> void:
 
 func reposition() -> void:
 	var viewport: Vector2 = get_viewport_rect().size
-	var safe := Rect2(8, 60, viewport.x - 16, viewport.y - 92)
+	var safe := Rect2(8, 60, viewport.x - 16, viewport.y - 132)
 	var popup: Vector2 = _panel.get_combined_minimum_size()
 	_panel.size = popup
-	var x: float = context.anchor.end.x + 6
-	if x + popup.x > safe.end.x:
-		x = context.anchor.position.x - popup.x - 6
-	_panel.position = Vector2(clampf(x, safe.position.x, maxf(safe.position.x, safe.end.x - popup.x)), clampf(context.anchor.position.y, safe.position.y, maxf(safe.position.y, safe.end.y - popup.y))).round()
+	var candidates: Array[float] = [context.anchor.end.x + 6, context.anchor.position.x - popup.x - 6]
+	for obstacle in context.obstacles:
+		candidates.append(obstacle.end.x + 6)
+		candidates.append(obstacle.position.x - popup.x - 6)
+	var y: float = clampf(context.anchor.position.y, safe.position.y, maxf(safe.position.y, safe.end.y - popup.y))
+	for x in candidates:
+		var position := Vector2(clampf(x, safe.position.x, maxf(safe.position.x, safe.end.x - popup.x)), y).round()
+		var rect := Rect2(position, popup)
+		var blocked: bool = rect.intersects(context.anchor.grow(-1))
+		for obstacle in context.obstacles:
+			blocked = blocked or rect.intersects(obstacle)
+		if not blocked:
+			_panel.position = position
+			return
+	_panel.position = Vector2(safe.position.x, y)
 
 func _icon(option: BuildOption) -> Texture2D:
 	if option.icon != null:
@@ -125,6 +139,7 @@ func _refresh() -> void:
 	if not is_instance_valid(context.controller):
 		close_requested.emit(self)
 		return
+	_choices.visible = not _confirming
 	_title.text = "%d:%d" % [context.cell.x, context.cell.y]
 	var occupant: Building = context.controller.registry.at(context.cell)
 	_description.text = "Строительство"

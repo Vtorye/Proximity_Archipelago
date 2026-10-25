@@ -110,6 +110,7 @@ func select_cell(cell: Vector2i) -> void:
 	context.art = world.art
 	context.cell = cell
 	context.anchor = selection.screen_rect()
+	context.obstacles = hud.build_obstacles()
 	_build_menu = Router.push_overlay(&"build", context) as BuildMenu
 	if _build_menu != null:
 		_build_menu.action_completed.connect(hud.toast)
@@ -122,6 +123,7 @@ func _process(_delta: float) -> void:
 	hud.lock_zoom(Router.has_overlay())
 	if is_instance_valid(_build_menu) and not _build_menu.is_queued_for_deletion():
 		_build_menu.context.anchor = selection.screen_rect()
+		_build_menu.context.obstacles = hud.build_obstacles()
 
 func _close_build() -> void:
 	selection.clear()

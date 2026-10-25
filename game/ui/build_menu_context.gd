@@ -6,3 +6,4 @@ var population: ColonyPopulation
 var art: ArtCatalog
 var cell: Vector2i
 var anchor: Rect2
+var obstacles: Array[Rect2] = []

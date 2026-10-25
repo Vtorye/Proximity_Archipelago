@@ -16,6 +16,7 @@ var _toast: Label
 var _toast_time := 0.0
 var _warning: Label
 var _zoom_level := 2
+var _objectives: PanelContainer
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -71,6 +72,7 @@ func _ready() -> void:
 	row.add_child(settings)
 	controls[&"settings"] = settings
 	var objectives := PanelContainer.new()
+	_objectives = objectives
 	objectives.position = Vector2(8, 64)
 	objectives.custom_minimum_size = Vector2(168, 0)
 	add_child(objectives)
@@ -162,7 +164,11 @@ func set_zoom(value: int) -> void:
 	controls[&"zoom_in"].disabled = value >= WorldCamera.ZOOMS.size() - 1
 	controls[&"zoom_out"].disabled = value <= 0
 
+func build_obstacles() -> Array[Rect2]:
+	return [_objectives.get_global_rect()]
+
 func lock_zoom(locked: bool) -> void:
+	_toast.visible = _toast_time > 0.0 and not locked
 	controls[&"zoom_in"].disabled = locked or _zoom_level >= WorldCamera.ZOOMS.size() - 1
 	controls[&"zoom_out"].disabled = locked or _zoom_level <= 0
 
