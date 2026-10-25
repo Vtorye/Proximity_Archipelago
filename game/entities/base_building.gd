@@ -7,6 +7,11 @@ var cell: Vector2i
 ## May be null for buildings placed in the scene from the start.
 @export var option: BuildOption
 var _is_setup := false
+var _is_demolished := false
+@export var title := "Строение"
+
+func display_title() -> String:
+	return option.display_name if option != null else title
 
 
 ## Called once. Fills the fields and then calls _on_setup().
@@ -28,6 +33,9 @@ func setup(origin: Vector2i, build_option: BuildOption) -> bool:
 ## leaves all groups and detaches from the tree. The caller must free() the node after this
 ## returns (a node cannot free itself while one of its methods is running).
 func demolish() -> void:
+	if _is_demolished:
+		return
+	_is_demolished = true
 	_on_demolish()
 	demolished.emit(self)
 	for group in get_groups():

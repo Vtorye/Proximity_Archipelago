@@ -108,7 +108,9 @@ func _refresh() -> void:
 	var occupant: Building = context.controller.registry.at(context.cell)
 	_description.text = "Выберите постройку или покрытие"
 	if occupant != null:
-		_description.text = "Здание: %s" % (occupant.option.display_name if occupant.option != null else occupant.name)
+		_description.text = "Здание: %s" % occupant.display_title()
+	elif not context.controller.route_service.walkable(context.cell):
+		_description.text = "Вода · строительство недоступно"
 	for option in _buttons:
 		var button: Button = _buttons[option]
 		var cost: ResourceAmount = option.cost

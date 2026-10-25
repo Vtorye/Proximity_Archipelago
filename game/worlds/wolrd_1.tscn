@@ -44,6 +44,7 @@ option = ExtResource("nest_option")
 [node name="Workplace" type="Node2D" parent="."]
 position = Vector2(744, 760)
 script = ExtResource("workplace")
+title = "Участок древесины"
 work_slots = 4
 output = ExtResource("wood")
 output_amount = 2
@@ -52,6 +53,7 @@ texture = ExtResource("timber_art")
 [node name="Workplace2" type="Node2D" parent="."]
 position = Vector2(872, 744)
 script = ExtResource("workplace")
+title = "Каменная россыпь"
 work_slots = 4
 output = ExtResource("stone")
 output_amount = 2
@@ -60,6 +62,7 @@ texture = ExtResource("stone_art")
 [node name="Food" type="Node2D" parent="."]
 position = Vector2(856, 824)
 script = ExtResource("canteen")
+title = "Столовая"
 [node name="Sprite" type="Sprite2D" parent="Food"]
 texture = ExtResource("nest_art")
 modulate = Color(1, 0.82, 0.52, 1)
