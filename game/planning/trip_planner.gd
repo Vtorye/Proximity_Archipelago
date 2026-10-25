@@ -2,11 +2,15 @@ class_name TripPlanner
 extends Node
 ## World-local assignment policy. Geometry remains in RouteService; hunger stays in AntNeeds.
 
+signal opportunities_changed
+
 const CARRY_SPEED_RATIO := 0.8
+const LOAD_PENALTY_SECONDS := 0.5
 var registry: BuildingRegistry
 var navigation: RouteService
 var inventory: WorldInventory
 var food_type: ResourceType
+var _opportunities_queued := false
 var _home_fields: Dictionary[Vector2i, NavigationField] = {}
 var _revision := -1
 
@@ -16,6 +20,8 @@ func configure(buildings: BuildingRegistry, routes: RouteService, stock: WorldIn
 	inventory = stock
 	food_type = food
 	registry.changed.connect(refresh_food)
+	registry.added.connect(_on_workplace_membership_changed)
+	registry.removed.connect(_on_workplace_membership_changed)
 
 func refresh_food() -> void:
 	var cells: Array[Vector2i] = []
@@ -29,10 +35,13 @@ func reserve_meal() -> StockReservation:
 func escape_energy(cell: Vector2i, speed: float) -> float:
 	return travel_energy(navigation.food_field().cost(cell), speed) + AntNeeds.MEAL_SECONDS * AntNeeds.EAT_RATE
 
-func travel_energy(cost: float, speed: float) -> float:
-	return cost * navigation.cell_size() / maxf(speed, 0.01) * AntNeeds.WALK_RATE
+func travel_seconds(cost: float, speed: float) -> float:
+	return cost * navigation.cell_size() / maxf(speed, 0.01)
 
-func plan_work(agent: Node2D, home: Building, needs: AntNeeds, speed: float, work_time: float, ticket: StockReservation) -> WorkPlan:
+func travel_energy(cost: float, speed: float) -> float:
+	return travel_seconds(cost, speed) * AntNeeds.WALK_RATE
+
+func plan_work(agent: Node2D, home: Building, needs: AntNeeds, speed: float, work_time: float, ticket: StockReservation, current: Workplace = null) -> WorkPlan:
 	if ticket == null or not ticket.active or not is_instance_valid(home):
 		return null
 	var home_cell: Vector2i = accessible_entry(home)
@@ -42,29 +51,31 @@ func plan_work(agent: Node2D, home: Building, needs: AntNeeds, speed: float, wor
 	var home_field: NavigationField = _home_fields[home_cell]
 	var from_cell: Vector2i = navigation.world_to_cell(agent.global_position)
 	var outward: NavigationField = navigation.distances_from(from_cell)
+	var approach: float = agent.global_position.distance_to(navigation.cell_to_world(from_cell)) * navigation.entry_cost(from_cell) / maxf(speed, 0.01)
 	var food_after_home: float = escape_energy(home_cell, speed)
+	var workplaces: Array[Workplace] = registry.workplaces()
 	var best_score := INF
 	var best: WorkPlan
 	var feasible_busy := false
 	var possible_after_meal := false
-	for workplace in registry.workplaces():
+	for workplace in workplaces:
 		for entry in workplace.entry_cells():
-			var to_work: float = travel_energy(outward.cost(entry), speed)
+			var to_work: float = approach + travel_seconds(outward.cost(entry), speed)
 			var back_home: float = travel_energy(home_field.cost(entry), speed * CARRY_SPEED_RATIO)
-			var energy: float = to_work + work_time * AntNeeds.WORK_RATE + back_home + food_after_home + 2.0
+			var energy: float = to_work * AntNeeds.WALK_RATE + work_time * AntNeeds.WORK_RATE + back_home + food_after_home + 2.0
 			possible_after_meal = possible_after_meal or energy + AntNeeds.SAFETY_MARGIN <= AntNeeds.CAPACITY
 			if not needs.can_afford(energy):
 				continue
-			if not workplace.has_free_slot():
+			if not workplace.has_worker(agent) and not workplace.has_free_slot():
 				feasible_busy = true
 				continue
-			var stock_level: float = inventory.quantity(workplace.output) if workplace.output != null else 100000.0
-			var score: float = stock_level / maxf(1.0, workplace.output_amount) + to_work * 0.25
-			if score < best_score:
+			# Compare other ants; the deciding ant would occupy one slot at either choice.
+			var load_count: int = workplace.worker_count() - (1 if workplace.has_worker(agent) else 0)
+			var score: float = to_work + LOAD_PENALTY_SECONDS * load_count
+			if score < best_score or is_equal_approx(score, best_score) and workplace == current:
 				best_score = score
 				best = WorkPlan.new()
 				best.workplace = workplace
-				best.outward = navigation.make_route(outward.path(entry))
 				best.job_cell = entry
 				best.home_cell = home_cell
 				best.estimated_energy = energy
@@ -72,9 +83,24 @@ func plan_work(agent: Node2D, home: Building, needs: AntNeeds, speed: float, wor
 	if best == null and (feasible_busy or not possible_after_meal and needs.can_afford(food_after_home + 2.0)):
 		best = WorkPlan.new()
 		best.waiting_for_slot = true
-	if best != null and not best.waiting_for_slot and not best.workplace.reserve_worker(agent):
-		return null
+		best.waiting_reason = WorkPlan.WaitReason.SLOTS_FULL if feasible_busy else WorkPlan.WaitReason.NO_SAFE_WORK
+	if best != null and not best.waiting_for_slot:
+		if not best.workplace.has_worker(agent) and not best.workplace.reserve_worker(agent):
+			return null
+		best.outward = navigation.make_route(outward.path(best.job_cell))
+	if best != null and is_instance_valid(current) and current != best.workplace:
+		current.release_worker(agent)
 	return best
+
+func _on_workplace_membership_changed(building: Building) -> void:
+	if not building is Workplace or _opportunities_queued:
+		return
+	_opportunities_queued = true
+	_emit_opportunities_changed.call_deferred()
+
+func _emit_opportunities_changed() -> void:
+	_opportunities_queued = false
+	opportunities_changed.emit()
 
 func accessible_entry(building: Building) -> Vector2i:
 	for cell in building.entry_cells():
