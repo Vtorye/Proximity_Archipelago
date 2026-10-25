@@ -23,6 +23,7 @@ func build(grid: TileGrid) -> void:
 	_astar.region = rect
 	_astar.cell_size = Vector2.ONE
 	_astar.diagonal_mode = AStarGrid2D.DIAGONAL_MODE_NEVER
+	_astar.default_estimate_heuristic = AStarGrid2D.HEURISTIC_MANHATTAN
 	_astar.update()
 
 	# AStarGrid2D defaults to open cells, so close everything first.

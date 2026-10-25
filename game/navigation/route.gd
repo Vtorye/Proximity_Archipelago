@@ -3,6 +3,8 @@ extends RefCounted
 
 var cells: Array[Vector2i] = []
 var current_index: int = 0
+var cost := 0.0
+var revision := 0
 
 
 static func invalid() -> Route:
@@ -34,5 +36,5 @@ func next_cell() -> Vector2i:
 
 
 func advance() -> void:
-	if not is_finished():
+	if is_valid() and not is_finished():
 		current_index += 1
