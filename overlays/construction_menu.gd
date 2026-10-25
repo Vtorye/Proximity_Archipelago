@@ -40,18 +40,14 @@ func _ready() -> void:
 	var content := VBoxContainer.new()
 	content.add_theme_constant_override("separation", 4)
 	panel.add_child(content)
-	var title := HBoxContainer.new()
-	title.add_theme_constant_override("separation", 8)
-	content.add_child(title)
-	title.add_child(ColonyStyle.label("Стройка · пауза", 8, ColonyStyle.ACCENT))
-	var hints: Label = ColonyStyle.label("ЛКМ: рисовать  СКМ/WASD: камера", 6, ColonyStyle.MUTED)
-	hints.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	hints.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	title.add_child(hints)
+	var toolbar := HBoxContainer.new()
+	toolbar.add_theme_constant_override("separation", 6)
+	content.add_child(toolbar)
 	var scroll := ScrollContainer.new()
 	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	scroll.custom_minimum_size.y = 54
-	content.add_child(scroll)
+	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.custom_minimum_size.y = 34
+	toolbar.add_child(scroll)
 	var choices := HBoxContainer.new()
 	choices.add_theme_constant_override("separation", 4)
 	scroll.add_child(choices)
@@ -61,28 +57,40 @@ func _ready() -> void:
 		var button := BuildChoiceButton.new()
 		button.option = option
 		button.art = context.art
-		button.card_width = 144
+		button.card_width = 112
+		button.compact = true
+		button.tooltip_text = "%s: %s" % [option.display_name, BuildCostText.format(option.costs)]
 		button.toggle_mode = true
 		button.button_group = group
 		button.pressed.connect(_select.bind(option))
 		choices.add_child(button)
 		controls[option.id] = button
 		if _selected == null: _select(option)
-	_cost = ColonyStyle.label("", 6)
-	_cost.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	content.add_child(_cost)
-	_status = ColonyStyle.label("", 6, ColonyStyle.MUTED)
-	_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	content.add_child(_status)
 	var actions := HBoxContainer.new()
-	actions.add_theme_constant_override("separation", 6)
-	content.add_child(actions)
-	for entry in [[&"undo", "Отменить ход", _undo], [&"cancel", "Отменить всё", _cancel], [&"apply", "Продолжить", apply_and_resume]]:
-		var button: Button = ColonyStyle.button(entry[1], entry[0] == &"apply")
-		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		button.pressed.connect(entry[2])
+	actions.add_theme_constant_override("separation", 4)
+	toolbar.add_child(actions)
+	for entry in [[&"undo", "Отменить ход (Ctrl+Z)", "undo", _undo], [&"cancel", "Отменить всё", "cancel", _cancel], [&"apply", "Применить и продолжить (Esc)", "apply", apply_and_resume]]:
+		var button: Button = ColonyStyle.button("", entry[0] == &"apply")
+		button.custom_minimum_size = Vector2(32, 32)
+		button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		button.icon = load("res://game/assets/ui/build_%s.svg" % entry[2])
+		button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		button.tooltip_text = entry[1]
+		button.pressed.connect(entry[3])
 		actions.add_child(button)
 		controls[entry[0]] = button
+	var summary := HBoxContainer.new()
+	summary.add_theme_constant_override("separation", 8)
+	content.add_child(summary)
+	_cost = ColonyStyle.label("", 6)
+	_cost.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_cost.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	summary.add_child(_cost)
+	summary.add_child(ColonyStyle.label("Пауза · ЛКМ: строить · СКМ/WASD: камера", 4, ColonyStyle.MUTED))
+	_status = ColonyStyle.label("", 6, ColonyStyle.DANGER)
+	_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_status.hide()
+	content.add_child(_status)
 	draft.changed.connect(_queue_refresh)
 	_refresh()
 	default_focus = controls[_selected.id] if _selected != null else controls[&"cancel"]
@@ -105,7 +113,8 @@ func _refresh() -> void:
 	controls[&"undo"].disabled = not draft.can_undo()
 	controls[&"apply"].disabled = not budget.allowed()
 	var reason: PlacementCheck = budget if not budget.allowed() else draft.last_result
-	_status.text = PlacementMessages.text(reason.code) if not reason.allowed() else "Ресурсы спишутся при продолжении. Esc: применить план."
+	_status.text = PlacementMessages.text(reason.code)
+	_status.visible = not reason.allowed()
 	_status.add_theme_color_override("font_color", ColonyStyle.DANGER if not reason.allowed() else ColonyStyle.MUTED)
 	_preview.queue_redraw()
 
@@ -130,7 +139,10 @@ func apply_and_resume() -> void:
 
 func _input(event: InputEvent) -> void:
 	if not visible: return
-	if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode in [KEY_ESCAPE, KEY_B]:
+	if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_Z and event.ctrl_pressed:
+		_undo()
+		get_viewport().set_input_as_handled()
+	elif event is InputEventKey and event.pressed and not event.echo and event.physical_keycode in [KEY_ESCAPE, KEY_B]:
 		apply_and_resume()
 		get_viewport().set_input_as_handled()
 	elif event is InputEventMouseButton and not event.pressed:
@@ -170,7 +182,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 
 func _point_allowed(point: Vector2) -> bool:
-	if point.y < 60 or point.y >= panel.position.y or not get_viewport_rect().has_point(point): return false
+	if point.y < 60 * AppSettings.ui_scale or point.y >= panel.get_global_rect().position.y or not get_viewport_rect().has_point(point): return false
 	for obstacle in context.obstacles:
 		if obstacle.has_point(point): return false
 	return true
