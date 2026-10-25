@@ -28,7 +28,7 @@ func click(control: Control) -> void:
 		event.button_index = MOUSE_BUTTON_LEFT
 		event.pressed = pressed
 		get_viewport().push_input(event, true)
-		await frames(2)
+	await frames(4)
 
 func _run() -> void:
 	AppSettings.reset_defaults()

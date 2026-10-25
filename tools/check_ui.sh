@@ -15,7 +15,7 @@ godot_binary="${GODOT_BIN:-godot}"
 "$godot_binary" --headless --path "$ui_root/project" --editor --quit > "$ui_root/import.log" 2>&1
 mkdir -p "$project_root/evidence/after"
 export COLONY_EVIDENCE_DIR="$project_root/evidence/after"
-if ! "$godot_binary" --path "$ui_root/project" --display-driver x11 --audio-driver Dummy --resolution 1280x720 --fixed-fps 30 --write-movie "$ui_root/interface.avi" res://tests/ui_runner.tscn > "$ui_root/ui.log" 2>&1; then cat "$ui_root/ui.log"; exit 1; fi
+if ! "$godot_binary" --path "$ui_root/project" --display-driver x11 --audio-driver Dummy --resolution 1280x720 --fixed-fps 30 --quit-after 3600 --write-movie "$ui_root/interface.avi" res://tests/ui_runner.tscn > "$ui_root/ui.log" 2>&1; then cat "$ui_root/ui.log"; exit 1; fi
 cat "$ui_root/ui.log"
 if rg -q 'SCRIPT ERROR|leaked|UI TESTS FAIL' "$ui_root/ui.log" || ! rg -q '^UI TESTS PASS$' "$ui_root/ui.log"; then exit 1; fi
 ffmpeg -hide_banner -loglevel error -y -i "$ui_root/interface.avi" -c:v libx264 -crf 20 -pix_fmt yuv420p -c:a aac -b:a 96k "$project_root/evidence/after/interface-walkthrough.mp4"
@@ -24,7 +24,7 @@ for resolution in 960x600 1920x1080; do
   layout_args=(--resolution "$resolution")
   virtual_args=()
   if [ "$resolution" = "1920x1080" ]; then layout_args=(--resolution 1280x720); virtual_args=(--virtual-resolution=1920x1080); fi
-  if ! "$godot_binary" --path "$ui_root/project" --display-driver x11 --audio-driver Dummy "${layout_args[@]}" --fixed-fps 30 res://tests/ui_runner.tscn -- --layout-only "${virtual_args[@]}" > "$ui_root/layout.log" 2>&1; then cat "$ui_root/layout.log"; exit 1; fi
+  if ! "$godot_binary" --path "$ui_root/project" --display-driver x11 --audio-driver Dummy "${layout_args[@]}" --fixed-fps 30 --quit-after 1200 res://tests/ui_runner.tscn -- --layout-only "${virtual_args[@]}" > "$ui_root/layout.log" 2>&1; then cat "$ui_root/layout.log"; exit 1; fi
   cat "$ui_root/layout.log"
   if rg -q 'SCRIPT ERROR|UI TESTS FAIL' "$ui_root/layout.log"; then exit 1; fi
   cp "$project_root/evidence/after/ui-report.json" "$project_root/evidence/after/ui-report-$resolution.json"

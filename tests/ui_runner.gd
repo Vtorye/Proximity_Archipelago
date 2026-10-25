@@ -36,13 +36,15 @@ func frames(count: int = 12) -> void:
 	for index in range(count):
 		await get_tree().process_frame
 
-func capture(label: String) -> void:
+func capture(label: String, linger: int = 12) -> Image:
 	await RenderingServer.frame_post_draw
 	var path: String = _output.path_join(label + ".png")
-	get_viewport().get_texture().get_image().save_png(path)
+	var image: Image = get_viewport().get_texture().get_image()
+	image.save_png(path)
 	captures.append(label)
 	print("CAPTURE ", label)
-	await frames(12)
+	await frames(linger)
+	return image
 
 func click_at(point: Vector2, button: MouseButton = MOUSE_BUTTON_LEFT) -> void:
 	var motion := InputEventMouseMotion.new()
@@ -56,7 +58,7 @@ func click_at(point: Vector2, button: MouseButton = MOUSE_BUTTON_LEFT) -> void:
 		event.position = point
 		event.global_position = point
 		get_viewport().push_input(event, true)
-		await frames(2)
+	await frames(4)
 
 func click(control: Control) -> void:
 	expect(is_instance_valid(control) and control.is_visible_in_tree(), "clicked control is visible")
@@ -134,9 +136,10 @@ func _run() -> void:
 	var menu: BuildMenu = await select_cell(cell)
 	validate_popup(menu)
 	await frames(7)
-	await capture("07-selection-bright")
+	var bright: Image = await capture("07-selection-bright", 0)
 	await frames(18)
-	await capture("08-selection-dim")
+	var dim: Image = await capture("08-selection-dim")
+	_check_brackets(bright, dim, screen.selection.screen_rect())
 	for item in [["left", Vector2(42, 390)], ["right", Vector2(1234, 390)], ["top", Vector2(800, 136)], ["bottom", Vector2(700, 630)]]:
 		await key(KEY_ESCAPE)
 		var desired: Vector2 = item[1]
@@ -267,6 +270,24 @@ func _run() -> void:
 	expect(Router.current_screen_key() == &"main_menu" and not Router.has_overlay() and not get_tree().paused, "completion during navigation cannot reopen a result")
 	AppSettings.reset_defaults()
 	_finish()
+
+func _check_brackets(bright: Image, dim: Image, rect: Rect2) -> void:
+	# Four independent pixel regions verify both presence and visible animation.
+	var scale: Vector2 = Vector2(bright.get_size()) / get_viewport().get_visible_rect().size
+	for corner in [rect.position, Vector2(rect.end.x, rect.position.y), rect.end, Vector2(rect.position.x, rect.end.y)]:
+		var a := 0.0
+		var b := 0.0
+		var pixel: Vector2i = Vector2i(corner * scale)
+		for y in range(-4, 5):
+			for x in range(-4, 5):
+				var point: Vector2i = pixel + Vector2i(x, y)
+				if Rect2i(Vector2i.ZERO, bright.get_size()).has_point(point):
+					var first: Color = bright.get_pixelv(point)
+					var second: Color = dim.get_pixelv(point)
+					a = maxf(a, minf(first.r, minf(first.g, first.b)))
+					b = maxf(b, minf(second.r, minf(second.g, second.b)))
+		expect(maxf(a, b) > 0.8, "selected tile has a white corner bracket")
+		expect(absf(a - b) > 0.1, "corner bracket visibly blinks")
 
 func _layout_only() -> void:
 	var tag: String = "layout-%dx%d-" % [int(get_viewport().get_visible_rect().size.x), int(get_viewport().get_visible_rect().size.y)]
