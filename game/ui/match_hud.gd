@@ -65,7 +65,9 @@ func _ready() -> void:
 	pause.pressed.connect(func(): pause_requested.emit())
 	row.add_child(pause)
 	controls[&"pause"] = pause
-	var settings: Button = _square_button("...", 32)
+	var settings: Button = _square_button("", 32)
+	settings.icon = preload("res://game/assets/ui/menu_dots.svg")
+	settings.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	settings.tooltip_text = "Настройки"
 	settings.pressed.connect(func(): settings_requested.emit())
 	row.add_child(settings)
