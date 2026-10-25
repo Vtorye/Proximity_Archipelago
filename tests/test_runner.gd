@@ -99,6 +99,15 @@ func _test_navigation() -> void:
 			for algorithm in [astar, dijkstra]:
 				var actual: float = algorithm.get_cost(start, finish)
 				expect((is_inf(actual) and is_inf(expected)) or is_equal_approx(actual, expected), "path cost matches independent reference")
+	var updates := TileGrid.new()
+	updates.configure(Rect2i(0, 0, 3, 2), PackedFloat32Array([1, 1, 1, 1, 1, 1]))
+	var changed_cells: Array[Vector2i] = [Vector2i(1, 0)]
+	for algorithm in [ASTAR.new(), DIJKSTRA.new()]:
+		algorithm.build(updates)
+		for value in [0.25, 2.0, 0.0, 1.0]:
+			updates = updates.with_cost(Vector2i(1, 0), value)
+			algorithm.update_grid(updates, changed_cells)
+			expect(is_equal_approx(algorithm.get_cost(Vector2i.ZERO, Vector2i(2, 0)), _reference(updates, Vector2i.ZERO, Vector2i(2, 0))), "incremental terrain updates preserve optimal path cost")
 	var grid := TileGrid.new()
 	grid.configure(Rect2i(0, 0, 3, 1), PackedFloat32Array([1.0, 2.0, 3.0]))
 	var reverse: NavigationField = GridSearch.build(grid, [Vector2i(2, 0)], true)
