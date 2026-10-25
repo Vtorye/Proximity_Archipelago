@@ -29,3 +29,9 @@ for resolution in 960x600 1920x1080; do
   if rg -q 'SCRIPT ERROR|UI TESTS FAIL' "$ui_root/layout.log"; then exit 1; fi
   cp "$project_root/evidence/after/ui-report.json" "$project_root/evidence/after/ui-report-$resolution.json"
 done
+
+export COLONY_DISPLAY_FRAMES="$ui_root/display-frames"
+if ! "$godot_binary" --path "$ui_root/project" --display-driver x11 --audio-driver Dummy --resolution 1280x720 --fixed-fps 30 res://tests/display_runner.tscn > "$ui_root/display.log" 2>&1; then cat "$ui_root/display.log"; exit 1; fi
+cat "$ui_root/display.log"
+if rg -q 'SCRIPT ERROR' "$ui_root/display.log"; then exit 1; fi
+ffmpeg -hide_banner -loglevel error -y -framerate 30 -i "$ui_root/display-frames/frame-%04d.png" -vf "scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2" -c:v libx264 -crf 20 -pix_fmt yuv420p "$project_root/evidence/after/display-settings.mp4"
