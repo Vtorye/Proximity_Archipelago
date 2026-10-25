@@ -74,9 +74,14 @@ func packed_costs() -> PackedFloat32Array:
 	return _costs
 
 func with_cost(cell: Vector2i, value: float) -> TileGrid:
+	return with_costs({cell: value})
+
+## A construction plan copies the grid once, regardless of the number of painted cells.
+func with_costs(values: Dictionary[Vector2i, float]) -> TileGrid:
 	var changed: PackedFloat32Array = _costs.duplicate()
-	if in_bounds(cell):
-		changed[index(cell)] = maxf(0.0, value)
+	for cell in values:
+		if in_bounds(cell):
+			changed[index(cell)] = maxf(0.0, values[cell])
 	var result := TileGrid.new()
 	result.configure(_rect, changed)
 	return result
