@@ -1,0 +1,283 @@
+extends Node
+## Runs the real GUI input pipeline, captures rendered frames, and checks visible behavior.
+var failures: Array[String] = []
+var assertions := 0
+var captures: Array[String] = []
+var screen: Node
+var _output: String
+
+func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS
+	_output = OS.get_environment("COLONY_EVIDENCE_DIR")
+	DirAccess.make_dir_recursive_absolute(_output)
+	_run.call_deferred()
+
+func expect(value: bool, message: String) -> void:
+	assertions += 1
+	if not value:
+		failures.append(message)
+		print("UI FAIL ", message)
+
+func frames(count: int = 12) -> void:
+	for index in range(count):
+		await get_tree().process_frame
+
+func capture(label: String) -> void:
+	await RenderingServer.frame_post_draw
+	var path: String = _output.path_join(label + ".png")
+	get_viewport().get_texture().get_image().save_png(path)
+	captures.append(label)
+	print("CAPTURE ", label)
+
+func click_at(point: Vector2, button: MouseButton = MOUSE_BUTTON_LEFT) -> void:
+	var motion := InputEventMouseMotion.new()
+	motion.position = point
+	motion.global_position = point
+	get_viewport().push_input(motion, true)
+	for pressed in [true, false]:
+		var event := InputEventMouseButton.new()
+		event.button_index = button
+		event.pressed = pressed
+		event.position = point
+		event.global_position = point
+		get_viewport().push_input(event, true)
+		await frames(2)
+
+func click(control: Control) -> void:
+	expect(is_instance_valid(control) and control.is_visible_in_tree(), "clicked control is visible")
+	if is_instance_valid(control):
+		await click_at(control.get_global_rect().get_center())
+
+func key(code: Key) -> void:
+	for pressed in [true, false]:
+		var event := InputEventKey.new()
+		event.keycode = code
+		event.physical_keycode = code
+		event.pressed = pressed
+		get_viewport().push_input(event, true)
+		await frames(2)
+
+func cell_point(cell: Vector2i) -> Vector2:
+	var map: TileMapLayer = screen.world.get_node("Map") as TileMapLayer
+	return map.get_global_transform_with_canvas() * map.map_to_local(cell)
+
+func select_cell(cell: Vector2i) -> BuildMenu:
+	await click_at(cell_point(cell))
+	await frames(6)
+	var menu: BuildMenu = Router.top_overlay() as BuildMenu
+	expect(menu != null and screen.selection.selected and screen.selection.cell == cell, "mouse selects the requested map cell")
+	return menu
+
+func validate_popup(menu: BuildMenu) -> void:
+	if menu == null:
+		return
+	var rect: Rect2 = menu._panel.get_global_rect()
+	var viewport: Rect2 = get_viewport().get_visible_rect()
+	expect(viewport.encloses(rect), "build menu stays fully inside viewport")
+	expect(not rect.intersects(screen.selection.screen_rect().grow(-1)), "build menu does not cover selected cell")
+	expect(rect.position.y >= 100 and rect.end.y <= viewport.end.y - 54, "build menu keeps permanent controls accessible")
+
+func _run() -> void:
+	seed(20261025)
+	AppSettings.reset_defaults()
+	var boot: Node = load("res://boot.tscn").instantiate()
+	get_tree().root.add_child(boot)
+	await frames(35)
+	expect(Router.current_screen_key() == &"main_menu", "main menu starts")
+	if "--layout-only" in OS.get_cmdline_user_args():
+		await _layout_only()
+		_finish()
+		return
+	await capture("01-main-menu")
+	await key(KEY_TAB)
+	expect(get_viewport().gui_get_focus_owner() != null, "keyboard focus is visible")
+	await capture("02-keyboard-focus")
+	await click(Router._current.controls[&"settings"])
+	await frames()
+	var settings: MenuBase = Router.top_overlay()
+	expect(settings != null and not get_tree().paused, "main-menu settings open without pausing a session")
+	await capture("03-main-settings")
+	await click(settings.controls[&"volume"])
+	await click(settings.controls[&"vsync"])
+	await click(settings.controls[&"show_grid"])
+	await click(settings.controls[&"reduced_motion"])
+	expect(AppSettings.master_volume < 65 and not AppSettings.vsync and AppSettings.show_grid and AppSettings.reduced_motion, "settings controls apply real values")
+	await capture("04-settings-modified")
+	var config := ConfigFile.new()
+	expect(config.load(AppSettings.PATH) == OK and config.get_value("interface", "grid", false), "settings persist to disk")
+	await click(settings.controls[&"reset"])
+	expect(AppSettings.master_volume == 70 and AppSettings.vsync and not AppSettings.show_grid and not AppSettings.reduced_motion, "reset restores defaults")
+	await capture("05-settings-reset")
+	await key(KEY_ESCAPE)
+	expect(not Router.has_overlay(), "escape returns from main settings")
+	await click(Router._current.controls[&"play"])
+	await frames(60)
+	screen = Router._current
+	expect(Router.current_screen_key() == &"match" and screen.world.population.count() == 10, "play enters a live colony")
+	await capture("06-colony")
+	var cell := Vector2i(51, 50)
+	var menu: BuildMenu = await select_cell(cell)
+	validate_popup(menu)
+	await frames(7)
+	await capture("07-selection-bright")
+	await frames(18)
+	await capture("08-selection-dim")
+	for item in [["left", Vector2(42, 390)], ["right", Vector2(1234, 390)], ["top", Vector2(800, 136)], ["bottom", Vector2(700, 630)]]:
+		await key(KEY_ESCAPE)
+		var desired: Vector2 = item[1]
+		var viewport: Vector2 = get_viewport().get_visible_rect().size
+		screen.camera.position = screen.world.route_service.cell_to_world(cell) - (desired - viewport / 2.0) / screen.camera.zoom
+		screen.camera.force_update_scroll()
+		await frames(4)
+		menu = await select_cell(cell)
+		validate_popup(menu)
+		await capture("09-edge-" + item[0])
+	await key(KEY_ESCAPE)
+	screen.camera.position = Vector2(800, 800)
+	screen.camera.force_update_scroll()
+	await frames(4)
+	await click(screen.hud.controls[&"zoom_in"])
+	expect(screen.camera.level == 4, "zoom in button")
+	await capture("10-zoom-in")
+	await click(screen.hud.controls[&"zoom_out"])
+	expect(screen.camera.level == 3, "zoom out button")
+	await click_at(Vector2(640, 360), MOUSE_BUTTON_WHEEL_DOWN)
+	expect(screen.camera.level == 2, "mouse wheel changes zoom")
+	await capture("11-zoom-out")
+	screen.camera.set_level(3)
+	await frames(3)
+	menu = await select_cell(Vector2i(55, 54))
+	expect(menu != null and not menu.controls[&"house"].disabled, "empty safe cell permits a nest")
+	await capture("12-build-choices")
+	await click(menu.controls[&"house"])
+	await frames(8)
+	expect(screen.world.population.count() == 15 and not Router.has_overlay(), "nest builds and creates configured population")
+	await capture("13-nest-built")
+	menu = await select_cell(Vector2i(55, 54))
+	expect(menu.controls[&"house"].disabled, "occupied nest cell rejects replacement")
+	await click(menu.controls[&"demolish"])
+	await capture("14-demolition-confirmation")
+	expect(menu._confirming and screen.world.population.count() == 15, "demolition waits for confirmation")
+	await click(menu.controls[&"cancel_demolish"])
+	expect(not menu._confirming and screen.world.population.count() == 15, "cancel preserves the building and residents")
+	await capture("15-demolition-cancelled")
+	await click(menu.controls[&"demolish"])
+	await click(menu.controls[&"demolish"])
+	await frames(8)
+	expect(screen.world.population.count() == 10 and screen.world.registry.at(Vector2i(55, 54)) == null, "confirmed demolition removes exactly that nest")
+	await capture("16-demolition-complete")
+	menu = await select_cell(Vector2i(53, 51))
+	expect(menu.controls[&"demolish"].disabled, "last feeding point is protected")
+	await capture("17-feeding-point-protected")
+	await key(KEY_ESCAPE)
+	await key(KEY_ESCAPE)
+	await click(screen.hud.controls[&"pause"])
+	await frames(8)
+	var paused_time: float = screen.world.match_controller.time_remaining
+	var satiety: float = screen.world.population.agents()[0].needs.satiety
+	await capture("18-pause")
+	await frames(20)
+	expect(is_equal_approx(screen.world.match_controller.time_remaining, paused_time) and is_equal_approx(screen.world.population.agents()[0].needs.satiety, satiety), "pause freezes timer and hunger")
+	await click(Router.top_overlay().controls[&"settings"])
+	await frames(8)
+	await capture("19-nested-settings")
+	settings = Router.top_overlay()
+	await click(settings.controls[&"show_grid"])
+	await click(settings.controls[&"reduced_motion"])
+	await capture("20-grid-setting")
+	await key(KEY_ESCAPE)
+	expect(get_tree().paused and Router.top_overlay() != null, "closing nested settings keeps pause ownership")
+	await click(Router.top_overlay().controls[&"resume"])
+	await frames(8)
+	expect(not get_tree().paused, "resume unpauses the session")
+	menu = await select_cell(Vector2i(51, 50))
+	await capture("21-reduced-motion-grid")
+	await key(KEY_ESCAPE)
+	await key(KEY_ESCAPE)
+	# A real camera drag must move the map, not activate a cell.
+	var old_position: Vector2 = screen.camera.position
+	var press := InputEventMouseButton.new()
+	press.button_index = MOUSE_BUTTON_MIDDLE
+	press.pressed = true
+	press.position = Vector2(640, 360)
+	get_viewport().push_input(press, true)
+	var drag := InputEventMouseMotion.new()
+	drag.position = Vector2(690, 390)
+	drag.relative = Vector2(50, 30)
+	get_viewport().push_input(drag, true)
+	press.pressed = false
+	get_viewport().push_input(press, true)
+	await frames(5)
+	expect(screen.camera.position != old_position, "middle-mouse drag pans the map")
+	await capture("22-camera-pan")
+	# Select a water tile by centering its neighborhood in the live camera.
+	screen.camera.position = Vector2(50 * 16 + 8, 20 * 16 + 8)
+	screen.camera.force_update_scroll()
+	await frames(5)
+	menu = await select_cell(Vector2i(50, 20))
+	expect(menu.controls[&"road"].disabled and menu.controls[&"house"].disabled, "water denies construction")
+	await capture("23-water-selection")
+	await key(KEY_ESCAPE)
+	screen.camera.position = Vector2(800, 800)
+	screen.camera.force_update_scroll()
+	await frames(5)
+	var stock: WorldInventory = screen.world.inventory
+	stock.begin_update()
+	for type in stock.registered_types():
+		stock.add(type, maxi(0, 120 - stock.quantity(type)))
+	stock.end_update()
+	await frames(8)
+	expect(get_tree().paused and Router.top_overlay() != null and not Router.top_overlay().dismissable, "victory presents a final paused result")
+	await capture("24-victory")
+	await key(KEY_ESCAPE)
+	expect(Router.has_overlay() and get_tree().paused, "escape cannot dismiss the final result")
+	await click(Router.top_overlay().controls[&"again"])
+	await frames(50)
+	screen = Router._current
+	expect(Router.current_screen_key() == &"match" and not get_tree().paused and screen.world.population.count() == 10, "restart creates a clean session")
+	screen.world.match_controller._process(500.0)
+	await frames(8)
+	await capture("25-defeat")
+	await click(Router.top_overlay().controls[&"main"])
+	await frames(50)
+	expect(Router.current_screen_key() == &"main_menu" and not Router.has_overlay() and not get_tree().paused, "result returns to an unpaused clean main menu")
+	await capture("26-return-to-menu")
+	# A result arriving during an exit must never survive that session.
+	await click(Router._current.controls[&"play"])
+	await frames(50)
+	screen = Router._current
+	Router.goto(&"main_menu")
+	screen.world.match_controller._finish(MatchController.Result.LOSS, MatchController.Reason.TIME_UP)
+	await frames(45)
+	expect(Router.current_screen_key() == &"main_menu" and not Router.has_overlay() and not get_tree().paused, "completion during navigation cannot reopen a result")
+	AppSettings.reset_defaults()
+	_finish()
+
+func _layout_only() -> void:
+	var tag: String = "layout-%dx%d-" % [get_window().size.x, get_window().size.y]
+	await capture(tag + "main")
+	await click(Router._current.controls[&"settings"])
+	await frames(10)
+	await capture(tag + "settings")
+	await key(KEY_ESCAPE)
+	await click(Router._current.controls[&"play"])
+	await frames(50)
+	screen = Router._current
+	var menu: BuildMenu = await select_cell(Vector2i(51, 50))
+	validate_popup(menu)
+	await capture(tag + "build")
+	await key(KEY_ESCAPE)
+	await click(screen.hud.controls[&"pause"])
+	await frames(8)
+	await capture(tag + "pause")
+	await click(Router.top_overlay().controls[&"main"])
+	await frames(45)
+	expect(not get_tree().paused and Router.current_screen_key() == &"main_menu", "layout navigation remains usable")
+
+func _finish() -> void:
+	var report := {"assertions": assertions, "failures": failures, "captures": captures}
+	var file := FileAccess.open(_output.path_join("ui-report.json"), FileAccess.WRITE)
+	file.store_string(JSON.stringify(report, "  "))
+	print("UI REPORT ", JSON.stringify(report))
+	print("UI TESTS PASS" if failures.is_empty() else "UI TESTS FAIL")
+	get_tree().quit(0 if failures.is_empty() else 1)
