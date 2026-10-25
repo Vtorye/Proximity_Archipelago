@@ -8,7 +8,7 @@ func run(test: Node) -> void:
 	var nest: SceneBuildOption = load("res://game/building/options/house.tres").duplicate(true)
 	nest.costs = [test.entry(stone, 5), test.entry(food, 20)]
 	world.build_controller.options.append(nest)
-	var cell := Vector2i(55, 54)
+	var cell := Vector2i(30, 29)
 	var stone_before: int = world.inventory.quantity(stone)
 	test.expect(not world.build_controller.try_build(nest, cell), "composite nest cannot spend the starting ants' reserved meals")
 	test.expect(world.inventory.quantity(stone) == stone_before and world.registry.at(cell) == null, "failed composite nest leaves stone and map unchanged")
