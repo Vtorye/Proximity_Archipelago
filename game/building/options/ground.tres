@@ -9,8 +9,8 @@ script = ExtResource("amount")
 type = ExtResource("wood")
 
 [resource]
-atlas_coords = Vector2i(1, 0)
 script = ExtResource("option")
+atlas_coords = Vector2i(1, 0)
 id = &"ground"
 display_name = "Почва"
 cost = SubResource("cost")
