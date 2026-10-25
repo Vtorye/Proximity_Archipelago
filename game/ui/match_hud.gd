@@ -59,14 +59,12 @@ func _ready() -> void:
 	_timer = ColonyStyle.label("3:00", 8, ColonyStyle.ACCENT)
 	_timer.custom_minimum_size.x = 48
 	row.add_child(_timer)
-	var pause: Button = ColonyStyle.button("||")
-	pause.custom_minimum_size = Vector2(28, 28)
+	var pause: Button = _square_button("||", 32)
 	pause.tooltip_text = "Пауза (Esc)"
 	pause.pressed.connect(func(): pause_requested.emit())
 	row.add_child(pause)
 	controls[&"pause"] = pause
-	var settings: Button = ColonyStyle.button("...")
-	settings.custom_minimum_size = Vector2(32, 28)
+	var settings: Button = _square_button("...", 32)
 	settings.tooltip_text = "Настройки"
 	settings.pressed.connect(func(): settings_requested.emit())
 	row.add_child(settings)
@@ -102,11 +100,15 @@ func _ready() -> void:
 	_warning.custom_minimum_size.x = 144
 	goals.add_child(_warning)
 	var bottom := PanelContainer.new()
+	var compact_panel: StyleBoxTexture = ColonyStyle.box()
+	compact_panel.content_margin_top = 2
+	compact_panel.content_margin_bottom = 2
+	bottom.add_theme_stylebox_override("panel", compact_panel)
 	add_child(bottom)
 	bottom.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
 	bottom.offset_left = 8
 	bottom.offset_right = -8
-	bottom.offset_top = -28
+	bottom.offset_top = -34
 	bottom.offset_bottom = -6
 	var hints := HBoxContainer.new()
 	hints.add_theme_constant_override("separation", 6)
@@ -115,8 +117,7 @@ func _ready() -> void:
 	help.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	hints.add_child(help)
 	for key in [&"zoom_out", &"zoom_in"]:
-		var button: Button = ColonyStyle.button("-" if key == &"zoom_out" else "+")
-		button.custom_minimum_size = Vector2(24, 20)
+		var button: Button = _square_button("-" if key == &"zoom_out" else "+", 24, 12)
 		button.pressed.connect(func():
 			if key == &"zoom_out": zoom_out_requested.emit()
 			else: zoom_in_requested.emit())
@@ -140,6 +141,14 @@ func _ready() -> void:
 	world.match_controller.time_changed.connect(_on_time_changed)
 	refresh()
 	set_zoom(2)
+
+func _square_button(text: String, side: int, font_size: int = 16) -> Button:
+	var button: Button = ColonyStyle.button(text)
+	button.custom_minimum_size = Vector2.ONE * side
+	button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	button.add_theme_font_size_override("font_size", font_size)
+	return button
 
 func _resource_icon(id: StringName) -> Texture2D:
 	return world.art.berries if id == &"food" else (world.art.timber if id == &"wood" else world.art.stone)
