@@ -160,13 +160,13 @@ func make_world() -> World:
 func _test_worlds() -> void:
 	var first: World = make_world()
 	var second: World = make_world()
-	expect(first.population.count() == 10 and second.population.count() == 10, "worlds own independent ant populations")
+	expect(first.population.count() == 5 and second.population.count() == 5, "worlds own independent ant populations")
 	for ant in second.population.agents():
 		expect(ant.get_parent() == second.units and ant.route_service == second.route_service and ant.planner.inventory == second.inventory, "second world has no first-world dependency")
 	var house: House = second.get_node("Home") as House
 	var origin: Vector2i = house.cell
 	house.free()
-	expect(second.registry.at(origin) == null and second.population.count() == 5, "external nest removal clears occupancy and residents")
+	expect(second.registry.at(origin) == null and second.population.count() == 0, "external nest removal clears occupancy and residents")
 	var food: ResourceType = first.inventory.type_by_id(&"food")
 	var wood: ResourceType = first.inventory.type_by_id(&"wood")
 	var ant: AntAgent = first.population.agents()[0]
@@ -176,7 +176,7 @@ func _test_worlds() -> void:
 	ant.needs.eat()
 	plan = first.planner.plan_work(ant, ant.home, ant.needs, ant.speed, ant.work_time, ant._meal)
 	expect(plan != null and plan.estimated_energy + AntNeeds.SAFETY_MARGIN <= ant.needs.satiety, "healthy ant receives a complete feasible plan")
-	if plan != null: plan.workplace.release_worker(ant)
+	if plan != null and plan.workplace != null: plan.workplace.release_worker(ant)
 	var options: Array[BuildOption] = first.build_controller.options
 	var nest: SceneBuildOption = load("res://game/building/options/house.tres").duplicate(true) as SceneBuildOption
 	nest.blocks_movement = true
@@ -209,6 +209,9 @@ func _test_worlds() -> void:
 	options.append(slow)
 	expect(first.build_controller.check(slow, Vector2i(74, 50)).code == PlacementCheck.Code.NO_ESCAPE, "nest outside its movement profile budget rejected")
 	# A slower tile must not consume a hungry ant's last safe escape budget.
+	var map: TileMapLayer = first.get_node("Map") as TileMapLayer
+	map.set_cell(Vector2i(53, 51), 3, Vector2i(2, 0))
+	first.route_service.rebuild(first.registry.blocked_cells())
 	var from_cell: Vector2i = first.route_service.world_to_cell(ant.global_position)
 	var current_escape: float = first.route_service.food_field().cost(from_cell)
 	ant.needs.satiety = current_escape * first.route_service.cell_size() / (ant.speed * TripPlanner.CARRY_SPEED_RATIO) + AntNeeds.MEAL_SECONDS + AntNeeds.SAFETY_MARGIN + 0.1
@@ -232,7 +235,7 @@ func _test_worlds() -> void:
 	nested.add_child(group)
 	group.add_child(nest_node)
 	add_child(nested)
-	expect(nested.population.count() == 10 and nested.registry.all().size() == 7, "nested starting buildings follow the same registration path")
+	expect(nested.population.count() == 5 and nested.registry.all().size() == 6, "nested starting buildings follow the same registration path")
 	nested.free()
 	await get_tree().process_frame
 
@@ -321,27 +324,42 @@ func _test_art_resolution() -> void:
 	expect(is_equal_approx(world.route_service.cell_size(), 16.0), "texture resolution does not change physical cell size")
 	var cell := Vector2i(49, 50)
 	expect(world.route_service.world_to_cell(world.route_service.cell_to_world(cell)) == cell, "32px replacement preserves coordinate roundtrip")
-	expect(world.population.count() == 10, "32px replacement preserves population")
+	expect(world.population.count() == 5, "32px replacement preserves population")
 	world.free()
 	await get_tree().process_frame
 
 func _test_simulation() -> void:
-	var world: World = make_world()
-	var deaths: Array[int] = [0]
-	for ant in world.population.agents():
-		ant.died.connect(func(_ant: Node2D, _cause: int): deaths[0] += 1)
-	var work: Array[int] = [0]
-	for ant in world.population.agents():
-		ant.work_completed.connect(func(_ant: Node2D, _place: Node2D): work[0] += 1)
-	var start_food: int = world.inventory.quantity(world.inventory.type_by_id(&"food"))
-	var started: int = Time.get_ticks_usec()
-	for step in range(60 * 180):
+	var scenarios := {}
+	for roads in [false, true]:
+		seed(20261025)
+		var world: World = make_world()
+		if roads:
+			var road: BuildOption = load("res://game/building/options/road.tres")
+			var network: Array[Vector2i] = []
+			for x in range(46, 56): network.append(Vector2i(x, 50))
+			for item in [Vector3i(46, 47, 49), Vector3i(49, 46, 49), Vector3i(54, 46, 49), Vector3i(53, 51, 51), Vector3i(55, 51, 52)]:
+				for y in range(item.y, item.z + 1): network.append(Vector2i(item.x, y))
+			for cell in network:
+				expect(world.build_controller.try_build(road, cell), "safe road network can be built from starting stock")
+		var deaths: Array[int] = [0]
+		var work: Array[int] = [0]
 		for ant in world.population.agents():
-			ant._physics_process(1.0 / 60.0)
-		if step % 600 == 0:
-			await get_tree().process_frame
-	expect(deaths[0] == 0 and world.population.count() == 10, "three simulated minutes without hunger deaths")
-	expect(work[0] > 40 and world.inventory.quantity(world.inventory.type_by_id(&"food")) > start_food, "ants complete work and replenish food")
-	metrics["simulation"] = {"seconds": 180, "ants": world.population.count(), "deaths": deaths[0], "completed_cycles": work[0], "wall_ms": (Time.get_ticks_usec() - started) / 1000.0, "searches": world.route_service.search_count, "cache_hits": world.route_service.cache_hits}
-	world.free()
-	await get_tree().process_frame
+			ant.died.connect(func(_ant: Node2D, _cause: int): deaths[0] += 1)
+			ant.work_completed.connect(func(_ant: Node2D, _place: Node2D): work[0] += 1)
+		var outcomes: Array[MatchSummary] = []
+		world.match_controller.completed.connect(func(summary: MatchSummary): outcomes.append(summary))
+		world.match_controller.start(world.inventory)
+		var started: int = Time.get_ticks_usec()
+		for step in range(60 * 180 + 1):
+			for ant in world.population.agents(): ant._physics_process(1.0 / 60.0)
+			world.match_controller._process(1.0 / 60.0)
+			if step % 60 == 0: await get_tree().process_frame
+			if world.match_controller.is_finished(): break
+		expect(deaths[0] == 0 and world.population.count() == 5, "full match has no starvation deaths")
+		expect(outcomes.size() == 1 and outcomes[0].won == roads, "idle loses; investing in roads wins within three minutes")
+		var stock := {}
+		for type in world.inventory.registered_types(): stock[String(type.id)] = world.inventory.quantity(type)
+		scenarios["roads" if roads else "idle"] = {"seconds": 180.0 - world.match_controller.time_remaining, "ants": world.population.count(), "deaths": deaths[0], "completed_cycles": work[0], "stock": stock, "won": not outcomes.is_empty() and outcomes[0].won, "wall_ms": (Time.get_ticks_usec() - started) / 1000.0, "searches": world.route_service.search_count, "cache_hits": world.route_service.cache_hits}
+		world.free()
+		await get_tree().process_frame
+	metrics["simulation"] = scenarios
