@@ -1,9 +1,8 @@
-[gd_scene format=3 uid="uid://cwway664illx1"]
-
-[ext_resource type="Texture2D" uid="uid://se5im0b15jyd" path="res://game/assets/house.png" id="1"]
-
-[node name="Building" type="Node2D" unique_id=1584446779]
-
-[node name="Sprite" type="Sprite2D" parent="." unique_id=2054159919]
+[gd_scene load_steps=3 format=3 uid="uid://cwway664illx1"]
+[ext_resource type="Script" path="res://game/entities/base_building.gd" id="script"]
+[ext_resource type="Texture2D" path="res://game/assets/sprites/nest.png" id="texture"]
+[node name="Building" type="Node2D"]
+script = ExtResource("script")
+[node name="Sprite" type="Sprite2D" parent="."]
+texture = ExtResource("texture")
 modulate = Color(0.6, 0.8, 0.9, 1)
-texture = ExtResource("1")
