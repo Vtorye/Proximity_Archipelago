@@ -18,14 +18,17 @@ const MAIN_MENU_KEY := &"main_menu"
 
 func _ready() -> void:
 	dismissable = false
-	var data: Dictionary = payload if payload is Dictionary else {}
-	var result := String(data.get("result", "LOSS"))
-	if result != "WIN" and result != "LOSS":
-		push_error("MatchResult: unknown result '%s'" % result)
-	_title.text = "Победа" if result == "WIN" else "Поражение"
-	_reason.text = String(data.get("reason", ""))
-	_resources.text = _format_resources(data.get("resources", {}))
-	_time.text = "Оставшееся время: %s" % _format_time(float(data.get("time_left", 0.0)))
+	var summary: MatchSummary = payload as MatchSummary
+	if summary == null:
+		_reason.text = "Не удалось получить результат матча"
+		return
+	_title.text = "Победа" if summary.won else "Поражение"
+	_reason.text = "Все цели достигнуты" if summary.won else "Время вышло"
+	var parts: PackedStringArray = []
+	for entry in summary.resources:
+		parts.append("%s: %d" % [entry.type.display_name, entry.amount])
+	_resources.text = "Запасы: " + ", ".join(parts)
+	_time.text = "Оставшееся время: %s" % _format_time(summary.time_left)
 	_to_menu.pressed.connect(_go_to_main_menu)
 	default_focus = _to_menu
 
