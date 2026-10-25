@@ -118,8 +118,11 @@ func _configure_building(building: Building) -> void:
 		building.configure(inventory, inventory.type_by_id(&"food"))
 	var sprite: Sprite2D = building.get_node_or_null("Sprite") as Sprite2D
 	if sprite != null:
-		if building is House or building is Canteen:
+		if building is House:
 			sprite.texture = art.nest
+		elif building is Canteen:
+			sprite.texture = art.canteen
+			sprite.modulate = Color.WHITE
 		elif building is Workplace:
 			var resource_id: StringName = building.output.id if building.output != null else &""
 			sprite.texture = art.berries if resource_id == &"food" else (art.timber if resource_id == &"wood" else art.stone)

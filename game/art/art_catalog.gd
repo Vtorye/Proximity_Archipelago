@@ -8,13 +8,14 @@ extends Resource
 @export var road: Texture2D
 @export var water: Texture2D
 @export var nest: Texture2D
+@export var canteen: Texture2D
 @export var berries: Texture2D
 @export var timber: Texture2D
 @export var stone: Texture2D
 
 func validate() -> Array[String]:
 	var errors: Array[String] = []
-	for name in ["grass", "soil", "road", "water", "nest", "berries", "timber", "stone"]:
+	for name in ["grass", "soil", "road", "water", "nest", "canteen", "berries", "timber", "stone"]:
 		var texture: Texture2D = get(name) as Texture2D
 		if texture == null or texture.get_width() <= 0 or texture.get_width() != texture.get_height():
 			errors.append("%s must be a nonempty square texture" % name)

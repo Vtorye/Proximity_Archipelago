@@ -298,7 +298,7 @@ func _test_rules() -> void:
 func _test_art_resolution() -> void:
 	var art: ArtCatalog = load("res://game/art/colony_art.tres") as ArtCatalog
 	expect(art.validate().is_empty(), "default art catalog valid")
-	for name in ["grass", "soil", "road", "water", "nest", "berries", "timber", "stone"]:
+	for name in ["grass", "soil", "road", "water", "nest", "canteen", "berries", "timber", "stone"]:
 		expect((art.get(name) as Texture2D).get_size() == Vector2(16, 16), "default game texture is 16x16")
 	var replacement: ArtCatalog = art.duplicate() as ArtCatalog
 	var image := Image.create(32, 32, false, Image.FORMAT_RGBA8)
