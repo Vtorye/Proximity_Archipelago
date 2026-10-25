@@ -20,10 +20,10 @@ static func box(background: Color = PANEL, border: Color = BORDER, width: int = 
 	style.texture_margin_right = 3
 	style.texture_margin_top = 3
 	style.texture_margin_bottom = 3
-	style.content_margin_left = 4
-	style.content_margin_right = 4
-	style.content_margin_top = 3
-	style.content_margin_bottom = 3
+	style.content_margin_left = 8
+	style.content_margin_right = 8
+	style.content_margin_top = 6
+	style.content_margin_bottom = 6
 	style.modulate_color = Color(1, 1, 1, background.a)
 	if width == 0:
 		var flat := Image.create(16, 16, false, Image.FORMAT_RGBA8)
@@ -35,14 +35,14 @@ static func box(background: Color = PANEL, border: Color = BORDER, width: int = 
 static func state_box(name: String) -> StyleBoxTexture:
 	var style: StyleBoxTexture = box()
 	style.texture = load("res://game/assets/ui/%s.svg" % name) as Texture2D
-	style.content_margin_top = 2
-	style.content_margin_bottom = 2
+	style.content_margin_top = 4
+	style.content_margin_bottom = 4
 	return style
 
 static func apply(control: Control) -> void:
 	var theme := Theme.new()
 	theme.default_font = FONT
-	theme.default_font_size = 8
+	theme.default_font_size = 16
 	theme.set_color("font_color", "Label", TEXT)
 	theme.set_color("font_shadow_color", "Label", Color.BLACK)
 	theme.set_constant("shadow_offset_x", "Label", 0)
@@ -58,7 +58,25 @@ static func apply(control: Control) -> void:
 	theme.set_stylebox("panel", "PanelContainer", box())
 	theme.set_stylebox("panel", "TooltipPanel", box())
 	theme.set_color("font_color", "TooltipLabel", TEXT)
-	theme.set_font_size("font_size", "TooltipLabel", 8)
+	theme.set_font_size("font_size", "TooltipLabel", 16)
+	var track := StyleBoxFlat.new()
+	track.bg_color = Color("161616")
+	track.border_color = Color("666666")
+	track.set_border_width_all(1)
+	track.content_margin_top = 2
+	track.content_margin_bottom = 2
+	track.anti_aliasing = false
+	theme.set_stylebox("slider", "HSlider", track)
+	var fill := track.duplicate() as StyleBoxFlat
+	fill.bg_color = ACCENT
+	theme.set_stylebox("grabber_area", "HSlider", fill)
+	theme.set_stylebox("grabber_area_highlight", "HSlider", fill)
+	var knob := Image.create(6, 12, false, Image.FORMAT_RGBA8)
+	knob.fill(Color("222222"))
+	knob.fill_rect(Rect2i(1, 1, 4, 10), Color("bbbbbb"))
+	var knob_texture := ImageTexture.create_from_image(knob)
+	theme.set_icon("grabber", "HSlider", knob_texture)
+	theme.set_icon("grabber_highlight", "HSlider", knob_texture)
 	control.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	control.theme = theme
 
@@ -66,7 +84,7 @@ static func label(text: String, font_size: int = 8, color: Color = TEXT) -> Labe
 	var result := Label.new()
 	result.text = text
 	# Existing callers can migrate independently from the old high-resolution layout.
-	var pixels: int = font_size if font_size <= 12 else (12 if font_size >= 28 else 8)
+	var pixels: int = font_size * 2
 	result.add_theme_font_size_override("font_size", pixels)
 	result.add_theme_color_override("font_color", color)
 	result.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -75,7 +93,7 @@ static func label(text: String, font_size: int = 8, color: Color = TEXT) -> Labe
 static func button(text: String, primary: bool = false, feedback: bool = true) -> Button:
 	var result := Button.new()
 	result.text = text
-	result.custom_minimum_size.y = 14
+	result.custom_minimum_size.y = 28
 	result.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	if primary:
 		result.add_theme_color_override("font_color", ACCENT)
@@ -103,9 +121,9 @@ static func modal(root: Control, width: float = 248.0) -> VBoxContainer:
 	root.add_child(center)
 	fill(center)
 	var panel := PanelContainer.new()
-	panel.custom_minimum_size.x = minf(width, 304)
+	panel.custom_minimum_size.x = minf(width * 2, 608)
 	center.add_child(panel)
 	var content := VBoxContainer.new()
-	content.add_theme_constant_override("separation", 4)
-	margin(panel, 3).add_child(content)
+	content.add_theme_constant_override("separation", 8)
+	margin(panel, 6).add_child(content)
 	return content
