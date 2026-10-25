@@ -21,9 +21,19 @@ func validate() -> Array[String]:
 			errs.append("screens contains empty key")
 		elif screens[key] == null:
 			errs.append("screens['%s'] is null" % key)
+		else:
+			var instance: Node = screens[key].instantiate()
+			if not instance is Screen:
+				errs.append("screens['%s'] root must extend Screen" % key)
+			instance.free()
 	for key in overlays:
 		if key == &"":
 			errs.append("overlays contains empty key")
 		elif overlays[key] == null:
 			errs.append("overlays['%s'] is null" % key)
+		else:
+			var instance: Node = overlays[key].instantiate()
+			if not instance is MenuBase:
+				errs.append("overlays['%s'] root must extend MenuBase" % key)
+			instance.free()
 	return errs

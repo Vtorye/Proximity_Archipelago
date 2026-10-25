@@ -30,6 +30,7 @@ func _ready() -> void:
 
 func _run() -> void:
 	seed(20261025)
+	_test_manifest()
 	_test_stock()
 	_test_navigation()
 	_test_resident_pruning()
@@ -40,6 +41,18 @@ func _run() -> void:
 	print("TEST REPORT ", JSON.stringify({"assertions": assertions, "failures": failures, "metrics": metrics}))
 	print("TESTS PASS" if failures.is_empty() else "TESTS FAIL")
 	get_tree().quit(0 if failures.is_empty() else 1)
+
+func _test_manifest() -> void:
+	var manifest: Manifest = load("res://manifest.tres") as Manifest
+	expect(manifest.validate().is_empty(), "registered screens and overlays have valid roots")
+	var invalid: Manifest = manifest.duplicate() as Manifest
+	invalid.screens = manifest.screens.duplicate()
+	var node := Node.new()
+	var packed := PackedScene.new()
+	packed.pack(node)
+	node.free()
+	invalid.screens[&"invalid"] = packed
+	expect(not invalid.validate().is_empty(), "manifest catches invalid screen roots before boot")
 
 func _test_stock() -> void:
 	var food: ResourceType = resource(&"food")
