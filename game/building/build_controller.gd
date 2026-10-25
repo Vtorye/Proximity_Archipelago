@@ -1,8 +1,9 @@
 class_name BuildController
 extends Node
+## Commits validated placement commands; occupancy belongs to the world registry.
 
 signal built(option: BuildOption, cell: Vector2i)
-
+signal changed
 var registry: BuildingRegistry
 var population: ColonyPopulation
 var map: TileMapLayer
@@ -10,198 +11,174 @@ var buildings: Node2D
 var inventory: WorldInventory
 var route_service: RouteService
 var options: Array[BuildOption] = []
-var _occupied: Dictionary[Vector2i, Node2D] = {}
-var _blocked: Dictionary[Vector2i, bool] = {}
 var _committing := false
-
+var last_result := PlacementCheck.new()
 
 func configure(tile_map: TileMapLayer, building_root: Node2D, stock: WorldInventory, catalog: Array[BuildOption]) -> void:
 	map = tile_map
 	buildings = building_root
 	inventory = stock
-	options = catalog
-
+	options = catalog.duplicate()
 
 ## Existing homes and workplaces reserve their cells, but remain accessible.
 func reserve_existing(node: Node2D) -> void:
-	_occupied[map.local_to_map(map.to_local(node.global_position))] = node
-
+	if node is Building:
+		registry.register(node)
 
 func blocked_cells() -> Array[Vector2i]:
-	return _blocked.keys()
+	return registry.blocked_cells()
 
-
-func unavailable_reason(option: BuildOption, cell: Vector2i) -> String:
+func check(option: BuildOption, cell: Vector2i) -> PlacementCheck:
 	if _committing:
-		return "Construction in progress"
+		return PlacementCheck.result(PlacementCheck.Code.BUSY)
 	if option == null or not options.has(option):
-		return "Unavailable option"
+		return PlacementCheck.result(PlacementCheck.Code.INVALID_OPTION)
 	if not inventory.can_afford(option.cost):
-		return "Insufficient or unregistered resources"
+		return PlacementCheck.result(PlacementCheck.Code.RESOURCES)
 	if option is TileBuildOption:
-		var tile := option as TileBuildOption
-		if not map.tile_set.has_source(tile.source_id):
-			return "Invalid tile source"
-		var source := map.tile_set.get_source(tile.source_id) as TileSetAtlasSource
+		var tile: TileBuildOption = option as TileBuildOption
+		var source: TileSetAtlasSource = map.tile_set.get_source(tile.source_id) as TileSetAtlasSource if map.tile_set.has_source(tile.source_id) else null
 		if source == null or not source.has_tile(tile.atlas_coords) or not source.has_alternative_tile(tile.atlas_coords, tile.alternative_tile):
-			return "Invalid atlas tile"
-		if map.get_cell_source_id(cell) == tile.source_id and map.get_cell_atlas_coords(cell) == tile.atlas_coords and map.get_cell_alternative_tile(cell) == tile.alternative_tile:
-			return "Already placed"
+			return PlacementCheck.result(PlacementCheck.Code.INVALID_TILE)
+		if map.get_cell_source_id(cell) == tile.source_id and map.get_cell_atlas_coords(cell) == tile.atlas_coords:
+			return PlacementCheck.result(PlacementCheck.Code.ALREADY_PLACED)
 	elif option is SceneBuildOption:
-		var scene_option := option as SceneBuildOption
-		if scene_option.scene == null or scene_option.occupied_cells.is_empty() or not scene_option.occupied_cells.has(Vector2i.ZERO):
-			return "Invalid building definition"
+		if option.scene == null or option.occupied_cells.is_empty() or not option.occupied_cells.has(Vector2i.ZERO):
+			return PlacementCheck.result(PlacementCheck.Code.INVALID_BUILDING)
+		if option.blocks_movement and option.entry_offsets.is_empty():
+			return PlacementCheck.result(PlacementCheck.Code.INVALID_BUILDING)
 	else:
-		return "Unsupported option"
+		return PlacementCheck.result(PlacementCheck.Code.INVALID_OPTION)
 	for target in _footprint(option, cell):
-		if map.get_cell_source_id(target) == -1:
-			return "Outside the map"
-		if option.allow_when_occupied:
-			continue
-		var occupant: Node2D = _occupied.get(target)
-		if occupant != null and not _can_replace(option, occupant):
-			if occupant is House and _builds_house(option):
-				return "House already here"
-			return "Cell occupied"
-		# Without the override, people also occupy their cells.
-		for human in get_tree().get_nodes_in_group("humans"):
-			if human.get_viewport() == map.get_viewport() and map.local_to_map(map.to_local(human.global_position)) == target:
-				# Residents of a building that is about to be replaced do not block it.
-				if occupant != null and human.get("home") == occupant:
-					continue
-				return "Person on cell"
-	return ""
-
+		if map.get_cell_source_id(target) == -1 or not route_service.walkable(target):
+			return PlacementCheck.result(PlacementCheck.Code.OUTSIDE_MAP)
+		if option is SceneBuildOption and registry.at(target) != null:
+			return PlacementCheck.result(PlacementCheck.Code.OCCUPIED)
+		if not option.allow_when_occupied and population != null:
+			for ant in population.agents():
+				if route_service.world_to_cell(ant.global_position) == target:
+					return PlacementCheck.result(PlacementCheck.Code.ANT_PRESENT)
+	return PlacementCheck.new()
 
 func can_build(option: BuildOption, cell: Vector2i) -> bool:
-	return unavailable_reason(option, cell).is_empty()
-
+	return check(option, cell).allowed()
 
 func try_build(option: BuildOption, cell: Vector2i) -> bool:
-	if not can_build(option, cell):
+	last_result = check(option, cell)
+	if not last_result.allowed():
 		return false
 	var instance: Building
 	if option is SceneBuildOption:
-		var candidate := (option as SceneBuildOption).scene.instantiate()
+		var candidate: Node = option.scene.instantiate()
 		if not candidate is Building:
 			candidate.free()
+			last_result = PlacementCheck.result(PlacementCheck.Code.INVALID_BUILDING)
 			return false
 		instance = candidate as Building
+		if not instance.setup(cell, option):
+			instance.free()
+			last_result = PlacementCheck.result(PlacementCheck.Code.INVALID_BUILDING)
+			return false
+	if not _preserves_escape(option, cell):
+		if instance != null:
+			instance.free()
+		last_result = PlacementCheck.result(PlacementCheck.Code.NO_ESCAPE)
+		return false
 	# No awaits or notifications until the world and inventory agree.
 	_committing = true
-	if not inventory.try_spend(option.cost, false):
+	inventory.begin_update()
+	if not inventory.try_spend(option.cost):
 		if instance != null:
 			instance.free()
 		_committing = false
+		inventory.end_update()
 		return false
 	if option is TileBuildOption:
-		var tile := option as TileBuildOption
-		map.set_cell(cell, tile.source_id, tile.atlas_coords, tile.alternative_tile)
+		map.set_cell(cell, option.source_id, option.atlas_coords, option.alternative_tile)
 	else:
-		var scene_option := option as SceneBuildOption
-		var footprint := _footprint(option, cell)
-		for old in _occupants_of(footprint):
-			_clear_occupant(old)
-		instance.position = buildings.to_local(map.to_global(map.map_to_local(cell)))
+		instance.position = buildings.to_local(route_service.cell_to_world(cell))
 		buildings.add_child(instance)
-		for target in footprint:
-			_occupied[target] = instance
-			if scene_option.blocks_movement:
-				_blocked[target] = true
-		instance.setup(cell, option)
-	route_service.rebuild(blocked_cells())
+		registry.register(instance)
+	route_service.rebuild(registry.blocked_cells())
 	_committing = false
-	inventory.changed.emit()
+	inventory.end_update()
 	built.emit(option, cell)
+	changed.emit()
 	return true
-
 
 ## Share of the build cost returned on demolition. 0 = no refund; raise to enable refunds.
 const DEMOLISH_REFUND_RATIO := 0.0
 
-
-## Empty string if the building on this cell can be demolished, otherwise the reason.
-func can_demolish(cell: Vector2i) -> String:
+func demolition_check(cell: Vector2i) -> PlacementCheck:
 	if _committing:
-		return "Construction in progress"
-	var occupant: Node2D = _occupied.get(cell)
-	if occupant == null:
-		return "Nothing to demolish"
-	if not occupant is Building:
-		return "Cannot demolish this"
-	return ""
-
+		return PlacementCheck.result(PlacementCheck.Code.BUSY)
+	return PlacementCheck.result(PlacementCheck.Code.OK if registry.at(cell) != null else PlacementCheck.Code.NO_BUILDING)
 
 ## Demolishes the building on the cell. No confirmation; residents die with DEMOLISHED.
+## The presentation requests confirmation; this command has no UI dependencies.
 func demolish_at(cell: Vector2i) -> bool:
-	if not can_demolish(cell).is_empty():
+	last_result = demolition_check(cell)
+	if not last_result.allowed():
 		return false
-	var building := _occupied[cell] as Building
+	var building: Building = registry.at(cell)
+	# Removing the last feeding point while ants are alive would invalidate every safe plan.
+	if building is Canteen and registry.canteens().size() <= 1 and population.count() > 0:
+		last_result = PlacementCheck.result(PlacementCheck.Code.NO_ESCAPE)
+		return false
 	_committing = true
+	inventory.begin_update()
 	_refund_for_demolish(building.option)
-	_clear_occupant(building)
-	route_service.rebuild(blocked_cells())
+	building.demolish()
+	building.free()
+	route_service.rebuild(registry.blocked_cells())
 	_committing = false
-	inventory.changed.emit()
+	inventory.end_update()
+	changed.emit()
 	return true
-
 
 ## Returns part of the build cost. Buildings without an option (placed in the scene) refund nothing.
 func _refund_for_demolish(option: BuildOption) -> void:
-	if option == null or option.cost == null or option.cost.type == null:
-		return
-	var amount := floori(option.cost.amount * DEMOLISH_REFUND_RATIO)
-	if amount > 0:
-		inventory.add(option.cost.type, amount)
-
+	if option != null and option.cost != null:
+		var amount: int = floori(option.cost.amount * DEMOLISH_REFUND_RATIO)
+		if amount > 0:
+			inventory.add(option.cost.type, amount)
 
 func _footprint(option: BuildOption, origin: Vector2i) -> Array[Vector2i]:
 	var cells: Array[Vector2i] = []
 	if option is SceneBuildOption:
-		for offset in (option as SceneBuildOption).occupied_cells:
+		for offset in option.occupied_cells:
 			if not cells.has(origin + offset):
 				cells.append(origin + offset)
 	else:
 		cells.append(origin)
 	return cells
 
+func _preserves_escape(option: BuildOption, cell: Vector2i) -> bool:
+	if not option is SceneBuildOption or not option.blocks_movement:
+		return true
+	var blocked: Array[Vector2i] = registry.blocked_cells()
+	blocked.append_array(_footprint(option, cell))
+	var preview := TileGrid.new()
+	preview.setup(map, blocked)
+	var foods: Array[Vector2i] = []
+	for canteen in registry.canteens():
+		foods.append_array(canteen.entry_cells())
+	var field: NavigationField = GridSearch.build(preview, foods, true)
+	for offset in option.entry_offsets:
+		if not preview.walkable(cell + offset) or not is_finite(field.cost(cell + offset)):
+			return false
+	for ant in population.agents():
+		var cost: float = field.cost(route_service.world_to_cell(ant.global_position))
+		var energy: float = cost * route_service.cell_size() / (ant.speed * TripPlanner.CARRY_SPEED_RATIO) + AntNeeds.MEAL_SECONDS
+		if not ant.needs.can_afford(energy):
+			return false
+	return true
 
-## Unique buildings currently registered on the given cells.
-func _occupants_of(cells: Array[Vector2i]) -> Array[Node2D]:
-	var found: Array[Node2D] = []
-	for target in cells:
-		var occupant: Node2D = _occupied.get(target)
-		if occupant != null and not found.has(occupant):
-			found.append(occupant)
-	return found
+# Compatibility for older overlay scenes. New UI maps reason codes to text itself.
+func unavailable_reason(option: BuildOption, cell: Vector2i) -> String:
+	var result: PlacementCheck = check(option, cell)
+	return "" if result.allowed() else PlacementCheck.Code.keys()[result.code]
 
-
-## Removes a building and every cell record that points to it.
-func _clear_occupant(old: Node2D) -> void:
-	for key in _occupied.keys():
-		if _occupied[key] == old:
-			_occupied.erase(key)
-			_blocked.erase(key)
-	if old is Building:
-		(old as Building).demolish()
-		old.free()
-	else:
-		old.queue_free()
-
-
-func _can_replace(option: BuildOption, occupant: Node2D) -> bool:
-	if not option is SceneBuildOption or not occupant is Building:
-		return false
-	return not (occupant is House and _builds_house(option))
-
-
-func _builds_house(option: BuildOption) -> bool:
-	if not option is SceneBuildOption:
-		return false
-	var scene := (option as SceneBuildOption).scene
-	if scene == null:
-		return false
-	var probe := scene.instantiate()
-	var is_house := probe is House
-	probe.free()
-	return is_house
+func can_demolish(cell: Vector2i) -> String:
+	var result: PlacementCheck = demolition_check(cell)
+	return "" if result.allowed() else PlacementCheck.Code.keys()[result.code]

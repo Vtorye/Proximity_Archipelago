@@ -38,6 +38,7 @@ func _ready() -> void:
 	registry.name = "BuildingRegistry"
 	add_child(registry)
 	registry.added.connect(_configure_building)
+	registry.changed.connect(_queue_navigation_update)
 	planner = TripPlanner.new()
 	planner.name = "TripPlanner"
 	add_child(planner)
@@ -129,3 +130,11 @@ func _configure_terrain(map: TileMapLayer) -> void:
 	tiles.add_source(atlas, 3)
 	map.tile_set = tiles
 	map.scale = Vector2.ONE * CELL_SIZE / pixels
+
+func _queue_navigation_update() -> void:
+	if ready_for_play:
+		_update_navigation.call_deferred()
+
+func _update_navigation() -> void:
+	if is_inside_tree():
+		route_service.rebuild(registry.blocked_cells())
