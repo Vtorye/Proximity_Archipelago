@@ -4,5 +4,5 @@ extends Node
 var manifest : Manifest
 
 func _ready() -> void:
-	Router.boot(manifest, %ScreenLayer, %MenuStack, %Fade)
-	Router.init()
+	if not Router.boot(manifest, %ScreenLayer, %MenuStack, %Fade):
+		push_error("Boot: shell configuration failed")
