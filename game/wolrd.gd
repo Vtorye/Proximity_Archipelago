@@ -146,7 +146,7 @@ func _configure_terrain(map: TileMapLayer) -> void:
 	tiles.add_source(atlas, 3)
 	for index in range(4):
 		atlas.create_tile(Vector2i(index, 0))
-		atlas.get_tile_data(Vector2i(index, 0), 0).set_custom_data("move_cost", [1.0, 1.6, 0.6, 0.0][index])
+		atlas.get_tile_data(Vector2i(index, 0), 0).set_custom_data("move_cost", [1.0, 1.6, 0.35, 0.0][index])
 	map.tile_set = tiles
 	map.scale = Vector2.ONE * CELL_SIZE / pixels
 
@@ -178,8 +178,8 @@ func _generate_terrain(map: TileMapLayer) -> void:
 			var terrain := 3
 			if shape < edge:
 				terrain = 1 if shape > edge - 0.12 else 0
-			if x >= 46 and x <= 55 and y == 50 or x == 50 and y >= 46 and y <= 54:
-				terrain = 2
+			if x >= 43 and x <= 58 and y >= 43 and y <= 57:
+				terrain = 1
 			map.set_cell(cell, 3, Vector2i(terrain, 0))
 
 func _collect_buildings(root: Node, found: Array[Building]) -> void:

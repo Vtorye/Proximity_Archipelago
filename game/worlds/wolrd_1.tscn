@@ -21,15 +21,15 @@
 [sub_resource type="Resource" id="wood_stock"]
 script = ExtResource("amount")
 type = ExtResource("wood")
-amount = 80
+amount = 60
 [sub_resource type="Resource" id="stone_stock"]
 script = ExtResource("amount")
 type = ExtResource("stone")
-amount = 60
+amount = 40
 [sub_resource type="Resource" id="food_stock"]
 script = ExtResource("amount")
 type = ExtResource("food")
-amount = 30
+amount = 20
 [node name="World" type="Node2D"]
 script = ExtResource("world")
 starting_resources = Array[ExtResource("amount")]([SubResource("wood_stock"), SubResource("stone_stock"), SubResource("food_stock")])
@@ -37,9 +37,6 @@ build_options = Array[ExtResource("build_option")]([ExtResource("road"), ExtReso
 [node name="Map" type="TileMapLayer" parent="."]
 [node name="Home" parent="." instance=ExtResource("nest")]
 position = Vector2(792, 808)
-option = ExtResource("nest_option")
-[node name="Home2" parent="." instance=ExtResource("nest")]
-position = Vector2(776, 856)
 option = ExtResource("nest_option")
 [node name="Workplace" type="Node2D" parent="."]
 position = Vector2(744, 760)
@@ -76,6 +73,6 @@ option = ExtResource("berry_option")
 output_amount = 3
 [node name="MatchController" type="Node" parent="."]
 script = ExtResource("rules")
-match_duration = 480.0
-target_amount = 120
+match_duration = 180.0
+target_amount = 100
 tracked_types = Array[ExtResource("resource_type")]([ExtResource("wood"), ExtResource("stone"), ExtResource("food")])

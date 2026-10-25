@@ -7,7 +7,7 @@
 [sub_resource type="Resource" id="cost"]
 script = ExtResource("amount")
 type = ExtResource("wood")
-amount = 2
+amount = 1
 
 [resource]
 script = ExtResource("option")

@@ -8,6 +8,7 @@
 script = ExtResource("1_workplace")
 work_slots = 3
 output = ExtResource("3_food")
+output_amount = 3
 
 [node name="Sprite" type="Sprite2D" parent="."]
 texture = ExtResource("2_apple")

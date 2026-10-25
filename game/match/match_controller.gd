@@ -15,7 +15,7 @@ signal match_won(reason: Reason)
 signal match_lost(reason: Reason)
 signal completed(summary: MatchSummary)
 
-@export var match_duration: float = 300.0
+@export var match_duration: float = 180.0
 @export var target_amount: int = 100
 @export var tracked_types: Array[ResourceType] = []
 
