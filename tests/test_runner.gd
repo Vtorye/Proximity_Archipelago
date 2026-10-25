@@ -35,6 +35,7 @@ func _run() -> void:
 	_test_navigation()
 	_test_resident_pruning()
 	await _test_worlds()
+	await _test_assignment_load()
 	await _test_rules()
 	await _test_art_resolution()
 	await _test_simulation()
@@ -224,6 +225,38 @@ func _test_worlds() -> void:
 	add_child(nested)
 	expect(nested.population.count() == 10 and nested.registry.all().size() == 7, "nested starting buildings follow the same registration path")
 	nested.free()
+	await get_tree().process_frame
+
+func _test_assignment_load() -> void:
+	var world: World = make_world()
+	var added := 0
+	for y in range(36, 56, 2):
+		for x in range(36, 56, 2):
+			var cell := Vector2i(x, y)
+			if world.registry.at(cell) != null: continue
+			var workplace := Workplace.new()
+			workplace.output = world.inventory.type_by_id(&"wood")
+			workplace.output_amount = 2
+			workplace.position = world.route_service.cell_to_world(cell)
+			workplace.setup(cell, null)
+			world.buildings.add_child(workplace)
+			world.registry.register(workplace)
+			added += 1
+	await get_tree().process_frame
+	var ant: AntAgent = world.population.agents()[0]
+	var searches_before: int = world.route_service.search_count
+	var started: int = Time.get_ticks_usec()
+	var assigned := 0
+	for request in range(1000):
+		var plan: WorkPlan = world.planner.plan_work(ant, ant.home, ant.needs, ant.speed, ant.work_time, ant._meal)
+		if plan != null:
+			assigned += 1
+			plan.workplace.release_worker(ant)
+	var elapsed_ms: float = (Time.get_ticks_usec() - started) / 1000.0
+	expect(assigned == 1000, "one thousand assignments remain feasible with many POIs")
+	expect(world.route_service.search_count == searches_before, "repeated assignments do not start new searches")
+	metrics["assignment_load"] = {"requests": 1000, "workplaces": world.registry.workplaces().size(), "wall_ms": elapsed_ms, "new_searches": world.route_service.search_count - searches_before}
+	world.free()
 	await get_tree().process_frame
 
 func make_rules(stock: WorldInventory) -> MatchController:
