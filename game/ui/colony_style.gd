@@ -13,7 +13,7 @@ const GREEN := Color("b9c79b")
 const FONT := preload("res://game/assets/fonts/BoldPixels.ttf")
 const SECONDARY_FONT := preload("res://game/assets/fonts/Pixuf.ttf")
 
-static func box(background: Color = PANEL, border: Color = BORDER, width: int = 1) -> StyleBoxTexture:
+static func box(background: Color = PANEL, _border: Color = BORDER, width: int = 1) -> StyleBoxTexture:
 	var style := StyleBoxTexture.new()
 	style.texture = preload("res://game/assets/ui/panel.svg")
 	style.texture_margin_left = 3
@@ -73,10 +73,10 @@ static func apply(control: Control) -> void:
 	track.content_margin_bottom = 2
 	track.anti_aliasing = false
 	theme.set_stylebox("slider", "HSlider", track)
-	var fill := track.duplicate() as StyleBoxFlat
-	fill.bg_color = ACCENT
-	theme.set_stylebox("grabber_area", "HSlider", fill)
-	theme.set_stylebox("grabber_area_highlight", "HSlider", fill)
+	var filled_track := track.duplicate() as StyleBoxFlat
+	filled_track.bg_color = ACCENT
+	theme.set_stylebox("grabber_area", "HSlider", filled_track)
+	theme.set_stylebox("grabber_area_highlight", "HSlider", filled_track)
 	var knob := Image.create(6, 12, false, Image.FORMAT_RGBA8)
 	knob.fill(Color("222222"))
 	knob.fill_rect(Rect2i(1, 1, 4, 10), Color("bbbbbb"))

@@ -21,12 +21,12 @@ func push(menu: MenuBase) -> void:
 func pop() -> void:
 	if _stack.is_empty():
 		return
-	var top: MenuBase = _stack.pop_back()
-	if is_instance_valid(top):
-		top.hide()
-		top.process_mode = Node.PROCESS_MODE_DISABLED
-		top.queue_free()
-	popped.emit(top)
+	var popped_menu: MenuBase = _stack.pop_back()
+	if is_instance_valid(popped_menu):
+		popped_menu.hide()
+		popped_menu.process_mode = Node.PROCESS_MODE_DISABLED
+		popped_menu.queue_free()
+	popped.emit(popped_menu)
 	if not _stack.is_empty():
 		_stack.back().show()
 		_stack.back().grab_focus_default()
