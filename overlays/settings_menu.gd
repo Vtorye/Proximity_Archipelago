@@ -3,6 +3,7 @@ extends MenuBase
 var controls: Dictionary[StringName, Control] = {}
 var _saved: Label
 var _volume_value: Label
+var _scale_value: Label
 
 func _ready() -> void:
 	if Router.current_screen_is_pausable():
@@ -31,6 +32,24 @@ func _ready() -> void:
 		AppSettings.play_click())
 	controls[&"volume"] = slider
 	content.add_child(row)
+	var scale_row := HBoxContainer.new()
+	scale_row.add_theme_constant_override("separation", 8)
+	var scale_title: Label = ColonyStyle.label("Масштаб интерфейса")
+	scale_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scale_row.add_child(scale_title)
+	for key in [&"ui_scale_minus", &"ui_scale_plus"]:
+		var button: Button = ColonyStyle.button("-" if key == &"ui_scale_minus" else "+")
+		button.custom_minimum_size = Vector2(32, 28)
+		button.pressed.connect(_change_scale.bind(-0.25 if key == &"ui_scale_minus" else 0.25))
+		scale_row.add_child(button)
+		controls[key] = button
+		if key == &"ui_scale_minus":
+			_scale_value = ColonyStyle.label("")
+			_scale_value.custom_minimum_size.x = 44
+			_scale_value.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			scale_row.add_child(_scale_value)
+	content.add_child(scale_row)
+	_refresh_scale()
 	_add_toggle(content, &"fullscreen", "Полный экран", AppSettings.fullscreen)
 	_add_toggle(content, &"vsync", "Вертикальная синхронизация", AppSettings.vsync)
 	_add_toggle(content, &"show_grid", "Сетка клеток", AppSettings.show_grid)
@@ -75,10 +94,21 @@ func _store() -> void:
 		_saved.text = "Сохранено" if error == OK else "Ошибка сохранения"
 		_saved.add_theme_color_override("font_color", ColonyStyle.MUTED if error == OK else ColonyStyle.DANGER)
 
+func _change_scale(delta: float) -> void:
+	AppSettings.ui_scale = clampf(AppSettings.ui_scale + delta, AppSettings.MIN_UI_SCALE, AppSettings.MAX_UI_SCALE)
+	_refresh_scale()
+	_store()
+
+func _refresh_scale() -> void:
+	_scale_value.text = "%d%%" % roundi(AppSettings.ui_scale * 100)
+	controls[&"ui_scale_minus"].disabled = AppSettings.ui_scale <= AppSettings.MIN_UI_SCALE
+	controls[&"ui_scale_plus"].disabled = AppSettings.ui_scale >= AppSettings.MAX_UI_SCALE
+
 func _reset() -> void:
 	AppSettings.reset_defaults()
 	(controls[&"volume"] as HSlider).set_value_no_signal(AppSettings.master_volume)
 	_volume_value.text = "%d%%" % AppSettings.master_volume
+	_refresh_scale()
 	for key in [&"fullscreen", &"vsync", &"show_grid", &"reduced_motion"]:
 		var button: Button = controls[key] as Button
 		var value: bool = bool(AppSettings.get(key))

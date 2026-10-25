@@ -7,6 +7,10 @@ var fullscreen := false
 var vsync := true
 var reduced_motion := false
 var show_grid := false
+const MIN_UI_SCALE := 0.5
+const MAX_UI_SCALE := 1.0
+const DEFAULT_UI_SCALE := 0.75
+var ui_scale := DEFAULT_UI_SCALE
 var _click: AudioStreamPlayer
 
 func _ready() -> void:
@@ -18,6 +22,7 @@ func _ready() -> void:
 		vsync = bool(config.get_value("video", "vsync", true))
 		reduced_motion = bool(config.get_value("accessibility", "reduced_motion", false))
 		show_grid = bool(config.get_value("interface", "grid", false))
+		ui_scale = clampf(snappedf(float(config.get_value("interface", "scale", DEFAULT_UI_SCALE)), 0.25), MIN_UI_SCALE, MAX_UI_SCALE)
 	_click = AudioStreamPlayer.new()
 	var sound := AudioStreamWAV.new()
 	sound.format = AudioStreamWAV.FORMAT_16_BITS
@@ -33,6 +38,7 @@ func _ready() -> void:
 	apply()
 
 func apply() -> void:
+	ui_scale = clampf(snappedf(ui_scale, 0.25), MIN_UI_SCALE, MAX_UI_SCALE)
 	AudioServer.set_bus_volume_db(0, linear_to_db(maxf(master_volume / 100.0, 0.0001)))
 	AudioServer.set_bus_mute(0, master_volume <= 0.0)
 	if DisplayServer.get_name() != "headless":
@@ -47,6 +53,7 @@ func save() -> Error:
 	config.set_value("video", "vsync", vsync)
 	config.set_value("accessibility", "reduced_motion", reduced_motion)
 	config.set_value("interface", "grid", show_grid)
+	config.set_value("interface", "scale", ui_scale)
 	apply()
 	return config.save(PATH)
 
@@ -56,6 +63,7 @@ func reset_defaults() -> void:
 	vsync = true
 	reduced_motion = false
 	show_grid = false
+	ui_scale = DEFAULT_UI_SCALE
 	save()
 
 func play_click() -> void:
