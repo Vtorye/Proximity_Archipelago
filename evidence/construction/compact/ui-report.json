@@ -1,0 +1,19 @@
+{
+  "assertions": 55,
+  "captures": [
+    "00-smaller-map-overview",
+    "01-centered-menu-dots",
+    "02-pause-restart-button",
+    "03-bottom-palette-and-composite-price",
+    "04-road-stroke-preview",
+    "05-composite-plan-total",
+    "06-applied-road-and-nest",
+    "07-unaffordable-plan",
+    "08-occupied-cell-feedback"
+  ],
+  "display_size": "(0, 0)",
+  "failures": [],
+  "render_size": "(640.0, 360.0)",
+  "source_revision": "d2e8a1189015e6b7283896ffec8520de4d513b1c",
+  "window_size": "(960, 600)"
+}
