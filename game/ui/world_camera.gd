@@ -4,7 +4,7 @@ signal zoom_changed(level: int)
 const ZOOMS := [0.5, 1.0, 2.0, 4.0, 6.0]
 var level := 2
 var enabled_input := true
-var bounds := Rect2(0, 0, 1600, 1600)
+var bounds := Rect2(0, 0, 800, 800)
 var dragging := false
 
 func _ready() -> void:
@@ -46,5 +46,9 @@ func set_level(value: int) -> void:
 	zoom_changed.emit(level)
 
 func _clamp() -> void:
-	position.x = clampf(position.x, bounds.position.x, bounds.end.x)
-	position.y = clampf(position.y, bounds.position.y, bounds.end.y)
+	var half_view: Vector2 = get_viewport_rect().size / zoom / 2.0
+	for axis in range(2):
+		if bounds.size[axis] <= half_view[axis] * 2.0:
+			position[axis] = bounds.get_center()[axis]
+		else:
+			position[axis] = clampf(position[axis], bounds.position[axis] + half_view[axis], bounds.end[axis] - half_view[axis])
