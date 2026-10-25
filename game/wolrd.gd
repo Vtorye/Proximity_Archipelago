@@ -68,12 +68,12 @@ func _ready() -> void:
 	# All setup() calls must finish before navigation is generated,
 	# otherwise units spawned by houses would appear before the grid exists.
 	# A base snapshot already exists; registry commits then apply blocking footprints.
-	for child in get_children():
-		if child is Building:
-			var building: Building = child as Building
-			var origin: Vector2i = map.local_to_map(map.to_local(building.global_position))
-			if building.setup(origin, building.option):
-				registry.register(building)
+	var initial: Array[Building] = []
+	_collect_buildings(self, initial)
+	for building in initial:
+		var origin: Vector2i = map.local_to_map(map.to_local(building.global_position))
+		if building.setup(origin, building.option):
+			registry.register(building)
 	route_service.rebuild(registry.blocked_cells())
 	planner.refresh_food()
 	match_controller = get_node_or_null("MatchController") as MatchController
@@ -162,3 +162,10 @@ func _generate_terrain(map: TileMapLayer) -> void:
 			if x >= 46 and x <= 55 and y == 50 or x == 50 and y >= 46 and y <= 54:
 				terrain = 2
 			map.set_cell(cell, 3, Vector2i(terrain, 0))
+
+func _collect_buildings(root: Node, found: Array[Building]) -> void:
+	for child in root.get_children():
+		if child is Building:
+			found.append(child)
+		else:
+			_collect_buildings(child, found)
