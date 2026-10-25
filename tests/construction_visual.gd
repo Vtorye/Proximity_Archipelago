@@ -143,7 +143,7 @@ func _check_ui_scales() -> void:
 	await click(Router.top_overlay().controls[&"restart"])
 	await frames(45)
 	screen = Router._current
-	expect(AppSettings.ui_scale == 0.5 and screen.hud.scale == Vector2.ONE * 0.5, "match restart preserves the selected interface scale")
+	expect(AppSettings.ui_scale == 0.5 and screen.hud.controls[&"pause"].custom_minimum_size == Vector2(16, 16), "match restart preserves the selected interface scale")
 
 func _entry(type: ResourceType, amount: int) -> ResourceAmount:
 	var result := ResourceAmount.new()
@@ -208,4 +208,5 @@ func _check_dots(image: Image, button: Button) -> void:
 				total += Vector2(x + 0.5, y + 0.5)
 				count += 1
 	expect(count >= 3 and count <= int(18 * factor * factor * AppSettings.ui_scale), "scaled menu icon renders its three pixel dots")
+	print("DOT CENTERS ", center, " ", total / maxf(1, count), " PIXELS ", count)
 	expect(count > 0 and (total / maxf(1, count)).distance_to(center) <= factor * 0.75, "menu dots stay centered at the chosen interface scale")

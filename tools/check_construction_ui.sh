@@ -12,7 +12,7 @@ project = destination / 'project.godot'
 project.write_text(project.read_text().replace('config/name="archipelago"', 'config/name="archipelago-construction-validation"'))
 PY
 godot_binary="${GODOT_BIN:-godot}"
-"$godot_binary" --headless --path "$construction_root/project" --editor --quit > "$construction_root/import.log" 2>&1
+if ! "$godot_binary" --headless --path "$construction_root/project" --editor --quit > "$construction_root/import.log" 2>&1; then cat "$construction_root/import.log"; exit 1; fi
 if rg -q 'SCRIPT ERROR|Failed to load|Parse Error' "$construction_root/import.log"; then cat "$construction_root/import.log"; exit 1; fi
 export COLONY_EVIDENCE_DIR="$project_root/evidence/construction"
 export COLONY_SOURCE_REVISION="$(git -C "$project_root" rev-parse HEAD)"
