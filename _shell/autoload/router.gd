@@ -2,6 +2,7 @@ extends Node
 
 signal screen_changed(key: StringName)
 signal overlay_emptied
+signal navigation_started(key: StringName)
 
 var _screen_layer: Node
 var _overlay: MenuStack
@@ -56,69 +57,70 @@ func goto(key: StringName, payload: Variant = null) -> void:
 	if is_instance_valid(_current) and not _current.can_leave():
 		return
 
+	# Validate the replacement before taking the active screen out of play.
+	var instance: Node = _manifest.screens[key].instantiate()
+	if not instance is Screen:
+		instance.free()
+		push_error("Router: '%s' root must extend Screen" % key)
+		return
+	var next_screen: Screen = instance as Screen
+	next_screen.payload = payload
 	_busy = true
-
-	# Any overlays are torn down on navigation
-	if _overlay.has_menus():
-		_overlay.clear()
 
 	if is_instance_valid(_current):
 		_current.on_blur()
-
+	navigation_started.emit(key)
+	# Any overlays are torn down on navigation
+	_overlay.clear()
 	await _fade.fade_out()
-	await _swap_screen(key, payload)
+	await _swap_screen(key, next_screen)
 	await _fade.fade_in()
-
 	_busy = false
+	_current.on_focus()
 	screen_changed.emit(key)
 
-func _swap_screen(key: StringName, payload: Variant) -> void:
+func _swap_screen(key: StringName, next_screen: Screen) -> void:
 	if is_instance_valid(_current):
-		_current.queue_free()
-		await _current.tree_exited
-
-	var packed := _manifest.screens[key] #load(_registry[key]) as PackedScene
-	if packed == null:
-		push_error("Router: failed to load '%s'" % _manifest.screens[key])		
-		_busy = false
-		return
-
-	_current = packed.instantiate() as Screen
-	if _current == null:
-		push_error("Router: '%s' root must extend Screen" % key)
-		_busy = false
-		return
-
+		var old: Screen = _current
+		_current = null
+		old.queue_free()
+		await old.tree_exited
 	# Payload MUST be set before add_child so _ready() can read it
-	_current.payload = payload
-
+	_current = next_screen
 	_screen_layer.add_child(_current)
 	_current_key = key
-	_current.on_focus()
+
+func is_navigating() -> bool:
+	return _busy
 
 # Overlays
 
 func push_overlay(key: StringName, payload: Variant = null) -> MenuBase:
+	if _busy:
+		return null
 	if _manifest == null or not is_instance_valid(_overlay):
 		push_error("Router: not booted yet; run the game from the main scene (F5), not the screen on its own")
 		return null
 	if not _manifest.overlays.has(key):
 		push_error("Router: overlay '%s' is not registered" % key)
 		return null
-	var packed :=  _manifest.overlays[key]
-	var menu := packed.instantiate() as MenuBase
-	if menu == null:
+	var packed: PackedScene = _manifest.overlays[key]
+	var instance: Node = packed.instantiate()
+	if not instance is MenuBase:
+		instance.free()
 		push_error("Router: '%s' root must extend MenuBase" % key)
 		return null
+	var menu: MenuBase = instance as MenuBase
 	menu.payload = payload
 	_overlay.push(menu)
 	return menu
 
 func pop_overlay() -> void:
-	_overlay.pop()
+	if is_instance_valid(_overlay):
+		_overlay.pop()
 
 func has_overlay() -> bool:
-	return _overlay.has_menus()
+	return is_instance_valid(_overlay) and _overlay.has_menus()
 
 func top_overlay() -> MenuBase:
 	return _overlay.top() if is_instance_valid(_overlay) else null
