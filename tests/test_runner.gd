@@ -108,7 +108,7 @@ func _test_navigation() -> void:
 	for index in range(12):
 		service.distances_from(Vector2i(index, 0))
 	expect(service._fields.size() <= RouteService.MAX_CACHED_FIELDS, "navigation cache stays bounded")
-	metrics["navigation_100x100"] = {"cold_field_ms": cold_us / 1000.0, "10000_cached_reads_ms": hits_us / 1000.0, "field_bytes": field.costs.size() * 4 + field.parents.size() * 4 + field.goal_ids.size() * 4, "cache_limit": RouteService.MAX_CACHED_FIELDS}
+	metrics["navigation_100x100"] = {"cold_field_ms": cold_us / 1000.0, "10000_cached_reads_ms": hits_us / 1000.0, "field_bytes": field.costs.size() * 4 + field.parents.size(), "cache_limit": RouteService.MAX_CACHED_FIELDS}
 	service.free()
 
 func _reference(grid: TileGrid, start: Vector2i, finish: Vector2i) -> float:
@@ -189,7 +189,11 @@ func _test_worlds() -> void:
 	expect(not first.build_controller.try_build(invalid, Vector2i(53, 54)), "invalid nest setup fails")
 	expect(first.inventory.quantity(wood) == stock_before and first.registry.at(Vector2i(53, 54)) == null, "invalid setup leaves stock and world unchanged")
 	var far: BuildOption = load("res://game/building/options/house.tres")
-	expect(first.build_controller.check(far, Vector2i(74, 50)).code == PlacementCheck.Code.NO_ESCAPE, "nest outside safe feeding range rejected")
+	expect(first.build_controller.check(far, Vector2i(18, 20)).code == PlacementCheck.Code.NO_ESCAPE, "nest with unreachable feeding rejected")
+	var slow: SceneBuildOption = far.duplicate(true) as SceneBuildOption
+	slow.spawn_speed = 1.0
+	options.append(slow)
+	expect(first.build_controller.check(slow, Vector2i(74, 50)).code == PlacementCheck.Code.NO_ESCAPE, "nest outside its movement profile budget rejected")
 	var saved_available: int = first.inventory.available(food)
 	first.inventory.try_spend(entry(food, saved_available))
 	expect(first.build_controller.check(far, Vector2i(51, 53)).code == PlacementCheck.Code.SPAWN_FOOD, "nest needs food for its residents")
@@ -199,6 +203,7 @@ func _test_worlds() -> void:
 	var nested: World = WORLD.instantiate() as World
 	nested.auto_start = false
 	var nest_node: Node = nested.get_node("Home")
+	nest_node.owner = null
 	nested.remove_child(nest_node)
 	var group := Node2D.new()
 	nested.add_child(group)

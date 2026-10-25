@@ -12,14 +12,14 @@ project = destination / 'project.godot'
 project.write_text(project.read_text().replace('config/name="archipelago"', 'config/name="archipelago-tests"'))
 PY
 godot_binary="${GODOT_BIN:-godot}"
-"$godot_binary" --headless --path "$check_root/project" --editor --quit > "$check_root/import.log" 2>&1
+if ! "$godot_binary" --headless --path "$check_root/project" --editor --quit > "$check_root/import.log" 2>&1; then cat "$check_root/import.log"; exit 1; fi
 if rg -q 'SCRIPT ERROR|Failed to load|Parse Error' "$check_root/import.log"; then
   cat "$check_root/import.log"
   exit 1
 fi
-"$godot_binary" --headless --path "$check_root/project" --fixed-fps 60 res://tests/test_runner.tscn > "$check_root/tests.log" 2>&1
+if ! "$godot_binary" --headless --path "$check_root/project" --fixed-fps 60 res://tests/test_runner.tscn > "$check_root/tests.log" 2>&1; then cat "$check_root/tests.log"; exit 1; fi
 cat "$check_root/tests.log"
 if rg -q 'SCRIPT ERROR|Leaked|leaked|TESTS FAIL' "$check_root/tests.log" || ! rg -q '^TESTS PASS$' "$check_root/tests.log"; then exit 1; fi
-"$godot_binary" --headless --path "$check_root/project" res://game/test/house_test.tscn > "$check_root/house.log" 2>&1
+if ! "$godot_binary" --headless --path "$check_root/project" res://game/test/house_test.tscn > "$check_root/house.log" 2>&1; then cat "$check_root/house.log"; exit 1; fi
 cat "$check_root/house.log"
 rg -q '^HOUSE TEST PASS$' "$check_root/house.log"
