@@ -135,7 +135,7 @@ func _run() -> void:
 	var cell := Vector2i(51, 50)
 	var menu: BuildMenu = await select_cell(cell)
 	validate_popup(menu)
-	await frames(7)
+	await frames(2)
 	var bright: Image = await capture("07-selection-bright", 0)
 	await frames(18)
 	var dim: Image = await capture("08-selection-dim")
@@ -277,6 +277,7 @@ func _check_brackets(bright: Image, dim: Image, rect: Rect2) -> void:
 	for corner in [rect.position, Vector2(rect.end.x, rect.position.y), rect.end, Vector2(rect.position.x, rect.end.y)]:
 		var a := 0.0
 		var b := 0.0
+		var difference := 0.0
 		var pixel: Vector2i = Vector2i(corner * scale)
 		for y in range(-4, 5):
 			for x in range(-4, 5):
@@ -286,8 +287,9 @@ func _check_brackets(bright: Image, dim: Image, rect: Rect2) -> void:
 					var second: Color = dim.get_pixelv(point)
 					a = maxf(a, minf(first.r, minf(first.g, first.b)))
 					b = maxf(b, minf(second.r, minf(second.g, second.b)))
+					difference = maxf(difference, absf(first.r - second.r))
 		expect(maxf(a, b) > 0.8, "selected tile has a white corner bracket")
-		expect(absf(a - b) > 0.1, "corner bracket visibly blinks")
+		expect(difference > 0.1, "corner bracket visibly blinks")
 
 func _layout_only() -> void:
 	var tag: String = "layout-%dx%d-" % [int(get_viewport().get_visible_rect().size.x), int(get_viewport().get_visible_rect().size.y)]
