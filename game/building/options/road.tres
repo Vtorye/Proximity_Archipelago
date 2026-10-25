@@ -13,6 +13,6 @@ amount = 2
 script = ExtResource("option")
 atlas_coords = Vector2i(2, 0)
 id = &"road"
-display_name = "Road"
+display_name = "Тропинка"
 cost = SubResource("cost")
 allow_when_occupied = true

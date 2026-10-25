@@ -15,5 +15,5 @@ script = ExtResource("option")
 scene = ExtResource("scene")
 blocks_movement = false
 id = &"apple_tree"
-display_name = "Apple tree"
+display_name = "Ягодный куст"
 cost = SubResource("cost")

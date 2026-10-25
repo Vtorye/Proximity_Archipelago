@@ -1,11 +1,11 @@
 [gd_resource type="Resource" script_class="ResourceType" format=3 uid="uid://bc4vd8o7qyldd"]
 
-[ext_resource type="Texture2D" uid="uid://bhrrfsjukdnt0" path="res://game/assets/apple.png" id="1_mw0mp"]
+[ext_resource type="Texture2D" path="res://game/assets/sprites/berries.png" id="1_mw0mp"]
 [ext_resource type="Script" uid="uid://cbbq05pxmjloa" path="res://game/resources/resource_type.gd" id="1_sh6p8"]
 
 [resource]
 script = ExtResource("1_sh6p8")
 id = &"food"
-display_name = "Food"
+display_name = "Пища"
 icon = ExtResource("1_mw0mp")
 metadata/_custom_type_script = "uid://cbbq05pxmjloa"

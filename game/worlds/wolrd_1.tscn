@@ -1,108 +1,78 @@
-[gd_scene format=4 uid="uid://cxuj0y1ptlvgr"]
-
-[ext_resource type="Texture2D" uid="uid://dy10o7un4edt6" path="res://game/assets/atlas.png" id="1_edyhd"]
-[ext_resource type="Script" uid="uid://b5xnctodqs6m0" path="res://game/wolrd.gd" id="1_rlqxc"]
-[ext_resource type="Texture2D" uid="uid://se5im0b15jyd" path="res://game/assets/house.png" id="2_rlqxc"]
-[ext_resource type="PackedScene" uid="uid://c6y7xv8tmtn8m" path="res://game/entities/human.tscn" id="3_hftme"]
-[ext_resource type="Script" uid="uid://cbbq05pxmjloa" path="res://game/resources/resource_type.gd" id="4_848ph"]
-[ext_resource type="Resource" uid="uid://bc4vd8o7qyldd" path="res://game/resources/dot_treses/food.tres" id="5_ojnm1"]
-[ext_resource type="Script" uid="uid://5i2ccfep0xxn" path="res://game/entities/basic_workplace.gd" id="11_848ph"]
-[ext_resource type="Script" uid="uid://cdmimrfnsanfy" path="res://game/building/build_option.gd" id="build_option"]
-[ext_resource type="Script" uid="uid://61u1015oq8mh" path="res://game/entities/canteen.gd" id="canteen_script"]
-[ext_resource type="Resource" uid="uid://bwanb45ketron" path="res://game/building/options/ground.tres" id="ground"]
-[ext_resource type="Script" uid="uid://dohq4yj0b3afb" path="res://game/resources/resource_amount.gd" id="resource_amount"]
-[ext_resource type="Resource" uid="uid://b3bspiavx16wa" path="res://game/building/options/road.tres" id="road"]
+[gd_scene format=3 uid="uid://cxuj0y1ptlvgr"]
+[ext_resource type="Script" path="res://game/wolrd.gd" id="world"]
+[ext_resource type="Script" path="res://game/resources/resource_amount.gd" id="amount"]
+[ext_resource type="Script" path="res://game/resources/resource_type.gd" id="resource_type"]
+[ext_resource type="Script" path="res://game/building/build_option.gd" id="build_option"]
+[ext_resource type="Resource" path="res://game/resources/dot_treses/food.tres" id="food"]
 [ext_resource type="Resource" path="res://game/resources/dot_treses/wood.tres" id="wood"]
 [ext_resource type="Resource" path="res://game/resources/dot_treses/stone.tres" id="stone"]
-[ext_resource type="PackedScene" path="res://game/entities/house.tscn" id="house_scene"]
-[ext_resource type="Resource" path="res://game/building/options/house.tres" id="house_option"]
-[ext_resource type="Resource" path="res://game/building/options/apple_tree.tres" id="apple_option"]
-[ext_resource type="PackedScene" path="res://game/entities/apple_tree.tscn" id="apple_tree_scene"]
-[ext_resource type="Script" path="res://game/test/debug_probe.gd" id="debug_probe_script"]
-[ext_resource type="Texture2D" path="res://game/assets/tree.png" id="tree_tex"]
-[ext_resource type="Texture2D" path="res://game/assets/rock.png" id="rock_tex"]
-[ext_resource type="Script" path="res://game/match/match_controller.gd" id="match_controller_script"]
-
-[sub_resource type="Resource" id="starting_wood"]
-script = ExtResource("resource_amount")
+[ext_resource type="Resource" path="res://game/building/options/ground.tres" id="ground"]
+[ext_resource type="Resource" path="res://game/building/options/road.tres" id="road"]
+[ext_resource type="Resource" path="res://game/building/options/house.tres" id="nest_option"]
+[ext_resource type="Resource" path="res://game/building/options/apple_tree.tres" id="berry_option"]
+[ext_resource type="PackedScene" path="res://game/entities/house.tscn" id="nest"]
+[ext_resource type="PackedScene" path="res://game/entities/apple_tree.tscn" id="berries"]
+[ext_resource type="Script" path="res://game/entities/basic_workplace.gd" id="workplace"]
+[ext_resource type="Script" path="res://game/entities/canteen.gd" id="canteen"]
+[ext_resource type="Texture2D" path="res://game/assets/sprites/timber.png" id="timber_art"]
+[ext_resource type="Texture2D" path="res://game/assets/sprites/stone.png" id="stone_art"]
+[ext_resource type="Texture2D" path="res://game/assets/sprites/nest.png" id="nest_art"]
+[ext_resource type="Script" path="res://game/match/match_controller.gd" id="rules"]
+[sub_resource type="Resource" id="wood_stock"]
+script = ExtResource("amount")
 type = ExtResource("wood")
-amount = 100
-
-[sub_resource type="Resource" id="Resource_js62v"]
-script = ExtResource("resource_amount")
+amount = 80
+[sub_resource type="Resource" id="stone_stock"]
+script = ExtResource("amount")
 type = ExtResource("stone")
-amount = 100
-metadata/_custom_type_script = "uid://dohq4yj0b3afb"
-
-[sub_resource type="Resource" id="Resource_apgqg"]
-script = ExtResource("resource_amount")
-type = ExtResource("5_ojnm1")
-amount = 10
-metadata/_custom_type_script = "uid://dohq4yj0b3afb"
-
-[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_qyjhd"]
-texture = ExtResource("1_edyhd")
-0:0/0 = 0
-0:0/0/custom_data_0 = 1.0
-1:0/0 = 0
-1:0/0/custom_data_0 = 2.0
-2:0/0 = 0
-2:0/0/custom_data_0 = 0.5
-
-[sub_resource type="TileSet" id="TileSet_4at0p"]
-custom_data_layer_0/name = "move_cost"
-custom_data_layer_0/type = 3
-sources/3 = SubResource("TileSetAtlasSource_qyjhd")
-tile_proxies/coords_level = [[0, Vector2i(0, 0)], [3, Vector2i(0, 0)], [1, Vector2i(0, 0)], [3, Vector2i(1, 0)], [2, Vector2i(0, 0)], [3, Vector2i(2, 0)]]
-
-[node name="Wolrd1" type="Node2D" unique_id=1844405457]
-script = ExtResource("1_rlqxc")
-starting_resources = Array[ExtResource("resource_amount")]([SubResource("starting_wood"), SubResource("Resource_js62v"), SubResource("Resource_apgqg")])
-build_options = Array[ExtResource("build_option")]([ExtResource("road"), ExtResource("ground"), ExtResource("house_option"), ExtResource("apple_option")])
-
-[node name="Map" type="TileMapLayer" parent="." unique_id=198608342]
-tile_map_data = PackedByteArray("AAAAAAAAAwABAAAAAAAAAAEAAwABAAAAAAAAAAIAAwABAAAAAAAAAAMAAwABAAAAAAAAAAQAAwABAAAAAAAAAAUAAwABAAAAAAAAAAYAAwABAAAAAAAAAAcAAwABAAAAAAAAAAgAAwABAAAAAAAAAAkAAwABAAAAAAAAAAoAAwABAAAAAAABAAAAAwABAAAAAAABAAEAAwABAAAAAAABAAIAAwABAAAAAAABAAMAAwABAAAAAAABAAQAAwABAAAAAAABAAUAAwABAAAAAAABAAYAAwABAAAAAAABAAcAAwABAAAAAAABAAgAAwABAAAAAAABAAkAAwABAAAAAAABAAoAAwABAAAAAAACAAAAAwABAAAAAAACAAEAAwABAAAAAAACAAIAAwABAAAAAAACAAMAAwABAAAAAAACAAQAAwABAAAAAAACAAUAAwABAAAAAAACAAYAAwABAAAAAAACAAcAAwABAAAAAAACAAgAAwABAAAAAAACAAkAAwABAAAAAAACAAoAAwABAAAAAAADAAAAAwABAAAAAAADAAEAAwABAAAAAAADAAIAAwABAAAAAAADAAMAAwABAAAAAAADAAQAAwABAAAAAAADAAUAAwABAAAAAAADAAYAAwABAAAAAAADAAcAAwABAAAAAAADAAgAAwABAAAAAAADAAkAAwABAAAAAAADAAoAAwABAAAAAAAEAAAAAwABAAAAAAAEAAEAAwABAAAAAAAEAAIAAwABAAAAAAAEAAMAAwABAAAAAAAEAAQAAwABAAAAAAAEAAUAAwABAAAAAAAEAAYAAwABAAAAAAAEAAcAAwABAAAAAAAEAAgAAwABAAAAAAAEAAkAAwABAAAAAAAEAAoAAwABAAAAAAAFAAAAAwABAAAAAAAFAAEAAwABAAAAAAAFAAIAAwABAAAAAAAFAAMAAwABAAAAAAAFAAQAAwABAAAAAAAFAAUAAwABAAAAAAAFAAYAAwABAAAAAAAFAAcAAwABAAAAAAAFAAgAAwABAAAAAAAFAAkAAwABAAAAAAAFAAoAAwABAAAAAAAGAAAAAwABAAAAAAAGAAEAAwABAAAAAAAGAAIAAwABAAAAAAAGAAMAAwABAAAAAAAGAAQAAwAAAAAAAAAGAAUAAwAAAAAAAAAGAAYAAwAAAAAAAAAGAAcAAwAAAAAAAAAGAAgAAwABAAAAAAAGAAkAAwABAAAAAAAGAAoAAwABAAAAAAAHAAAAAwABAAAAAAAHAAEAAwABAAAAAAAHAAIAAwABAAAAAAAHAAMAAwAAAAAAAAAHAAQAAwAAAAAAAAAHAAUAAwAAAAAAAAAHAAYAAwAAAAAAAAAHAAcAAwAAAAAAAAAHAAgAAwAAAAAAAAAHAAkAAwABAAAAAAAHAAoAAwABAAAAAAAIAAAAAwABAAAAAAAIAAEAAwABAAAAAAAIAAIAAwABAAAAAAAIAAMAAwAAAAAAAAAIAAQAAwACAAAAAAAIAAUAAwACAAAAAAAIAAYAAwACAAAAAAAIAAcAAwACAAAAAAAIAAgAAwAAAAAAAAAIAAkAAwABAAAAAAAIAAoAAwABAAAAAAAJAAAAAwABAAAAAAAJAAEAAwABAAAAAAAJAAIAAwABAAAAAAAJAAMAAwAAAAAAAAAJAAQAAwAAAAAAAAAJAAUAAwAAAAAAAAAJAAYAAwAAAAAAAAAJAAcAAwACAAAAAAAJAAgAAwAAAAAAAAAJAAkAAwABAAAAAAAJAAoAAwABAAAAAAAKAAAAAwABAAAAAAAKAAEAAwABAAAAAAAKAAIAAwABAAAAAAAKAAMAAwAAAAAAAAAKAAQAAwAAAAAAAAAKAAUAAwAAAAAAAAAKAAYAAwAAAAAAAAAKAAcAAwACAAAAAAAKAAgAAwAAAAAAAAAKAAkAAwABAAAAAAAKAAoAAwABAAAAAAALAAAAAwABAAAAAAALAAEAAwABAAAAAAALAAIAAwABAAAAAAALAAMAAwAAAAAAAAALAAQAAwAAAAAAAAALAAUAAwAAAAAAAAALAAYAAwAAAAAAAAALAAcAAwAAAAAAAAALAAgAAwAAAAAAAAALAAkAAwABAAAAAAALAAoAAwABAAAAAAAMAAAAAwABAAAAAAAMAAEAAwABAAAAAAAMAAIAAwABAAAAAAAMAAMAAwAAAAAAAAAMAAQAAwAAAAAAAAAMAAUAAwAAAAAAAAAMAAYAAwAAAAAAAAAMAAcAAwAAAAAAAAAMAAgAAwAAAAAAAAAMAAkAAwABAAAAAAAMAAoAAwABAAAAAAANAAAAAwABAAAAAAANAAEAAwABAAAAAAANAAIAAwABAAAAAAANAAMAAwAAAAAAAAANAAQAAwAAAAAAAAANAAYAAwACAAAAAAANAAcAAwAAAAAAAAANAAgAAwAAAAAAAAANAAkAAwABAAAAAAANAAoAAwABAAAAAAAOAAAAAwABAAAAAAAOAAEAAwABAAAAAAAOAAIAAwABAAAAAAAOAAMAAwABAAAAAAAOAAQAAwAAAAAAAAAOAAUAAwAAAAAAAAAOAAYAAwAAAAAAAAAOAAcAAwAAAAAAAAAOAAgAAwABAAAAAAAOAAkAAwABAAAAAAAOAAoAAwABAAAAAAAPAAAAAwABAAAAAAAPAAEAAwABAAAAAAAPAAIAAwABAAAAAAAPAAMAAwABAAAAAAAPAAQAAwABAAAAAAAPAAUAAwABAAAAAAAPAAYAAwABAAAAAAAPAAcAAwABAAAAAAAPAAgAAwABAAAAAAAPAAkAAwABAAAAAAAPAAoAAwABAAAAAAAQAAAAAwABAAAAAAAQAAEAAwABAAAAAAAQAAIAAwABAAAAAAAQAAMAAwABAAAAAAAQAAQAAwABAAAAAAAQAAUAAwABAAAAAAAQAAYAAwABAAAAAAAQAAcAAwABAAAAAAAQAAgAAwABAAAAAAAQAAkAAwABAAAAAAAQAAoAAwABAAAAAAARAAAAAwABAAAAAAARAAEAAwABAAAAAAARAAIAAwABAAAAAAARAAMAAwABAAAAAAARAAQAAwABAAAAAAARAAUAAwABAAAAAAARAAYAAwABAAAAAAARAAcAAwABAAAAAAARAAgAAwABAAAAAAARAAkAAwABAAAAAAARAAoAAwABAAAAAAASAAAAAwABAAAAAAASAAEAAwABAAAAAAASAAIAAwABAAAAAAASAAMAAwABAAAAAAASAAQAAwABAAAAAAASAAUAAwABAAAAAAASAAYAAwABAAAAAAASAAcAAwABAAAAAAASAAgAAwABAAAAAAASAAkAAwABAAAAAAASAAoAAwABAAAAAAATAAAAAwABAAAAAAATAAEAAwABAAAAAAATAAIAAwABAAAAAAATAAMAAwABAAAAAAATAAQAAwABAAAAAAATAAUAAwABAAAAAAATAAYAAwABAAAAAAATAAcAAwABAAAAAAATAAgAAwABAAAAAAATAAkAAwABAAAAAAATAAoAAwABAAAAAAAAAAsAAwABAAAAAAABAAsAAwABAAAAAAACAAsAAwABAAAAAAADAAsAAwABAAAAAAAEAAsAAwABAAAAAAAFAAsAAwABAAAAAAAGAAsAAwABAAAAAAAHAAsAAwABAAAAAAAIAAsAAwABAAAAAAAJAAsAAwABAAAAAAAKAAsAAwABAAAAAAALAAsAAwABAAAAAAAMAAsAAwABAAAAAAANAAsAAwABAAAAAAAOAAsAAwABAAAAAAAPAAsAAwABAAAAAAAQAAsAAwABAAAAAAARAAsAAwABAAAAAAASAAsAAwABAAAAAAATAAsAAwABAAAAAAANAAUAAwAAAAAAAAA=")
-tile_set = SubResource("TileSet_4at0p")
-
-[node name="Home" parent="." instance=ExtResource("house_scene")]
-position = Vector2(168, 120)
-
-[node name="Workplace" type="Node2D" parent="." unique_id=1394307724]
-position = Vector2(136, 72)
-script = ExtResource("11_848ph")
-work_slots = 20
+amount = 60
+[sub_resource type="Resource" id="food_stock"]
+script = ExtResource("amount")
+type = ExtResource("food")
+amount = 30
+[node name="World" type="Node2D"]
+script = ExtResource("world")
+starting_resources = Array[ExtResource("amount")]([SubResource("wood_stock"), SubResource("stone_stock"), SubResource("food_stock")])
+build_options = Array[ExtResource("build_option")]([ExtResource("road"), ExtResource("ground"), ExtResource("nest_option"), ExtResource("berry_option")])
+[node name="Map" type="TileMapLayer" parent="."]
+[node name="Home" parent="." instance=ExtResource("nest")]
+position = Vector2(792, 808)
+option = ExtResource("nest_option")
+[node name="Home2" parent="." instance=ExtResource("nest")]
+position = Vector2(776, 856)
+option = ExtResource("nest_option")
+[node name="Workplace" type="Node2D" parent="."]
+position = Vector2(744, 760)
+script = ExtResource("workplace")
+work_slots = 4
 output = ExtResource("wood")
-
-[node name="Sprite" type="Sprite2D" parent="Workplace" unique_id=1394307725]
-texture = ExtResource("tree_tex")
-
-[node name="Workplace2" type="Node2D" parent="." unique_id=339688897]
-position = Vector2(216, 72)
-script = ExtResource("11_848ph")
-work_slots = 20
+output_amount = 2
+[node name="Sprite" type="Sprite2D" parent="Workplace"]
+texture = ExtResource("timber_art")
+[node name="Workplace2" type="Node2D" parent="."]
+position = Vector2(872, 744)
+script = ExtResource("workplace")
+work_slots = 4
 output = ExtResource("stone")
-
-[node name="Sprite" type="Sprite2D" parent="Workplace2" unique_id=339688898]
-texture = ExtResource("rock_tex")
-
-[node name="Food" type="Node2D" parent="." unique_id=662730675]
-position = Vector2(216, 104)
-script = ExtResource("canteen_script")
-
-[node name="Sprite" type="Sprite2D" parent="Food" unique_id=662730676]
-modulate = Color(0.9703431, 1, 0.05098039, 1)
-texture = ExtResource("2_rlqxc")
-
-[node name="AppleTree" parent="." instance=ExtResource("apple_tree_scene")]
-position = Vector2(168, 72)
-
-[node name="DebugProbe" type="Node" parent="."]
-script = ExtResource("debug_probe_script")
-enabled = false
-
+output_amount = 2
+[node name="Sprite" type="Sprite2D" parent="Workplace2"]
+texture = ExtResource("stone_art")
+[node name="Food" type="Node2D" parent="."]
+position = Vector2(856, 824)
+script = ExtResource("canteen")
+[node name="Sprite" type="Sprite2D" parent="Food"]
+texture = ExtResource("nest_art")
+modulate = Color(1, 0.82, 0.52, 1)
+[node name="AppleTree" parent="." instance=ExtResource("berries")]
+position = Vector2(792, 744)
+option = ExtResource("berry_option")
+output_amount = 3
+[node name="AppleTree2" parent="." instance=ExtResource("berries")]
+position = Vector2(888, 840)
+option = ExtResource("berry_option")
+output_amount = 3
 [node name="MatchController" type="Node" parent="."]
-script = ExtResource("match_controller_script")
-match_duration = 180.0
-target_amount = 100
-tracked_types = Array[ExtResource("4_848ph")]([ExtResource("wood"), ExtResource("stone"), ExtResource("5_ojnm1")])
-
+script = ExtResource("rules")
+match_duration = 480.0
+target_amount = 120
+tracked_types = Array[ExtResource("resource_type")]([ExtResource("wood"), ExtResource("stone"), ExtResource("food")])

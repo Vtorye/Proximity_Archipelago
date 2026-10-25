@@ -7,6 +7,8 @@ const CELL_SIZE := 16
 @export var build_options: Array[BuildOption] = []
 @export var art: ArtCatalog = preload("res://game/art/colony_art.tres")
 @export var auto_start := true
+@export var map_size := Vector2i(100, 100)
+@export var generate_archipelago := true
 var inventory: WorldInventory
 var build_controller: BuildController
 var route_service: RouteService
@@ -24,6 +26,8 @@ func _ready() -> void:
 		push_error("Invalid world art catalog")
 		return
 	_configure_terrain(map)
+	if generate_archipelago:
+		_generate_terrain(map)
 	inventory = WorldInventory.new()
 	inventory.name = "Inventory"
 	add_child(inventory)
@@ -138,3 +142,23 @@ func _queue_navigation_update() -> void:
 func _update_navigation() -> void:
 	if is_inside_tree():
 		route_service.rebuild(registry.blocked_cells())
+
+func _generate_terrain(map: TileMapLayer) -> void:
+	map.clear()
+	var noise := FastNoiseLite.new()
+	noise.seed = 1147
+	noise.frequency = 0.16
+	for y in range(map_size.y):
+		for x in range(map_size.x):
+			var cell := Vector2i(x, y)
+			var main: Vector2 = (Vector2(cell) - Vector2(50, 50)) / Vector2(33, 25)
+			var west: Vector2 = (Vector2(cell) - Vector2(18, 20)) / Vector2(13, 10)
+			var east: Vector2 = (Vector2(cell) - Vector2(81, 77)) / Vector2(13, 12)
+			var shape: float = minf(main.length_squared(), minf(west.length_squared(), east.length_squared()))
+			var edge: float = 1.0 + noise.get_noise_2d(x, y) * 0.18
+			var terrain := 3
+			if shape < edge:
+				terrain = 1 if shape > edge - 0.12 else 0
+			if x >= 46 and x <= 55 and y == 50 or x == 50 and y >= 46 and y <= 54:
+				terrain = 2
+			map.set_cell(cell, 3, Vector2i(terrain, 0))
