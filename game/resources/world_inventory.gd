@@ -25,6 +25,10 @@ func configure(entries: Array[ResourceAmount]) -> bool:
 			return false
 		types[entry.type.id] = entry.type
 		amounts[entry.type.id] = entry.amount
+	for ticket in _tickets.values():
+		ticket.active = false
+	_tickets.clear()
+	_reserved.clear()
 	_types = types
 	_amounts = amounts
 	_notify()
@@ -47,12 +51,11 @@ func can_afford(cost: ResourceAmount) -> bool:
 	return cost != null and cost.amount >= 0 and is_registered(cost.type) and available(cost.type) >= cost.amount
 
 
-func try_spend(cost: ResourceAmount, notify: bool = true) -> bool:
+func try_spend(cost: ResourceAmount) -> bool:
 	if not can_afford(cost):
 		return false
 	_amounts[cost.type.id] -= cost.amount
-	if notify:
-		_notify()
+	_notify()
 	return true
 
 
