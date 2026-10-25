@@ -9,6 +9,7 @@ const CELL_SIZE := 16
 @export var auto_start := true
 @export var map_size := Vector2i(100, 100)
 @export var generate_archipelago := true
+@export var diagnostics_enabled := false
 var inventory: WorldInventory
 var build_controller: BuildController
 var route_service: RouteService
@@ -78,6 +79,11 @@ func _ready() -> void:
 	planner.refresh_food()
 	match_controller = get_node_or_null("MatchController") as MatchController
 	ready_for_play = true
+	if diagnostics_enabled:
+		var observer := DebugProbe.new()
+		observer.enabled = true
+		observer.configure(self)
+		add_child(observer)
 	if auto_start:
 		start()
 	else:

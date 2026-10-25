@@ -6,9 +6,6 @@ extends Node
 ## Defeat: the timer reaches 0 without victory.
 ## Only one result is ever produced per match.
 
-## Group used by HUD and PauseController to find the active match.
-const GROUP := &"match_controller"
-
 enum Result { WIN, LOSS }
 enum Reason { TARGET_REACHED, TIME_UP }
 
@@ -86,7 +83,7 @@ func _on_inventory_changed() -> void:
 	if _finished or not _started:
 		return
 	# Deferred: the change may come from inside BuildController.try_build() or demolish_at(),
-	# where _committing is still true. The result is applied at the end of the frame.
+	# where a command may still be running. Recheck after the complete operation.
 	_evaluate.call_deferred()
 
 func _evaluate() -> void:
