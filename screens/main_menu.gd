@@ -25,7 +25,7 @@ func _ready() -> void:
 func _add_action(parent: VBoxContainer, key: StringName, text: String, action: Callable) -> void:
 	var button: Button = ColonyStyle.button(text, false, key != &"quit")
 	button.custom_minimum_size = Vector2(208, 34)
-	button.add_theme_font_size_override("font_size", 12)
+	button.add_theme_font_size_override("font_size", 24)
 	button.add_theme_color_override("font_outline_color", Color.BLACK)
 	button.add_theme_constant_override("outline_size", 2)
 	for state in ["normal", "hover", "pressed", "disabled", "focus"]:

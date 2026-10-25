@@ -34,10 +34,16 @@ func _draw() -> void:
 		else:
 			position = Vector2(size.x * 0.5 + (index % 5 - 2) * 2, t * (size.y + 16) - 8)
 		position = position.floor()
-		var color := Color("211c18")
-		draw_rect(Rect2(position, Vector2(3, 2)), color)
-		draw_rect(Rect2(position + Vector2(3, 0), Vector2(2, 2)), color)
-		var phase: int = int(_time * 9.0 + index) % 2
-		for leg in range(3):
-			draw_rect(Rect2(position + Vector2(leg * 2, -1 - phase), Vector2(1, 1)), color)
-			draw_rect(Rect2(position + Vector2(leg * 2, 2 + phase), Vector2(1, 1)), color)
+		var forward := Vector2.RIGHT if index % 2 == 0 else Vector2.DOWN
+		var side := Vector2(-forward.y, forward.x)
+		var phase: float = sin(_time * 16.0 + index)
+		for pair in range(3):
+			var origin: Vector2 = position + forward * (pair - 1) * 2.0
+			for sign_value in [-1.0, 1.0]:
+				var foot: Vector2 = origin + side * sign_value * 4.0 + forward * phase * sign_value
+				draw_line(origin, foot.round(), Color("181512"), 1.0)
+		draw_circle(position - forward * 3, 2.5, Color("38271e"))
+		draw_circle(position, 1.5, Color("211b15"))
+		draw_circle(position + forward * 3, 2, Color("30221a"))
+		for sign_value in [-1.0, 1.0]:
+			draw_line(position + forward * 4, (position + forward * 6 + side * sign_value * 2).round(), Color("181512"), 1.0)
