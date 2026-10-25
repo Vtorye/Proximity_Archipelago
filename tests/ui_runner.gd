@@ -256,6 +256,15 @@ func _run() -> void:
 	await click(Router.top_overlay().controls[&"resume"])
 	await frames(8)
 	expect(not get_tree().paused, "resume unpauses the session")
+	await click(screen.hud.controls[&"pause"])
+	var old_world: World = screen.world
+	await click(Router.top_overlay().controls[&"restart"])
+	await frames(50)
+	screen = Router._current
+	expect(not is_instance_valid(old_world) and not get_tree().paused and not Router.has_overlay(), "pause restart retires the old world and clears pause ownership")
+	expect(screen.world.population.count() == 5 and screen.world.match_controller.time_remaining > 178.0, "pause restart resets the population and match timer")
+	expect(AppSettings.show_grid and AppSettings.reduced_motion, "pause restart preserves player settings")
+	await capture("20a-pause-restart")
 	menu = await select_cell(Vector2i(51, 50))
 	await capture("21-reduced-motion-grid")
 	await key(KEY_ESCAPE)

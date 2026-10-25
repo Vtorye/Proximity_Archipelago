@@ -32,9 +32,11 @@ func _run() -> void:
 	seed(20261025)
 	_test_manifest()
 	_test_stock()
+	_test_composite_stock()
 	_test_navigation()
 	_test_resident_pruning()
 	await _test_worlds()
+	await preload("res://tests/build_regressions.gd").new().run(self)
 	await _test_assignment_lifecycle()
 	await preload("res://tests/planning_regressions.gd").new().run(self)
 	await _test_assignment_load()
@@ -79,6 +81,33 @@ func _test_stock() -> void:
 	expect(notifications[0] == 0, "no intermediate inventory notification")
 	stock.end_update()
 	expect(notifications[0] == 1, "one committed inventory notification")
+	stock.free()
+
+func _test_composite_stock() -> void:
+	var stone: ResourceType = resource(&"stone")
+	var food: ResourceType = resource(&"food")
+	var stock := WorldInventory.new()
+	stock.configure([entry(stone, 5), entry(food, 20)])
+	var notifications: Array[int] = [0]
+	stock.changed.connect(func(): notifications[0] += 1)
+	var price: Array[ResourceAmount] = [entry(stone, 5), entry(food, 21)]
+	expect(not stock.try_spend_all(price), "unaffordable composite purchase fails")
+	expect(stock.quantity(stone) == 5 and stock.quantity(food) == 20 and notifications[0] == 0, "failed composite purchase spends nothing and emits nothing")
+	price = [entry(stone, 3), entry(stone, 3)]
+	expect(not stock.can_afford_all(price), "duplicate price entries share the same stock budget")
+	var ticket: StockReservation = stock.reserve(food)
+	expect(not stock.try_spend_all([entry(stone, 5), entry(food, 20)]), "composite purchase cannot spend a reserved meal")
+	stock.release(ticket)
+	notifications[0] = 0
+	var snapshots: Array[Vector2i] = []
+	stock.changed.connect(func(): snapshots.append(Vector2i(stock.quantity(stone), stock.quantity(food))))
+	expect(stock.try_spend_all([entry(stone, 2), entry(food, 20), entry(stone, 3)]), "composite purchase spends all resource types and duplicate entries")
+	expect(notifications[0] == 1 and snapshots == [Vector2i.ZERO], "composite purchase observers see one fully committed state")
+	expect(stock.try_spend_all([]) and notifications[0] == 1, "free purchase succeeds without a stock notification")
+	for invalid in [[null], [entry(stone, -1)], [entry(resource(&"unknown"), 0)]]:
+		var entries: Array[ResourceAmount] = []
+		entries.assign(invalid)
+		expect(not stock.try_spend_all(entries), "invalid composite component rejects the entire purchase")
 	stock.free()
 
 func _test_navigation() -> void:
@@ -191,7 +220,7 @@ func _test_worlds() -> void:
 	var options: Array[BuildOption] = first.build_controller.options
 	var nest: SceneBuildOption = load("res://game/building/options/house.tres").duplicate(true) as SceneBuildOption
 	nest.blocks_movement = true
-	nest.cost = entry(wood, 0)
+	nest.costs = [entry(wood, 0)]
 	options.append(nest)
 	var built: bool = first.build_controller.try_build(nest, Vector2i(52, 54))
 	expect(built, "blocking nest can have an accessible external entrance")
@@ -207,7 +236,7 @@ func _test_worlds() -> void:
 	bad.free()
 	var invalid := SceneBuildOption.new()
 	invalid.scene = packed
-	invalid.cost = entry(wood, 20)
+	invalid.costs = [entry(wood, 20)]
 	invalid.blocks_movement = false
 	options.append(invalid)
 	var stock_before: int = first.inventory.quantity(wood)
