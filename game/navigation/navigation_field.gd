@@ -1,11 +1,9 @@
 class_name NavigationField
 extends RefCounted
-## A shared shortest-path tree. Reverse trees lead every cell toward a goal.
-
+## A shared shortest-path tree. A byte per cell encodes its parent direction.
 var region: Rect2i
 var costs := PackedFloat32Array()
-var parents := PackedInt32Array()
-var goal_ids := PackedInt32Array()
+var parents := PackedByteArray()
 var reverse := false
 
 func index(cell: Vector2i) -> int:
@@ -23,9 +21,14 @@ func path(cell: Vector2i) -> Array[Vector2i]:
 	if not is_finite(cost(cell)):
 		return result
 	var id: int = index(cell)
-	while id >= 0 and result.size() <= costs.size():
+	while result.size() <= costs.size():
 		result.append(cell_at(id))
-		id = parents[id]
+		match parents[id]:
+			0: id -= 1
+			1: id += 1
+			2: id -= region.size.x
+			3: id += region.size.x
+			_: break
 	if not reverse:
 		result.reverse()
 	return result

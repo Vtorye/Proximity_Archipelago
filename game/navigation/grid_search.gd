@@ -6,39 +6,52 @@ static func build(grid: TileGrid, seeds: Array[Vector2i], reverse: bool = false,
 	var field := NavigationField.new()
 	field.region = grid.rect()
 	field.reverse = reverse
-	var count: int = field.region.size.x * field.region.size.y
-	field.costs.resize(count)
-	field.costs.fill(INF)
-	field.parents.resize(count)
-	field.parents.fill(-1)
-	field.goal_ids.resize(count)
-	field.goal_ids.fill(-1)
+	var width: int = field.region.size.x
+	var count: int = width * field.region.size.y
+	var terrain: PackedFloat32Array = grid.packed_costs()
+	var distances := PackedFloat32Array()
+	distances.resize(count)
+	distances.fill(INF)
+	var parents := PackedByteArray()
+	parents.resize(count)
+	parents.fill(255)
 	var heap: Array[Vector2] = []
-	for seed_id in range(seeds.size()):
-		var seed: Vector2i = seeds[seed_id]
+	for seed in seeds:
 		if grid.walkable(seed):
 			var id: int = grid.index(seed)
-			field.costs[id] = 0.0
-			field.goal_ids[id] = seed_id
+			distances[id] = 0.0
 			_push(heap, Vector2(0.0, id))
+	var stop_id: int = grid.index(stop) if grid.in_bounds(stop) else -1
 	while not heap.is_empty():
 		var item: Vector2 = _pop(heap)
 		var id: int = int(item.y)
-		if item.x > field.costs[id]:
+		if item.x > distances[id]:
 			continue
-		var cell: Vector2i = grid.cell_at(id)
-		if cell == stop:
+		if id == stop_id:
 			break
-		for neighbor in grid.neighbors(cell):
-			var next: int = grid.index(neighbor)
+		var column: int = id % width
+		for direction in range(4):
+			var next: int = id
+			match direction:
+				0:
+					if column == 0: continue
+					next -= 1
+				1:
+					if column == width - 1: continue
+					next += 1
+				2: next -= width
+				3: next += width
+			if next < 0 or next >= count or terrain[next] <= 0.0:
+				continue
 			# Reverse traversal preserves the original destination-entry edge weight.
-			var step: float = grid.cost(cell) if reverse else grid.cost(neighbor)
-			var candidate: float = field.costs[id] + step
-			if candidate < field.costs[next]:
-				field.costs[next] = candidate
-				field.parents[next] = id
-				field.goal_ids[next] = field.goal_ids[id]
+			var step: float = terrain[id] if reverse else terrain[next]
+			var candidate: float = distances[id] + step
+			if candidate < distances[next]:
+				distances[next] = candidate
+				parents[next] = direction ^ 1
 				_push(heap, Vector2(candidate, next))
+	field.costs = distances
+	field.parents = parents
 	return field
 
 static func _push(heap: Array[Vector2], item: Vector2) -> void:

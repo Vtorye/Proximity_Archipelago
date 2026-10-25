@@ -68,3 +68,7 @@ func neighbors(cell: Vector2i) -> Array[Vector2i]:
 		if walkable(candidate):
 			result.append(candidate)
 	return result
+
+func packed_costs() -> PackedFloat32Array:
+	# Packed arrays use copy-on-write; a caller cannot mutate this snapshot through the returned value.
+	return _costs
