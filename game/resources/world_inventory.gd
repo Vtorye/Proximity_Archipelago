@@ -48,14 +48,33 @@ func registered_types() -> Array[ResourceType]:
 
 
 func can_afford(cost: ResourceAmount) -> bool:
-	return cost != null and cost.amount >= 0 and is_registered(cost.type) and available(cost.type) >= cost.amount
+	return can_afford_all([cost])
 
 
 func try_spend(cost: ResourceAmount) -> bool:
-	if not can_afford(cost):
+	return try_spend_all([cost])
+
+
+## Duplicate resource IDs share one budget, including outstanding food reservations.
+func can_afford_all(costs: Array[ResourceAmount]) -> bool:
+	var totals: Dictionary[StringName, int] = {}
+	for cost in costs:
+		if cost == null or cost.amount < 0 or not is_registered(cost.type):
+			return false
+		totals[cost.type.id] = totals.get(cost.type.id, 0) + cost.amount
+		if totals[cost.type.id] > available(cost.type):
+			return false
+	return true
+
+
+## Validate every component before spending; observers see only the complete purchase.
+func try_spend_all(costs: Array[ResourceAmount]) -> bool:
+	if not can_afford_all(costs):
 		return false
-	_amounts[cost.type.id] -= cost.amount
-	_notify()
+	for cost in costs:
+		_amounts[cost.type.id] -= cost.amount
+	if not costs.is_empty():
+		_notify()
 	return true
 
 
