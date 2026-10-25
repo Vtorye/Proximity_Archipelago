@@ -3,6 +3,8 @@ extends Node
 
 signal built(option: BuildOption, cell: Vector2i)
 
+var registry: BuildingRegistry
+var population: ColonyPopulation
 var map: TileMapLayer
 var buildings: Node2D
 var inventory: WorldInventory

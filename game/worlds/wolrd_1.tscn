@@ -98,6 +98,7 @@ position = Vector2(168, 72)
 
 [node name="DebugProbe" type="Node" parent="."]
 script = ExtResource("debug_probe_script")
+enabled = false
 
 [node name="MatchController" type="Node" parent="."]
 script = ExtResource("match_controller_script")

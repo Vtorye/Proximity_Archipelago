@@ -1,77 +1,131 @@
 extends Node2D
 class_name World
+## Composition root. Owns services and lifecycle, never shell navigation or input.
 
+const CELL_SIZE := 16
 @export var starting_resources: Array[ResourceAmount] = []
 @export var build_options: Array[BuildOption] = []
-
+@export var art: ArtCatalog = preload("res://game/art/colony_art.tres")
+@export var auto_start := true
 var inventory: WorldInventory
 var build_controller: BuildController
 var route_service: RouteService
-
+var registry: BuildingRegistry
+var population: ColonyPopulation
+var planner: TripPlanner
+var match_controller: MatchController
+var units: Node2D
+var buildings: Node2D
+var ready_for_play := false
 
 func _ready() -> void:
-	var map := $Map as TileMapLayer
+	var map: TileMapLayer = $Map
+	if not art.validate().is_empty():
+		push_error("Invalid world art catalog")
+		return
+	_configure_terrain(map)
 	inventory = WorldInventory.new()
 	inventory.name = "Inventory"
 	add_child(inventory)
+	if not inventory.configure(starting_resources):
+		return
 	route_service = RouteService.new()
 	route_service.name = "RouteService"
 	add_child(route_service)
 	route_service.setup(map)
-	route_service.add_to_group(&"route_service")
-	if not inventory.configure(starting_resources):
-		return
-	var units := Node2D.new()
+	route_service.rebuild()
+	registry = BuildingRegistry.new()
+	registry.name = "BuildingRegistry"
+	add_child(registry)
+	registry.added.connect(_configure_building)
+	planner = TripPlanner.new()
+	planner.name = "TripPlanner"
+	add_child(planner)
+	planner.configure(registry, route_service, inventory, inventory.type_by_id(&"food"))
+	units = Node2D.new()
 	units.name = "Units"
+	units.z_index = 2
 	add_child(units)
-	units.add_to_group(&"units_root")
-	# Buildings added later are drawn above units by tree order; keep units on top.
-	units.z_index = 1
-	var buildings := Node2D.new()
+	buildings = Node2D.new()
 	buildings.name = "Buildings"
 	add_child(buildings)
-	# Workplaces built later through BuildController enter the tree under this node.
-	buildings.child_entered_tree.connect(_subscribe_workplace)
+	population = ColonyPopulation.new()
+	population.name = "Population"
+	add_child(population)
+	population.configure(units, route_service, planner, registry)
 	build_controller = BuildController.new()
 	build_controller.name = "BuildController"
 	build_controller.route_service = route_service
 	add_child(build_controller)
 	build_controller.configure(map, buildings, inventory, build_options)
+	build_controller.registry = registry
+	build_controller.population = population
 	# All setup() calls must finish before navigation is generated,
 	# otherwise units spawned by houses would appear before the grid exists.
+	# A base snapshot already exists; registry commits then apply blocking footprints.
 	for child in get_children():
 		if child is Building:
-			var building := child as Building
-			var origin := map.local_to_map(map.to_local(building.global_position))
-			building.setup(origin, null)
-			_subscribe_workplace(building)
-			build_controller.reserve_existing(building)
-	route_service.rebuild(build_controller.blocked_cells())
+			var building: Building = child as Building
+			var origin: Vector2i = map.local_to_map(map.to_local(building.global_position))
+			if building.setup(origin, building.option):
+				registry.register(building)
+	route_service.rebuild(registry.blocked_cells())
+	planner.refresh_food()
+	match_controller = get_node_or_null("MatchController") as MatchController
+	ready_for_play = true
+	if auto_start:
+		start()
+	else:
+		process_mode = Node.PROCESS_MODE_DISABLED
 
+func start() -> void:
+	if not ready_for_play:
+		return
+	process_mode = Node.PROCESS_MODE_INHERIT
+	if match_controller != null:
+		match_controller.start(inventory)
+
+func stop() -> void:
+	if match_controller != null:
+		match_controller.stop()
+	process_mode = Node.PROCESS_MODE_DISABLED
 
 ## Connects a workplace's output to the world inventory. Safe to call more than once.
 func _subscribe_workplace(node: Node) -> void:
-	if not node is Workplace:
-		return
-	var workplace := node as Workplace
-	if not workplace.produced.is_connected(_on_workplace_produced):
-		workplace.produced.connect(_on_workplace_produced)
+	if node is Workplace and not node.produced.is_connected(_on_workplace_produced):
+		node.produced.connect(_on_workplace_produced)
 
+func _configure_building(building: Building) -> void:
+	_subscribe_workplace(building)
+	if building is Canteen:
+		building.configure(inventory, inventory.type_by_id(&"food"))
+	var sprite: Sprite2D = building.get_node_or_null("Sprite") as Sprite2D
+	if sprite != null:
+		if building is House or building is Canteen:
+			sprite.texture = art.nest
+		elif building is Workplace:
+			var resource_id: StringName = building.output.id if building.output != null else &""
+			sprite.texture = art.berries if resource_id == &"food" else (art.timber if resource_id == &"wood" else art.stone)
+		if sprite.texture != null:
+			sprite.scale = Vector2.ONE * CELL_SIZE / sprite.texture.get_width()
 
 func _on_workplace_produced(type: ResourceType, amount: int) -> void:
 	if not inventory.add(type, amount):
 		push_warning("World could not store %d of %s" % [amount, type.id])
 
-
-func _unhandled_input(event: InputEvent) -> void:
-	if not event is InputEventMouseButton or not event.pressed or event.button_index != MOUSE_BUTTON_RIGHT:
-		return
-	if not is_instance_valid(build_controller) or Router.has_overlay():
-		return
-	var map := $Map as TileMapLayer
-	var local_position: Vector2 = map.get_global_transform_with_canvas().affine_inverse() * event.position
-	var cell := map.local_to_map(local_position)
-	if map.get_cell_source_id(cell) == -1:
-		return
-	Router.push_overlay(&"build", {"controller": build_controller, "cell": cell})
-	get_viewport().set_input_as_handled()
+func _configure_terrain(map: TileMapLayer) -> void:
+	var pixels: int = art.tile_resolution()
+	var tiles := TileSet.new()
+	tiles.tile_size = Vector2i(pixels, pixels)
+	tiles.add_custom_data_layer()
+	tiles.set_custom_data_layer_name(0, "move_cost")
+	tiles.set_custom_data_layer_type(0, TYPE_FLOAT)
+	var atlas := TileSetAtlasSource.new()
+	atlas.texture = art.terrain_atlas()
+	atlas.texture_region_size = Vector2i(pixels, pixels)
+	for index in range(4):
+		atlas.create_tile(Vector2i(index, 0))
+		atlas.get_tile_data(Vector2i(index, 0), 0).set_custom_data("move_cost", [1.0, 1.6, 0.6, 0.0][index])
+	tiles.add_source(atlas, 3)
+	map.tile_set = tiles
+	map.scale = Vector2.ONE * CELL_SIZE / pixels

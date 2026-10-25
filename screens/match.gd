@@ -8,17 +8,16 @@ var _active := false
 
 func _ready() -> void:
 	_world = $SubViewportContainer/SubViewport/Wolrd1
-	_controller = _world.get_node("MatchController") as MatchController
+	_controller = _world.match_controller
 	_controller.completed.connect(_on_completed)
 
 func on_focus() -> void:
 	_active = true
-	_controller.start(_world.inventory)
+	_world.start()
 
 func on_blur() -> void:
 	_active = false
-	_controller.stop()
-	_world.process_mode = Node.PROCESS_MODE_DISABLED
+	_world.stop()
 
 func _on_completed(summary: MatchSummary) -> void:
 	if not _active or Router.is_navigating():

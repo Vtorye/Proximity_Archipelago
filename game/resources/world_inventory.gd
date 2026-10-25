@@ -112,3 +112,6 @@ func _notify() -> void:
 		_dirty = true
 	else:
 		changed.emit()
+
+func type_by_id(id: StringName) -> ResourceType:
+	return _types.get(id)

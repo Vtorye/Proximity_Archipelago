@@ -1,4 +1,3 @@
-@abstract
 class_name Workplace
 extends Building
 
@@ -9,10 +8,6 @@ signal produced(type: ResourceType, amount: int)
 @export var output: ResourceType
 @export var output_amount: int = 1
 var workers: Array[Node2D] = []
-
-
-func _enter_tree() -> void:
-	add_to_group("workplaces")
 
 
 func has_free_slot() -> bool:
@@ -30,7 +25,7 @@ func _prune_workers() -> void:
 
 
 func reserve_worker(human: Node2D) -> bool:
-	if workers.has(human) or not has_free_slot():
+	if not is_instance_valid(human) or workers.has(human) or not has_free_slot():
 		return false
 	workers.append(human)
 	return true
@@ -40,11 +35,20 @@ func release_worker(human: Node2D) -> void:
 	workers.erase(human)
 
 
-@abstract func work_complete(human: Node2D) -> void
+func work_complete(_human: Node2D) -> void:
+	pass
 
 
 ## Called by the worker when a work cycle finishes. Runs work_complete() and emits produced() if output is set.
 func complete_cycle(human: Node2D) -> void:
+	if not workers.has(human):
+		return
 	work_complete(human)
 	if output != null:
 		produced.emit(output, output_amount)
+
+func validate_definition() -> Array[String]:
+	var errors: Array[String] = []
+	if work_slots < 1 or output_amount < 1:
+		errors.append("Workplace needs positive slots and output")
+	return errors
