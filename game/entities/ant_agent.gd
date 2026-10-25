@@ -7,6 +7,7 @@ enum Status { HOME, WALKING, WORKING, EATING, WAITING_FOR_FOOD, DEAD }
 signal work_completed(human: Node2D, workplace: Node2D)
 signal died(human: Node2D, cause: DeathCause)
 signal status_changed(status: Status)
+signal cell_changed(old: Vector2i, next: Vector2i)
 
 @export var speed := 24.0
 @export var work_time := 3.0
@@ -71,6 +72,10 @@ func _physics_process(delta: float) -> void:
 		Status.WALKING:
 			var before: Vector2 = global_position
 			global_position = motion.step(global_position, speed * (TripPlanner.CARRY_SPEED_RATIO if _carrying else 1.0), delta)
+			var old_cell: Vector2i = route_service.world_to_cell(before)
+			var next_cell: Vector2i = route_service.world_to_cell(global_position)
+			if old_cell != next_cell:
+				cell_changed.emit(old_cell, next_cell)
 			if before.distance_squared_to(global_position) > 0.0001:
 				_last_direction = (global_position - before).normalized()
 			if motion.finished:

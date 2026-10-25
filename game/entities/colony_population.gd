@@ -3,6 +3,7 @@ extends Node
 ## Owns spawning, homes, and removal; buildings do not create or destroy agents.
 
 signal changed
+signal cell_changed(old: Vector2i, next: Vector2i)
 var units: Node2D
 var navigation: RouteService
 var planner: TripPlanner
@@ -32,6 +33,7 @@ func _on_building_added(building: Building) -> void:
 		house.add_resident(ant)
 		units.add_child(ant)
 		ant.global_position = navigation.cell_to_world(entry)
+		ant.cell_changed.connect(func(old: Vector2i, next: Vector2i): cell_changed.emit(old, next))
 		ant.died.connect(func(_ant: Node2D, _cause: int): changed.emit())
 	changed.emit()
 
@@ -43,7 +45,7 @@ func _on_building_removed(building: Building) -> void:
 	changed.emit()
 
 func count() -> int:
-	return units.get_child_count()
+	return agents().size()
 
 func agents() -> Array[AntAgent]:
 	var result: Array[AntAgent] = []

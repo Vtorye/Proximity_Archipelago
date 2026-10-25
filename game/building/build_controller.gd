@@ -112,7 +112,10 @@ const DEMOLISH_REFUND_RATIO := 0.0
 func demolition_check(cell: Vector2i) -> PlacementCheck:
 	if _committing:
 		return PlacementCheck.result(PlacementCheck.Code.BUSY)
-	return PlacementCheck.result(PlacementCheck.Code.OK if registry.at(cell) != null else PlacementCheck.Code.NO_BUILDING)
+	var building: Building = registry.at(cell)
+	if building is Canteen and registry.canteens().size() <= 1 and population.count() > 0:
+		return PlacementCheck.result(PlacementCheck.Code.NO_ESCAPE)
+	return PlacementCheck.result(PlacementCheck.Code.OK if building != null else PlacementCheck.Code.NO_BUILDING)
 
 ## Demolishes the building on the cell. No confirmation; residents die with DEMOLISHED.
 ## The presentation requests confirmation; this command has no UI dependencies.
@@ -174,11 +177,3 @@ func _preserves_escape(option: BuildOption, cell: Vector2i) -> bool:
 			return false
 	return true
 
-# Compatibility for older overlay scenes. New UI maps reason codes to text itself.
-func unavailable_reason(option: BuildOption, cell: Vector2i) -> String:
-	var result: PlacementCheck = check(option, cell)
-	return "" if result.allowed() else PlacementCheck.Code.keys()[result.code]
-
-func can_demolish(cell: Vector2i) -> String:
-	var result: PlacementCheck = demolition_check(cell)
-	return "" if result.allowed() else PlacementCheck.Code.keys()[result.code]
