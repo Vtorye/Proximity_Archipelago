@@ -214,6 +214,7 @@ func toast(message: String, danger: bool = false) -> void:
 	_toast.show()
 
 func set_construction_mode(active: bool) -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS if active else Node.PROCESS_MODE_INHERIT
 	_bottom.visible = not active
 	_toast.hide()
 	controls[&"pause"].tooltip_text = "Применить план и продолжить" if active else "Пауза (Esc)"

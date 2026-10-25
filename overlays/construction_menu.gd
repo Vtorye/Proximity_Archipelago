@@ -13,6 +13,7 @@ var _painting := false
 var _panning := false
 var _last_cell := Vector2i.ZERO
 var _has_last := false
+var _refresh_queued := false
 
 func _ready() -> void:
 	dismissable = false
@@ -34,6 +35,7 @@ func _ready() -> void:
 	panel.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
 	panel.offset_left = 8
 	panel.offset_right = -8
+	panel.offset_top = -150
 	panel.offset_bottom = -6
 	var content := VBoxContainer.new()
 	content.add_theme_constant_override("separation", 4)
@@ -81,7 +83,7 @@ func _ready() -> void:
 		button.pressed.connect(entry[2])
 		actions.add_child(button)
 		controls[entry[0]] = button
-	draft.changed.connect(_refresh)
+	draft.changed.connect(_queue_refresh)
 	_refresh()
 	default_focus = controls[_selected.id] if _selected != null else controls[&"cancel"]
 
@@ -96,6 +98,7 @@ func _select(option: BuildOption) -> void:
 	_preview.queue_redraw()
 
 func _refresh() -> void:
+	_refresh_queued = false
 	var budget: PlacementCheck = draft.budget_check()
 	_cost.text = "План: %d · %s" % [draft.size(), BuildCostText.format(draft.costs())]
 	_cost.add_theme_color_override("font_color", ColonyStyle.TEXT if budget.allowed() else ColonyStyle.DANGER)
@@ -105,7 +108,11 @@ func _refresh() -> void:
 	_status.text = PlacementMessages.text(reason.code) if not reason.allowed() else "Ресурсы спишутся при продолжении. Esc: применить план."
 	_status.add_theme_color_override("font_color", ColonyStyle.DANGER if not reason.allowed() else ColonyStyle.MUTED)
 	_preview.queue_redraw()
-	panel.offset_top = -panel.get_combined_minimum_size().y - 6
+
+func _queue_refresh() -> void:
+	if _refresh_queued: return
+	_refresh_queued = true
+	_refresh.call_deferred()
 
 func _undo() -> void:
 	_end_stroke()
@@ -133,10 +140,16 @@ func _input(event: InputEvent) -> void:
 			_panning = false
 	elif event is InputEventMouseMotion:
 		if _panning:
-			context.camera.pan(event.relative)
+			if event.button_mask & MOUSE_BUTTON_MASK_MIDDLE:
+				context.camera.pan(event.relative)
+			else:
+				_panning = false
 			get_viewport().set_input_as_handled()
 		elif _painting:
-			_paint_to(event.position)
+			if event.button_mask & MOUSE_BUTTON_MASK_LEFT:
+				_paint_to(event.position)
+			else:
+				_end_stroke()
 			get_viewport().set_input_as_handled()
 		_update_hover(event.position)
 
@@ -194,12 +207,16 @@ func _end_stroke() -> void:
 	if _cost != null: _refresh()
 
 func _update_hover(point: Vector2) -> void:
-	_preview.hovering = _point_allowed(point)
-	_preview.hover = _cell(point)
-	_preview.queue_redraw()
+	var hovering: bool = _point_allowed(point)
+	var cell: Vector2i = _cell(point)
+	if _preview.hovering != hovering or _preview.hover != cell:
+		_preview.hovering = hovering
+		_preview.hover = cell
+		_preview.queue_redraw()
 
 func _process(delta: float) -> void:
 	if not visible: return
+	panel.offset_top = -panel.get_combined_minimum_size().y - 6
 	if not _painting:
 		var direction := Vector2(float(Input.is_physical_key_pressed(KEY_D)) - float(Input.is_physical_key_pressed(KEY_A)), float(Input.is_physical_key_pressed(KEY_S)) - float(Input.is_physical_key_pressed(KEY_W)))
 		if not direction.is_zero_approx():
