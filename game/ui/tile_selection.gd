@@ -46,10 +46,12 @@ func _draw() -> void:
 	var center: Vector2 = to_local(map.to_global(map.map_to_local(cell)))
 	var alpha: float = 1.0 if AppSettings.reduced_motion else 0.65 + 0.35 * sin(_time * TAU / 1.2)
 	var white := Color(1, 1, 1, alpha)
+	var pixel: float = 1.0 / maxf(get_global_transform_with_canvas().get_scale().x, 0.01)
+	var arm: float = minf(3.0 * pixel, 7.0)
 	for x in [-1.0, 1.0]:
 		for y in [-1.0, 1.0]:
 			var corner: Vector2 = center + Vector2(x, y) * 8.0
-			draw_line(corner + Vector2(0, y), corner + Vector2(-x * 4, y), Color(0, 0, 0, alpha), 1.0)
-			draw_line(corner + Vector2(x, 0), corner + Vector2(x, -y * 4), Color(0, 0, 0, alpha), 1.0)
-			draw_line(corner, corner + Vector2(-x * 4, 0), white, 1.0)
-			draw_line(corner, corner + Vector2(0, -y * 4), white, 1.0)
+			draw_line(corner + Vector2(0, y * pixel), corner + Vector2(-x * arm, y * pixel), Color(0, 0, 0, alpha), pixel)
+			draw_line(corner + Vector2(x * pixel, 0), corner + Vector2(x * pixel, -y * arm), Color(0, 0, 0, alpha), pixel)
+			draw_line(corner, corner + Vector2(-x * arm, 0), white, pixel)
+			draw_line(corner, corner + Vector2(0, -y * arm), white, pixel)

@@ -21,46 +21,60 @@ func _ready() -> void:
 		close_requested.emit.call_deferred(self)
 		return
 	_panel = PanelContainer.new()
-	_panel.custom_minimum_size.x = 286
+	_panel.custom_minimum_size.x = 108
 	add_child(_panel)
 	var content := VBoxContainer.new()
-	content.add_theme_constant_override("separation", 8)
+	content.add_theme_constant_override("separation", 2)
 	_panel.add_child(content)
-	content.add_child(ColonyStyle.label("СТРОИТЕЛЬСТВО", 11, ColonyStyle.ACCENT))
-	_title = ColonyStyle.label("", 21)
-	content.add_child(_title)
-	_description = ColonyStyle.label("", 13, ColonyStyle.MUTED)
+	var heading := HBoxContainer.new()
+	heading.add_theme_constant_override("separation", 2)
+	content.add_child(heading)
+	_title = ColonyStyle.label("")
+	_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	heading.add_child(_title)
+	var close: Button = ColonyStyle.button("X")
+	close.custom_minimum_size = Vector2(12, 12)
+	close.pressed.connect(func(): close_requested.emit(self))
+	heading.add_child(close)
+	controls[&"close"] = close
+	default_focus = close
+	_description = ColonyStyle.label("", 8, ColonyStyle.MUTED)
 	content.add_child(_description)
 	var scroll := ScrollContainer.new()
-	scroll.custom_minimum_size = Vector2(256, 278)
+	scroll.custom_minimum_size = Vector2(100, 68)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	content.add_child(scroll)
 	var options := VBoxContainer.new()
 	options.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	options.add_theme_constant_override("separation", 6)
+	options.add_theme_constant_override("separation", 1)
 	scroll.add_child(options)
 	for option in context.controller.options:
 		if option == null:
 			continue
-		var button: Button = ColonyStyle.button("")
+		var button: Button = ColonyStyle.button(option.display_name)
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		button.add_theme_font_size_override("font_size", 16)
-		button.custom_minimum_size.y = 50
+		button.custom_minimum_size.y = 16
 		button.icon = _icon(option)
 		button.expand_icon = true
-		button.add_theme_constant_override("icon_max_width", 32)
-		button.add_theme_constant_override("h_separation", 12)
+		button.add_theme_constant_override("icon_max_width", 12)
+		button.add_theme_constant_override("h_separation", 2)
 		button.pressed.connect(_choose.bind(option))
 		button.mouse_entered.connect(_show_help.bind(option))
 		button.focus_entered.connect(_show_help.bind(option))
 		options.add_child(button)
 		_buttons[option] = button
 		controls[option.id] = button
-	_message = ColonyStyle.label("", 13, ColonyStyle.DANGER)
-	_message.custom_minimum_size = Vector2(250, 42)
+	_message = ColonyStyle.label("", 8, ColonyStyle.TEXT)
+	_message.add_theme_stylebox_override("normal", ColonyStyle.box())
 	_message.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	content.add_child(_message)
-	_demolish = ColonyStyle.button("Снести здание")
+	add_child(_message)
+	_message.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
+	_message.offset_left = 4
+	_message.offset_right = -4
+	_message.offset_top = -33
+	_message.offset_bottom = -17
+	_message.hide()
+	_demolish = ColonyStyle.button("Снести")
 	_demolish.pressed.connect(_on_demolish_pressed)
 	content.add_child(_demolish)
 	controls[&"demolish"] = _demolish
@@ -69,11 +83,6 @@ func _ready() -> void:
 	_cancel.hide()
 	content.add_child(_cancel)
 	controls[&"cancel_demolish"] = _cancel
-	var close: Button = ColonyStyle.button("Закрыть · Esc")
-	close.pressed.connect(func(): close_requested.emit(self))
-	content.add_child(close)
-	controls[&"close"] = close
-	default_focus = close
 	context.controller.inventory.changed.connect(_refresh)
 	context.controller.changed.connect(_refresh)
 	context.controller.registry.changed.connect(_refresh)
@@ -86,13 +95,13 @@ func _process(_delta: float) -> void:
 
 func reposition() -> void:
 	var viewport: Vector2 = get_viewport_rect().size
-	var safe := Rect2(16, 110, viewport.x - 32, viewport.y - 176)
+	var safe := Rect2(4, 30, viewport.x - 8, viewport.y - 46)
 	var popup: Vector2 = _panel.get_combined_minimum_size()
 	_panel.size = popup
-	var x: float = context.anchor.end.x + 12
+	var x: float = context.anchor.end.x + 3
 	if x + popup.x > safe.end.x:
-		x = context.anchor.position.x - popup.x - 12
-	_panel.position = Vector2(clampf(x, safe.position.x, maxf(safe.position.x, safe.end.x - popup.x)), clampf(context.anchor.position.y, safe.position.y, maxf(safe.position.y, safe.end.y - popup.y)))
+		x = context.anchor.position.x - popup.x - 3
+	_panel.position = Vector2(clampf(x, safe.position.x, maxf(safe.position.x, safe.end.x - popup.x)), clampf(context.anchor.position.y, safe.position.y, maxf(safe.position.y, safe.end.y - popup.y))).round()
 
 func _icon(option: BuildOption) -> Texture2D:
 	if option.icon != null:
@@ -108,32 +117,41 @@ func _refresh() -> void:
 	if not is_instance_valid(context.controller):
 		close_requested.emit(self)
 		return
-	_title.text = "Клетка %d · %d" % [context.cell.x, context.cell.y]
+	_title.text = "%d:%d" % [context.cell.x, context.cell.y]
 	var occupant: Building = context.controller.registry.at(context.cell)
-	_description.text = "Выберите постройку или покрытие"
+	_description.text = "Строительство"
 	if occupant != null:
-		_description.text = "Здание: %s" % occupant.display_title()
+		_description.text = occupant.display_title()
 	elif not context.controller.route_service.walkable(context.cell):
-		_description.text = "Вода · строительство недоступно"
+		_description.text = "Вода"
 	for option in _buttons:
 		var button: Button = _buttons[option]
 		var cost: ResourceAmount = option.cost
-		button.text = "%s\n%s: %d" % [option.display_name, cost.type.display_name, cost.amount] if cost != null and cost.type != null else option.display_name
+		button.text = "%s %d" % [option.display_name, cost.amount] if cost != null else option.display_name
 		var result: PlacementCheck = context.controller.check(option, context.cell)
 		button.disabled = not result.allowed() or _confirming
 		button.tooltip_text = ""
 	var demolition: PlacementCheck = context.controller.demolition_check(context.cell)
+	_demolish.visible = occupant != null
 	_demolish.disabled = not demolition.allowed()
 	_demolish.tooltip_text = PlacementMessages.text(demolition.code)
 	reposition()
+
+func _set_message(text: String) -> void:
+	_message.text = text
+	_message.visible = not text.is_empty()
 
 func _show_help(option: BuildOption) -> void:
 	if _confirming or _message == null:
 		return
 	var result: PlacementCheck = context.controller.check(option, context.cell)
-	_message.text = PlacementMessages.text(result.code)
-	if result.allowed() and option is SceneBuildOption and option.spawn_count > 0:
-		_message.text = "Новые жители: %d. Нужны свободные порции пищи: %d." % [option.spawn_count, option.spawn_count]
+	var help: String = PlacementMessages.text(result.code)
+	if result.allowed():
+		var cost: ResourceAmount = option.cost
+		help = "%s: %d %s" % [option.display_name, cost.amount, cost.type.display_name] if cost != null else option.display_name
+		if option is SceneBuildOption and option.spawn_count > 0:
+			help += ". +%d муравьёв; нужно %d порций." % [option.spawn_count, option.spawn_count]
+	_set_message(help)
 
 func _on_cell_changed(old: Vector2i, next: Vector2i) -> void:
 	if old == context.cell or next == context.cell:
@@ -144,14 +162,14 @@ func _choose(option: BuildOption) -> void:
 		action_completed.emit("%s: готово" % option.display_name, false)
 		close_requested.emit(self)
 	else:
-		_message.text = PlacementMessages.text(context.controller.last_result.code)
+		_set_message(PlacementMessages.text(context.controller.last_result.code))
 		_refresh()
 
 func _on_demolish_pressed() -> void:
 	if not _confirming:
 		_confirming = true
 		var building: Building = context.controller.registry.at(context.cell)
-		_message.text = "Жители погибнут: %d. Снести муравейник?" % building.residents.size() if building is House else "Снести это здание? Ресурсы не возвращаются."
+		_set_message("Жители погибнут: %d. Снести муравейник?" % building.residents.size() if building is House else "Снести здание без возврата ресурсов?")
 		_demolish.text = "Да, снести"
 		_demolish.add_theme_color_override("font_color", ColonyStyle.DANGER)
 		_cancel.show()
@@ -161,13 +179,13 @@ func _on_demolish_pressed() -> void:
 		action_completed.emit("Здание снесено", false)
 		close_requested.emit(self)
 	else:
-		_message.text = PlacementMessages.text(context.controller.last_result.code)
+		_set_message(PlacementMessages.text(context.controller.last_result.code))
 		_refresh()
 
 func _cancel_confirmation() -> void:
 	_confirming = false
-	_message.text = ""
-	_demolish.text = "Снести здание"
+	_set_message("")
+	_demolish.text = "Снести"
 	_demolish.remove_theme_color_override("font_color")
 	_cancel.hide()
 	_refresh()
