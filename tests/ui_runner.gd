@@ -5,9 +5,23 @@ var assertions := 0
 var captures: Array[String] = []
 var screen: Node
 var _output: String
+var nested_viewport := false
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	if not nested_viewport:
+		for argument in OS.get_cmdline_user_args():
+			if argument.begins_with("--virtual-resolution="):
+				var dimensions: PackedStringArray = argument.get_slice("=", 1).split("x")
+				var viewport := SubViewport.new()
+				viewport.size = Vector2i(int(dimensions[0]), int(dimensions[1]))
+				viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+				viewport.handle_input_locally = true
+				add_child(viewport)
+				var child: Node = get_script().new()
+				child.nested_viewport = true
+				viewport.add_child(child)
+				return
 	_output = OS.get_environment("COLONY_EVIDENCE_DIR")
 	DirAccess.make_dir_recursive_absolute(_output)
 	_run.call_deferred()
@@ -28,6 +42,7 @@ func capture(label: String) -> void:
 	get_viewport().get_texture().get_image().save_png(path)
 	captures.append(label)
 	print("CAPTURE ", label)
+	await frames(12)
 
 func click_at(point: Vector2, button: MouseButton = MOUSE_BUTTON_LEFT) -> void:
 	var motion := InputEventMouseMotion.new()
@@ -81,7 +96,7 @@ func _run() -> void:
 	seed(20261025)
 	AppSettings.reset_defaults()
 	var boot: Node = load("res://boot.tscn").instantiate()
-	get_tree().root.add_child(boot)
+	get_viewport().add_child(boot)
 	await frames(35)
 	expect(Router.current_screen_key() == &"main_menu", "main menu starts")
 	if "--layout-only" in OS.get_cmdline_user_args():
@@ -254,7 +269,7 @@ func _run() -> void:
 	_finish()
 
 func _layout_only() -> void:
-	var tag: String = "layout-%dx%d-" % [get_window().size.x, get_window().size.y]
+	var tag: String = "layout-%dx%d-" % [int(get_viewport().get_visible_rect().size.x), int(get_viewport().get_visible_rect().size.y)]
 	await capture(tag + "main")
 	await click(Router._current.controls[&"settings"])
 	await frames(10)
@@ -275,9 +290,12 @@ func _layout_only() -> void:
 	expect(not get_tree().paused and Router.current_screen_key() == &"main_menu", "layout navigation remains usable")
 
 func _finish() -> void:
-	var report := {"assertions": assertions, "failures": failures, "captures": captures}
+	var report := {"assertions": assertions, "failures": failures, "captures": captures, "render_size": str(get_viewport().get_texture().get_size()), "window_size": str(get_window().size)}
 	var file := FileAccess.open(_output.path_join("ui-report.json"), FileAccess.WRITE)
 	file.store_string(JSON.stringify(report, "  "))
 	print("UI REPORT ", JSON.stringify(report))
 	print("UI TESTS PASS" if failures.is_empty() else "UI TESTS FAIL")
+	if failures.is_empty() and Router.current_screen_key() == &"main_menu":
+		# Exercise the real quit button after writing the report.
+		await click(Router._current.controls[&"quit"])
 	get_tree().quit(0 if failures.is_empty() else 1)
