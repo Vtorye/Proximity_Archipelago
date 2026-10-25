@@ -7,7 +7,7 @@ const CELL_SIZE := 16
 @export var build_options: Array[BuildOption] = []
 @export var art: ArtCatalog = preload("res://game/art/colony_art.tres")
 @export var auto_start := true
-@export var map_size := Vector2i(100, 100)
+@export var map_size := Vector2i(50, 50)
 @export var generate_archipelago := true
 @export var diagnostics_enabled := false
 var inventory: WorldInventory
@@ -167,18 +167,20 @@ func _generate_terrain(map: TileMapLayer) -> void:
 	var noise := FastNoiseLite.new()
 	noise.seed = 1147
 	noise.frequency = 0.16
+	var dimensions := Vector2(map_size)
+	var center: Vector2i = map_size / 2
 	for y in range(map_size.y):
 		for x in range(map_size.x):
 			var cell := Vector2i(x, y)
-			var main: Vector2 = (Vector2(cell) - Vector2(50, 50)) / Vector2(33, 25)
-			var west: Vector2 = (Vector2(cell) - Vector2(18, 20)) / Vector2(13, 10)
-			var east: Vector2 = (Vector2(cell) - Vector2(81, 77)) / Vector2(13, 12)
+			var main: Vector2 = (Vector2(cell) - dimensions * 0.5) / (dimensions * Vector2(0.33, 0.25))
+			var west: Vector2 = (Vector2(cell) - dimensions * Vector2(0.18, 0.20)) / (dimensions * Vector2(0.13, 0.10))
+			var east: Vector2 = (Vector2(cell) - dimensions * Vector2(0.81, 0.77)) / (dimensions * Vector2(0.13, 0.12))
 			var shape: float = minf(main.length_squared(), minf(west.length_squared(), east.length_squared()))
 			var edge: float = 1.0 + noise.get_noise_2d(x, y) * 0.18
 			var terrain := 3
 			if shape < edge:
 				terrain = 1 if shape > edge - 0.12 else 0
-			if x >= 43 and x <= 58 and y >= 43 and y <= 57:
+			if x >= center.x - 7 and x <= center.x + 8 and y >= center.y - 7 and y <= center.y + 7:
 				terrain = 1
 			map.set_cell(cell, 3, Vector2i(terrain, 0))
 
