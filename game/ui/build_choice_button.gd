@@ -5,10 +5,14 @@ var option: BuildOption
 var art: ArtCatalog
 var cost_label: Label
 var card_width := 176
+var _body: MarginContainer
 
 func _ready() -> void:
 	custom_minimum_size = Vector2(card_width, 44)
+	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	pressed.connect(AppSettings.play_click)
 	var margin := MarginContainer.new()
+	_body = margin
 	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	for side in ["left", "right"]:
@@ -41,6 +45,9 @@ func _ready() -> void:
 	minimum_size_changed.connect(_fit_content)
 	margin.minimum_size_changed.connect(_fit_content)
 	_fit_content()
+
+func _process(_delta: float) -> void:
+	_body.modulate.a = 0.35 if disabled else 1.0
 
 func _fit_content() -> void:
 	if get_child_count() > 0:
