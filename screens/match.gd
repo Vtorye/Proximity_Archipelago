@@ -16,7 +16,7 @@ func _ready() -> void:
 	world.match_controller.completed.connect(_on_completed)
 	camera = WorldCamera.new()
 	camera.name = "ColonyCamera"
-	camera.position = Vector2(800, 800)
+	camera.position = Vector2(800, 792)
 	world.add_child(camera)
 	camera.make_current()
 	selection = TileSelection.new()
@@ -55,8 +55,27 @@ func _on_completed(summary: MatchSummary) -> void:
 func _input(event: InputEvent) -> void:
 	if not _active or Router.is_navigating():
 		return
+	if event is InputEventMouseButton and not event.pressed and event.button_index in [MOUSE_BUTTON_LEFT, MOUSE_BUTTON_MIDDLE] and camera.dragging:
+		camera.dragging = false
+		get_viewport().set_input_as_handled()
+		return
+	if event is InputEventMouseMotion and camera.dragging:
+		camera.pan(event.relative)
+		get_viewport().set_input_as_handled()
+		return
+	var top: MenuBase = Router.top_overlay()
+	if top is BuildMenu and event is InputEventMouseButton and event.pressed:
+		var inside: bool = top._panel.get_global_rect().has_point(event.position)
+		if event.button_index == MOUSE_BUTTON_RIGHT or event.button_index == MOUSE_BUTTON_LEFT and not inside:
+			_close_build()
+			if event.button_index == MOUSE_BUTTON_LEFT:
+				camera.dragging = true
+			get_viewport().set_input_as_handled()
+			return
+		if event.button_index in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN] and not inside:
+			get_viewport().set_input_as_handled()
+			return
 	if event.is_action_pressed(&"ui_cancel"):
-		var top: MenuBase = Router.top_overlay()
 		if top is BuildMenu:
 			top.cancel_or_close()
 			get_viewport().set_input_as_handled()
@@ -65,11 +84,9 @@ func _input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 
 func _unhandled_input(event: InputEvent) -> void:
-	if not _active or Router.is_navigating():
+	if not _active or Router.is_navigating() or Router.has_overlay():
 		return
-	if Router.has_overlay() and not Router.top_overlay() is BuildMenu:
-		return
-	if event is InputEventMouseButton and event.pressed and event.button_index in [MOUSE_BUTTON_LEFT, MOUSE_BUTTON_RIGHT]:
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_RIGHT:
 		var map: TileMapLayer = world.get_node("Map") as TileMapLayer
 		var point: Vector2 = map.get_global_transform_with_canvas().affine_inverse() * event.position
 		var cell: Vector2i = map.local_to_map(point)
@@ -78,6 +95,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 
 func select_cell(cell: Vector2i) -> void:
+	camera.dragging = false
+	camera.enabled_input = false
 	selection.select(cell)
 	if is_instance_valid(_build_menu) and not _build_menu.is_queued_for_deletion():
 		_build_menu.context.cell = cell
@@ -98,7 +117,7 @@ func select_cell(cell: Vector2i) -> void:
 func _process(_delta: float) -> void:
 	if camera == null:
 		return
-	camera.enabled_input = not Router.has_overlay() or Router.top_overlay() is BuildMenu
+	camera.enabled_input = not Router.has_overlay()
 	if is_instance_valid(_build_menu) and not _build_menu.is_queued_for_deletion():
 		_build_menu.context.anchor = selection.screen_rect()
 
@@ -107,6 +126,7 @@ func _close_build() -> void:
 	if Router.top_overlay() is BuildMenu:
 		Router.pop_overlay()
 	_build_menu = null
+	camera.enabled_input = true
 
 func _open_pause() -> void:
 	_close_build()
