@@ -13,9 +13,8 @@ func _open_settings() -> void:
 	# Nested overlay: sits on top of the pause menu
 	var settings = Router.push_overlay(&"settings")
 	if settings:
-		settings.closed.connect(func(): pass)  # optional hook
+		settings.close_requested.connect(func(_menu: MenuBase): pass)  # optional hook
 
 func _quit_to_menu() -> void:
 	# Explicitly unpause before navigating away
-	get_tree().paused = false
 	Router.goto(&"main_menu")

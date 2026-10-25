@@ -46,5 +46,4 @@ func _format_time(seconds: float) -> String:
 
 func _go_to_main_menu() -> void:
 	# Explicitly unpause before navigating away, as in pause_menu.gd
-	get_tree().paused = false
 	Router.goto(MAIN_MENU_KEY)
