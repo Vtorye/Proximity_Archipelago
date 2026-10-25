@@ -181,6 +181,11 @@ func _on_food_sources_changed() -> void:
 	else:
 		_on_navigation_changed()
 
+func workplace_removed(workplace: Workplace) -> void:
+	if current_workplace == workplace:
+		_release_work()
+		_go_home()
+
 func _release_work() -> void:
 	if is_instance_valid(current_workplace):
 		current_workplace.release_worker(self)

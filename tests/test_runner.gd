@@ -35,6 +35,7 @@ func _run() -> void:
 	_test_navigation()
 	_test_resident_pruning()
 	await _test_worlds()
+	await _test_assignment_lifecycle()
 	await _test_assignment_load()
 	await _test_rules()
 	await _test_art_resolution()
@@ -372,3 +373,22 @@ func _test_simulation() -> void:
 		world.free()
 		await get_tree().process_frame
 	metrics["simulation"] = scenarios
+
+func _test_assignment_lifecycle() -> void:
+	var world: World = make_world()
+	var ant: AntAgent = world.population.agents()[0]
+	for workplace in world.registry.workplaces(): workplace.work_slots = 0
+	var food: ResourceType = world.inventory.type_by_id(&"food")
+	var before: int = world.inventory.quantity(food)
+	ant._decide()
+	expect(ant.status == AntAgent.Status.HOME and ant._plan.waiting_for_slot, "busy work slots leave a healthy ant waiting at home")
+	expect(ant._meal.active and world.inventory.quantity(food) == before, "waiting preserves the next reserved meal")
+	for workplace in world.registry.workplaces(): workplace.work_slots = 4
+	ant._decide()
+	var job: Workplace = ant.current_workplace
+	expect(job != null and ant.status == AntAgent.Status.WALKING, "released work slots allow a new assignment")
+	job.demolish()
+	job.free()
+	expect(ant.current_workplace == null and ant._destination != &"work", "removed workplace immediately cancels the walking assignment")
+	world.free()
+	await get_tree().process_frame

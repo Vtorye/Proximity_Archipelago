@@ -46,6 +46,9 @@ func _on_building_removed(building: Building) -> void:
 		for resident in building.residents:
 			if is_instance_valid(resident) and resident is AntAgent:
 				resident.die(AntAgent.DeathCause.DEMOLISHED)
+	elif building is Workplace:
+		for ant in agents():
+			ant.workplace_removed(building)
 	changed.emit()
 
 func count() -> int:
