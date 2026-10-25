@@ -1,0 +1,54 @@
+{
+  "assertions": 502,
+  "failures": [],
+  "metrics": {
+    "assignment_load": {
+      "new_searches": 0,
+      "requests": 1000,
+      "wall_ms": 544.352,
+      "workplaces": 103
+    },
+    "navigation_100x100": {
+      "10000_cached_reads_ms": 7.428,
+      "cache_limit": 8,
+      "cold_field_ms": 30.982,
+      "field_bytes": 50000
+    },
+    "simulation": {
+      "idle": {
+        "ants": 5,
+        "cache_hits": 193,
+        "completed_cycles": 58,
+        "deaths": 0,
+        "searches": 3,
+        "seconds": 180.0,
+        "stock": {
+          "food": 147,
+          "stone": 40,
+          "wood": 88
+        },
+        "wall_ms": 226.0,
+        "won": false
+      },
+      "roads": {
+        "ants": 10,
+        "cache_hits": 845,
+        "completed_cycles": 267,
+        "deaths": 0,
+        "searches": 8,
+        "seconds": 147.016666666703,
+        "stock": {
+          "food": 289,
+          "stone": 304,
+          "wood": 100
+        },
+        "wall_ms": 307.499,
+        "won": true
+      }
+    }
+  },
+  "source_revision": "9fba283ea4f63860396033646dd733124fde31b0",
+  "scenario_notes": {
+    "roads": "roads plus another nest placed near stone, using unchanged build costs"
+  }
+}
