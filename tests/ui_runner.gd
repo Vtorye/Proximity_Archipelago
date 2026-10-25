@@ -294,7 +294,7 @@ func _run() -> void:
 	screen.camera.position = Vector2(25 * 16 + 8, 10 * 16 + 8)
 	screen.camera.force_update_scroll()
 	await frames(5)
-	menu = await select_cell(Vector2i(50, 20))
+	menu = await select_cell(Vector2i(25, 10))
 	expect(menu.controls[&"road"].disabled and menu.controls[&"house"].disabled, "water denies construction")
 	await capture("23-water-selection")
 	await key(KEY_ESCAPE)

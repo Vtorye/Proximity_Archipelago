@@ -200,6 +200,13 @@ func make_world() -> World:
 func _test_worlds() -> void:
 	var first: World = make_world()
 	var second: World = make_world()
+	var map: TileMapLayer = first.get_node("Map")
+	expect(first.map_size == Vector2i(50, 50) and map.get_used_rect() == Rect2i(0, 0, 50, 50) and map.get_used_cells().size() == 2500, "default world contains exactly fifty by fifty cells")
+	for building in first.registry.all():
+		expect(map.get_used_rect().has_point(building.cell) and first.route_service.walkable(building.entry_cells()[0]), "smaller world keeps every starting building inside the map and accessible")
+	var field: NavigationField = first.route_service.food_field()
+	metrics["navigation_50x50"] = {"field_bytes": field.costs.size() * 4 + field.parents.size(), "cells": map.get_used_cells().size()}
+	expect(field.costs.size() * 4 + field.parents.size() == 12500, "fifty by fifty navigation field uses one quarter of the previous cell storage")
 	expect(first.population.count() == 5 and second.population.count() == 5, "worlds own independent ant populations")
 	for ant in second.population.agents():
 		expect(ant.get_parent() == second.units and ant.route_service == second.route_service and ant.planner.inventory == second.inventory, "second world has no first-world dependency")
@@ -249,7 +256,6 @@ func _test_worlds() -> void:
 	options.append(slow)
 	expect(first.build_controller.check(slow, Vector2i(39, 25)).code == PlacementCheck.Code.NO_ESCAPE, "nest outside its movement profile budget rejected")
 	# A slower tile must not consume a hungry ant's last safe escape budget.
-	var map: TileMapLayer = first.get_node("Map") as TileMapLayer
 	map.set_cell(Vector2i(28, 26), 3, Vector2i(2, 0))
 	first.route_service.rebuild(first.registry.blocked_cells())
 	var from_cell: Vector2i = first.route_service.world_to_cell(ant.global_position)
