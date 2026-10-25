@@ -41,14 +41,8 @@ func frames(count: int = 12) -> void:
 func capture(label: String, linger: int = 12) -> Image:
 	await RenderingServer.frame_post_draw
 	var path: String = _output.path_join(label + ".png")
-	var image: Image = get_viewport().get_texture().get_image()
 	var target: Vector2i = display_size if display_size != Vector2i.ZERO else get_window().size
-	var factor: int = maxi(1, mini(target.x / image.get_width(), target.y / image.get_height()))
-	image.resize(image.get_width() * factor, image.get_height() * factor, Image.INTERPOLATE_NEAREST)
-	var canvas := Image.create(target.x, target.y, false, Image.FORMAT_RGBA8)
-	canvas.fill(Color.BLACK)
-	canvas.blit_rect(image, Rect2i(Vector2i.ZERO, image.get_size()), (target - image.get_size()) / 2)
-	image = canvas
+	var image: Image = PixelCapture.from_viewport(get_viewport(), target)
 	image.save_png(path)
 	captures.append(label)
 	print("CAPTURE ", label)

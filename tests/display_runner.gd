@@ -15,7 +15,7 @@ func _ready() -> void:
 func frames(count: int) -> void:
 	for frame in range(count):
 		await RenderingServer.frame_post_draw
-		var image: Image = get_viewport().get_texture().get_image()
+		var image: Image = PixelCapture.from_viewport(get_viewport(), get_window().size)
 		image.save_png(_frames.path_join("frame-%04d.png" % _index))
 		_index += 1
 
@@ -42,12 +42,12 @@ func _run() -> void:
 	await frames(30)
 	if DisplayServer.window_get_mode() != DisplayServer.WINDOW_MODE_FULLSCREEN:
 		_failures.append("fullscreen control did not change native window mode")
-	get_viewport().get_texture().get_image().save_png(_output.path_join("27-fullscreen-settings.png"))
+	PixelCapture.from_viewport(get_viewport(), get_window().size).save_png(_output.path_join("27-fullscreen-settings.png"))
 	await click(settings.controls[&"fullscreen"])
 	await frames(30)
 	if DisplayServer.window_get_mode() != DisplayServer.WINDOW_MODE_WINDOWED:
 		_failures.append("fullscreen control did not restore windowed mode")
-	get_viewport().get_texture().get_image().save_png(_output.path_join("28-windowed-settings.png"))
+	PixelCapture.from_viewport(get_viewport(), get_window().size).save_png(_output.path_join("28-windowed-settings.png"))
 	AppSettings.reset_defaults()
 	var report := {"source_revision": OS.get_environment("COLONY_SOURCE_REVISION"), "failures": _failures, "recorded_frames": _index, "fullscreen_toggle": _failures.is_empty()}
 	FileAccess.open(_output.path_join("display-report.json"), FileAccess.WRITE).store_string(JSON.stringify(report, "  "))
