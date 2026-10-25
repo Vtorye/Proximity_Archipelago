@@ -28,7 +28,7 @@ func _run() -> void:
 	nest.costs = [_entry(stone, 5), _entry(food, 20)]
 	world.build_controller.options[2] = nest
 	world.inventory.add(food, 10)
-	screen.camera.position = Vector2(800, 864)
+	screen.camera.position = Vector2(400, 464)
 	screen.camera.force_update_scroll()
 	await frames(2)
 	var revision: int = world.route_service.revision
@@ -41,25 +41,25 @@ func _run() -> void:
 	await capture("03-bottom-palette-and-composite-price")
 	var time: float = world.match_controller.time_remaining
 	var satiety: float = world.population.agents()[0].needs.satiety
-	await _stroke(Vector2i(48, 53), Vector2i(54, 53))
+	await _stroke(Vector2i(23, 28), Vector2i(29, 28))
 	expect(menu.draft.size() == 7 and menu._cost.text.contains("7 Древесина"), "one fast drag fills every road cell and totals its price")
 	expect(world.route_service.revision == revision and world.inventory.quantity(wood) == stock, "draft leaves navigation and inventory unchanged")
 	expect(world.match_controller.time_remaining == time and world.population.agents()[0].needs.satiety == satiety, "painting pauses both the timer and hunger")
 	await capture("04-road-stroke-preview")
 	await click(menu.controls[&"undo"])
 	expect(menu.draft.size() == 0 and menu.controls[&"undo"].disabled, "undo removes the whole drag")
-	await _stroke(Vector2i(48, 53), Vector2i(54, 53))
+	await _stroke(Vector2i(23, 28), Vector2i(29, 28))
 	await click(menu.controls[&"cancel"])
 	expect(not get_tree().paused and not Router.has_overlay() and world.route_service.revision == revision and world.inventory.quantity(wood) == stock, "cancel discards the complete plan for free")
 	await key(KEY_B)
 	menu = Router.top_overlay() as ConstructionMenu
 	expect(menu != null and get_tree().paused, "B opens the same construction editor")
-	await _stroke(Vector2i(48, 53), Vector2i(54, 53))
+	await _stroke(Vector2i(23, 28), Vector2i(29, 28))
 	await click(menu.controls[&"house"])
-	await click_at(cell_point(Vector2i(54, 52)))
+	await click_at(cell_point(Vector2i(29, 27)))
 	expect(menu.draft.size() == 8 and not menu.controls[&"apply"].disabled, "road and nest share an affordable plan")
 	expect(menu._cost.text.contains("7 Древесина") and menu._cost.text.contains("5 Камень") and menu._cost.text.contains("20 Пища"), "plan total includes every resource across all placements")
-	expect(world.population.count() == 5 and world.registry.at(Vector2i(54, 52)) == null, "draft nest has no residents or world occupancy before commit")
+	expect(world.population.count() == 5 and world.registry.at(Vector2i(29, 27)) == null, "draft nest has no residents or world occupancy before commit")
 	await capture("05-composite-plan-total")
 	var food_before: int = world.inventory.quantity(food)
 	var stone_before: int = world.inventory.quantity(stone)
@@ -69,17 +69,17 @@ func _run() -> void:
 	expect(Router.top_overlay() == menu and menu.draft.size() == 8 and get_tree().paused, "closing settings restores the draft and its pause")
 	await click(screen.hud.controls[&"pause"])
 	expect(not Router.has_overlay() and not get_tree().paused and world.route_service.revision == revision + 1, "unpausing applies the entire draft with one navigation revision")
-	expect(world.population.count() == 10 and world.registry.at(Vector2i(54, 52)) is House, "committed nest creates its residents")
+	expect(world.population.count() == 10 and world.registry.at(Vector2i(29, 27)) is House, "committed nest creates its residents")
 	expect(world.inventory.quantity(wood) == stock - 7 and world.inventory.quantity(stone) == stone_before - 5 and world.inventory.quantity(food) == food_before - 20, "commit charges the composite total exactly once")
-	for x in range(48, 55):
-		expect(world.build_controller.map.get_cell_atlas_coords(Vector2i(x, 53)) == Vector2i(2, 0), "every previewed road cell is committed")
+	for x in range(23, 30):
+		expect(world.build_controller.map.get_cell_atlas_coords(Vector2i(x, 28)) == Vector2i(2, 0), "every previewed road cell is committed")
 	await capture("06-applied-road-and-nest")
 	var expensive: TileBuildOption = world.build_controller.options[0].duplicate(true)
 	expensive.costs = [_entry(wood, 10000)]
 	world.build_controller.options[0] = expensive
 	await key(KEY_B)
 	menu = Router.top_overlay() as ConstructionMenu
-	await click_at(cell_point(Vector2i(55, 53)))
+	await click_at(cell_point(Vector2i(30, 28)))
 	expect(menu.draft.size() == 1 and menu.controls[&"apply"].disabled and menu._status.text == "Не хватает свободных ресурсов", "unaffordable draft explains its budget and blocks continuation")
 	await capture("07-unaffordable-plan")
 	await key(KEY_ESCAPE)
@@ -88,7 +88,7 @@ func _run() -> void:
 	await key(KEY_B)
 	menu = Router.top_overlay() as ConstructionMenu
 	await click(menu.controls[&"apple_tree"])
-	await click_at(cell_point(Vector2i(54, 52)))
+	await click_at(cell_point(Vector2i(29, 27)))
 	expect(menu.draft.size() == 0 and menu._status.text == "Сначала снесите существующее здание", "occupied cells explain why the brush cannot paint")
 	await capture("08-occupied-cell-feedback")
 	var camera_before: Vector2 = screen.camera.position

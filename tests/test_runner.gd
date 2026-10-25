@@ -222,10 +222,10 @@ func _test_worlds() -> void:
 	nest.blocks_movement = true
 	nest.costs = [entry(wood, 0)]
 	options.append(nest)
-	var built: bool = first.build_controller.try_build(nest, Vector2i(52, 54))
+	var built: bool = first.build_controller.try_build(nest, Vector2i(27, 29))
 	expect(built, "blocking nest can have an accessible external entrance")
 	if built:
-		var new_home: House = first.registry.at(Vector2i(52, 54)) as House
+		var new_home: House = first.registry.at(Vector2i(27, 29)) as House
 		expect(not first.route_service.walkable(new_home.cell), "blocking footprint is closed")
 		for resident in new_home.residents:
 			var cell: Vector2i = first.route_service.world_to_cell(resident.global_position)
@@ -240,29 +240,29 @@ func _test_worlds() -> void:
 	invalid.blocks_movement = false
 	options.append(invalid)
 	var stock_before: int = first.inventory.quantity(wood)
-	expect(not first.build_controller.try_build(invalid, Vector2i(53, 54)), "invalid nest setup fails")
-	expect(first.inventory.quantity(wood) == stock_before and first.registry.at(Vector2i(53, 54)) == null, "invalid setup leaves stock and world unchanged")
+	expect(not first.build_controller.try_build(invalid, Vector2i(28, 29)), "invalid nest setup fails")
+	expect(first.inventory.quantity(wood) == stock_before and first.registry.at(Vector2i(28, 29)) == null, "invalid setup leaves stock and world unchanged")
 	var far: BuildOption = load("res://game/building/options/house.tres")
-	expect(first.build_controller.check(far, Vector2i(18, 20)).code == PlacementCheck.Code.NO_ESCAPE, "nest with unreachable feeding rejected")
+	expect(first.build_controller.check(far, Vector2i(9, 10)).code == PlacementCheck.Code.NO_ESCAPE, "nest with unreachable feeding rejected")
 	var slow: SceneBuildOption = far.duplicate(true) as SceneBuildOption
 	slow.spawn_speed = 1.0
 	options.append(slow)
-	expect(first.build_controller.check(slow, Vector2i(74, 50)).code == PlacementCheck.Code.NO_ESCAPE, "nest outside its movement profile budget rejected")
+	expect(first.build_controller.check(slow, Vector2i(39, 25)).code == PlacementCheck.Code.NO_ESCAPE, "nest outside its movement profile budget rejected")
 	# A slower tile must not consume a hungry ant's last safe escape budget.
 	var map: TileMapLayer = first.get_node("Map") as TileMapLayer
-	map.set_cell(Vector2i(53, 51), 3, Vector2i(2, 0))
+	map.set_cell(Vector2i(28, 26), 3, Vector2i(2, 0))
 	first.route_service.rebuild(first.registry.blocked_cells())
 	var from_cell: Vector2i = first.route_service.world_to_cell(ant.global_position)
 	var current_escape: float = first.route_service.food_field().cost(from_cell)
 	ant.needs.satiety = current_escape * first.route_service.cell_size() / (ant.speed * TripPlanner.CARRY_SPEED_RATIO) + AntNeeds.MEAL_SECONDS + AntNeeds.SAFETY_MARGIN + 0.1
 	var ground: BuildOption = load("res://game/building/options/ground.tres")
-	var before_terrain: Vector2i = (first.get_node("Map") as TileMapLayer).get_cell_atlas_coords(Vector2i(53, 51))
-	expect(not first.build_controller.try_build(ground, Vector2i(53, 51)) and first.build_controller.last_result.code == PlacementCheck.Code.NO_ESCAPE, "terrain change cannot strand a hungry ant")
-	expect((first.get_node("Map") as TileMapLayer).get_cell_atlas_coords(Vector2i(53, 51)) == before_terrain, "unsafe terrain edit leaves map unchanged")
+	var before_terrain: Vector2i = (first.get_node("Map") as TileMapLayer).get_cell_atlas_coords(Vector2i(28, 26))
+	expect(not first.build_controller.try_build(ground, Vector2i(28, 26)) and first.build_controller.last_result.code == PlacementCheck.Code.NO_ESCAPE, "terrain change cannot strand a hungry ant")
+	expect((first.get_node("Map") as TileMapLayer).get_cell_atlas_coords(Vector2i(28, 26)) == before_terrain, "unsafe terrain edit leaves map unchanged")
 	ant.needs.eat()
 	var saved_available: int = first.inventory.available(food)
 	first.inventory.try_spend(entry(food, saved_available))
-	expect(first.build_controller.check(far, Vector2i(51, 53)).code == PlacementCheck.Code.SPAWN_FOOD, "nest needs food for its residents")
+	expect(first.build_controller.check(far, Vector2i(26, 28)).code == PlacementCheck.Code.SPAWN_FOOD, "nest needs food for its residents")
 	first.free()
 	second.free()
 	await get_tree().process_frame
@@ -282,8 +282,8 @@ func _test_worlds() -> void:
 func _test_assignment_load() -> void:
 	var world: World = make_world()
 	var added := 0
-	for y in range(36, 56, 2):
-		for x in range(36, 56, 2):
+	for y in range(11, 31, 2):
+		for x in range(11, 31, 2):
 			var cell := Vector2i(x, y)
 			if world.registry.at(cell) != null: continue
 			var workplace := Workplace.new()
@@ -362,7 +362,7 @@ func _test_art_resolution() -> void:
 	add_child(world)
 	expect(world.ready_for_play and world.art.tile_resolution() == 32, "32px replacement loads without gameplay edits")
 	expect(is_equal_approx(world.route_service.cell_size(), 16.0), "texture resolution does not change physical cell size")
-	var cell := Vector2i(49, 50)
+	var cell := Vector2i(24, 25)
 	expect(world.route_service.world_to_cell(world.route_service.cell_to_world(cell)) == cell, "32px replacement preserves coordinate roundtrip")
 	expect(world.population.count() == 5, "32px replacement preserves population")
 	world.free()
@@ -376,12 +376,12 @@ func _test_simulation() -> void:
 		if roads:
 			var road: BuildOption = load("res://game/building/options/road.tres")
 			var network: Array[Vector2i] = []
-			for x in range(46, 56): network.append(Vector2i(x, 50))
-			for item in [Vector3i(46, 47, 49), Vector3i(49, 46, 49), Vector3i(54, 46, 49), Vector3i(53, 51, 51), Vector3i(55, 51, 52)]:
+			for x in range(21, 31): network.append(Vector2i(x, 25))
+			for item in [Vector3i(21, 22, 24), Vector3i(24, 21, 24), Vector3i(29, 21, 24), Vector3i(28, 26, 26), Vector3i(30, 26, 27)]:
 				for y in range(item.y, item.z + 1): network.append(Vector2i(item.x, y))
 			for cell in network:
 				expect(world.build_controller.try_build(road, cell), "safe road network can be built from starting stock")
-			expect(world.build_controller.try_build(load("res://game/building/options/house.tres"), Vector2i(54, 47)), "player can place another nest near the stone workplace")
+			expect(world.build_controller.try_build(load("res://game/building/options/house.tres"), Vector2i(29, 22)), "player can place another nest near the stone workplace")
 		var deaths: Array[int] = [0]
 		var work: Array[int] = [0]
 		for ant in world.population.agents():
