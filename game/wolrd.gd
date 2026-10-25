@@ -124,10 +124,10 @@ func _configure_terrain(map: TileMapLayer) -> void:
 	var atlas := TileSetAtlasSource.new()
 	atlas.texture = art.terrain_atlas()
 	atlas.texture_region_size = Vector2i(pixels, pixels)
+	tiles.add_source(atlas, 3)
 	for index in range(4):
 		atlas.create_tile(Vector2i(index, 0))
 		atlas.get_tile_data(Vector2i(index, 0), 0).set_custom_data("move_cost", [1.0, 1.6, 0.6, 0.0][index])
-	tiles.add_source(atlas, 3)
 	map.tile_set = tiles
 	map.scale = Vector2.ONE * CELL_SIZE / pixels
 
