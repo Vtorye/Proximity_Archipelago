@@ -49,7 +49,7 @@ func _run() -> void:
 		_failures.append("fullscreen control did not restore windowed mode")
 	get_viewport().get_texture().get_image().save_png(_output.path_join("28-windowed-settings.png"))
 	AppSettings.reset_defaults()
-	var report := {"failures": _failures, "recorded_frames": _index, "fullscreen_toggle": _failures.is_empty()}
+	var report := {"source_revision": OS.get_environment("COLONY_SOURCE_REVISION"), "failures": _failures, "recorded_frames": _index, "fullscreen_toggle": _failures.is_empty()}
 	FileAccess.open(_output.path_join("display-report.json"), FileAccess.WRITE).store_string(JSON.stringify(report, "  "))
 	print("DISPLAY REPORT ", JSON.stringify(report))
 	get_tree().quit(0 if _failures.is_empty() else 1)

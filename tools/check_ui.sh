@@ -14,6 +14,7 @@ PY
 godot_binary="${GODOT_BIN:-godot}"
 "$godot_binary" --headless --path "$ui_root/project" --editor --quit > "$ui_root/import.log" 2>&1
 mkdir -p "$project_root/evidence/after"
+export COLONY_SOURCE_REVISION="$(git -C "$project_root" rev-parse HEAD)"
 export COLONY_EVIDENCE_DIR="$project_root/evidence/after"
 if ! "$godot_binary" --path "$ui_root/project" --display-driver x11 --audio-driver Dummy --resolution 1280x720 --fixed-fps 30 --quit-after 3600 --write-movie "$ui_root/interface.avi" res://tests/ui_runner.tscn > "$ui_root/ui.log" 2>&1; then cat "$ui_root/ui.log"; exit 1; fi
 cat "$ui_root/ui.log"

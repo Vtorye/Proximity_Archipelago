@@ -335,7 +335,7 @@ func _finish() -> void:
 			event.pressed = pressed
 			get_viewport().push_input(event, true)
 		expect(AppSettings.quitting, "quit button requests application shutdown")
-	var report := {"assertions": assertions, "failures": failures, "captures": captures, "render_size": str(get_viewport().get_texture().get_size()), "window_size": str(get_window().size)}
+	var report := {"source_revision": OS.get_environment("COLONY_SOURCE_REVISION"), "assertions": assertions, "failures": failures, "captures": captures, "render_size": str(get_viewport().get_texture().get_size()), "window_size": str(get_window().size)}
 	var file := FileAccess.open(_output.path_join("ui-report.json"), FileAccess.WRITE)
 	file.store_string(JSON.stringify(report, "  "))
 	print("UI REPORT ", JSON.stringify(report))
