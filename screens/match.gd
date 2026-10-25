@@ -93,6 +93,7 @@ func select_cell(cell: Vector2i) -> void:
 	_build_menu = Router.push_overlay(&"build", context) as BuildMenu
 	if _build_menu != null:
 		_build_menu.action_completed.connect(hud.toast)
+		_build_menu.close_requested.connect(func(_menu: MenuBase): selection.clear())
 
 func _process(_delta: float) -> void:
 	if camera == null:
@@ -102,6 +103,7 @@ func _process(_delta: float) -> void:
 		_build_menu.context.anchor = selection.screen_rect()
 
 func _close_build() -> void:
+	selection.clear()
 	if Router.top_overlay() is BuildMenu:
 		Router.pop_overlay()
 	_build_menu = null

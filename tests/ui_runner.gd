@@ -197,7 +197,6 @@ func _run() -> void:
 	expect(menu.controls[&"demolish"].disabled, "last feeding point is protected")
 	await capture("17-feeding-point-protected")
 	await key(KEY_ESCAPE)
-	await key(KEY_ESCAPE)
 	await click(screen.hud.controls[&"pause"])
 	await frames(8)
 	var paused_time: float = screen.world.match_controller.time_remaining
@@ -219,7 +218,6 @@ func _run() -> void:
 	expect(not get_tree().paused, "resume unpauses the session")
 	menu = await select_cell(Vector2i(51, 50))
 	await capture("21-reduced-motion-grid")
-	await key(KEY_ESCAPE)
 	await key(KEY_ESCAPE)
 	# A real camera drag must move the map, not activate a cell.
 	var old_position: Vector2 = screen.camera.position
