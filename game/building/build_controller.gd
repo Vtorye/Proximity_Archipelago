@@ -45,6 +45,13 @@ func check(option: BuildOption, cell: Vector2i) -> PlacementCheck:
 	elif option is SceneBuildOption:
 		if option.scene == null or option.occupied_cells.is_empty() or not option.occupied_cells.has(Vector2i.ZERO):
 			return PlacementCheck.result(PlacementCheck.Code.INVALID_BUILDING)
+		if option.spawn_count > 0:
+			if inventory.available(inventory.type_by_id(&"food")) < option.spawn_count:
+				return PlacementCheck.result(PlacementCheck.Code.SPAWN_FOOD)
+			var escape_units: float = route_service.food_field().cost(cell)
+			var energy: float = escape_units * route_service.cell_size() / option.spawn_speed * 2.25 + AntNeeds.MEAL_SECONDS + AntNeeds.SAFETY_MARGIN
+			if energy > AntNeeds.CAPACITY:
+				return PlacementCheck.result(PlacementCheck.Code.NO_ESCAPE)
 		if option.blocks_movement and option.entry_offsets.is_empty():
 			return PlacementCheck.result(PlacementCheck.Code.INVALID_BUILDING)
 	else:

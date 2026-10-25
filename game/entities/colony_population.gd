@@ -30,6 +30,8 @@ func _on_building_added(building: Building) -> void:
 			push_error("Nest scene must contain an AntAgent root")
 			return
 		var ant: AntAgent = instance as AntAgent
+		if house.option is SceneBuildOption and house.option.spawn_count > 0:
+			ant.speed = house.option.spawn_speed
 		ant.configure(house, planner, navigation)
 		house.add_resident(ant)
 		units.add_child(ant)

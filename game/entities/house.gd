@@ -47,3 +47,8 @@ func _prune() -> void:
 		if is_instance_valid(resident):
 			alive.append(resident)
 	_residents = alive
+
+func _on_setup() -> bool:
+	if option is SceneBuildOption and option.spawn_count > 0:
+		capacity = option.spawn_count
+	return true

@@ -14,6 +14,7 @@ amount = 20
 script = ExtResource("option")
 scene = ExtResource("scene")
 blocks_movement = false
+spawn_count = 5
 id = &"house"
 display_name = "Муравейник"
 cost = SubResource("cost")

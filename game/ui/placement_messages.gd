@@ -14,5 +14,6 @@ static func text(code: PlacementCheck.Code) -> String:
 		PlacementCheck.Code.ANT_PRESENT: return "Подождите, пока муравей освободит клетку"
 		PlacementCheck.Code.INVALID_BUILDING: return "Ошибка определения здания"
 		PlacementCheck.Code.NO_BUILDING: return "На клетке нет здания"
+		PlacementCheck.Code.SPAWN_FOOD: return "Нужны свободные порции пищи для новых жителей"
 		PlacementCheck.Code.NO_ESCAPE: return "Это лишит муравьёв безопасного пути к еде"
 	return "Действие недоступно"
