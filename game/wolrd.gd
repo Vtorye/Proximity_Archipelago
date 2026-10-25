@@ -20,6 +20,7 @@ var match_controller: MatchController
 var units: Node2D
 var buildings: Node2D
 var ready_for_play := false
+var _navigation_update_queued := false
 
 func _ready() -> void:
 	var map: TileMapLayer = $Map
@@ -66,6 +67,7 @@ func _ready() -> void:
 	build_controller.configure(map, buildings, inventory, build_options)
 	build_controller.registry = registry
 	build_controller.population = population
+	build_controller.changed.connect(func(): _navigation_update_queued = false)
 	# All setup() calls must finish before navigation is generated,
 	# otherwise units spawned by houses would appear before the grid exists.
 	# A base snapshot already exists; registry commits then apply blocking footprints.
@@ -77,6 +79,10 @@ func _ready() -> void:
 			registry.register(building)
 	route_service.rebuild(registry.blocked_cells())
 	planner.refresh_food()
+	route_service.food_field()
+	for building in registry.all():
+		if building is House:
+			planner.prepare_home(building)
 	match_controller = get_node_or_null("MatchController") as MatchController
 	ready_for_play = true
 	if diagnostics_enabled:
@@ -142,10 +148,14 @@ func _configure_terrain(map: TileMapLayer) -> void:
 	map.scale = Vector2.ONE * CELL_SIZE / pixels
 
 func _queue_navigation_update() -> void:
-	if ready_for_play:
+	if ready_for_play and not _navigation_update_queued:
+		_navigation_update_queued = true
 		_update_navigation.call_deferred()
 
 func _update_navigation() -> void:
+	if not _navigation_update_queued:
+		return
+	_navigation_update_queued = false
 	if is_inside_tree():
 		route_service.rebuild(registry.blocked_cells())
 
