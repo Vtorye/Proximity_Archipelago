@@ -5,13 +5,13 @@
     "assignment_load": {
       "new_searches": 0,
       "requests": 1000,
-      "wall_ms": 544.352,
+      "wall_ms": 543.284,
       "workplaces": 103
     },
     "navigation_100x100": {
-      "10000_cached_reads_ms": 7.428,
+      "10000_cached_reads_ms": 7.363,
       "cache_limit": 8,
-      "cold_field_ms": 30.982,
+      "cold_field_ms": 30.911,
       "field_bytes": 50000
     },
     "simulation": {
@@ -27,7 +27,7 @@
           "stone": 40,
           "wood": 88
         },
-        "wall_ms": 226.0,
+        "wall_ms": 221.282,
         "won": false
       },
       "roads": {
@@ -42,13 +42,14 @@
           "stone": 304,
           "wood": 100
         },
-        "wall_ms": 307.499,
+        "wall_ms": 298.229,
         "won": true
       }
     }
   },
-  "source_revision": "9fba283ea4f63860396033646dd733124fde31b0",
+  "source_revision": "6fddc6ae3ea3106398171c544819dbc2805dbc10",
   "scenario_notes": {
     "roads": "roads plus another nest placed near stone, using unchanged build costs"
-  }
+  },
+  "import_note": "One clean import crashed in Godot font importing with a C++ thread notification error; the subsequent clean import and complete regression run passed."
 }
