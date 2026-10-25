@@ -105,9 +105,45 @@ func _run() -> void:
 	expect(screen.camera.position != camera_before and menu.draft.size() == 0, "middle drag pans while construction remains paused")
 	await key(KEY_ESCAPE)
 	expect(not get_tree().paused and not Router.has_overlay(), "empty draft resumes safely with Esc")
+	await _check_ui_scales()
 	Router.goto(&"main_menu")
 	await frames(45)
+	AppSettings.reset_defaults()
 	_finish()
+
+func _check_ui_scales() -> void:
+	await click(screen.hud.controls[&"settings"])
+	var settings: Control = Router.top_overlay()
+	expect(AppSettings.ui_scale == 0.75 and settings._scale_value.text == "75%", "interface starts smaller at seventy-five percent")
+	await click(settings.controls[&"ui_scale_plus"])
+	expect(AppSettings.ui_scale == 1.0 and settings.controls[&"ui_scale_plus"].disabled, "settings apply the largest supported UI scale immediately")
+	expect(get_viewport().get_visible_rect().encloses(settings.controls[&"done"].get_global_rect()), "largest settings scale keeps its close action visible")
+	await capture("09-settings-scale-100")
+	await click(settings.controls[&"done"])
+	await key(KEY_B)
+	var menu: ConstructionMenu = Router.top_overlay() as ConstructionMenu
+	_validate_palette(menu)
+	await capture("10-toolbar-scale-100")
+	await key(KEY_ESCAPE)
+	await click(screen.hud.controls[&"settings"])
+	settings = Router.top_overlay()
+	await click(settings.controls[&"ui_scale_minus"])
+	await click(settings.controls[&"ui_scale_minus"])
+	expect(AppSettings.ui_scale == 0.5 and settings.controls[&"ui_scale_minus"].disabled, "settings apply the smallest supported UI scale immediately")
+	var config := ConfigFile.new()
+	expect(config.load(AppSettings.PATH) == OK and config.get_value("interface", "scale", 0.0) == 0.5, "UI scale persists in the settings file")
+	await capture("11-settings-scale-50")
+	await click(settings.controls[&"done"])
+	await key(KEY_B)
+	menu = Router.top_overlay() as ConstructionMenu
+	_validate_palette(menu)
+	await capture("12-toolbar-scale-50")
+	await key(KEY_ESCAPE)
+	await click(screen.hud.controls[&"pause"])
+	await click(Router.top_overlay().controls[&"restart"])
+	await frames(45)
+	screen = Router._current
+	expect(AppSettings.ui_scale == 0.5 and screen.hud.scale == Vector2.ONE * 0.5, "match restart preserves the selected interface scale")
 
 func _entry(type: ResourceType, amount: int) -> ResourceAmount:
 	var result := ResourceAmount.new()
@@ -155,6 +191,7 @@ func _pan() -> void:
 func _validate_palette(menu: ConstructionMenu) -> void:
 	print("PALETTE ", menu.panel.get_global_rect(), " MIN ", menu.panel.get_combined_minimum_size())
 	expect(get_viewport().get_visible_rect().encloses(menu.panel.get_global_rect()), "construction palette fits the viewport")
+	expect(menu.panel.get_global_rect().size.y <= get_viewport().get_visible_rect().size.y * 0.22, "compact palette occupies less than a quarter of the screen height")
 	for id in [&"road", &"ground", &"house", &"apple_tree", &"undo", &"cancel", &"apply"]:
 		expect(menu.panel.get_global_rect().encloses(menu.controls[id].get_global_rect()), "every construction action fits the bottom palette")
 
@@ -170,5 +207,5 @@ func _check_dots(image: Image, button: Button) -> void:
 			if color.r > 0.75 and color.g > 0.7 and color.b > 0.55:
 				total += Vector2(x + 0.5, y + 0.5)
 				count += 1
-	expect(count == int(12 * factor * factor), "menu icon renders exactly three pixel dots")
-	expect(count > 0 and (total / maxf(1, count)).is_equal_approx(center), "menu dots have their visible centroid at the button center")
+	expect(count >= 3 and count <= int(18 * factor * factor * AppSettings.ui_scale), "scaled menu icon renders its three pixel dots")
+	expect(count > 0 and (total / maxf(1, count)).distance_to(center) <= factor * 0.75, "menu dots stay centered at the chosen interface scale")
