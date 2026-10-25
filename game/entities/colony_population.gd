@@ -32,6 +32,7 @@ func _on_building_added(building: Building) -> void:
 		var ant: AntAgent = instance as AntAgent
 		if house.option is SceneBuildOption and house.option.spawn_count > 0:
 			ant.speed = house.option.spawn_speed
+		ant.departure_delay = index * 1.25
 		ant.configure(house, planner, navigation)
 		house.add_resident(ant)
 		units.add_child(ant)

@@ -22,6 +22,7 @@ var _plan: WorkPlan
 var _meal: StockReservation
 var _destination: StringName = &"home"
 var _timer := 0.0
+var departure_delay := 0.0
 var _carrying := false
 var _angle := 0.0
 var _animation_time := 0.0
@@ -40,7 +41,7 @@ func _ready() -> void:
 		sprite.queue_free()
 	route_service.navigation_changed.connect(_on_navigation_changed)
 	route_service.food_sources_changed.connect(_on_food_sources_changed)
-	_timer = randf_range(0.3, 1.4)
+	_timer = departure_delay + randf_range(0.3, 0.5)
 	_meal = planner.reserve_meal()
 
 func _exit_tree() -> void:
