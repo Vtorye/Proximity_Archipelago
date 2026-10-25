@@ -39,6 +39,7 @@ func _ready() -> void:
 	if sprite != null:
 		sprite.queue_free()
 	route_service.navigation_changed.connect(_on_navigation_changed)
+	route_service.food_sources_changed.connect(_on_food_sources_changed)
 	_timer = randf_range(0.3, 1.4)
 	_meal = planner.reserve_meal()
 
@@ -170,6 +171,12 @@ func _on_navigation_changed() -> void:
 		var escape: float = planner.escape_energy(route_service.world_to_cell(global_position), speed)
 		if route_service.route_affected(motion.route) or not needs.can_afford(escape + 3.0):
 			_seek_food()
+
+func _on_food_sources_changed() -> void:
+	if status == Status.WALKING and _destination == &"food" or status == Status.EATING:
+		_seek_food()
+	else:
+		_on_navigation_changed()
 
 func _release_work() -> void:
 	if is_instance_valid(current_workplace):

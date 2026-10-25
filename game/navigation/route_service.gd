@@ -3,6 +3,7 @@ extends Node
 ## Owns the navigation snapshot and the path algorithm, and serves cell-based routes.
 
 signal navigation_changed
+signal food_sources_changed
 
 const MAX_CACHED_FIELDS := 8
 var revision := 0
@@ -91,6 +92,7 @@ func set_food_cells(cells: Array[Vector2i]) -> void:
 	if cells != _food_cells:
 		_food_cells = cells.duplicate()
 		_food_field = null
+		food_sources_changed.emit()
 
 func food_field() -> NavigationField:
 	if _food_field == null:
@@ -130,3 +132,6 @@ func route_affected(route: Route) -> bool:
 
 func snapshot() -> TileGrid:
 	return _grid
+
+func is_food_cell(cell: Vector2i) -> bool:
+	return _food_cells.has(cell)
