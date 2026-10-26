@@ -6,6 +6,7 @@ func _run() -> void:
 	AppSettings.reset_defaults()
 	get_viewport().add_child(load("res://boot.tscn").instantiate())
 	await frames(35)
+	await _check_tutorial_and_backdrop()
 	await click(Router._current.controls[&"play"])
 	await frames(45)
 	screen = Router._current
@@ -23,7 +24,7 @@ func _run() -> void:
 	screen.camera.set_level(2)
 	var image: Image = await capture("01-centered-menu-dots")
 	_check_dots(image, screen.hud.controls[&"settings"])
-	await click(screen.hud.controls[&"pause"])
+	await click(screen.hud.controls[&"settings"])
 	await capture("02-pause-restart-button")
 	var retired: World = screen.world
 	await click(Router.top_overlay().controls[&"restart"])
@@ -76,10 +77,12 @@ func _run() -> void:
 	var food_before: int = world.inventory.quantity(food)
 	var stone_before: int = world.inventory.quantity(stone)
 	await click(screen.hud.controls[&"settings"])
+	await click(Router.top_overlay().controls[&"settings"])
 	expect(Router.top_overlay() != menu and not menu.visible and get_tree().paused, "settings open above the paused draft")
 	await key(KEY_ESCAPE)
+	await click(Router.top_overlay().controls[&"resume"])
 	expect(Router.top_overlay() == menu and menu.draft.size() == 8 and get_tree().paused, "closing settings restores the draft and its pause")
-	await click(screen.hud.controls[&"pause"])
+	await key(KEY_SPACE)
 	expect(not Router.has_overlay() and not get_tree().paused and world.route_service.revision == revision + 1, "unpausing applies the entire draft with one navigation revision")
 	expect(world.population.count() == 10 and world.registry.at(Vector2i(29, 27)) is House, "committed nest creates its residents")
 	expect(world.inventory.quantity(wood) == stock - 7 and world.inventory.quantity(stone) == stone_before - 5 and world.inventory.quantity(food) == food_before - 20, "commit charges the composite total exactly once")
@@ -108,6 +111,7 @@ func _run() -> void:
 	expect(screen.camera.position != camera_before and menu.draft.size() == 0, "middle drag pans while construction remains paused")
 	await key(KEY_ESCAPE)
 	expect(not get_tree().paused and not Router.has_overlay(), "empty draft resumes safely with Esc")
+	await _check_requested_features()
 	await _check_ui_scales()
 	Router.goto(&"main_menu")
 	await frames(45)
@@ -116,6 +120,7 @@ func _run() -> void:
 
 func _check_ui_scales() -> void:
 	await click(screen.hud.controls[&"settings"])
+	await click(Router.top_overlay().controls[&"settings"])
 	var settings: Control = Router.top_overlay()
 	expect(AppSettings.ui_scale == 0.75 and settings._scale_value.text == "75%", "interface starts smaller at seventy-five percent")
 	await click(settings.controls[&"ui_scale_plus"])
@@ -124,12 +129,14 @@ func _check_ui_scales() -> void:
 	await capture("09-settings-scale-100")
 	preload("res://tests/pixel_font_checks.gd").verify(self, settings)
 	await click(settings.controls[&"done"])
+	await click(Router.top_overlay().controls[&"resume"])
 	await key(KEY_B)
 	var menu: ConstructionMenu = Router.top_overlay() as ConstructionMenu
 	_validate_palette(menu)
 	await capture("10-toolbar-scale-100")
 	await key(KEY_ESCAPE)
 	await click(screen.hud.controls[&"settings"])
+	await click(Router.top_overlay().controls[&"settings"])
 	settings = Router.top_overlay()
 	await click(settings.controls[&"ui_scale_minus"])
 	await click(settings.controls[&"ui_scale_minus"])
@@ -139,16 +146,17 @@ func _check_ui_scales() -> void:
 	await capture("11-settings-scale-50")
 	preload("res://tests/pixel_font_checks.gd").verify(self, settings)
 	await click(settings.controls[&"done"])
+	await click(Router.top_overlay().controls[&"resume"])
 	await key(KEY_B)
 	menu = Router.top_overlay() as ConstructionMenu
 	_validate_palette(menu)
 	await capture("12-toolbar-scale-50")
 	await key(KEY_ESCAPE)
-	await click(screen.hud.controls[&"pause"])
+	await click(screen.hud.controls[&"settings"])
 	await click(Router.top_overlay().controls[&"restart"])
 	await frames(45)
 	screen = Router._current
-	expect(AppSettings.ui_scale == 0.5 and screen.hud.controls[&"pause"].custom_minimum_size == Vector2(16, 16), "match restart preserves the selected interface scale")
+	expect(AppSettings.ui_scale == 0.5 and screen.hud.controls[&"settings"].custom_minimum_size == Vector2(16, 16), "match restart preserves the selected interface scale")
 
 func _entry(type: ResourceType, amount: int) -> ResourceAmount:
 	var result := ResourceAmount.new()
@@ -198,7 +206,7 @@ func _validate_palette(menu: ConstructionMenu) -> void:
 	print("PALETTE ", menu.panel.get_global_rect(), " MIN ", menu.panel.get_combined_minimum_size())
 	expect(get_viewport().get_visible_rect().encloses(menu.panel.get_global_rect()), "construction palette fits the viewport")
 	expect(menu.panel.get_global_rect().size.y <= get_viewport().get_visible_rect().size.y * 0.22, "compact palette occupies less than a quarter of the screen height")
-	for id in [&"road", &"ground", &"house", &"apple_tree", &"undo", &"cancel", &"apply"]:
+	for id in [&"road", &"ground", &"house", &"apple_tree", &"move", &"demolish", &"undo", &"cancel", &"apply"]:
 		expect(menu.panel.get_global_rect().encloses(menu.controls[id].get_global_rect()), "every construction action fits the bottom palette")
 
 func _check_dots(image: Image, button: Button) -> void:
@@ -216,3 +224,92 @@ func _check_dots(image: Image, button: Button) -> void:
 	expect(count >= 3 and count <= int(18 * factor * factor * AppSettings.ui_scale), "scaled menu icon renders its three pixel dots")
 	print("DOT CENTERS ", center, " ", total / maxf(1, count), " PIXELS ", count)
 	expect(count > 0 and (total / maxf(1, count)).distance_to(center) <= factor * 0.75, "menu dots stay centered at the chosen interface scale")
+
+func _check_tutorial_and_backdrop() -> void:
+	var backdrop: ColonyBackdrop = Router._current.get_child(1) as ColonyBackdrop
+	# UiScale may precede the backdrop; discover the actual presentation node.
+	for child in Router._current.get_children():
+		if child is ColonyBackdrop: backdrop = child
+	expect(backdrop != null, "main menu owns its animated road backdrop")
+	if backdrop != null:
+		var center := Vector2(floorf(backdrop.size.x / 64.0), floorf(backdrop.size.y / 64.0)) * 32.0 + Vector2(16, 16)
+		for index in range(28):
+			var point: Vector2 = backdrop.ant_position(index)
+			expect(absf(point.y - center.y) <= 4.0 if index % 2 == 0 else absf(point.x - center.x) <= 4.0, "title ant stays inside its visible road lane")
+	await capture("13-main-menu-road-lanes")
+	await click(Router._current.controls[&"tutorial"])
+	await frames(35)
+	expect(Router.current_screen_key() == &"tutorial" and not get_tree().paused, "tutorial opens as an independent screen")
+	for page in range(4):
+		var tutorial: Control = Router._current
+		expect(tutorial._page == page and not tutorial._body.text.is_empty(), "tutorial displays the requested instruction page")
+		expect(get_viewport().get_visible_rect().encloses(tutorial._body.get_global_rect()), "tutorial text fits the viewport")
+		preload("res://tests/pixel_font_checks.gd").verify(self, tutorial)
+		await capture("14-tutorial-%d" % page)
+		if page < 3: await click(tutorial.controls[&"next"])
+	await click(Router._current.controls[&"previous"])
+	expect(Router._current._page == 2, "tutorial supports paging backwards")
+	await key(KEY_ESCAPE)
+	await frames(35)
+	expect(Router.current_screen_key() == &"main_menu", "Escape returns from tutorial to the main menu")
+
+func _check_requested_features() -> void:
+	var world: World = screen.world
+	var road: TileBuildOption = load("res://game/building/options/road.tres")
+	world.build_controller.options[0] = road
+	await key(KEY_SPACE)
+	var menu: ConstructionMenu = Router.top_overlay() as ConstructionMenu
+	expect(menu != null and get_tree().paused and not screen.hud.controls.has(&"pause"), "Space opens construction without a separate HUD pause button")
+	var cell := Vector2i(30, 28)
+	await click_at(cell_point(cell))
+	await click(menu.controls[&"house"])
+	await click_at(cell_point(cell))
+	expect(menu.draft.size() == 2, "real clicks stack a road and nest on one cell")
+	await capture("15-layered-road-and-nest")
+	await click_at(cell_point(cell), MOUSE_BUTTON_RIGHT)
+	expect(menu.draft.size() == 1 and menu.draft.commands()[0].option is TileBuildOption, "right click removes the most recent building and retains its road")
+	await click_at(cell_point(cell), MOUSE_BUTTON_RIGHT)
+	expect(menu.draft.size() == 0 and Router.top_overlay() == menu, "second right click removes the remaining layer without closing construction")
+	await click(menu.controls[&"undo"])
+	expect(menu.draft.size() == 1, "toolbar undo restores a right-click removal")
+	await click(menu.controls[&"move"])
+	var before: Vector2 = screen.camera.position
+	await _stroke(Vector2i(23, 28), Vector2i(25, 28))
+	expect(screen.camera.position != before and menu.draft.size() == 1, "move tool pans with held left mouse without painting")
+	var level: int = screen.camera.level
+	await click_at(Vector2(330, 180), MOUSE_BUTTON_WHEEL_UP)
+	expect(screen.camera.level == level + 1 and menu.draft.size() == 1, "wheel zoom works during paused construction without changing the draft")
+	await click_at(Vector2(330, 180), MOUSE_BUTTON_WHEEL_DOWN)
+	await capture("16-move-tool-and-zoom")
+	await click(menu.controls[&"cancel"])
+	# New residents were created at 29:27 by the earlier composite-price fixture.
+	screen.camera.position = Vector2(400, 464)
+	screen.camera.force_update_scroll()
+	await key(KEY_SPACE)
+	menu = Router.top_overlay() as ConstructionMenu
+	await click(menu.controls[&"demolish"])
+	var nest_cell := Vector2i(29, 27)
+	var house: House = world.registry.at(nest_cell) as House
+	var count: int = world.population.count()
+	await click_at(cell_point(nest_cell))
+	expect(menu.draft.size() == 1 and world.registry.at(nest_cell) == house, "demolition button marks a nest without deleting it")
+	await capture("17-planned-demolition")
+	await click_at(cell_point(nest_cell), MOUSE_BUTTON_RIGHT)
+	expect(menu.draft.size() == 0 and world.population.count() == count, "right click cancels a demolition mark without killing residents")
+	await click_at(cell_point(nest_cell))
+	await key(KEY_SPACE)
+	expect(menu._confirmation.visible and Router.top_overlay() == menu and world.population.count() == count, "unpause requests explicit confirmation before destroying residents")
+	await capture("18-demolition-confirmation")
+	await click(menu.controls[&"keep_residents"])
+	expect(not menu._confirmation.visible and world.registry.at(nest_cell) == house, "declining demolition keeps residents and the editable draft")
+	await key(KEY_SPACE)
+	await click(menu.controls[&"confirm_demolish"])
+	expect(not Router.has_overlay() and not get_tree().paused and not is_instance_valid(house) and world.population.count() == count - 5, "confirmed demolition removes the nest and resumes the simulation")
+	await key(KEY_SPACE)
+	menu = Router.top_overlay() as ConstructionMenu
+	await click(menu.controls[&"demolish"])
+	await click_at(cell_point(Vector2i(29, 28)))
+	expect(menu.draft.size() == 1, "demolition tool stages a committed road as soil")
+	await key(KEY_SPACE)
+	expect(world.build_controller.map.get_cell_atlas_coords(Vector2i(29, 28)) == Vector2i(1, 0), "road demolition commits when construction resumes")
+	await capture("19-demolition-applied")

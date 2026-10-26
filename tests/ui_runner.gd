@@ -244,7 +244,7 @@ func _run() -> void:
 	menu = await select_cell(Vector2i(28, 26))
 	expect(menu.controls[&"demolish"].disabled, "last feeding point is protected")
 	await capture("17-feeding-point-protected")
-	await click(screen.hud.controls[&"pause"])
+	await click(screen.hud.controls[&"settings"])
 	expect(not screen.selection.selected and not Router.top_overlay() is BuildMenu, "pause closes construction with a single click")
 	await frames(8)
 	var paused_time: float = screen.world.match_controller.time_remaining
@@ -264,7 +264,7 @@ func _run() -> void:
 	await click(Router.top_overlay().controls[&"resume"])
 	await frames(8)
 	expect(not get_tree().paused, "resume unpauses the session")
-	await click(screen.hud.controls[&"pause"])
+	await click(screen.hud.controls[&"settings"])
 	var old_world: World = screen.world
 	await click(Router.top_overlay().controls[&"restart"])
 	await frames(50)
@@ -372,7 +372,7 @@ func _layout_only() -> void:
 	validate_popup(menu)
 	await capture(tag + "build")
 	await key(KEY_ESCAPE)
-	await click(screen.hud.controls[&"pause"])
+	await click(screen.hud.controls[&"settings"])
 	await frames(8)
 	await capture(tag + "pause")
 	await click(Router.top_overlay().controls[&"main"])
