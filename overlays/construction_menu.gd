@@ -9,6 +9,10 @@ var _cost: Label
 var _status: Label
 var _preview: BuildPreview
 var _selected: BuildOption
+var _tool: StringName = &"build"
+var _pan_mask := MOUSE_BUTTON_MASK_MIDDLE
+var _confirmation: HBoxContainer
+var _confirm_label: Label
 var _painting := false
 var _panning := false
 var _last_cell := Vector2i.ZERO
@@ -58,7 +62,7 @@ func _ready() -> void:
 		var button := BuildChoiceButton.new()
 		button.option = option
 		button.art = context.art
-		button.card_width = 112
+		button.card_width = 96
 		button.compact = true
 		button.tooltip_text = "%s: %s" % [option.display_name, BuildCostText.format(option.costs)]
 		button.toggle_mode = true
@@ -67,6 +71,17 @@ func _ready() -> void:
 		choices.add_child(button)
 		controls[option.id] = button
 		if _selected == null: _select(option)
+	for entry in [[&"move", "Перемещение: ЛКМ двигает карту", "move"], [&"demolish", "Снос: отметить здание или дорогу", "demolish"]]:
+		var tool: Button = ColonyStyle.button("")
+		tool.custom_minimum_size = Vector2(32, 32)
+		tool.icon = load("res://game/assets/ui/build_%s.svg" % entry[2])
+		tool.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		tool.tooltip_text = entry[1]
+		tool.toggle_mode = true
+		tool.button_group = group
+		tool.pressed.connect(_select_tool.bind(entry[0]))
+		toolbar.add_child(tool)
+		controls[entry[0]] = tool
 	var actions := HBoxContainer.new()
 	actions.add_theme_constant_override("separation", 4)
 	toolbar.add_child(actions)
@@ -92,6 +107,20 @@ func _ready() -> void:
 	_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_status.hide()
 	content.add_child(_status)
+	_confirmation = HBoxContainer.new()
+	_confirmation.add_theme_constant_override("separation", 4)
+	_confirm_label = ColonyStyle.label("", 6, ColonyStyle.DANGER)
+	_confirm_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_confirm_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_confirmation.add_child(_confirm_label)
+	for entry in [[&"confirm_demolish", "Да, снести", _commit], [&"keep_residents", "Назад", _cancel_confirmation]]:
+		var button: Button = ColonyStyle.button(entry[1])
+		button.pressed.connect(entry[2])
+		_confirmation.add_child(button)
+		controls[entry[0]] = button
+	content.add_child(_confirmation)
+	_confirmation.hide()
+	draft.changed.connect(_cancel_confirmation)
 	draft.changed.connect(_queue_refresh)
 	_refresh()
 	default_focus = controls[_selected.id] if _selected != null else controls[&"cancel"]
@@ -101,10 +130,23 @@ func _exit_tree() -> void:
 
 func _select(option: BuildOption) -> void:
 	_end_stroke()
+	_tool = &"build"
 	_selected = option
+	_preview.demolishing = false
 	controls[option.id].set_pressed_no_signal(true)
 	_preview.option = option
 	_preview.queue_redraw()
+
+func _select_tool(tool: StringName) -> void:
+	_end_stroke()
+	_tool = tool
+	controls[tool].set_pressed_no_signal(true)
+	_preview.option = null
+	_preview.demolishing = tool == &"demolish"
+	_preview.queue_redraw()
+
+func _cancel_confirmation() -> void:
+	if _confirmation != null: _confirmation.hide()
 
 func _refresh() -> void:
 	_refresh_queued = false
@@ -135,6 +177,14 @@ func _cancel() -> void:
 
 func apply_and_resume() -> void:
 	_end_stroke()
+	var residents: int = draft.residents_to_demolish()
+	if residents > 0:
+		_confirm_label.text = "Жители погибнут: %d. Снести муравейник?" % residents
+		_confirmation.show()
+		return
+	_commit()
+
+func _commit() -> void:
 	if draft.commit():
 		close_requested.emit(self)
 
@@ -143,7 +193,7 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_Z and event.ctrl_pressed:
 		_undo()
 		get_viewport().set_input_as_handled()
-	elif event is InputEventKey and event.pressed and not event.echo and event.physical_keycode in [KEY_ESCAPE, KEY_B]:
+	elif event is InputEventKey and event.pressed and not event.echo and event.physical_keycode in [KEY_ESCAPE, KEY_B, KEY_SPACE]:
 		apply_and_resume()
 		get_viewport().set_input_as_handled()
 	elif event is InputEventMouseButton and not event.pressed:
@@ -151,9 +201,10 @@ func _input(event: InputEvent) -> void:
 			_end_stroke()
 		elif event.button_index == MOUSE_BUTTON_MIDDLE:
 			_panning = false
+		if (event.button_mask & _pan_mask) == 0: _panning = false
 	elif event is InputEventMouseMotion:
 		if _panning:
-			if event.button_mask & MOUSE_BUTTON_MASK_MIDDLE:
+			if event.button_mask & _pan_mask:
 				context.camera.pan(event.relative)
 			else:
 				_panning = false
@@ -169,7 +220,12 @@ func _input(event: InputEvent) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if not visible: return
 	if event is InputEventMouseButton and event.pressed and _point_allowed(event.position):
-		if event.button_index == MOUSE_BUTTON_LEFT:
+		if event.button_index == MOUSE_BUTTON_LEFT and _tool == &"move":
+			_end_stroke()
+			_panning = true
+			_pan_mask = MOUSE_BUTTON_MASK_LEFT
+			get_viewport().set_input_as_handled()
+		elif event.button_index == MOUSE_BUTTON_LEFT:
 			draft.begin_stroke()
 			_painting = true
 			_has_last = false
@@ -178,6 +234,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif event.button_index == MOUSE_BUTTON_MIDDLE:
 			_end_stroke()
 			_panning = true
+			_pan_mask = MOUSE_BUTTON_MASK_MIDDLE
 			get_viewport().set_input_as_handled()
 		elif event.button_index == MOUSE_BUTTON_RIGHT:
 			_end_stroke()
@@ -187,6 +244,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			_refresh()
 			get_viewport().set_input_as_handled()
 		elif event.button_index in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN]:
+			_end_stroke()
+			context.camera.set_level(context.camera.level + (1 if event.button_index == MOUSE_BUTTON_WHEEL_UP else -1))
 			get_viewport().set_input_as_handled()
 
 func _point_allowed(point: Vector2) -> bool:
@@ -211,14 +270,18 @@ func _paint_to(point: Vector2) -> void:
 		for index in range(1, steps + 1):
 			var cell: Vector2i = Vector2i(Vector2(_last_cell).lerp(Vector2(target), float(index) / steps).round())
 			if cell.x != previous.x and cell.y != previous.y:
-				draft.paint(_selected, Vector2i(cell.x, previous.y))
-			draft.paint(_selected, cell)
+				_paint_cell(Vector2i(cell.x, previous.y))
+			_paint_cell(cell)
 			previous = cell
 	else:
-		draft.paint(_selected, target)
+		_paint_cell(target)
 	_last_cell = target
 	_has_last = true
 	_refresh()
+
+func _paint_cell(cell: Vector2i) -> void:
+	if _tool == &"demolish": draft.demolish(cell)
+	elif _tool == &"build": draft.paint(_selected, cell)
 
 func _end_stroke() -> void:
 	_painting = false
