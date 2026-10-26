@@ -1,17 +1,17 @@
 {
-  "assertions": 549,
+  "assertions": 573,
   "failures": [],
   "metrics": {
     "assignment_load": {
       "new_searches": 0,
       "requests": 1000,
-      "wall_ms": 519.924,
+      "wall_ms": 589.486,
       "workplaces": 103
     },
     "navigation_100x100": {
-      "10000_cached_reads_ms": 7.429,
+      "10000_cached_reads_ms": 7.88,
       "cache_limit": 8,
-      "cold_field_ms": 30.855,
+      "cold_field_ms": 32.315,
       "field_bytes": 50000
     },
     "navigation_50x50": {
@@ -31,7 +31,7 @@
           "stone": 40,
           "wood": 88
         },
-        "wall_ms": 228.502,
+        "wall_ms": 255.571,
         "won": false
       },
       "roads": {
@@ -46,11 +46,10 @@
           "stone": 290,
           "wood": 100
         },
-        "wall_ms": 267.047,
+        "wall_ms": 294.215,
         "won": true
       }
     }
   },
-  "source_revision": "36efc2b27dca093409d9748cf8bbee81e46cbe56",
-  "note": "Subsequent changes adjust pixel font selection and UI checks only; domain code unchanged."
+  "source_revision": "f8eb43511bb1d2d4b4fbd8ca4afbb4dc59925b06"
 }
