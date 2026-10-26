@@ -10,9 +10,11 @@ var option: BuildOption
 func _draw() -> void:
 	if draft == null: return
 	var color: Color = ColonyStyle.ACCENT if draft.budget_check().allowed() else ColonyStyle.DANGER
-	var commands: Dictionary[Vector2i, BuildOption] = draft.commands()
-	for cell in commands:
-		_draw_option(cell, commands[cell], Color.WHITE, color)
+	var commands: Array[BuildCommand] = draft.commands()
+	for terrain in [true, false]:
+		for command in commands:
+			if (command.option is TileBuildOption) == terrain:
+				_draw_option(command.cell, command.option, Color.WHITE, color)
 	if hovering and option != null:
 		var check: PlacementCheck = draft.controller.placement_check(option, hover)
 		var border: Color = ColonyStyle.GREEN if check.allowed() else ColonyStyle.DANGER

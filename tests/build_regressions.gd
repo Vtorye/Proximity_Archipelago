@@ -5,6 +5,7 @@ func run(test: Node) -> void:
 	await _composite_price(test)
 	await _draft_and_commit(test)
 	await _invalid_batches(test)
+	await _layered_plan(test)
 
 func _composite_price(test: Node) -> void:
 	var world: World = test.make_world()
@@ -60,9 +61,9 @@ func _draft_and_commit(test: Node) -> void:
 	draft.begin_stroke()
 	draft.paint(berry, Vector2i(25, 29))
 	draft.end_stroke()
-	test.expect(draft.size() == 1 and draft.costs().size() == 1 and draft.costs()[0].type.id == &"food", "repainting a draft cell replaces its option and price")
+	test.expect(draft.size() == 2 and draft.costs().size() == 2, "terrain and structure retain independent options and prices")
 	draft.undo()
-	test.expect(draft.commands()[Vector2i(25, 29)] == road, "undo restores the previous option on a repainted cell")
+	test.expect(draft.commands()[0].option == road, "undo restores the previous option on a repainted cell")
 	draft.clear()
 	test.expect(draft.size() == 0 and not draft.can_undo() and world.route_service.revision == revision, "cancel clears draft history without touching the world")
 	draft.begin_stroke()
@@ -104,5 +105,35 @@ func _invalid_batches(test: Node) -> void:
 		commands[Vector2i(28, 26) + offset] = wall
 	test.expect(not world.build_controller.try_build_batch(commands) and world.build_controller.last_result.code == PlacementCheck.Code.NO_ESCAPE, "combined terrain changes cannot cut every safe route to food")
 	test.expect(world.route_service.revision == revision and world.inventory.quantity(wood) == 60 and world.population.count() == 5, "unsafe batch leaves navigation stock and ants unchanged")
+	world.free()
+	await test.get_tree().process_frame
+
+func _layered_plan(test: Node) -> void:
+	var world: World = test.make_world()
+	var road: BuildOption = load("res://game/building/options/road.tres")
+	var nest: BuildOption = load("res://game/building/options/house.tres")
+	var draft := BuildDraft.new()
+	draft.controller = world.build_controller
+	var cell := Vector2i(30, 29)
+	draft.begin_stroke()
+	test.expect(draft.paint(road, cell) and draft.paint(nest, cell), "road and nest can be planned on one cell")
+	draft.end_stroke()
+	test.expect(draft.size() == 2, "layered plan retains both commands")
+	draft.begin_stroke()
+	test.expect(draft.remove_last(cell) and draft.commands()[0].option == road, "right removal peels only the latest structure")
+	draft.end_stroke()
+	draft.undo()
+	test.expect(draft.size() == 2, "undo restores a peeled layer")
+	draft.clear()
+	draft.paint(nest, cell)
+	draft.paint(road, cell)
+	test.expect(draft.remove_last(cell) and draft.commands()[0].option == nest, "layer removal follows insertion order even when terrain was added last")
+	draft.paint(road, cell)
+	draft.paint(road, cell)
+	test.expect(draft.size() == 2, "repeated painting does not duplicate a layer or its cost")
+	var before: int = world.inventory.quantity(world.inventory.type_by_id(&"wood"))
+	test.expect(draft.commit(), "layered plan commits regardless of painting order")
+	test.expect(world.registry.at(cell) is House and world.build_controller.map.get_cell_atlas_coords(cell) == Vector2i(2, 0), "committed road remains underneath its nest")
+	test.expect(world.population.count() == 10 and world.inventory.quantity(world.inventory.type_by_id(&"wood")) == before - 21, "layered commit charges both prices and spawns once")
 	world.free()
 	await test.get_tree().process_frame

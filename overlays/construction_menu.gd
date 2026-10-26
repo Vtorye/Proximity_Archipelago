@@ -87,7 +87,7 @@ func _ready() -> void:
 	_cost.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_cost.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	summary.add_child(_cost)
-	summary.add_child(ColonyStyle.label("Пауза · ЛКМ: строить · СКМ/WASD: камера", 4, ColonyStyle.MUTED))
+	summary.add_child(ColonyStyle.label("ЛКМ: строить · ПКМ: убрать слой · СКМ: камера", 4, ColonyStyle.MUTED))
 	_status = ColonyStyle.label("", 6, ColonyStyle.DANGER)
 	_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_status.hide()
@@ -179,7 +179,14 @@ func _unhandled_input(event: InputEvent) -> void:
 			_end_stroke()
 			_panning = true
 			get_viewport().set_input_as_handled()
-		elif event.button_index in [MOUSE_BUTTON_RIGHT, MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN]:
+		elif event.button_index == MOUSE_BUTTON_RIGHT:
+			_end_stroke()
+			draft.begin_stroke()
+			draft.remove_last(_cell(event.position))
+			draft.end_stroke()
+			_refresh()
+			get_viewport().set_input_as_handled()
+		elif event.button_index in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN]:
 			get_viewport().set_input_as_handled()
 
 func _point_allowed(point: Vector2) -> bool:

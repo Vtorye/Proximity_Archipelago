@@ -86,6 +86,11 @@ func try_build(option: BuildOption, cell: Vector2i) -> bool:
 
 ## All placements either commit together or leave stock, buildings, and navigation untouched.
 func try_build_batch(commands: Dictionary[Vector2i, BuildOption]) -> bool:
+	var plan: Array[BuildCommand] = []
+	for cell in commands: plan.append(BuildCommand.create(cell, commands[cell]))
+	return try_build_plan(plan)
+
+func try_build_plan(commands: Array[BuildCommand]) -> bool:
 	last_result = PlacementCheck.new()
 	if _committing:
 		last_result = PlacementCheck.result(PlacementCheck.Code.BUSY)
@@ -95,19 +100,22 @@ func try_build_batch(commands: Dictionary[Vector2i, BuildOption]) -> bool:
 	var costs: Array[ResourceAmount] = []
 	var cells: Array[Vector2i] = []
 	var occupied: Dictionary[Vector2i, bool] = {}
+	var terrain: Dictionary[Vector2i, bool] = {}
 	var candidates: Array[Building] = []
 	var spawn_count := 0
-	for cell in commands:
-		var option: BuildOption = commands[cell]
+	for command in commands:
+		var cell: Vector2i = command.cell
+		var option: BuildOption = command.option
 		last_result = placement_check(option, cell)
 		if not last_result.allowed():
 			break
+		var layer: Dictionary[Vector2i, bool] = terrain if option is TileBuildOption else occupied
 		for target in _footprint(option, cell):
-			if occupied.has(target):
+			if layer.has(target):
 				last_result = PlacementCheck.result(PlacementCheck.Code.OCCUPIED)
 				break
 			cells.append(target)
-			occupied[target] = true
+			layer[target] = true
 		if not last_result.allowed():
 			break
 		costs.append_array(option.costs)
@@ -147,8 +155,9 @@ func try_build_batch(commands: Dictionary[Vector2i, BuildOption]) -> bool:
 		_committing = false
 		inventory.end_update()
 		return false
-	for cell in commands:
-		var option: BuildOption = commands[cell]
+	for command in commands:
+		var cell: Vector2i = command.cell
+		var option: BuildOption = command.option
 		if option is TileBuildOption:
 			map.set_cell(cell, option.source_id, option.atlas_coords, option.alternative_tile)
 	var blocked: Array[Vector2i] = registry.blocked_cells()
@@ -163,8 +172,8 @@ func try_build_batch(commands: Dictionary[Vector2i, BuildOption]) -> bool:
 		registry.register(candidate)
 	_committing = false
 	inventory.end_update()
-	for cell in commands:
-		built.emit(commands[cell], cell)
+	for command in commands:
+		built.emit(command.option, command.cell)
 	changed.emit()
 	return true
 
@@ -221,20 +230,22 @@ func _footprint(option: BuildOption, origin: Vector2i) -> Array[Vector2i]:
 		cells.append(origin)
 	return cells
 
-func _batch_preserves_escape(commands: Dictionary[Vector2i, BuildOption], candidates: Array[Building]) -> bool:
+func _batch_preserves_escape(commands: Array[BuildCommand], candidates: Array[Building]) -> bool:
 	var values: Dictionary[Vector2i, float] = {}
 	var needs_check := false
 	for candidate in candidates:
 		needs_check = needs_check or candidate is House or candidate.option.blocks_movement
-	for cell in commands:
-		var option: BuildOption = commands[cell]
+	for command in commands:
+		var cell: Vector2i = command.cell
+		var option: BuildOption = command.option
 		if option is TileBuildOption:
 			var source: TileSetAtlasSource = map.tile_set.get_source(option.source_id) as TileSetAtlasSource
 			var value: float = float(source.get_tile_data(option.atlas_coords, option.alternative_tile).get_custom_data("move_cost"))
 			values[cell] = value
 			needs_check = needs_check or value <= 0.0 or value > route_service.entry_cost(cell)
-		elif option.blocks_movement:
-			for target in _footprint(option, cell): values[target] = 0.0
+	for candidate in candidates:
+		if candidate.option.blocks_movement:
+			for target in candidate.footprint(): values[target] = 0.0
 	if not needs_check:
 		return true
 	var preview: TileGrid = route_service.snapshot().with_costs(values)
