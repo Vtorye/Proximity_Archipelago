@@ -226,7 +226,7 @@ func _check_dots(image: Image, button: Button) -> void:
 	expect(count > 0 and (total / maxf(1, count)).distance_to(center) <= factor * 0.75, "menu dots stay centered at the chosen interface scale")
 
 func _check_tutorial_and_backdrop() -> void:
-	var backdrop: ColonyBackdrop = Router._current.get_child(1) as ColonyBackdrop
+	var backdrop: ColonyBackdrop
 	# UiScale may precede the backdrop; discover the actual presentation node.
 	for child in Router._current.get_children():
 		if child is ColonyBackdrop: backdrop = child
@@ -249,9 +249,31 @@ func _check_tutorial_and_backdrop() -> void:
 		if page < 3: await click(tutorial.controls[&"next"])
 	await click(Router._current.controls[&"previous"])
 	expect(Router._current._page == 2, "tutorial supports paging backwards")
+	for factor in [0.5, 1.0]:
+		AppSettings.ui_scale = factor
+		await frames(5)
+		for page in range(4):
+			Router._current._show_page(page)
+			await frames(3)
+			expect(get_viewport().get_visible_rect().encloses(Router._current._body.get_global_rect()), "tutorial remains readable at the smallest and largest interface scale")
+			expect(Router._current._body.get_visible_line_count() == Router._current._body.get_line_count(), "tutorial never clips instruction lines")
+		await capture("14-tutorial-scale-%d" % roundi(factor * 100))
+	AppSettings.ui_scale = 0.75
+	await click(Router._current.controls[&"back"])
+	await frames(35)
+	expect(Router.current_screen_key() == &"main_menu", "tutorial menu button returns to the title screen")
+	await click(Router._current.controls[&"tutorial"])
+	await frames(35)
 	await key(KEY_ESCAPE)
 	await frames(35)
 	expect(Router.current_screen_key() == &"main_menu", "Escape returns from tutorial to the main menu")
+	await click(Router._current.controls[&"tutorial"])
+	await frames(35)
+	await click(Router._current.controls[&"play"])
+	await frames(45)
+	expect(Router.current_screen_key() == &"match", "tutorial play button starts a real colony")
+	Router.goto(&"main_menu")
+	await frames(35)
 
 func _check_requested_features() -> void:
 	var world: World = screen.world
