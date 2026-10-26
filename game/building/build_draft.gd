@@ -7,6 +7,7 @@ var last_result := PlacementCheck.new()
 var _commands: Array[BuildCommand] = []
 var _occupied: Dictionary[Vector2i, BuildCommand] = {}
 var _terrain: Dictionary[Vector2i, BuildCommand] = {}
+var _removed: Array[Building] = []
 var _history: Array[Array] = []
 var _stroke: Array[BuildCommand] = []
 var _painting := false
@@ -32,8 +33,7 @@ func paint(option: BuildOption, cell: Vector2i) -> bool:
 	last_result = controller.placement_check(option, cell, removals())
 	var previous: BuildCommand = _terrain.get(cell) if option is TileBuildOption else _occupied.get(cell)
 	if last_result.code == PlacementCheck.Code.ALREADY_PLACED and previous != null:
-		_commands.erase(previous)
-		_reindex()
+		_erase(previous)
 		last_result = PlacementCheck.new()
 		changed.emit()
 		return true
@@ -47,9 +47,10 @@ func paint(option: BuildOption, cell: Vector2i) -> bool:
 		if previous != null and previous.cell != cell:
 			last_result = PlacementCheck.result(PlacementCheck.Code.OCCUPIED)
 			return false
-	if previous != null: _commands.erase(previous)
-	_commands.append(BuildCommand.create(cell, option))
-	_reindex()
+	if previous != null: _erase(previous)
+	var command: BuildCommand = BuildCommand.create(cell, option)
+	_commands.append(command)
+	_index(command)
 	changed.emit()
 	return true
 
@@ -58,8 +59,7 @@ func remove_last(cell: Vector2i) -> bool:
 	for index in range(_commands.size() - 1, -1, -1):
 		var command: BuildCommand = _commands[index]
 		if footprint(command).has(cell):
-			_commands.remove_at(index)
-			_reindex()
+			_erase(command)
 			last_result = PlacementCheck.new()
 			changed.emit()
 			return true
@@ -80,6 +80,7 @@ func clear() -> void:
 	_commands.clear()
 	_occupied.clear()
 	_terrain.clear()
+	_removed.clear()
 	_history.clear()
 	_stroke.clear()
 	_painting = false
@@ -119,19 +120,30 @@ func commit() -> bool:
 func _reindex() -> void:
 	_occupied.clear()
 	_terrain.clear()
-	for command in _commands:
-		if command.is_removal(): continue
-		if command.option is TileBuildOption:
-			_terrain[command.cell] = command
-		else:
-			for target in controller.footprint_at(command.option, command.cell):
-				_occupied[target] = command
+	_removed.clear()
+	for command in _commands: _index(command)
+
+func _index(command: BuildCommand) -> void:
+	if command.is_removal():
+		_removed.append(command.removed_building)
+	elif command.option is TileBuildOption:
+		_terrain[command.cell] = command
+	else:
+		for target in controller.footprint_at(command.option, command.cell):
+			_occupied[target] = command
+
+func _erase(command: BuildCommand) -> void:
+	_commands.erase(command)
+	if command.is_removal():
+		_removed.erase(command.removed_building)
+	elif command.option is TileBuildOption:
+		_terrain.erase(command.cell)
+	else:
+		for target in controller.footprint_at(command.option, command.cell):
+			_occupied.erase(target)
 
 func removals() -> Array[Building]:
-	var result: Array[Building] = []
-	for command in _commands:
-		if command.is_removal(): result.append(command.removed_building)
-	return result
+	return _removed.duplicate()
 
 func footprint(command: BuildCommand) -> Array[Vector2i]:
 	return command.removed_building.footprint() if command.is_removal() else controller.footprint_at(command.option, command.cell)
@@ -152,7 +164,9 @@ func demolish(cell: Vector2i) -> bool:
 	last_result = demolition_check(cell)
 	if not last_result.allowed(): return false
 	if building != null:
-		_commands.append(BuildCommand.remove(building))
+		var command: BuildCommand = BuildCommand.remove(building)
+		_commands.append(command)
+		_index(command)
 		changed.emit()
 		return true
 	for option in controller.options:
