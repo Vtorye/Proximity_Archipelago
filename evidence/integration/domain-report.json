@@ -1,0 +1,56 @@
+{
+  "assertions": 573,
+  "failures": [],
+  "metrics": {
+    "assignment_load": {
+      "new_searches": 0,
+      "requests": 1000,
+      "wall_ms": 550.34,
+      "workplaces": 103
+    },
+    "navigation_100x100": {
+      "10000_cached_reads_ms": 8.343,
+      "cache_limit": 8,
+      "cold_field_ms": 34.194,
+      "field_bytes": 50000
+    },
+    "navigation_50x50": {
+      "cells": 2500,
+      "field_bytes": 12500
+    },
+    "simulation": {
+      "idle": {
+        "ants": 5,
+        "cache_hits": 193,
+        "completed_cycles": 58,
+        "deaths": 0,
+        "searches": 3,
+        "seconds": 180.0,
+        "stock": {
+          "food": 147,
+          "stone": 40,
+          "wood": 88
+        },
+        "wall_ms": 240.167,
+        "won": false
+      },
+      "roads": {
+        "ants": 10,
+        "cache_hits": 804,
+        "completed_cycles": 254,
+        "deaths": 0,
+        "searches": 8,
+        "seconds": 140.016666666703,
+        "stock": {
+          "food": 271,
+          "stone": 290,
+          "wood": 100
+        },
+        "wall_ms": 283.311,
+        "won": true
+      }
+    }
+  },
+  "source_revision": "5dcbea33969a358961fa205936c9c6ec14a47770",
+  "house_test": true
+}
