@@ -123,7 +123,9 @@ func _check_ui_scales() -> void:
 	await click(Router.top_overlay().controls[&"settings"])
 	var settings: Control = Router.top_overlay()
 	expect(AppSettings.ui_scale == 0.75 and settings._scale_value.text == "75%", "interface starts smaller at seventy-five percent")
+	var window_before: Vector2i = get_window().size
 	await click(settings.controls[&"ui_scale_plus"])
+	expect(get_window().size == window_before, "UI scale changes preserve the physical window size")
 	expect(AppSettings.ui_scale == 1.0 and settings.controls[&"ui_scale_plus"].disabled, "settings apply the largest supported UI scale immediately")
 	expect(get_viewport().get_visible_rect().encloses(settings.controls[&"done"].get_global_rect()), "largest settings scale keeps its close action visible")
 	await capture("09-settings-scale-100")
@@ -138,8 +140,10 @@ func _check_ui_scales() -> void:
 	await click(screen.hud.controls[&"settings"])
 	await click(Router.top_overlay().controls[&"settings"])
 	settings = Router.top_overlay()
+	window_before = get_window().size
 	await click(settings.controls[&"ui_scale_minus"])
 	await click(settings.controls[&"ui_scale_minus"])
+	expect(get_window().size == window_before, "shrinking UI preserves the physical window size")
 	expect(AppSettings.ui_scale == 0.5 and settings.controls[&"ui_scale_minus"].disabled, "settings apply the smallest supported UI scale immediately")
 	var config := ConfigFile.new()
 	expect(config.load(AppSettings.PATH) == OK and config.get_value("interface", "scale", 0.0) == 0.5, "UI scale persists in the settings file")
@@ -251,6 +255,7 @@ func _check_tutorial_and_backdrop() -> void:
 	expect(Router._current._page == 2, "tutorial supports paging backwards")
 	for factor in [0.5, 1.0]:
 		AppSettings.ui_scale = factor
+		AppSettings.apply()
 		await frames(5)
 		for page in range(4):
 			Router._current._show_page(page)
@@ -259,6 +264,8 @@ func _check_tutorial_and_backdrop() -> void:
 			expect(Router._current._body.get_visible_line_count() == Router._current._body.get_line_count(), "tutorial never clips instruction lines")
 		await capture("14-tutorial-scale-%d" % roundi(factor * 100))
 	AppSettings.ui_scale = 0.75
+	AppSettings.apply()
+	await frames(3)
 	await click(Router._current.controls[&"back"])
 	await frames(35)
 	expect(Router.current_screen_key() == &"main_menu", "tutorial menu button returns to the title screen")
