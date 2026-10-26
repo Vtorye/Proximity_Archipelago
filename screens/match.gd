@@ -29,8 +29,8 @@ func _ready() -> void:
 	hud = MatchHud.new()
 	hud.world = world
 	layer.add_child(hud)
-	hud.pause_requested.connect(_open_pause)
 	hud.settings_requested.connect(_open_settings)
+	hud.construction_requested.connect(_open_construction)
 	hud.zoom_in_requested.connect(func(): camera.set_level(camera.level + 1))
 	hud.zoom_out_requested.connect(func(): camera.set_level(camera.level - 1))
 	camera.zoom_changed.connect(hud.set_zoom)
@@ -65,12 +65,16 @@ func _input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		return
 	var top: MenuBase = Router.top_overlay()
+	if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_SPACE and (top == null or top is BuildMenu):
+		_open_construction()
+		get_viewport().set_input_as_handled()
+		return
 	if top is BuildMenu and event is InputEventMouseButton and event.pressed:
 		var inside: bool = top.contains_point(event.position)
 		if event.button_index == MOUSE_BUTTON_RIGHT or event.button_index == MOUSE_BUTTON_LEFT and not inside:
 			_close_build()
 			if event.button_index == MOUSE_BUTTON_LEFT:
-				for key in [&"pause", &"settings"]:
+				for key in [&"settings"]:
 					if hud.controls[key].get_global_rect().has_point(event.position):
 						return
 				camera.dragging = true
@@ -89,6 +93,10 @@ func _input(event: InputEvent) -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not _active or Router.is_navigating() or Router.has_overlay():
+		return
+	if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode in [KEY_B, KEY_SPACE]:
+		_open_construction()
+		get_viewport().set_input_as_handled()
 		return
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_RIGHT:
 		var map: TileMapLayer = world.get_node("Map") as TileMapLayer
@@ -133,11 +141,24 @@ func _close_build() -> void:
 	_build_menu = null
 	camera.enabled_input = true
 
-func _open_pause() -> void:
+func _open_settings() -> void:
 	_close_build()
 	if Router.push_overlay(&"pause") != null:
 		PauseController.acquire(&"menu")
 
-func _open_settings() -> void:
+func _open_construction() -> void:
 	_close_build()
-	Router.push_overlay(&"settings")
+	var context := ConstructionContext.new()
+	context.controller = world.build_controller
+	context.art = world.art
+	context.camera = camera
+	context.obstacles = hud.build_obstacles()
+	var menu: ConstructionMenu = Router.push_overlay(&"construction", context) as ConstructionMenu
+	if menu == null: return
+	camera.dragging = false
+	camera.enabled_input = false
+	hud.set_construction_mode(true)
+	menu.tree_exiting.connect(func():
+		if is_instance_valid(hud): hud.set_construction_mode(false)
+		if is_instance_valid(camera): camera.enabled_input = true)
+	PauseController.acquire(&"menu")

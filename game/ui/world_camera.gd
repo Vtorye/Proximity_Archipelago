@@ -37,8 +37,6 @@ func _process(delta: float) -> void:
 		_clamp()
 
 func set_level(value: int) -> void:
-	if not enabled_input:
-		return
 	level = clampi(value, 0, ZOOMS.size() - 1)
 	zoom = Vector2.ONE * ZOOMS[level]
 	_clamp()
