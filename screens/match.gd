@@ -29,7 +29,6 @@ func _ready() -> void:
 	hud = MatchHud.new()
 	hud.world = world
 	layer.add_child(hud)
-	hud.pause_requested.connect(_open_pause)
 	hud.settings_requested.connect(_open_settings)
 	hud.construction_requested.connect(_open_construction)
 	hud.zoom_in_requested.connect(func(): camera.set_level(camera.level + 1))
@@ -66,12 +65,16 @@ func _input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		return
 	var top: MenuBase = Router.top_overlay()
+	if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_SPACE and (top == null or top is BuildMenu):
+		_open_construction()
+		get_viewport().set_input_as_handled()
+		return
 	if top is BuildMenu and event is InputEventMouseButton and event.pressed:
 		var inside: bool = top.contains_point(event.position)
 		if event.button_index == MOUSE_BUTTON_RIGHT or event.button_index == MOUSE_BUTTON_LEFT and not inside:
 			_close_build()
 			if event.button_index == MOUSE_BUTTON_LEFT:
-				for key in [&"pause", &"settings"]:
+				for key in [&"settings"]:
 					if hud.controls[key].get_global_rect().has_point(event.position):
 						return
 				camera.dragging = true
@@ -91,7 +94,7 @@ func _input(event: InputEvent) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if not _active or Router.is_navigating() or Router.has_overlay():
 		return
-	if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_B:
+	if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode in [KEY_B, KEY_SPACE]:
 		_open_construction()
 		get_viewport().set_input_as_handled()
 		return
@@ -138,20 +141,10 @@ func _close_build() -> void:
 	_build_menu = null
 	camera.enabled_input = true
 
-func _open_pause() -> void:
-	if Router.top_overlay() is ConstructionMenu:
-		Router.top_overlay().apply_and_resume()
-		return
+func _open_settings() -> void:
 	_close_build()
 	if Router.push_overlay(&"pause") != null:
 		PauseController.acquire(&"menu")
-
-func _open_settings() -> void:
-	if Router.top_overlay() is ConstructionMenu:
-		Router.push_overlay(&"settings")
-		return
-	_close_build()
-	Router.push_overlay(&"settings")
 
 func _open_construction() -> void:
 	_close_build()

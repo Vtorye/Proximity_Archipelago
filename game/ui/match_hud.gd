@@ -1,6 +1,5 @@
 class_name MatchHud
 extends Control
-signal pause_requested
 signal settings_requested
 signal construction_requested
 signal zoom_in_requested
@@ -62,15 +61,10 @@ func _ready() -> void:
 	_timer = ColonyStyle.label("3:00", 8, ColonyStyle.ACCENT)
 	_timer.custom_minimum_size.x = 48
 	row.add_child(_timer)
-	var pause: Button = _square_button("||", 32)
-	pause.tooltip_text = "Пауза (Esc)"
-	pause.pressed.connect(func(): pause_requested.emit())
-	row.add_child(pause)
-	controls[&"pause"] = pause
 	var settings: Button = _square_button("", 32)
 	settings.icon = preload("res://game/assets/ui/menu_dots.svg")
 	settings.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	settings.tooltip_text = "Настройки"
+	settings.tooltip_text = "Меню (Esc)"
 	settings.pressed.connect(func(): settings_requested.emit())
 	row.add_child(settings)
 	controls[&"settings"] = settings
@@ -127,7 +121,7 @@ func _ready() -> void:
 	var help: Label = ColonyStyle.label("ЛКМ: камера  ПКМ: тайл", 8, ColonyStyle.MUTED)
 	help.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	hints.add_child(help)
-	var build: Button = ColonyStyle.button("Стройка [B]")
+	var build: Button = ColonyStyle.button("Пауза / стройка [Пробел]")
 	build.pressed.connect(func(): construction_requested.emit())
 	hints.add_child(build)
 	controls[&"build"] = build
@@ -217,7 +211,6 @@ func set_construction_mode(active: bool) -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS if active else Node.PROCESS_MODE_INHERIT
 	_bottom.visible = not active
 	_toast.hide()
-	controls[&"pause"].tooltip_text = "Применить план и продолжить" if active else "Пауза (Esc)"
 
 func _process(delta: float) -> void:
 	if _toast_time > 0.0:
