@@ -1,5 +1,5 @@
 extends Screen
-## Main menu contains only the animated background and three unframed actions.
+## Main menu contains only the animated background and unframed actions.
 var controls: Dictionary[StringName, Button] = {}
 
 func _ready() -> void:
@@ -19,6 +19,7 @@ func _ready() -> void:
 	content.add_theme_constant_override("separation", 14)
 	center.add_child(content)
 	_add_action(content, &"play", "Играть", func(): Router.goto(&"match"))
+	_add_action(content, &"tutorial", "Обучение", func(): Router.goto(&"tutorial"))
 	_add_action(content, &"settings", "Настройки", func(): Router.push_overlay(&"settings"))
 	_add_action(content, &"quit", "Выход", AppSettings.quit_game)
 

@@ -10,12 +10,15 @@
 [ext_resource type="PackedScene" path="res://overlays/settings_menu.tscn" id="settings"]
 [ext_resource type="PackedScene" path="res://overlays/construction_menu.tscn" id="construction"]
 
+[ext_resource type="PackedScene" path="res://screens/tutorial.tscn" id="tutorial"]
+
 [resource]
 resource_name = "Manifest"
 script = ExtResource("4_oj60a")
 init_key = &"main_menu"
 screens = Dictionary[StringName, PackedScene]({
 &"main_menu": ExtResource("2_1jkm1"),
+&"tutorial": ExtResource("tutorial"),
 &"match": ExtResource("3_sk4hq")
 })
 overlays = Dictionary[StringName, PackedScene]({
