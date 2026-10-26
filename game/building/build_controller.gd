@@ -48,7 +48,7 @@ func check(option: BuildOption, cell: Vector2i) -> PlacementCheck:
 	return PlacementCheck.new()
 
 ## Geometry-only check for a draft. The final command validates its entire budget and grid.
-func placement_check(option: BuildOption, cell: Vector2i) -> PlacementCheck:
+func placement_check(option: BuildOption, cell: Vector2i, removed: Array[Building] = []) -> PlacementCheck:
 	if _committing:
 		return PlacementCheck.result(PlacementCheck.Code.BUSY)
 	if option == null or not options.has(option):
@@ -68,9 +68,9 @@ func placement_check(option: BuildOption, cell: Vector2i) -> PlacementCheck:
 	else:
 		return PlacementCheck.result(PlacementCheck.Code.INVALID_OPTION)
 	for target in _footprint(option, cell):
-		if map.get_cell_source_id(target) == -1 or not route_service.walkable(target):
+		if map.get_cell_source_id(target) == -1 or not route_service.walkable(target) and not removed.has(registry.at(target)):
 			return PlacementCheck.result(PlacementCheck.Code.OUTSIDE_MAP)
-		if registry.at(target) != null and (option is SceneBuildOption or not option.allow_when_occupied):
+		if registry.at(target) != null and not removed.has(registry.at(target)) and (option is SceneBuildOption or not option.allow_when_occupied):
 			return PlacementCheck.result(PlacementCheck.Code.OCCUPIED)
 		if not option.allow_when_occupied and population != null:
 			for ant in population.agents():
@@ -97,16 +97,31 @@ func try_build_plan(commands: Array[BuildCommand]) -> bool:
 		return false
 	if commands.is_empty():
 		return true
+	var removed: Array[Building] = []
+	var placements: Array[BuildCommand] = []
+	for command in commands:
+		if command == null:
+			last_result = PlacementCheck.result(PlacementCheck.Code.INVALID_OPTION)
+			return false
+		if command.is_removal():
+			var building: Building = command.removed_building
+			if not is_instance_valid(building) or registry.at(command.cell) != building or removed.has(building):
+				last_result = PlacementCheck.result(PlacementCheck.Code.NO_BUILDING)
+				return false
+			removed.append(building)
+		else:
+			placements.append(command)
 	var costs: Array[ResourceAmount] = []
 	var cells: Array[Vector2i] = []
+	for building in removed: cells.append_array(building.footprint())
 	var occupied: Dictionary[Vector2i, bool] = {}
 	var terrain: Dictionary[Vector2i, bool] = {}
 	var candidates: Array[Building] = []
 	var spawn_count := 0
-	for command in commands:
+	for command in placements:
 		var cell: Vector2i = command.cell
 		var option: BuildOption = command.option
-		last_result = placement_check(option, cell)
+		last_result = placement_check(option, cell, removed)
 		if not last_result.allowed():
 			break
 		var layer: Dictionary[Vector2i, bool] = terrain if option is TileBuildOption else occupied
@@ -141,7 +156,7 @@ func try_build_plan(commands: Array[BuildCommand]) -> bool:
 			if food != null and cost.type.id == food.id: food_cost += cost.amount
 		if inventory.available(food) - food_cost < spawn_count:
 			last_result = PlacementCheck.result(PlacementCheck.Code.SPAWN_FOOD)
-	if last_result.allowed() and not _batch_preserves_escape(commands, candidates):
+	if last_result.allowed() and not _batch_preserves_escape(placements, candidates, removed):
 		last_result = PlacementCheck.result(PlacementCheck.Code.NO_ESCAPE)
 	if not last_result.allowed():
 		for candidate in candidates: candidate.free()
@@ -155,11 +170,15 @@ func try_build_plan(commands: Array[BuildCommand]) -> bool:
 		_committing = false
 		inventory.end_update()
 		return false
-	for command in commands:
+	for command in placements:
 		var cell: Vector2i = command.cell
 		var option: BuildOption = command.option
 		if option is TileBuildOption:
 			map.set_cell(cell, option.source_id, option.atlas_coords, option.alternative_tile)
+	for building in removed:
+		_refund_for_demolish(building.option)
+		building.demolish()
+		building.free()
 	var blocked: Array[Vector2i] = registry.blocked_cells()
 	for candidate in candidates:
 		if candidate.option.blocks_movement:
@@ -172,7 +191,7 @@ func try_build_plan(commands: Array[BuildCommand]) -> bool:
 		registry.register(candidate)
 	_committing = false
 	inventory.end_update()
-	for command in commands:
+	for command in placements:
 		built.emit(command.option, command.cell)
 	changed.emit()
 	return true
@@ -230,9 +249,13 @@ func _footprint(option: BuildOption, origin: Vector2i) -> Array[Vector2i]:
 		cells.append(origin)
 	return cells
 
-func _batch_preserves_escape(commands: Array[BuildCommand], candidates: Array[Building]) -> bool:
+func _batch_preserves_escape(commands: Array[BuildCommand], candidates: Array[Building], removed: Array[Building] = []) -> bool:
 	var values: Dictionary[Vector2i, float] = {}
-	var needs_check := false
+	var needs_check := not removed.is_empty()
+	for building in removed:
+		for cell in building.footprint():
+			var data: TileData = map.get_cell_tile_data(cell)
+			values[cell] = float(data.get_custom_data("move_cost")) if data != null else 0.0
 	for candidate in candidates:
 		needs_check = needs_check or candidate is House or candidate.option.blocks_movement
 	for command in commands:
@@ -250,7 +273,8 @@ func _batch_preserves_escape(commands: Array[BuildCommand], candidates: Array[Bu
 		return true
 	var preview: TileGrid = route_service.snapshot().with_costs(values)
 	var foods: Array[Vector2i] = []
-	for canteen in registry.canteens(): foods.append_array(canteen.entry_cells())
+	for canteen in registry.canteens():
+		if not removed.has(canteen): foods.append_array(canteen.entry_cells())
 	for candidate in candidates:
 		if candidate is Canteen: foods.append_array(candidate.entry_cells())
 	var field: NavigationField = GridSearch.build(preview, foods, true)
@@ -264,10 +288,11 @@ func _batch_preserves_escape(commands: Array[BuildCommand], candidates: Array[Bu
 			var energy: float = nearest_food * route_service.cell_size() / candidate.option.spawn_speed * 2.25 + AntNeeds.MEAL_SECONDS + AntNeeds.SAFETY_MARGIN
 			if energy > AntNeeds.CAPACITY:
 				return false
-	return _agents_can_escape(field)
+	return _agents_can_escape(field, removed)
 
-func _agents_can_escape(field: NavigationField) -> bool:
+func _agents_can_escape(field: NavigationField, removed: Array[Building] = []) -> bool:
 	for ant in population.agents():
+		if removed.has(ant.home): continue
 		var cost: float = field.cost(route_service.world_to_cell(ant.global_position))
 		var energy: float = cost * route_service.cell_size() / (ant.speed * TripPlanner.CARRY_SPEED_RATIO) + AntNeeds.MEAL_SECONDS
 		if not ant.needs.can_afford(energy):

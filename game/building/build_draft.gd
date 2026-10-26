@@ -29,7 +29,7 @@ func end_stroke() -> void:
 	_painting = false
 
 func paint(option: BuildOption, cell: Vector2i) -> bool:
-	last_result = controller.placement_check(option, cell)
+	last_result = controller.placement_check(option, cell, removals())
 	var previous: BuildCommand = _terrain.get(cell) if option is TileBuildOption else _occupied.get(cell)
 	if last_result.code == PlacementCheck.Code.ALREADY_PLACED and previous != null:
 		_commands.erase(previous)
@@ -57,7 +57,7 @@ func paint(option: BuildOption, cell: Vector2i) -> bool:
 func remove_last(cell: Vector2i) -> bool:
 	for index in range(_commands.size() - 1, -1, -1):
 		var command: BuildCommand = _commands[index]
-		if controller.footprint_at(command.option, command.cell).has(cell):
+		if footprint(command).has(cell):
 			_commands.remove_at(index)
 			_reindex()
 			last_result = PlacementCheck.new()
@@ -88,7 +88,8 @@ func clear() -> void:
 
 func costs() -> Array[ResourceAmount]:
 	var result: Array[ResourceAmount] = []
-	for command in _commands: result.append_array(command.option.costs)
+	for command in _commands:
+		if not command.is_removal(): result.append_array(command.option.costs)
 	return result
 
 func budget_check() -> PlacementCheck:
@@ -98,6 +99,7 @@ func budget_check() -> PlacementCheck:
 	var meals := 0
 	var food_cost := 0
 	for command in _commands:
+		if command.is_removal(): continue
 		var option: BuildOption = command.option
 		food_cost += option.cost_amount(food)
 		if option is SceneBuildOption: meals += option.spawn_count
@@ -118,8 +120,47 @@ func _reindex() -> void:
 	_occupied.clear()
 	_terrain.clear()
 	for command in _commands:
+		if command.is_removal(): continue
 		if command.option is TileBuildOption:
 			_terrain[command.cell] = command
 		else:
 			for target in controller.footprint_at(command.option, command.cell):
 				_occupied[target] = command
+
+func removals() -> Array[Building]:
+	var result: Array[Building] = []
+	for command in _commands:
+		if command.is_removal(): result.append(command.removed_building)
+	return result
+
+func footprint(command: BuildCommand) -> Array[Vector2i]:
+	return command.removed_building.footprint() if command.is_removal() else controller.footprint_at(command.option, command.cell)
+
+func demolition_check(cell: Vector2i) -> PlacementCheck:
+	var building: Building = controller.registry.at(cell)
+	if building != null:
+		if removals().has(building): return PlacementCheck.result(PlacementCheck.Code.ALREADY_PLACED)
+		return controller.demolition_check(cell)
+	for option in controller.options:
+		if option.id == &"ground": return controller.placement_check(option, cell)
+	return PlacementCheck.result(PlacementCheck.Code.NO_BUILDING)
+
+func demolish(cell: Vector2i) -> bool:
+	# Repeated brush visits must not peel layers or toggle demolition marks.
+	var building: Building = controller.registry.at(cell)
+	if building != null and removals().has(building): return true
+	last_result = demolition_check(cell)
+	if not last_result.allowed(): return false
+	if building != null:
+		_commands.append(BuildCommand.remove(building))
+		changed.emit()
+		return true
+	for option in controller.options:
+		if option.id == &"ground": return paint(option, cell)
+	return false
+
+func residents_to_demolish() -> int:
+	var result := 0
+	for building in removals():
+		if building is House: result += building.residents.size()
+	return result

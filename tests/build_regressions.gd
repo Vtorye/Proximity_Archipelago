@@ -6,6 +6,7 @@ func run(test: Node) -> void:
 	await _draft_and_commit(test)
 	await _invalid_batches(test)
 	await _layered_plan(test)
+	await _planned_demolition(test)
 
 func _composite_price(test: Node) -> void:
 	var world: World = test.make_world()
@@ -135,5 +136,49 @@ func _layered_plan(test: Node) -> void:
 	test.expect(draft.commit(), "layered plan commits regardless of painting order")
 	test.expect(world.registry.at(cell) is House and world.build_controller.map.get_cell_atlas_coords(cell) == Vector2i(2, 0), "committed road remains underneath its nest")
 	test.expect(world.population.count() == 10 and world.inventory.quantity(world.inventory.type_by_id(&"wood")) == before - 21, "layered commit charges both prices and spawns once")
+	world.free()
+	await test.get_tree().process_frame
+
+func _planned_demolition(test: Node) -> void:
+	var world: World = test.make_world()
+	var controller: BuildController = world.build_controller
+	var wood: ResourceType = world.inventory.type_by_id(&"wood")
+	var road: BuildOption = load("res://game/building/options/road.tres")
+	var berry: BuildOption = load("res://game/building/options/apple_tree.tres")
+	var cell := Vector2i(30, 29)
+	test.expect(controller.try_build_plan([BuildCommand.create(cell, road), BuildCommand.create(cell, berry)]), "demolition fixture has a road beneath a workplace")
+	var target: Building = world.registry.at(cell)
+	var revision: int = world.route_service.revision
+	var stock: int = world.inventory.quantity(wood)
+	var draft := BuildDraft.new()
+	draft.controller = controller
+	draft.begin_stroke()
+	test.expect(draft.demolish(cell) and draft.demolish(cell) and draft.size() == 1, "demolition brush reserves one removal despite repeated visits")
+	draft.end_stroke()
+	test.expect(world.registry.at(cell) == target and world.route_service.revision == revision, "demolition preview leaves the building and navigation untouched")
+	draft.begin_stroke()
+	test.expect(draft.remove_last(cell) and draft.size() == 0, "right click cancels a demolition mark")
+	draft.end_stroke()
+	draft.undo()
+	test.expect(draft.removals() == [target], "stroke undo restores a cancelled removal")
+	draft.clear()
+	test.expect(world.registry.at(cell) == target and world.inventory.quantity(wood) == stock, "cancelling demolition preserves the world and stock")
+	draft.demolish(cell)
+	test.expect(draft.paint(berry, cell), "plan can replace a building scheduled for removal")
+	test.expect(draft.commit() and not is_instance_valid(target) and world.registry.at(cell) is Workplace, "demolition and replacement commit together")
+	test.expect(controller.map.get_cell_atlas_coords(cell) == Vector2i(2, 0), "building demolition preserves the terrain layer")
+	draft.demolish(cell)
+	test.expect(draft.commit(), "standalone planned demolition commits")
+	test.expect(world.registry.at(cell) == null and world.inventory.quantity(wood) == stock, "demolition has no implicit refund")
+	draft.demolish(cell)
+	test.expect(draft.commit() and controller.map.get_cell_atlas_coords(cell) == Vector2i(1, 0), "demolition brush restores road terrain to soil after the building is gone")
+	var canteen: Canteen = world.registry.canteens()[0]
+	test.expect(not draft.demolish(canteen.cell) and draft.last_result.code == PlacementCheck.Code.NO_ESCAPE, "draft cannot mark the final feeding point for demolition")
+	test.expect(not controller.try_build_plan([BuildCommand.remove(canteen)]) and is_instance_valid(canteen), "controller also rejects an unsafe direct removal plan")
+	var workplace: Workplace = world.registry.workplaces()[0]
+	var expensive: TileBuildOption = road.duplicate(true)
+	expensive.costs = [test.entry(wood, 10000)]
+	controller.options.append(expensive)
+	test.expect(not controller.try_build_plan([BuildCommand.remove(workplace), BuildCommand.create(cell, expensive)]) and is_instance_valid(workplace), "unaffordable plan cannot partially demolish an existing building")
 	world.free()
 	await test.get_tree().process_frame
