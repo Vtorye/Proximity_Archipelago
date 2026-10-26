@@ -7,6 +7,7 @@ var controls: Dictionary[StringName, Button] = {}
 var panel: PanelContainer
 var _cost: Label
 var _status: Label
+var _hint: Label
 var _preview: BuildPreview
 var _selected: BuildOption
 var _tool: StringName = &"build"
@@ -74,6 +75,7 @@ func _ready() -> void:
 	for entry in [[&"move", "Перемещение: ЛКМ двигает карту", "move"], [&"demolish", "Снос: отметить здание или дорогу", "demolish"]]:
 		var tool: Button = ColonyStyle.button("")
 		tool.custom_minimum_size = Vector2(32, 32)
+		tool.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		tool.icon = load("res://game/assets/ui/build_%s.svg" % entry[2])
 		tool.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		tool.tooltip_text = entry[1]
@@ -85,7 +87,7 @@ func _ready() -> void:
 	var actions := HBoxContainer.new()
 	actions.add_theme_constant_override("separation", 4)
 	toolbar.add_child(actions)
-	for entry in [[&"undo", "Отменить ход (Ctrl+Z)", "undo", _undo], [&"cancel", "Отменить всё", "cancel", _cancel], [&"apply", "Применить и продолжить (Esc)", "apply", apply_and_resume]]:
+	for entry in [[&"undo", "Отменить ход (Ctrl+Z)", "undo", _undo], [&"cancel", "Отменить всё", "cancel", _cancel], [&"apply", "Применить и продолжить (Пробел)", "apply", apply_and_resume]]:
 		var button: Button = ColonyStyle.button("", entry[0] == &"apply")
 		button.custom_minimum_size = Vector2(32, 32)
 		button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
@@ -102,7 +104,8 @@ func _ready() -> void:
 	_cost.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_cost.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	summary.add_child(_cost)
-	summary.add_child(ColonyStyle.label("ЛКМ: строить · ПКМ: убрать слой · СКМ: камера", 4, ColonyStyle.MUTED))
+	_hint = ColonyStyle.label("", 4, ColonyStyle.MUTED)
+	summary.add_child(_hint)
 	_status = ColonyStyle.label("", 6, ColonyStyle.DANGER)
 	_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_status.hide()
@@ -136,6 +139,7 @@ func _select(option: BuildOption) -> void:
 	controls[option.id].set_pressed_no_signal(true)
 	_preview.option = option
 	_preview.queue_redraw()
+	if _hint != null: _refresh()
 
 func _select_tool(tool: StringName) -> void:
 	_end_stroke()
@@ -144,12 +148,14 @@ func _select_tool(tool: StringName) -> void:
 	_preview.option = null
 	_preview.demolishing = tool == &"demolish"
 	_preview.queue_redraw()
+	_refresh()
 
 func _cancel_confirmation() -> void:
 	if _confirmation != null: _confirmation.hide()
 
 func _refresh() -> void:
 	_refresh_queued = false
+	_hint.text = "ЛКМ: строить · ПКМ: убрать слой" if _tool == &"build" else ("ЛКМ/СКМ: камера · колесо: зум" if _tool == &"move" else "ЛКМ: снос · ПКМ: убрать отметку")
 	var budget: PlacementCheck = draft.budget_check()
 	_cost.text = "План: %d · %s" % [draft.size(), BuildCostText.format(draft.costs())]
 	_cost.add_theme_color_override("font_color", ColonyStyle.TEXT if budget.allowed() else ColonyStyle.DANGER)
