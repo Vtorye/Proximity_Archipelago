@@ -1,0 +1,52 @@
+{
+  "assertions": 461,
+  "failures": [],
+  "metrics": {
+    "assignment_load": {
+      "new_searches": 0,
+      "requests": 1000,
+      "wall_ms": 414.842,
+      "workplaces": 103
+    },
+    "navigation_100x100": {
+      "10000_cached_reads_ms": 7.627,
+      "cache_limit": 8,
+      "cold_field_ms": 31.935,
+      "field_bytes": 50000
+    },
+    "simulation": {
+      "idle": {
+        "ants": 5,
+        "cache_hits": 155,
+        "completed_cycles": 46,
+        "deaths": 0,
+        "searches": 3,
+        "seconds": 180.0,
+        "stock": {
+          "food": 99,
+          "stone": 66,
+          "wood": 70
+        },
+        "wall_ms": 232.2,
+        "won": false
+      },
+      "roads": {
+        "ants": 5,
+        "cache_hits": 345,
+        "completed_cycles": 109,
+        "deaths": 0,
+        "searches": 6,
+        "seconds": 158.016666666702,
+        "stock": {
+          "food": 150,
+          "stone": 104,
+          "wood": 100
+        },
+        "wall_ms": 198.0,
+        "won": true
+      }
+    }
+  },
+  "source_revision": "d6286365f5315f6fd32bbb948eb93b53e6c74eb3",
+  "engine": "4.7.2.stable.arch_linux.ed1daf0bf"
+}

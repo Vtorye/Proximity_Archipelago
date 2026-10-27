@@ -1,0 +1,219 @@
+class_name MatchHud
+extends Control
+signal settings_requested
+signal construction_requested
+signal zoom_in_requested
+signal zoom_out_requested
+var world: World
+var controls: Dictionary[StringName, Button] = {}
+var stock_labels: Dictionary[StringName, Label] = {}
+var stock_chips: Dictionary[StringName, Control] = {}
+var progress: Dictionary[StringName, ProgressBar] = {}
+var _timer: Label
+var _ants: Label
+var _zoom: Label
+var _toast: Label
+var _toast_time := 0.0
+var _warning: Label
+var _waiting: Label
+var _zoom_level := 2
+var _objectives: PanelContainer
+var _bottom: PanelContainer
+
+func _ready() -> void:
+	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ColonyStyle.fill(self)
+	ColonyStyle.apply(self)
+	var top := PanelContainer.new()
+	add_child(top)
+	top.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
+	top.offset_left = 8
+	top.offset_right = -8
+	top.offset_top = 8
+	top.offset_bottom = 56
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	top.add_child(row)
+	for type in world.inventory.registered_types():
+		var chip := HBoxContainer.new()
+		chip.custom_minimum_size.x = 100
+		chip.add_theme_constant_override("separation", 4)
+		stock_chips[type.id] = chip
+		var icon := TextureRect.new()
+		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		icon.texture = _resource_icon(type.id)
+		icon.custom_minimum_size = Vector2(32, 32)
+		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		chip.add_child(icon)
+		var amount: Label = ColonyStyle.label("0")
+		amount.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		chip.add_child(amount)
+		stock_labels[type.id] = amount
+		row.add_child(chip)
+	var spacer := Control.new()
+	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(spacer)
+	_ants = ColonyStyle.label("5")
+	_ants.tooltip_text = "Муравьи"
+	row.add_child(_ants)
+	row.add_child(ColonyStyle.label("м.", 8, ColonyStyle.MUTED))
+	_timer = ColonyStyle.label("3:00", 8, ColonyStyle.ACCENT)
+	_timer.custom_minimum_size.x = 48
+	row.add_child(_timer)
+	var settings: Button = _square_button("", 32)
+	settings.icon = preload("res://game/assets/ui/menu_dots.svg")
+	settings.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	settings.tooltip_text = "Меню (Esc)"
+	settings.pressed.connect(func(): settings_requested.emit())
+	row.add_child(settings)
+	controls[&"settings"] = settings
+	var objectives := PanelContainer.new()
+	_objectives = objectives
+	objectives.position = Vector2(8, 64)
+	objectives.custom_minimum_size = Vector2(168, 0)
+	add_child(objectives)
+	var goals := VBoxContainer.new()
+	goals.add_theme_constant_override("separation", 2)
+	objectives.add_child(goals)
+	goals.add_child(ColonyStyle.label("Цель: по %d" % world.match_controller.target_amount, 8, ColonyStyle.MUTED))
+	for type in world.match_controller.tracked_types:
+		var line := HBoxContainer.new()
+		line.add_theme_constant_override("separation", 4)
+		var caption: Label = ColonyStyle.label(type.display_name)
+		caption.custom_minimum_size.x = 84
+		line.add_child(caption)
+		var bar := ProgressBar.new()
+		bar.custom_minimum_size = Vector2(56, 6)
+		bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		bar.show_percentage = false
+		bar.max_value = world.match_controller.target_amount
+		bar.add_theme_stylebox_override("background", ColonyStyle.box(Color("151515"), Color("555555"), 0))
+		bar.add_theme_stylebox_override("fill", ColonyStyle.box(ColonyStyle.ACCENT, ColonyStyle.ACCENT, 0))
+		line.add_child(bar)
+		progress[type.id] = bar
+		goals.add_child(line)
+	_warning = ColonyStyle.label("", 8, ColonyStyle.DANGER)
+	_warning.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_warning.custom_minimum_size.x = 144
+	goals.add_child(_warning)
+	_waiting = ColonyStyle.label("", 8, ColonyStyle.MUTED)
+	_waiting.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_waiting.custom_minimum_size.x = 144
+	_waiting.hide()
+	goals.add_child(_waiting)
+	var bottom := PanelContainer.new()
+	_bottom = bottom
+	var compact_panel: StyleBoxTexture = ColonyStyle.box()
+	compact_panel.content_margin_top = 2
+	compact_panel.content_margin_bottom = 2
+	bottom.add_theme_stylebox_override("panel", compact_panel)
+	add_child(bottom)
+	bottom.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
+	bottom.offset_left = 8
+	bottom.offset_right = -8
+	bottom.offset_top = -34
+	bottom.offset_bottom = -6
+	var hints := HBoxContainer.new()
+	hints.add_theme_constant_override("separation", 6)
+	bottom.add_child(hints)
+	var help: Label = ColonyStyle.label("ЛКМ: камера  ПКМ: тайл", 8, ColonyStyle.MUTED)
+	help.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	hints.add_child(help)
+	var build: Button = ColonyStyle.button("Пауза / стройка [Пробел]")
+	build.pressed.connect(func(): construction_requested.emit())
+	hints.add_child(build)
+	controls[&"build"] = build
+	for key in [&"zoom_out", &"zoom_in"]:
+		var button: Button = _square_button("-" if key == &"zoom_out" else "+", 24, 12)
+		button.pressed.connect(func():
+			if key == &"zoom_out": zoom_out_requested.emit()
+			else: zoom_in_requested.emit())
+		hints.add_child(button)
+		controls[key] = button
+		if key == &"zoom_out":
+			_zoom = ColonyStyle.label("1x", 8, ColonyStyle.MUTED)
+			hints.add_child(_zoom)
+	_toast = ColonyStyle.label("", 8)
+	_toast.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_toast.add_theme_stylebox_override("normal", ColonyStyle.box())
+	add_child(_toast)
+	_toast.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
+	_toast.offset_left = 8
+	_toast.offset_right = -8
+	_toast.offset_top = -64
+	_toast.offset_bottom = -34
+	_toast.hide()
+	world.inventory.changed.connect(refresh)
+	world.population.changed.connect(refresh)
+	world.match_controller.time_changed.connect(_on_time_changed)
+	refresh()
+	set_zoom(2)
+
+func _square_button(text: String, side: int, font_size: int = 16) -> Button:
+	var button: Button = ColonyStyle.button(text)
+	button.custom_minimum_size = Vector2.ONE * side
+	button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	button.add_theme_font_size_override("font_size", font_size)
+	return button
+
+func _resource_icon(id: StringName) -> Texture2D:
+	return world.art.berries if id == &"food" else (world.art.timber if id == &"wood" else world.art.stone)
+
+func refresh() -> void:
+	for type in world.inventory.registered_types():
+		stock_labels[type.id].text = "%d(%d)" % [world.inventory.quantity(type), world.inventory.available(type)] if type.id == &"food" else str(world.inventory.quantity(type))
+		stock_chips[type.id].tooltip_text = "%s: %d, свободно %d" % [type.display_name, world.inventory.quantity(type), world.inventory.available(type)]
+		if progress.has(type.id):
+			progress[type.id].value = world.inventory.quantity(type)
+	var agents: Array[AntAgent] = world.population.agents()
+	_ants.text = str(agents.size())
+	var busy := 0
+	var unsafe_work := 0
+	for ant in agents:
+		if ant.status != AntAgent.Status.HOME: continue
+		if ant.waiting_reason == WorkPlan.WaitReason.SLOTS_FULL: busy += 1
+		elif ant.waiting_reason == WorkPlan.WaitReason.NO_SAFE_WORK: unsafe_work += 1
+	_waiting.text = "Ждут мест: %d" % busy if busy > 0 else ""
+	if unsafe_work > 0:
+		_waiting.text += ("\n" if busy > 0 else "") + "Нет безопасной работы: %d" % unsafe_work
+	_waiting.visible = busy > 0 or unsafe_work > 0
+	var food: ResourceType = world.inventory.type_by_id(&"food")
+	_warning.text = "Нужна пища" if world.inventory.available(food) < 3 else ""
+
+func _on_time_changed(seconds: int) -> void:
+	_timer.text = "%d:%02d" % [seconds / 60, seconds % 60]
+	_timer.add_theme_color_override("font_color", ColonyStyle.DANGER if seconds <= 30 else ColonyStyle.ACCENT)
+
+func set_zoom(value: int) -> void:
+	_zoom_level = value
+	_zoom.text = "%sx" % str(WorldCamera.ZOOMS[value])
+	controls[&"zoom_in"].disabled = value >= WorldCamera.ZOOMS.size() - 1
+	controls[&"zoom_out"].disabled = value <= 0
+
+func build_obstacles() -> Array[Rect2]:
+	return [_objectives.get_global_rect()]
+
+func lock_zoom(locked: bool) -> void:
+	_toast.visible = _toast_time > 0.0 and not locked
+	controls[&"zoom_in"].disabled = locked or _zoom_level >= WorldCamera.ZOOMS.size() - 1
+	controls[&"zoom_out"].disabled = locked or _zoom_level <= 0
+
+func toast(message: String, danger: bool = false) -> void:
+	_toast.text = message
+	_toast.add_theme_color_override("font_color", ColonyStyle.DANGER if danger else ColonyStyle.TEXT)
+	_toast_time = 3.0
+	_toast.show()
+
+func set_construction_mode(active: bool) -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS if active else Node.PROCESS_MODE_INHERIT
+	_bottom.visible = not active
+	_toast.hide()
+
+func _process(delta: float) -> void:
+	if _toast_time > 0.0:
+		_toast_time -= delta
+		if _toast_time <= 0.0:
+			_toast.hide()

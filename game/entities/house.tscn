@@ -1,7 +1,7 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://game/entities/house.gd" id="1_house"]
-[ext_resource type="Texture2D" uid="uid://se5im0b15jyd" path="res://game/assets/house.png" id="2_tex"]
+[ext_resource type="Texture2D" path="res://game/assets/sprites/nest.png" id="2_tex"]
 [ext_resource type="PackedScene" uid="uid://c6y7xv8tmtn8m" path="res://game/entities/human.tscn" id="3_human"]
 
 [node name="House" type="Node2D"]

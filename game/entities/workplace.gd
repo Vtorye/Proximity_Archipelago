@@ -1,50 +1,91 @@
-@abstract
 class_name Workplace
 extends Building
 
 signal produced(type: ResourceType, amount: int)
+signal load_changed
 
 @export_range(1, 1000) var work_slots: int = 1
 ## Resource produced at the end of each work cycle. Leave empty for no output.
 @export var output: ResourceType
 @export var output_amount: int = 1
-var workers: Array[Node2D] = []
+var _workers: Array[Node2D] = []
+var _working: Array[Node2D] = []
+var workers: Array[Node2D]:
+	get:
+		_prune_workers()
+		return _workers.duplicate()
 
 
-func _enter_tree() -> void:
-	add_to_group("workplaces")
+func has_worker(worker: Node2D) -> bool:
+	_prune_workers()
+	return _workers.has(worker)
 
+func worker_count() -> int:
+	_prune_workers()
+	return _workers.size()
+
+func working_count() -> int:
+	_prune_workers()
+	return _working.size()
+
+func incoming_count() -> int:
+	return worker_count() - working_count()
+
+func begin_work(worker: Node2D) -> bool:
+	if not has_worker(worker):
+		return false
+	if not _working.has(worker):
+		_working.append(worker)
+		load_changed.emit()
+	return true
 
 func has_free_slot() -> bool:
 	_prune_workers()
-	return workers.size() < work_slots
+	return _workers.size() < work_slots
 
 
 ## Drops freed units. Written as a loop: a typed lambda cannot receive a freed Object.
 func _prune_workers() -> void:
 	var alive: Array[Node2D] = []
-	for worker in workers:
+	for worker in _workers:
 		if is_instance_valid(worker):
 			alive.append(worker)
-	workers = alive
+	_workers = alive
+	var active: Array[Node2D] = []
+	for worker in _working:
+		if is_instance_valid(worker) and _workers.has(worker): active.append(worker)
+	_working = active
 
 
 func reserve_worker(human: Node2D) -> bool:
-	if workers.has(human) or not has_free_slot():
+	if not is_instance_valid(human) or _workers.has(human) or not has_free_slot():
 		return false
-	workers.append(human)
+	_workers.append(human)
+	load_changed.emit()
 	return true
 
 
 func release_worker(human: Node2D) -> void:
-	workers.erase(human)
+	if _workers.has(human):
+		_workers.erase(human)
+		_working.erase(human)
+		load_changed.emit()
 
 
-@abstract func work_complete(human: Node2D) -> void
+func work_complete(_human: Node2D) -> void:
+	pass
 
 
 ## Called by the worker when a work cycle finishes. Runs work_complete() and emits produced() if output is set.
 func complete_cycle(human: Node2D) -> void:
+	if not _workers.has(human):
+		return
 	work_complete(human)
 	if output != null:
 		produced.emit(output, output_amount)
+
+func validate_definition() -> Array[String]:
+	var errors: Array[String] = []
+	if work_slots < 1 or output_amount < 1:
+		errors.append("Workplace needs positive slots and output")
+	return errors

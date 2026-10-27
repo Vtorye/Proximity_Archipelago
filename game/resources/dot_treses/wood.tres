@@ -2,7 +2,10 @@
 
 [ext_resource type="Script" path="res://game/resources/resource_type.gd" id="1"]
 
+[ext_resource type="Texture2D" path="res://game/assets/sprites/timber.png" id="icon"]
+
 [resource]
 script = ExtResource("1")
 id = &"wood"
-display_name = "Wood"
+display_name = "Древесина"
+icon = ExtResource("icon")

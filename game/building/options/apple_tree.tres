@@ -15,5 +15,5 @@ script = ExtResource("option")
 scene = ExtResource("scene")
 blocks_movement = false
 id = &"apple_tree"
-display_name = "Apple tree"
-cost = SubResource("cost")
+display_name = "Ягодный куст"
+costs = Array[ExtResource("amount")]([SubResource("cost")])

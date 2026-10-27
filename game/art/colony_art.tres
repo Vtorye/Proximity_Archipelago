@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="ArtCatalog" load_steps=11 format=3]
+[ext_resource type="Script" path="res://game/art/art_catalog.gd" id="script"]
+[ext_resource type="Texture2D" path="res://game/assets/tiles/grass.png" id="grass"]
+[ext_resource type="Texture2D" path="res://game/assets/tiles/soil.png" id="soil"]
+[ext_resource type="Texture2D" path="res://game/assets/tiles/road.png" id="road"]
+[ext_resource type="Texture2D" path="res://game/assets/tiles/water.png" id="water"]
+[ext_resource type="Texture2D" path="res://game/assets/sprites/nest.png" id="nest"]
+[ext_resource type="Texture2D" path="res://game/assets/sprites/berries.png" id="berries"]
+[ext_resource type="Texture2D" path="res://game/assets/sprites/timber.png" id="timber"]
+[ext_resource type="Texture2D" path="res://game/assets/sprites/stone.png" id="stone"]
+[ext_resource type="Texture2D" path="res://game/assets/sprites/canteen.png" id="canteen"]
+[resource]
+script = ExtResource("script")
+grass = ExtResource("grass")
+soil = ExtResource("soil")
+road = ExtResource("road")
+water = ExtResource("water")
+nest = ExtResource("nest")
+canteen = ExtResource("canteen")
+berries = ExtResource("berries")
+timber = ExtResource("timber")
+stone = ExtResource("stone")

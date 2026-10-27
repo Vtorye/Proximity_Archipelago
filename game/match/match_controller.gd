@@ -1,13 +1,10 @@
 class_name MatchController
 extends Node
-## Owns the match rules: countdown, victory and defeat. Must be a direct child of World.
+## Owns the match rules: countdown, victory and defeat. Receives its inventory explicitly before start.
 ##
 ## Victory: every type in tracked_types has at least target_amount in the world inventory.
 ## Defeat: the timer reaches 0 without victory.
 ## Only one result is ever produced per match.
-
-## Group used by HUD and PauseController to find the active match.
-const GROUP := &"match_controller"
 
 enum Result { WIN, LOSS }
 enum Reason { TARGET_REACHED, TIME_UP }
@@ -16,8 +13,9 @@ enum Reason { TARGET_REACHED, TIME_UP }
 signal time_changed(seconds_left: int)
 signal match_won(reason: Reason)
 signal match_lost(reason: Reason)
+signal completed(summary: MatchSummary)
 
-@export var match_duration: float = 300.0
+@export var match_duration: float = 180.0
 @export var target_amount: int = 100
 @export var tracked_types: Array[ResourceType] = []
 
@@ -30,15 +28,13 @@ var _inventory: WorldInventory
 
 func _ready() -> void:
 	set_process(false)
-	add_to_group(GROUP)
 	# Parent World creates its inventory in its own _ready(), which runs after this one.
-	_start.call_deferred()
+	# It calls start() explicitly after the complete world has been configured.
 
 
 func _exit_tree() -> void:
 	_started = false
 	set_process(false)
-	remove_from_group(GROUP)
 	if is_instance_valid(_inventory) and _inventory.changed.is_connected(_on_inventory_changed):
 		_inventory.changed.disconnect(_on_inventory_changed)
 	_inventory = null
@@ -48,20 +44,23 @@ func is_finished() -> bool:
 	return _finished
 
 
-func _start() -> void:
-	if not is_inside_tree():
-		return
-	var world := get_parent() as World
-	if world == null or world.inventory == null:
-		push_error("MatchController must be a direct child of World with an inventory")
-		return
-	_inventory = world.inventory
+func start(stock: WorldInventory) -> bool:
+	if _started or _finished or stock == null or tracked_types.is_empty():
+		return false
+	if match_duration <= 0.0 or target_amount <= 0:
+		return false
+	for type in tracked_types:
+		if type == null or not stock.is_registered(type):
+			return false
+	_inventory = stock
 	_inventory.changed.connect(_on_inventory_changed)
 	time_remaining = match_duration
 	_started = true
 	_last_seconds = ceili(time_remaining)
 	time_changed.emit(_last_seconds)
 	set_process(true)
+	_evaluate.call_deferred()
+	return true
 
 
 func _process(delta: float) -> void:
@@ -83,11 +82,18 @@ func _process(delta: float) -> void:
 func _on_inventory_changed() -> void:
 	if _finished or not _started:
 		return
-	if _targets_met():
-		# Deferred: the change may come from inside BuildController.try_build() or demolish_at(),
-		# where _committing is still true. The result is applied at the end of the frame.
-		_finish.call_deferred(Result.WIN, Reason.TARGET_REACHED)
+	# Deferred: the change may come from inside BuildController.try_build() or demolish_at(),
+	# where a command may still be running. Recheck after the complete operation.
+	_evaluate.call_deferred()
 
+func _evaluate() -> void:
+	# Recheck committed stock instead of latching an intermediate inventory value.
+	if _started and not _finished and _targets_met():
+		_finish(Result.WIN, Reason.TARGET_REACHED)
+
+func stop() -> void:
+	_started = false
+	set_process(false)
 
 func _targets_met() -> bool:
 	if _inventory == null or tracked_types.is_empty():
@@ -104,19 +110,10 @@ func _finish(result: Result, reason: Reason) -> void:
 	_finished = true
 	_started = false
 	set_process(false)
-	var resources := {}
-	if _inventory != null:
-		for type in _inventory.registered_types():
-			resources[type.display_name] = _inventory.quantity(type)
-	var payload := {
-		"result": "WIN" if result == Result.WIN else "LOSS",
-		"reason": Reason.keys()[reason],
-		"resources": resources,
-		"time_left": time_remaining,
-	}
+	var cause: StringName = &"target_reached" if reason == Reason.TARGET_REACHED else &"time_up"
+	var summary: MatchSummary = MatchSummary.capture(result == Result.WIN, cause, time_remaining, _inventory)
 	if result == Result.WIN:
 		match_won.emit(reason)
 	else:
 		match_lost.emit(reason)
-	get_tree().paused = true
-	Router.push_overlay(&"match_result", payload)
+	completed.emit(summary)
