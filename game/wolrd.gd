@@ -121,6 +121,7 @@ func _subscribe_workplace(node: Node) -> void:
 		node.produced.connect(_on_workplace_produced)
 
 func _configure_building(building: Building) -> void:
+	if building is Workplace: building.inventory = inventory
 	_subscribe_workplace(building)
 	if building is Canteen:
 		building.configure(inventory, inventory.type_by_id(&"food"))

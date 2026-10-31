@@ -95,7 +95,9 @@ func _physics_process(delta: float) -> void:
 			if not is_instance_valid(current_workplace) or not current_workplace.is_inside_tree():
 				_seek_food()
 			elif _timer <= 0.0:
-				current_workplace.complete_cycle(self)
+				if not current_workplace.complete_cycle(self):
+					_timer = work_time
+					return
 				work_completed.emit(self, current_workplace)
 				_release_work()
 				_carrying = true
