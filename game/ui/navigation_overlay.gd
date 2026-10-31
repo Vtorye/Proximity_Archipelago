@@ -11,6 +11,8 @@ var _revision := -1
 var _refresh := 0.0
 
 func cycle() -> void:
+	var ants: Array[AntAgent] = world.population.agents()
+	if not ants.is_empty(): reference_speed = ants[0].speed
 	mode = (mode + 1) % 3
 	if mode > 0 and _field == null:
 		for building in world.registry.all():
@@ -31,6 +33,8 @@ func _update_field() -> void:
 
 func _process(delta: float) -> void:
 	if mode == 0: return
+	var ants: Array[AntAgent] = world.population.agents()
+	if not ants.is_empty(): reference_speed = ants[0].speed
 	_refresh += delta
 	if _revision != world.route_service.revision: _update_field()
 	if _refresh >= 0.25:
@@ -73,10 +77,12 @@ func _draw() -> void:
 		# The legend uses screen pixels, independent of camera zoom.
 		draw_set_transform_matrix(get_global_transform_with_canvas().affine_inverse())
 		var row := 0
+		var legend_x := 150.0
+		for obstacle in obstacles: legend_x = maxf(legend_x, obstacle.end.x + 8)
 		for workplace in world.registry.workplaces():
 			if row >= 7: break
 			var text: String = workplace.display_title() + ": " + explanation(workplace)
-			var position := Vector2(150, 62 + row * 12)
+			var position := Vector2(legend_x, 62 + row * 12)
 			draw_rect(Rect2(position - Vector2(2, 9), Vector2(minf(480, font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, 8).x + 4), 12)), Color(0, 0, 0, 0.9))
 			draw_string(font, position, text, HORIZONTAL_ALIGNMENT_LEFT, 480, 8, ColonyStyle.ACCENT)
 			row += 1

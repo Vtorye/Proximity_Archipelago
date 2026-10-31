@@ -13,6 +13,9 @@ func _ready() -> void:
 		for entry in summary.resources:
 			content.add_child(ColonyStyle.label("%s: %d" % [entry.type.display_name, entry.amount]))
 		content.add_child(ColonyStyle.label("Осталось %02d:%02d" % [int(summary.time_left) / 60, int(summary.time_left) % 60], 8, ColonyStyle.MUTED))
+	if summary != null and summary.development_level > 0:
+		content.add_child(ColonyStyle.label("Уровень: %d" % summary.development_level))
+		content.add_child(ColonyStyle.label("Выполнено: %d · отказов: %d" % [summary.tasks_completed, summary.tasks_skipped]))
 	var again: Button = ColonyStyle.button("Новая игра", true)
 	again.pressed.connect(func(): Router.goto(&"match"))
 	content.add_child(again)

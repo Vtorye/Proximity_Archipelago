@@ -19,6 +19,7 @@ var _warning: Label
 var _waiting: Label
 var _zoom_level := 2
 var _objectives: PanelContainer
+var task_panel: TaskPanel
 var _bottom: PanelContainer
 
 func _ready() -> void:
@@ -155,6 +156,12 @@ func _ready() -> void:
 	world.inventory.changed.connect(refresh)
 	world.population.changed.connect(refresh)
 	world.match_controller.time_changed.connect(_on_time_changed)
+	if world.tasks != null:
+		_objectives.hide()
+		task_panel = TaskPanel.new()
+		task_panel.director = world.tasks
+		task_panel.position = Vector2(8, 64)
+		add_child(task_panel)
 	refresh()
 	set_zoom(2)
 
@@ -181,14 +188,18 @@ func refresh() -> void:
 	_ants.text = str(agents.size())
 	var busy := 0
 	var unsafe_work := 0
+	var missing_inputs := 0
 	for ant in agents:
 		if ant.status != AntAgent.Status.HOME: continue
 		if ant.waiting_reason == WorkPlan.WaitReason.SLOTS_FULL: busy += 1
 		elif ant.waiting_reason == WorkPlan.WaitReason.NO_SAFE_WORK: unsafe_work += 1
+		elif ant.waiting_reason == WorkPlan.WaitReason.MISSING_INPUTS: missing_inputs += 1
 	_waiting.text = "Ждут мест: %d" % busy if busy > 0 else ""
 	if unsafe_work > 0:
 		_waiting.text += ("\n" if busy > 0 else "") + "Нет безопасной работы: %d" % unsafe_work
-	_waiting.visible = busy > 0 or unsafe_work > 0
+	if missing_inputs > 0:
+		_waiting.text += ("\n" if not _waiting.text.is_empty() else "") + "Ждут сырья: %d" % missing_inputs
+	_waiting.visible = busy > 0 or unsafe_work > 0 or missing_inputs > 0
 	var food: ResourceType = world.inventory.type_by_id(&"food")
 	_warning.text = "Нужна пища" if world.inventory.available(food) < 3 else ""
 
@@ -203,7 +214,9 @@ func set_zoom(value: int) -> void:
 	controls[&"zoom_out"].disabled = value <= 0
 
 func build_obstacles() -> Array[Rect2]:
-	return [_objectives.get_global_rect()]
+	var result: Array[Rect2] = []
+	result.append(task_panel.get_global_rect() if task_panel != null else _objectives.get_global_rect())
+	return result
 
 func lock_zoom(locked: bool) -> void:
 	_toast.visible = _toast_time > 0.0 and not locked

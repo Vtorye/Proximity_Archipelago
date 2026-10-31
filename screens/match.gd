@@ -76,6 +76,8 @@ func _input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		return
 	if top == null and navigation_overlay.mode == 2 and event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT and event.position.y > 60 and event.position.y < get_viewport_rect().size.y - 40:
+		for obstacle in hud.build_obstacles():
+			if obstacle.has_point(event.position): return
 		var map: TileMapLayer = world.get_node("Map")
 		var cell: Vector2i = map.local_to_map(map.get_global_transform_with_canvas().affine_inverse() * event.position)
 		navigation_overlay.select_origin(cell)
@@ -183,5 +185,5 @@ func _open_construction() -> void:
 
 func _toggle_navigation() -> void:
 	navigation_overlay.cycle()
-	hud.controls[&"routes"].text = ["Маршруты [N]", "Клетки: мс [N]", "От точки: с [N]"][navigation_overlay.mode]
-	hud.toast(["Оценки скрыты", "Время входа в клетку, мс. Скорость муравья: 24. Приблизьте карту для чисел.", "ЛКМ: начало маршрута. Секунды + 0.5 × занятые места. Голод проверяется отдельно."][navigation_overlay.mode])
+	hud.controls[&"routes"].text = ["Пути [N]", "Клетки: мс [N]", "От точки: с [N]"][navigation_overlay.mode]
+	hud.toast(["Оценки скрыты", "Время входа в клетку, мс. Скорость: %.1f. Приблизьте карту для чисел." % navigation_overlay.reference_speed, "ЛКМ: начало маршрута. Секунды + 0.5 × занятые места. Голод проверяется отдельно."][navigation_overlay.mode])
