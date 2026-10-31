@@ -66,6 +66,8 @@ static func validate(path: String) -> Array[String]:
 			if option.id == &"" or ids.has(option.id): errors.append(prefix + ": missing or duplicate build ID")
 			ids[option.id] = true
 			if not prices.valid(option): errors.append(prefix + ": invalid price or event rule")
+			for rule in option.price_rules:
+				if rule != null and rule.resource != null and not types.has(rule.resource.id): errors.append(prefix + ": unknown rule resource " + str(rule.resource.id))
 			for cost in option.costs:
 				if cost != null and cost.type != null and not types.has(cost.type.id): errors.append(prefix + ": unknown resource " + str(cost.type.id))
 			if option is SceneBuildOption:
