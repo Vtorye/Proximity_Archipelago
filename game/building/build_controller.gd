@@ -200,7 +200,7 @@ func try_build_plan(commands: Array[BuildCommand]) -> bool:
 	_committing = false
 	inventory.end_update()
 	for command in placements:
-		if prices != null: prices.record(GameEvents.Kind.BUILDING_BUILT, command.option.id)
+		if prices != null: prices.record(GameEvents.Kind.BUILDING_BUILT if command.option is SceneBuildOption else GameEvents.Kind.TERRAIN_CHANGED, command.option.id)
 		built.emit(command.option, command.cell)
 	changed.emit()
 	return true

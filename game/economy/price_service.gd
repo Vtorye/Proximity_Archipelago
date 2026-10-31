@@ -53,7 +53,8 @@ func quote_plan(commands: Array[BuildCommand]) -> Array[ResourceAmount]:
 		if command.option == null: return [null]
 		result.append_array(quote(command.option, pending))
 		for subject in [command.option.id, &""]:
-			var id: String = key(GameEvents.Kind.BUILDING_BUILT, subject)
+			var event: GameEvents.Kind = GameEvents.Kind.BUILDING_BUILT if command.option is SceneBuildOption else GameEvents.Kind.TERRAIN_CHANGED
+			var id: String = key(event, subject)
 			pending[id] = pending.get(id, 0) + 1
 	return result
 
