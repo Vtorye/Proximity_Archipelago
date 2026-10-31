@@ -88,10 +88,7 @@ func clear() -> void:
 	changed.emit()
 
 func costs() -> Array[ResourceAmount]:
-	var result: Array[ResourceAmount] = []
-	for command in _commands:
-		if not command.is_removal(): result.append_array(command.option.costs)
-	return result
+	return controller.prices.quote_plan(_commands) if controller.prices != null else controller._base_plan_price(_commands)
 
 func budget_check() -> PlacementCheck:
 	if not controller.inventory.can_afford_all(costs()):
@@ -102,8 +99,9 @@ func budget_check() -> PlacementCheck:
 	for command in _commands:
 		if command.is_removal(): continue
 		var option: BuildOption = command.option
-		food_cost += option.cost_amount(food)
+		pass # Food is calculated from the same sequential quote used for payment.
 		if option is SceneBuildOption: meals += option.spawn_count
+	food_cost = BuildController.price_amount(costs(), food)
 	if controller.inventory.available(food) - food_cost < meals:
 		return PlacementCheck.result(PlacementCheck.Code.SPAWN_FOOD)
 	return PlacementCheck.new()

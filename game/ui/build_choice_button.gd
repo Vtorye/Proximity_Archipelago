@@ -2,6 +2,7 @@ class_name BuildChoiceButton
 extends Button
 ## A shared pixel button with a separate, wrapping multi-resource price line.
 var option: BuildOption
+var controller: BuildController
 var art: ArtCatalog
 var cost_label: Label
 var card_width := 176
@@ -42,12 +43,16 @@ func _ready() -> void:
 	var caption: Label = ColonyStyle.label(option.display_name, 6 if compact else 8)
 	caption.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	lines.add_child(caption)
-	cost_label = ColonyStyle.label(BuildCostText.format(option.costs), 4 if compact else 6, ColonyStyle.MUTED)
+	cost_label = ColonyStyle.label(BuildCostText.format(controller.price(option) if controller != null else option.costs), 4 if compact else 6, ColonyStyle.MUTED)
 	cost_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	lines.add_child(cost_label)
 	minimum_size_changed.connect(_fit_content)
 	margin.minimum_size_changed.connect(_fit_content)
+	if controller != null and controller.prices != null: controller.prices.changed.connect(_refresh_price)
 	_fit_content()
+
+func _refresh_price() -> void:
+	cost_label.text = BuildCostText.format(controller.price(option))
 
 func _process(_delta: float) -> void:
 	_body.modulate.a = 0.35 if disabled else 1.0

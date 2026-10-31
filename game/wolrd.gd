@@ -4,12 +4,14 @@ class_name World
 
 const CELL_SIZE := 16
 @export var starting_resources: Array[ResourceAmount] = []
+@export var build_catalog: BuildCatalog
 @export var build_options: Array[BuildOption] = []
 @export var art: ArtCatalog = preload("res://game/art/colony_art.tres")
 @export var auto_start := true
 @export var map_size := Vector2i(50, 50)
 @export var generate_archipelago := true
 @export var diagnostics_enabled := false
+var prices: PriceService
 var inventory: WorldInventory
 var build_controller: BuildController
 var route_service: RouteService
@@ -23,6 +25,11 @@ var ready_for_play := false
 var _navigation_update_queued := false
 
 func _ready() -> void:
+	if build_catalog != null: build_options = build_catalog.options.duplicate()
+	prices = PriceService.new()
+	prices.definitions = build_options
+	prices.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(prices)
 	var map: TileMapLayer = $Map
 	if not art.validate().is_empty():
 		push_error("Invalid world art catalog")
@@ -62,6 +69,7 @@ func _ready() -> void:
 	population.configure(units, route_service, planner, registry)
 	build_controller = BuildController.new()
 	build_controller.name = "BuildController"
+	build_controller.prices = prices
 	build_controller.route_service = route_service
 	add_child(build_controller)
 	build_controller.configure(map, buildings, inventory, build_options)
@@ -130,6 +138,7 @@ func _configure_building(building: Building) -> void:
 			sprite.scale = Vector2.ONE * CELL_SIZE / sprite.texture.get_width()
 
 func _on_workplace_produced(type: ResourceType, amount: int) -> void:
+	prices.record(GameEvents.Kind.RESOURCE_PRODUCED, type.id, amount)
 	if not inventory.add(type, amount):
 		push_warning("World could not store %d of %s" % [amount, type.id])
 

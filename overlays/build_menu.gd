@@ -58,6 +58,7 @@ func _ready() -> void:
 		if option == null:
 			continue
 		var button := BuildChoiceButton.new()
+		button.controller = context.controller
 		button.option = option
 		button.art = context.art
 		button.pressed.connect(_choose.bind(option))
@@ -85,6 +86,7 @@ func _ready() -> void:
 	_cancel.hide()
 	content.add_child(_cancel)
 	controls[&"cancel_demolish"] = _cancel
+	if context.controller.prices != null: context.controller.prices.changed.connect(_refresh)
 	context.controller.inventory.changed.connect(_refresh)
 	context.controller.changed.connect(_refresh)
 	context.controller.registry.changed.connect(_refresh)
@@ -174,7 +176,7 @@ func _show_help(option: BuildOption) -> void:
 	var result: PlacementCheck = context.controller.check(option, context.cell)
 	var help: String = PlacementMessages.text(result.code)
 	if result.allowed():
-		help = "%s: %s" % [option.display_name, BuildCostText.format(option.costs)]
+		help = "%s: %s" % [option.display_name, BuildCostText.format(context.controller.price(option))]
 		if option is SceneBuildOption and option.spawn_count > 0:
 			help += ". +%d муравьёв; нужно %d порций." % [option.spawn_count, option.spawn_count]
 	_set_message(help)

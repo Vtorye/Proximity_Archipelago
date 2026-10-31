@@ -61,11 +61,12 @@ func _ready() -> void:
 	for option in context.controller.options:
 		if option == null: continue
 		var button := BuildChoiceButton.new()
+		button.controller = context.controller
 		button.option = option
 		button.art = context.art
 		button.card_width = 96
 		button.compact = true
-		button.tooltip_text = "%s: %s" % [option.display_name, BuildCostText.format(option.costs)]
+		button.tooltip_text = "%s: %s" % [option.display_name, BuildCostText.format(context.controller.price(option))]
 		button.toggle_mode = true
 		button.button_group = group
 		button.pressed.connect(_select.bind(option))
@@ -124,6 +125,7 @@ func _ready() -> void:
 	content.add_child(_confirmation)
 	_confirmation.hide()
 	draft.changed.connect(_cancel_confirmation)
+	if context.controller.prices != null: context.controller.prices.changed.connect(_queue_refresh)
 	draft.changed.connect(_queue_refresh)
 	_refresh()
 	default_focus = controls[_selected.id] if _selected != null else controls[&"cancel"]

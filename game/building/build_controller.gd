@@ -4,6 +4,7 @@ extends Node
 
 signal built(option: BuildOption, cell: Vector2i)
 signal changed
+var prices: PriceService
 var registry: BuildingRegistry
 var population: ColonyPopulation
 var map: TileMapLayer
@@ -35,11 +36,11 @@ func check(option: BuildOption, cell: Vector2i) -> PlacementCheck:
 	var placement: PlacementCheck = placement_check(option, cell)
 	if not placement.allowed():
 		return placement
-	if not inventory.can_afford_all(option.costs):
+	if not inventory.can_afford_all(price(option)):
 		return PlacementCheck.result(PlacementCheck.Code.RESOURCES)
 	if option is SceneBuildOption and option.spawn_count > 0:
 		var food: ResourceType = inventory.type_by_id(&"food")
-		if inventory.available(food) - option.cost_amount(food) < option.spawn_count:
+		if inventory.available(food) - price_amount(price(option), food) < option.spawn_count:
 			return PlacementCheck.result(PlacementCheck.Code.SPAWN_FOOD)
 		var escape_units: float = route_service.food_field().cost(cell)
 		var energy: float = escape_units * route_service.cell_size() / option.spawn_speed * 2.25 + AntNeeds.MEAL_SECONDS + AntNeeds.SAFETY_MARGIN
@@ -133,7 +134,7 @@ func try_build_plan(commands: Array[BuildCommand]) -> bool:
 			layer[target] = true
 		if not last_result.allowed():
 			break
-		costs.append_array(option.costs)
+		pass # The complete sequential quote is computed once below.
 		if option is SceneBuildOption:
 			var candidate: Node = option.scene.instantiate()
 			if not candidate is Building:
@@ -147,6 +148,7 @@ func try_build_plan(commands: Array[BuildCommand]) -> bool:
 				break
 			if building is House:
 				spawn_count += building.capacity
+	if last_result.allowed(): costs = prices.quote_plan(placements) if prices != null else _base_plan_price(placements)
 	if last_result.allowed() and not inventory.can_afford_all(costs):
 		last_result = PlacementCheck.result(PlacementCheck.Code.RESOURCES)
 	if last_result.allowed():
@@ -177,6 +179,7 @@ func try_build_plan(commands: Array[BuildCommand]) -> bool:
 			map.set_cell(cell, option.source_id, option.atlas_coords, option.alternative_tile)
 	for building in removed:
 		_refund_for_demolish(building.option)
+		if prices != null: prices.record(GameEvents.Kind.BUILDING_DEMOLISHED, building.option.id if building.option != null else &"initial")
 		building.demolish()
 		building.free()
 	var blocked: Array[Vector2i] = registry.blocked_cells()
@@ -192,6 +195,7 @@ func try_build_plan(commands: Array[BuildCommand]) -> bool:
 	_committing = false
 	inventory.end_update()
 	for command in placements:
+		if prices != null: prices.record(GameEvents.Kind.BUILDING_BUILT, command.option.id)
 		built.emit(command.option, command.cell)
 	changed.emit()
 	return true
@@ -307,3 +311,18 @@ func _can_remove_food(building: Building) -> bool:
 		if canteen != building:
 			remaining.append_array(canteen.entry_cells())
 	return _agents_can_escape(GridSearch.build(route_service.snapshot(), remaining, true))
+
+func price(option: BuildOption) -> Array[ResourceAmount]:
+	return prices.quote(option) if prices != null else option.costs
+
+static func price_amount(costs: Array[ResourceAmount], type: ResourceType) -> int:
+	var result := 0
+	for entry in costs:
+		if entry != null and entry.type != null and type != null and entry.type.id == type.id: result += entry.amount
+	return result
+
+func _base_plan_price(commands: Array[BuildCommand]) -> Array[ResourceAmount]:
+	var result: Array[ResourceAmount] = []
+	for command in commands:
+		if not command.is_removal(): result.append_array(command.option.costs)
+	return result
