@@ -43,6 +43,7 @@ func _run() -> void:
 	await _test_rules()
 	await _test_art_resolution()
 	await preload("res://tests/designer_regressions.gd").new().run(self)
+	await preload("res://tests/task_regressions.gd").new().run(self)
 	await _test_simulation()
 	print("TEST REPORT ", JSON.stringify({"assertions": assertions, "failures": failures, "metrics": metrics}))
 	print("TESTS PASS" if failures.is_empty() else "TESTS FAIL")
@@ -194,6 +195,7 @@ func _test_resident_pruning() -> void:
 
 func make_world() -> World:
 	var world: World = WORLD.instantiate() as World
+	world.task_deck = null
 	world.auto_start = false
 	add_child(world)
 	return world

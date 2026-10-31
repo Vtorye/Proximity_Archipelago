@@ -144,6 +144,8 @@ func _run() -> void:
 	await click(Router._current.controls[&"play"])
 	await frames(60)
 	screen = Router._current
+	# Legacy UI regression retains the fixed-goal fixture; task behavior has its own runner.
+	if screen.world != null: screen.world.match_controller.task_mode = false
 	expect(Router.current_screen_key() == &"match" and screen.world.population.count() == 5, "play enters a live colony")
 	expect((screen.world.registry.at(Vector2i(24, 25)) as House).residents.size() == 5, "starter nest owns five residents")
 	expect(screen.world.population.agents().any(func(ant: AntAgent): return ant.status == AntAgent.Status.WALKING), "starter ants visibly leave home")
@@ -269,6 +271,8 @@ func _run() -> void:
 	await click(Router.top_overlay().controls[&"restart"])
 	await frames(50)
 	screen = Router._current
+	# Legacy UI regression retains the fixed-goal fixture; task behavior has its own runner.
+	if screen.world != null: screen.world.match_controller.task_mode = false
 	expect(not is_instance_valid(old_world) and not get_tree().paused and not Router.has_overlay(), "pause restart retires the old world and clears pause ownership")
 	expect(screen.world.population.count() == 5 and screen.world.match_controller.time_remaining > 178.0, "pause restart resets the population and match timer")
 	expect(AppSettings.show_grid and AppSettings.reduced_motion, "pause restart preserves player settings")
@@ -316,6 +320,8 @@ func _run() -> void:
 	await click(Router.top_overlay().controls[&"again"])
 	await frames(50)
 	screen = Router._current
+	# Legacy UI regression retains the fixed-goal fixture; task behavior has its own runner.
+	if screen.world != null: screen.world.match_controller.task_mode = false
 	expect(Router.current_screen_key() == &"match" and not get_tree().paused and screen.world.population.count() == 5, "restart creates a clean session")
 	screen.world.match_controller._process(500.0)
 	await frames(8)
@@ -328,6 +334,8 @@ func _run() -> void:
 	await click(Router._current.controls[&"play"])
 	await frames(50)
 	screen = Router._current
+	# Legacy UI regression retains the fixed-goal fixture; task behavior has its own runner.
+	if screen.world != null: screen.world.match_controller.task_mode = false
 	Router.goto(&"main_menu")
 	screen.world.match_controller._finish(MatchController.Result.LOSS, MatchController.Reason.TIME_UP)
 	await frames(45)
@@ -368,6 +376,8 @@ func _layout_only() -> void:
 	await click(Router._current.controls[&"play"])
 	await frames(50)
 	screen = Router._current
+	# Legacy UI regression retains the fixed-goal fixture; task behavior has its own runner.
+	if screen.world != null: screen.world.match_controller.task_mode = false
 	var menu: BuildMenu = await select_cell(Vector2i(26, 25))
 	validate_popup(menu)
 	await capture(tag + "build")

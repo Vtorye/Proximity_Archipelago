@@ -1,7 +1,7 @@
 class_name WorkPlan
 extends RefCounted
 ## A complete feasible sortie, including its return and reserved next meal.
-enum WaitReason { NONE, SLOTS_FULL, NO_SAFE_WORK }
+enum WaitReason { NONE, SLOTS_FULL, NO_SAFE_WORK, MISSING_INPUTS }
 var waiting_reason: WaitReason = WaitReason.NONE
 var workplace: Workplace
 var outward: Route

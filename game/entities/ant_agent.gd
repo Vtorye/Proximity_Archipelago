@@ -96,7 +96,8 @@ func _physics_process(delta: float) -> void:
 				_seek_food()
 			elif _timer <= 0.0:
 				if not current_workplace.complete_cycle(self):
-					_timer = work_time
+					# Contended ingredients must not trap the worker in unbudgeted repeat cycles.
+					_seek_food()
 					return
 				work_completed.emit(self, current_workplace)
 				_release_work()

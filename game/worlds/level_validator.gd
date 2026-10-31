@@ -45,6 +45,14 @@ static func validate(path: String) -> Array[String]:
 			if entry == null or entry.type == null or entry.amount < 0: errors.append(path + ": invalid starting resource")
 			elif types.has(entry.type.id): errors.append(path + ": duplicate resource " + str(entry.type.id))
 			else: types[entry.type.id] = true
+		var residents := 0
+		for building in buildings:
+			if building is House:
+				residents += building.option.spawn_count if building.option is SceneBuildOption and building.option.spawn_count > 0 else building.capacity
+		var portions := 0
+		for entry in world.starting_resources:
+			if entry != null and entry.type != null and entry.type.id == &"food": portions += entry.amount
+		if residents > portions: errors.append(path + ": starting residents need a registered food resource and at least one reserved portion each")
 		for building in buildings:
 			if building is Workplace:
 				var ingredients: Array[ResourceAmount] = []
@@ -66,6 +74,8 @@ static func validate(path: String) -> Array[String]:
 			if option.id == &"" or ids.has(option.id): errors.append(prefix + ": missing or duplicate build ID")
 			ids[option.id] = true
 			if not prices.valid(option): errors.append(prefix + ": invalid price or event rule")
+			for rule in option.price_rules:
+				if rule != null and rule.resource != null and not types.has(rule.resource.id): errors.append(prefix + ": unknown rule resource " + str(rule.resource.id))
 			for cost in option.costs:
 				if cost != null and cost.type != null and not types.has(cost.type.id): errors.append(prefix + ": unknown resource " + str(cost.type.id))
 			if option is SceneBuildOption:
@@ -77,6 +87,9 @@ static func validate(path: String) -> Array[String]:
 						for error in candidate.validate_definition(): errors.append(prefix + ": " + error)
 					else: errors.append(prefix + ": scene root is not a Building")
 					candidate.free()
+		if world.task_deck != null and errors.is_empty():
+			stock.configure(world.starting_resources)
+			errors.append_array(world.task_deck.validate(stock))
 		prices.free()
 		stock.free()
 	world.free()

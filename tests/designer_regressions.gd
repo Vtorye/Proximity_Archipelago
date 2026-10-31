@@ -3,7 +3,7 @@ func run(test: Node) -> void:
 	var world: World = test.make_world()
 	var wood: ResourceType = world.inventory.type_by_id(&"wood")
 	var stone: ResourceType = world.inventory.type_by_id(&"stone")
-	var option := BuildOption.new()
+	var option := SceneBuildOption.new()
 	option.id = &"test_house"
 	option.costs = [test.entry(wood, 10), test.entry(stone, 20)]
 	var rule := PriceRule.new()
@@ -48,4 +48,23 @@ func run(test: Node) -> void:
 	test.expect(not issues.is_empty() and str(issues).contains("Workplace") and str(issues).contains("food"), "validator reports bad slots and unreachable food with level paths")
 	invalid.free()
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
+	await test.get_tree().process_frame
+	var retry_world: World = test.make_world()
+	var ant: AntAgent = retry_world.population.agents()[0]
+	ant._decide()
+	var job: Workplace = ant.current_workplace
+	var blocked := WorkRecipe.new()
+	blocked.inputs = [test.entry(retry_world.inventory.type_by_id(&"wood"), 10000)]
+	blocked.outputs = [test.entry(retry_world.inventory.type_by_id(&"wood"), 1)]
+	job.recipe = blocked
+	ant._set_status(AntAgent.Status.WORKING)
+	ant._timer = 0.0
+	ant._physics_process(1.0 / 60.0)
+	test.expect(ant.current_workplace == null and not ant._carrying and not job.has_worker(ant), "ingredient contention releases the slot and never traps an ant in unsafe repeat cycles")
+	for place in retry_world.registry.workplaces(): place.recipe = blocked
+	ant.global_position = ant.home.global_position
+	ant._set_status(AntAgent.Status.HOME)
+	ant._decide()
+	test.expect(ant.waiting_reason == WorkPlan.WaitReason.MISSING_INPUTS, "lack of recipe ingredients has a specific home waiting reason")
+	retry_world.free()
 	await test.get_tree().process_frame
