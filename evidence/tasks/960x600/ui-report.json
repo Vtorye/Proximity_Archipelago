@@ -1,0 +1,20 @@
+{
+  "assertions": 80,
+  "captures": [
+    "01-three-requests",
+    "02-time-and-rare-reward",
+    "03-cancelled-request",
+    "04-level-two-and-road-unlock",
+    "05-reward-buildings-in-plan",
+    "06-level-three-discount",
+    "07-speed-upgrade-and-repeat",
+    "08-task-panel-scale-100",
+    "09-navigation-and-task-actions",
+    "10-task-expiry-result"
+  ],
+  "display_size": "(0, 0)",
+  "failures": [],
+  "render_size": "(640, 360)",
+  "source_revision": "b62036ec8cc68d848ce6d7f2adf382f97ee8e96d",
+  "window_size": "(960, 600)"
+}

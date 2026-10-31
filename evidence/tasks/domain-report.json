@@ -1,0 +1,57 @@
+{
+  "assertions": 597,
+  "failures": [],
+  "metrics": {
+    "assignment_load": {
+      "new_searches": 0,
+      "requests": 1000,
+      "wall_ms": 549.664,
+      "workplaces": 103
+    },
+    "navigation_100x100": {
+      "10000_cached_reads_ms": 8.901,
+      "cache_limit": 8,
+      "cold_field_ms": 36.072,
+      "field_bytes": 50000
+    },
+    "navigation_50x50": {
+      "cells": 2500,
+      "field_bytes": 12500
+    },
+    "simulation": {
+      "idle": {
+        "ants": 5,
+        "cache_hits": 193,
+        "completed_cycles": 58,
+        "deaths": 0,
+        "searches": 3,
+        "seconds": 180.0,
+        "stock": {
+          "food": 147,
+          "royal": 0,
+          "stone": 40,
+          "wood": 88
+        },
+        "wall_ms": 260.235,
+        "won": false
+      },
+      "roads": {
+        "ants": 10,
+        "cache_hits": 710,
+        "completed_cycles": 222,
+        "deaths": 0,
+        "searches": 8,
+        "seconds": 125.016666666704,
+        "stock": {
+          "food": 238,
+          "royal": 0,
+          "stone": 238,
+          "wood": 100
+        },
+        "wall_ms": 362.83,
+        "won": true
+      }
+    }
+  },
+  "source_revision": "bf596978d0d79043041fca11a61418c7ed924d70"
+}
