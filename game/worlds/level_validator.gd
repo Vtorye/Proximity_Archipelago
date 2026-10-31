@@ -55,6 +55,14 @@ static func validate(path: String) -> Array[String]:
 			if entry == null or entry.type == null or entry.type.id == &"" or entry.amount < 0: errors.append(path + ": invalid starting resource")
 			elif types.has(entry.type.id): errors.append(path + ": duplicate resource " + str(entry.type.id))
 			else: types[entry.type.id] = true
+		var residents := 0
+		for building in buildings:
+			if building is House:
+				residents += building.option.spawn_count if building.option is SceneBuildOption and building.option.spawn_count > 0 else building.capacity
+		var portions := 0
+		for entry in world.starting_resources:
+			if entry != null and entry.type != null and entry.type.id == &"food": portions += entry.amount
+		if residents > portions: errors.append(path + ": starting residents need a registered food resource and at least one reserved portion each")
 		for building in buildings:
 			if building is Workplace:
 				var ingredients: Array[ResourceAmount] = []
