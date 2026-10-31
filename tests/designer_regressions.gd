@@ -35,4 +35,17 @@ func run(test: Node) -> void:
 	workplace.free()
 	service.free()
 	world.free()
+	test.expect(LevelValidator.validate("res://game/worlds/wolrd_1.tscn").is_empty(), "authored production level passes offline validation")
+	var invalid: World = load("res://game/worlds/wolrd_1.tscn").instantiate()
+	invalid.get_node("Workplace").work_slots = 0
+	var map: TileMapLayer = invalid.get_node("Map")
+	map.set_cell(Vector2i(28, 26), 3, Vector2i(3, 0))
+	var packed := PackedScene.new()
+	packed.pack(invalid)
+	var path := "user://designer-invalid-level.tscn"
+	ResourceSaver.save(packed, path)
+	var issues: Array[String] = LevelValidator.validate(path)
+	test.expect(not issues.is_empty() and str(issues).contains("Workplace") and str(issues).contains("food"), "validator reports bad slots and unreachable food with level paths")
+	invalid.free()
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 	await test.get_tree().process_frame
