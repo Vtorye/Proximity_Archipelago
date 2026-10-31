@@ -367,7 +367,7 @@ func _test_art_resolution() -> void:
 	world.auto_start = false
 	world.art = replacement
 	add_child(world)
-	expect(world.ready_for_play and world.art.tile_resolution() == 32, "32px replacement loads without gameplay edits")
+	expect(world.ready_for_play and world.art.tile_resolution() == 32 and (world.get_node("Map") as TileMapLayer).tile_set.tile_size == Vector2i(16, 16), "sprite catalog replacement preserves the authored map tile geometry")
 	expect(is_equal_approx(world.route_service.cell_size(), 16.0), "texture resolution does not change physical cell size")
 	var cell := Vector2i(24, 25)
 	expect(world.route_service.world_to_cell(world.route_service.cell_to_world(cell)) == cell, "32px replacement preserves coordinate roundtrip")

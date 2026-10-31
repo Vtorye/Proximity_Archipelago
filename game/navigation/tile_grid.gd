@@ -18,7 +18,7 @@ func setup(map: TileMapLayer, blocked_cells: Array[Vector2i]) -> void:
 		var data: TileData = map.get_cell_tile_data(cell)
 		if data != null:
 			var value: Variant = data.get_custom_data("move_cost")
-			if value is float or value is int:
+			if (map.tile_set.get_custom_data_layer_by_name("walkable") < 0 or data.get_custom_data("walkable")) and (value is float or value is int):
 				_costs[index(cell)] = maxf(0.0, float(value))
 	for cell in blocked_cells:
 		if in_bounds(cell):
@@ -98,6 +98,6 @@ func with_map_cells(map: TileMapLayer, cells: Array[Vector2i], blocked: Array[Ve
 		var value := 0.0
 		if data != null and not blocked.has(cell):
 			var custom: Variant = data.get_custom_data("move_cost")
-			if custom is int or custom is float: value = maxf(0.0, float(custom))
+			if (map.tile_set.get_custom_data_layer_by_name("walkable") < 0 or data.get_custom_data("walkable")) and (custom is int or custom is float): value = maxf(0.0, float(custom))
 		result._costs[index(cell)] = value
 	return result

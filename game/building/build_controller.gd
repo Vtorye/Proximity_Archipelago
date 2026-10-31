@@ -69,8 +69,13 @@ func placement_check(option: BuildOption, cell: Vector2i, removed: Array[Buildin
 	else:
 		return PlacementCheck.result(PlacementCheck.Code.INVALID_OPTION)
 	for target in _footprint(option, cell):
-		if map.get_cell_source_id(target) == -1 or not route_service.walkable(target) and not removed.has(registry.at(target)):
+		if map.get_cell_source_id(target) == -1:
 			return PlacementCheck.result(PlacementCheck.Code.OUTSIDE_MAP)
+		var terrain: TileData = map.get_cell_tile_data(target)
+		if map.tile_set.get_custom_data_layer_by_name("buildable") >= 0 and not terrain.get_custom_data("buildable"):
+			return PlacementCheck.result(PlacementCheck.Code.UNBUILDABLE)
+		if not route_service.walkable(target) and not removed.has(registry.at(target)):
+			return PlacementCheck.result(PlacementCheck.Code.IMPASSABLE)
 		if registry.at(target) != null and not removed.has(registry.at(target)) and (option is SceneBuildOption or not option.allow_when_occupied):
 			return PlacementCheck.result(PlacementCheck.Code.OCCUPIED)
 		if not option.allow_when_occupied and population != null:

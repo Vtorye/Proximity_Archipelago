@@ -16,7 +16,7 @@ func _ready() -> void:
 	world.match_controller.completed.connect(_on_completed)
 	camera = WorldCamera.new()
 	camera.name = "ColonyCamera"
-	camera.bounds = Rect2(Vector2.ZERO, Vector2(world.map_size * World.CELL_SIZE))
+	camera.bounds = world.map_bounds()
 	camera.position = camera.bounds.get_center() - Vector2(0, 8)
 	world.add_child(camera)
 	camera.make_current()

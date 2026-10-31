@@ -8,8 +8,8 @@ const CELL_SIZE := 16
 @export var build_options: Array[BuildOption] = []
 @export var art: ArtCatalog = preload("res://game/art/colony_art.tres")
 @export var auto_start := true
-@export var map_size := Vector2i(50, 50)
-@export var generate_archipelago := true
+var map_size: Vector2i:
+	get: return ($Map as TileMapLayer).get_used_rect().size
 @export var diagnostics_enabled := false
 var prices: PriceService
 var inventory: WorldInventory
@@ -34,9 +34,9 @@ func _ready() -> void:
 	if not art.validate().is_empty():
 		push_error("Invalid world art catalog")
 		return
-	_configure_terrain(map)
-	if generate_archipelago:
-		_generate_terrain(map)
+	if map.tile_set == null or map.get_used_cells().is_empty():
+		push_error("World requires a painted TileMapLayer with a TileSet")
+		return
 	inventory = WorldInventory.new()
 	inventory.name = "Inventory"
 	add_child(inventory)
@@ -143,23 +143,6 @@ func _on_workplace_produced(type: ResourceType, amount: int) -> void:
 	if not inventory.add(type, amount):
 		push_warning("World could not store %d of %s" % [amount, type.id])
 
-func _configure_terrain(map: TileMapLayer) -> void:
-	var pixels: int = art.tile_resolution()
-	var tiles := TileSet.new()
-	tiles.tile_size = Vector2i(pixels, pixels)
-	tiles.add_custom_data_layer()
-	tiles.set_custom_data_layer_name(0, "move_cost")
-	tiles.set_custom_data_layer_type(0, TYPE_FLOAT)
-	var atlas := TileSetAtlasSource.new()
-	atlas.texture = art.terrain_atlas()
-	atlas.texture_region_size = Vector2i(pixels, pixels)
-	tiles.add_source(atlas, 3)
-	for index in range(4):
-		atlas.create_tile(Vector2i(index, 0))
-		atlas.get_tile_data(Vector2i(index, 0), 0).set_custom_data("move_cost", [1.0, 1.6, 0.35, 0.0][index])
-	map.tile_set = tiles
-	map.scale = Vector2.ONE * CELL_SIZE / pixels
-
 func _queue_navigation_update() -> void:
 	if ready_for_play and not _navigation_update_queued:
 		_navigation_update_queued = true
@@ -172,31 +155,14 @@ func _update_navigation() -> void:
 	if is_inside_tree():
 		route_service.rebuild(registry.blocked_cells())
 
-func _generate_terrain(map: TileMapLayer) -> void:
-	map.clear()
-	var noise := FastNoiseLite.new()
-	noise.seed = 1147
-	noise.frequency = 0.16
-	var dimensions := Vector2(map_size)
-	var center: Vector2i = map_size / 2
-	for y in range(map_size.y):
-		for x in range(map_size.x):
-			var cell := Vector2i(x, y)
-			var main: Vector2 = (Vector2(cell) - dimensions * 0.5) / (dimensions * Vector2(0.33, 0.25))
-			var west: Vector2 = (Vector2(cell) - dimensions * Vector2(0.18, 0.20)) / (dimensions * Vector2(0.13, 0.10))
-			var east: Vector2 = (Vector2(cell) - dimensions * Vector2(0.81, 0.77)) / (dimensions * Vector2(0.13, 0.12))
-			var shape: float = minf(main.length_squared(), minf(west.length_squared(), east.length_squared()))
-			var edge: float = 1.0 + noise.get_noise_2d(x, y) * 0.18
-			var terrain := 3
-			if shape < edge:
-				terrain = 1 if shape > edge - 0.12 else 0
-			if x >= center.x - 7 and x <= center.x + 8 and y >= center.y - 7 and y <= center.y + 7:
-				terrain = 1
-			map.set_cell(cell, 3, Vector2i(terrain, 0))
-
 func _collect_buildings(root: Node, found: Array[Building]) -> void:
 	for child in root.get_children():
 		if child is Building:
 			found.append(child)
 		else:
 			_collect_buildings(child, found)
+
+func map_bounds() -> Rect2:
+	var map: TileMapLayer = $Map
+	var region: Rect2i = map.get_used_rect()
+	return map.transform * Rect2(Vector2(region.position * map.tile_set.tile_size), Vector2(region.size * map.tile_set.tile_size))
