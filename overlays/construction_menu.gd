@@ -125,7 +125,9 @@ func _ready() -> void:
 	content.add_child(_confirmation)
 	_confirmation.hide()
 	draft.changed.connect(_cancel_confirmation)
-	if context.controller.prices != null: context.controller.prices.changed.connect(_queue_refresh)
+	if context.controller.prices != null: context.controller.prices.changed.connect(func():
+		draft.last_result = PlacementCheck.new()
+		_queue_refresh())
 	draft.changed.connect(_queue_refresh)
 	_refresh()
 	default_focus = controls[_selected.id] if _selected != null else controls[&"cancel"]

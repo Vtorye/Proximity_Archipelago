@@ -11,6 +11,7 @@ const CELL_SIZE := 16
 var map_size: Vector2i:
 	get: return ($Map as TileMapLayer).get_used_rect().size
 @export var diagnostics_enabled := false
+var events: WorldEvents
 var prices: PriceService
 var inventory: WorldInventory
 var build_controller: BuildController
@@ -27,6 +28,7 @@ var _navigation_update_queued := false
 func _ready() -> void:
 	if build_catalog != null: build_options = build_catalog.options.duplicate()
 	prices = PriceService.new()
+	events = prices.events
 	prices.definitions = build_options
 	prices.process_mode = Node.PROCESS_MODE_ALWAYS
 	add_child(prices)
@@ -127,20 +129,27 @@ func _configure_building(building: Building) -> void:
 		building.configure(inventory, inventory.type_by_id(&"food"))
 	var sprite: Sprite2D = building.get_node_or_null("Sprite") as Sprite2D
 	if sprite != null:
-		if building is House:
+		if building.option != null and building.option.icon != null:
+			sprite.texture = building.option.icon
+		elif building is House:
 			sprite.texture = art.nest
 		elif building is Canteen:
 			sprite.texture = art.canteen
 			sprite.modulate = Color.WHITE
 		elif building is Workplace:
-			var resource_id: StringName = building.output.id if building.output != null else &""
-			sprite.texture = art.berries if resource_id == &"food" else (art.timber if resource_id == &"wood" else art.stone)
+			var product: ResourceType = building.output
+			if product == null and building.recipe != null and not building.recipe.outputs.is_empty(): product = building.recipe.outputs[0].type
+			if product != null and product.icon != null: sprite.texture = product.icon
+			elif sprite.texture == null:
+				var resource_id: StringName = product.id if product != null else &""
+				sprite.texture = art.berries if resource_id == &"food" else (art.timber if resource_id == &"wood" else art.stone)
 		if sprite.texture != null:
 			sprite.scale = Vector2.ONE * CELL_SIZE / sprite.texture.get_width()
 
 func _on_workplace_produced(type: ResourceType, amount: int) -> void:
-	prices.record(GameEvents.Kind.RESOURCE_PRODUCED, type.id, amount)
-	if not inventory.add(type, amount):
+	if inventory.add(type, amount):
+		events.publish(GameEvents.Kind.RESOURCE_PRODUCED, type.id, amount)
+	else:
 		push_warning("World could not store %d of %s" % [amount, type.id])
 
 func _queue_navigation_update() -> void:
