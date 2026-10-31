@@ -1,0 +1,14 @@
+{
+  "assertions": 8,
+  "captures": [
+    "01-entry-milliseconds",
+    "02-distance-and-job-scores",
+    "03-configured-house-price",
+    "04-live-price-reload"
+  ],
+  "display_size": "(0, 0)",
+  "failures": [],
+  "render_size": "(1280, 720)",
+  "source_revision": "3c76ec026c79947e0d86264cd1c4f0629ee5f4b8",
+  "window_size": "(1280, 720)"
+}
