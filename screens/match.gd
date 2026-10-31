@@ -183,5 +183,5 @@ func _open_construction() -> void:
 
 func _toggle_navigation() -> void:
 	navigation_overlay.cycle()
-	hud.controls[&"routes"].text = ["Маршруты [N]", "Клетки: мс [N]", "От точки: с [N]"][navigation_overlay.mode]
-	hud.toast(["Оценки скрыты", "Время входа в клетку, мс. Скорость муравья: 24. Приблизьте карту для чисел.", "ЛКМ: начало маршрута. Секунды + 0.5 × занятые места. Голод проверяется отдельно."][navigation_overlay.mode])
+	hud.controls[&"routes"].text = ["Пути [N]", "Клетки: мс [N]", "От точки: с [N]"][navigation_overlay.mode]
+	hud.toast(["Оценки скрыты", "Время входа в клетку, мс. Скорость: %.1f. Приблизьте карту для чисел." % navigation_overlay.reference_speed, "ЛКМ: начало маршрута. Секунды + 0.5 × занятые места. Голод проверяется отдельно."][navigation_overlay.mode])

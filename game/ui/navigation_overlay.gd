@@ -11,6 +11,8 @@ var _revision := -1
 var _refresh := 0.0
 
 func cycle() -> void:
+	var ants: Array[AntAgent] = world.population.agents()
+	if not ants.is_empty(): reference_speed = ants[0].speed
 	mode = (mode + 1) % 3
 	if mode > 0 and _field == null:
 		for building in world.registry.all():
@@ -31,6 +33,8 @@ func _update_field() -> void:
 
 func _process(delta: float) -> void:
 	if mode == 0: return
+	var ants: Array[AntAgent] = world.population.agents()
+	if not ants.is_empty(): reference_speed = ants[0].speed
 	_refresh += delta
 	if _revision != world.route_service.revision: _update_field()
 	if _refresh >= 0.25:
