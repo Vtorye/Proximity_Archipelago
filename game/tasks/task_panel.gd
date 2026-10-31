@@ -4,6 +4,7 @@ extends PanelContainer
 var director: TaskDirector
 var _content: VBoxContainer
 var _queued := false
+var _waiting: Label
 func _ready() -> void:
 	custom_minimum_size.x = 198
 	_content = VBoxContainer.new()
@@ -16,8 +17,8 @@ func _ready() -> void:
 	scroll.add_child(_content)
 	AppSettings.changed.connect(_queue_refresh)
 	director.changed.connect(_queue_refresh)
-	director.world.inventory.changed.connect(_queue_refresh)
-	director.world.match_controller.time_changed.connect(func(_seconds: int): _queue_refresh())
+	director.world.inventory.changed.connect(_update_availability)
+	director.world.match_controller.time_changed.connect(func(_seconds: int): _update_availability())
 	_refresh()
 func _queue_refresh() -> void:
 	if _queued: return
@@ -63,16 +64,24 @@ func _refresh() -> void:
 	var message: Label = _label(director.message, ColonyStyle.MUTED)
 	message.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_content.add_child(message)
+	_waiting = _label("", ColonyStyle.MUTED)
+	_waiting.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_content.add_child(_waiting)
+	_update_availability()
+
+func _update_availability() -> void:
+	if _content == null: return
+	for button in _content.find_children("*", "Button", true, false):
+		button.disabled = not director.can_pay(button.get_meta(&"task_index"), button.get_meta(&"cancel"))
 	var missing := 0
 	var occupied := 0
 	for ant in director.world.population.agents():
 		if ant.status != AntAgent.Status.HOME: continue
 		if ant.waiting_reason == WorkPlan.WaitReason.MISSING_INPUTS: missing += 1
 		elif ant.waiting_reason == WorkPlan.WaitReason.SLOTS_FULL: occupied += 1
-	if occupied > 0 or missing > 0:
-		var waiting: Label = _label("Ждут мест: %d; сырья: %d" % [occupied, missing], ColonyStyle.MUTED)
-		waiting.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		_content.add_child(waiting)
+	if is_instance_valid(_waiting):
+		_waiting.text = "Ждут мест: %d; сырья: %d" % [occupied, missing]
+		_waiting.visible = occupied > 0 or missing > 0
 
 func _label(text: String, color: Color = ColonyStyle.TEXT) -> Label:
 	var label: Label = ColonyStyle.label(text, 4, color)

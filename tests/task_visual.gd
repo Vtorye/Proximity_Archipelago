@@ -10,6 +10,11 @@ func _run() -> void:
 	var tasks: TaskDirector = screen.world.tasks
 	expect(tasks != null and tasks.slots.size() == 3, "three task cards replace the fixed objective")
 	await capture("01-three-requests", 30)
+	var stable_button: Button = screen.hud.task_panel.find_children("*", "Button", true, false)[0]
+	screen.world.inventory.add(screen.world.inventory.type_by_id(&"wood"), 1)
+	screen.world.match_controller.time_changed.emit(179)
+	await frames(4)
+	expect(is_instance_valid(stable_button), "inventory and timer updates preserve the button being clicked")
 	var before: float = screen.world.match_controller.time_remaining
 	await action(false)
 	expect(screen.world.match_controller.time_remaining > before + 24 and tasks.closed == 1, "claim button pays the request and adds time")
