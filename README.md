@@ -101,3 +101,7 @@ await get_tree().create_timer(0.3, false).timeout
 7. `process_mode` is set in the Inspector, not the script, for the shell layers. If you set it in code, make sure it runs before anything can pause - `_enter_tree()` is safe, `_ready()` is too late for the very first frame in edge cases
 
 В `dan/ui` обучение открывается отдельной кнопкой главного меню. **Пробел** включает паузу со стройкой и применяет план при повторном нажатии. **ПКМ** в стройке снимает последнее добавление на клетке; дорога и здание совместимы в одном плане. В палитре есть снос и перенос камеры ЛКМ, колесо меняет масштаб. **«…»** открывает меню с настройками и перезапуском. Подробности: [режим стройки](docs/CONSTRUCTION_MODE.md).
+
+## Инструменты дизайнера
+
+Ветка `codex/designer-tools`: сохранённый TileMap, каталог построек, дом за 10 дерева и 20 камня, правила цены по событиям и обновление цены после сохранения конфигов во время матча. `N` показывает время прохода и оценки рабочих точек. [Настройка и проверка уровня](docs/DESIGNER_WORKFLOW.md). Эксперимент с заданиями находится отдельно, в `codex/task-progression`.

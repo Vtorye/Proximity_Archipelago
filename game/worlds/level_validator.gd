@@ -14,6 +14,16 @@ static func validate(path: String) -> Array[String]:
 	if map == null or map.tile_set == null or map.get_used_cells().is_empty():
 		errors.append(path + ": missing painted TileMap/TileSet")
 	else:
+		for cell in map.get_used_cells():
+			var data: TileData = map.get_cell_tile_data(cell)
+			if data == null:
+				errors.append(path + ": invalid tile at " + str(cell))
+				continue
+			var value: Variant = data.get_custom_data("move_cost")
+			if not (value is float or value is int) or not is_finite(float(value)) or float(value) < 0:
+				errors.append(path + ": invalid movement cost at " + str(cell))
+			elif map.tile_set.get_custom_data_layer_by_name("walkable") >= 0 and data.get_custom_data("walkable") and float(value) <= 0:
+				errors.append(path + ": walkable tile has no positive movement cost at " + str(cell))
 		var grid := TileGrid.new()
 		grid.setup(map, [])
 		var buildings: Array[Building] = []
@@ -42,7 +52,7 @@ static func validate(path: String) -> Array[String]:
 		var stock := WorldInventory.new()
 		var types: Dictionary[StringName, bool] = {}
 		for entry in world.starting_resources:
-			if entry == null or entry.type == null or entry.amount < 0: errors.append(path + ": invalid starting resource")
+			if entry == null or entry.type == null or entry.type.id == &"" or entry.amount < 0: errors.append(path + ": invalid starting resource")
 			elif types.has(entry.type.id): errors.append(path + ": duplicate resource " + str(entry.type.id))
 			else: types[entry.type.id] = true
 		var residents := 0

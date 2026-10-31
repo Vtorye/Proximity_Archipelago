@@ -28,6 +28,11 @@ func _run() -> void:
 	await key(KEY_ESCAPE)
 	await key(KEY_N)
 	expect(screen.navigation_overlay.mode == 0, "third N restores the ordinary map")
+	screen.world.population.agents()[0].speed = 30.0
+	await key(KEY_N)
+	expect(screen.navigation_overlay.reference_speed == 30.0, "diagnostic times follow the actual reference ant speed")
+	await key(KEY_N)
+	await key(KEY_N)
 	Router.goto(&"main_menu")
 	await frames(40)
 	_finish()
