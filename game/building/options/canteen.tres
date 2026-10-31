@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="SceneBuildOption" format=3]
+[ext_resource type="Script" path="res://game/building/scene_build_option.gd" id="option"]
+[ext_resource type="Script" path="res://game/resources/resource_amount.gd" id="amount"]
+[ext_resource type="Resource" path="res://game/resources/dot_treses/royal.tres" id="royal"]
+[ext_resource type="PackedScene" path="res://game/entities/canteen.tscn" id="scene"]
+[ext_resource type="Texture2D" path="res://game/assets/sprites/canteen.png" id="icon"]
+[sub_resource type="Resource" id="cost"]
+script = ExtResource("amount")
+type = ExtResource("royal")
+amount = 3
+[resource]
+script = ExtResource("option")
+scene = ExtResource("scene")
+blocks_movement = false
+id = &"canteen"
+display_name = "Столовая"
+icon = ExtResource("icon")
+costs = Array[ExtResource("amount")]([SubResource("cost")])

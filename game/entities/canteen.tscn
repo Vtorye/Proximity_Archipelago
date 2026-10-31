@@ -1,0 +1,8 @@
+[gd_scene load_steps=3 format=3]
+[ext_resource type="Script" path="res://game/entities/canteen.gd" id="script"]
+[ext_resource type="Texture2D" path="res://game/assets/sprites/canteen.png" id="art"]
+[node name="Canteen" type="Node2D"]
+script = ExtResource("script")
+title = "Столовая"
+[node name="Sprite" type="Sprite2D" parent="."]
+texture = ExtResource("art")

@@ -1,0 +1,8 @@
+[gd_resource type="Resource" script_class="ResourceType" format=3]
+[ext_resource type="Script" path="res://game/resources/resource_type.gd" id="type"]
+[ext_resource type="Texture2D" path="res://game/assets/ui/royal.svg" id="icon"]
+[resource]
+script = ExtResource("type")
+id = &"royal"
+display_name = "Знак колонии"
+icon = ExtResource("icon")
