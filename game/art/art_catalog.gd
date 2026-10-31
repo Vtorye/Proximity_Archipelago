@@ -21,18 +21,6 @@ func validate() -> Array[String]:
 			errors.append("%s must be a nonempty square texture" % name)
 	return errors
 
-func terrain_atlas() -> Texture2D:
-	var pixels: int = tile_resolution()
-	var image := Image.create(pixels * 4, pixels, false, Image.FORMAT_RGBA8)
-	var textures: Array[Texture2D] = [grass, soil, road, water]
-	for index in range(textures.size()):
-		var source: Image = textures[index].get_image()
-		source.convert(Image.FORMAT_RGBA8)
-		if source.get_width() != pixels:
-			source.resize(pixels, pixels, Image.INTERPOLATE_NEAREST)
-		image.blit_rect(source, Rect2i(0, 0, pixels, pixels), Vector2i(index * pixels, 0))
-	return ImageTexture.create_from_image(image)
-
 func tile_resolution() -> int:
 	var pixels := 16
 	for texture in [grass, soil, road, water]:

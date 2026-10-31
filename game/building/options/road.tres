@@ -11,6 +11,7 @@ amount = 1
 
 [resource]
 script = ExtResource("option")
+source_id = 3
 atlas_coords = Vector2i(2, 0)
 id = &"road"
 display_name = "Тропинка"
