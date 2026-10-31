@@ -1,6 +1,7 @@
 class_name MatchHud
 extends Control
 signal settings_requested
+signal navigation_requested
 signal construction_requested
 signal zoom_in_requested
 signal zoom_out_requested
@@ -119,8 +120,14 @@ func _ready() -> void:
 	hints.add_theme_constant_override("separation", 6)
 	bottom.add_child(hints)
 	var help: Label = ColonyStyle.label("ЛКМ: камера  ПКМ: тайл", 8, ColonyStyle.MUTED)
+	help.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	help.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	hints.add_child(help)
+	var routes: Button = ColonyStyle.button("Пути [N]")
+	routes.tooltip_text = "Клетки в мс / путь в секундах / выключено. ЛКМ выбирает начало; СКМ двигает карту. Голод проверяется отдельно."
+	routes.pressed.connect(func(): navigation_requested.emit())
+	hints.add_child(routes)
+	controls[&"routes"] = routes
 	var build: Button = ColonyStyle.button("Пауза / стройка [Пробел]")
 	build.pressed.connect(func(): construction_requested.emit())
 	hints.add_child(build)
@@ -160,6 +167,8 @@ func _square_button(text: String, side: int, font_size: int = 16) -> Button:
 	return button
 
 func _resource_icon(id: StringName) -> Texture2D:
+	var type: ResourceType = world.inventory.type_by_id(id)
+	if type != null and type.icon != null: return type.icon
 	return world.art.berries if id == &"food" else (world.art.timber if id == &"wood" else world.art.stone)
 
 func refresh() -> void:

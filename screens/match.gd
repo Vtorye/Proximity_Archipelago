@@ -5,6 +5,7 @@ extends Screen
 @export var debug_show_result := false
 var world: World
 var camera: WorldCamera
+var navigation_overlay: NavigationOverlay
 var selection: TileSelection
 var hud: MatchHud
 var _active := false
@@ -20,6 +21,10 @@ func _ready() -> void:
 	camera.position = camera.bounds.get_center() - Vector2(0, 8)
 	world.add_child(camera)
 	camera.make_current()
+	navigation_overlay = NavigationOverlay.new()
+	navigation_overlay.world = world
+	navigation_overlay.z_index = 19
+	world.add_child(navigation_overlay)
 	selection = TileSelection.new()
 	selection.map = world.get_node("Map") as TileMapLayer
 	world.add_child(selection)
@@ -30,6 +35,7 @@ func _ready() -> void:
 	hud.world = world
 	layer.add_child(hud)
 	hud.settings_requested.connect(_open_settings)
+	hud.navigation_requested.connect(_toggle_navigation)
 	hud.construction_requested.connect(_open_construction)
 	hud.zoom_in_requested.connect(func(): camera.set_level(camera.level + 1))
 	hud.zoom_out_requested.connect(func(): camera.set_level(camera.level - 1))
@@ -65,6 +71,17 @@ func _input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		return
 	var top: MenuBase = Router.top_overlay()
+	if top == null and event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_N:
+		_toggle_navigation()
+		get_viewport().set_input_as_handled()
+		return
+	if top == null and navigation_overlay.mode == 2 and event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT and event.position.y > 60 and event.position.y < get_viewport_rect().size.y - 40:
+		var map: TileMapLayer = world.get_node("Map")
+		var cell: Vector2i = map.local_to_map(map.get_global_transform_with_canvas().affine_inverse() * event.position)
+		navigation_overlay.select_origin(cell)
+		get_viewport().set_input_as_handled()
+		return
+
 	if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_SPACE and (top == null or top is BuildMenu):
 		_open_construction()
 		get_viewport().set_input_as_handled()
@@ -130,6 +147,7 @@ func _process(_delta: float) -> void:
 		return
 	camera.enabled_input = not Router.has_overlay()
 	hud.lock_zoom(Router.has_overlay())
+	navigation_overlay.obstacles = hud.build_obstacles()
 	if is_instance_valid(_build_menu) and not _build_menu.is_queued_for_deletion():
 		_build_menu.context.anchor = selection.screen_rect()
 		_build_menu.context.obstacles = hud.build_obstacles()
@@ -162,3 +180,8 @@ func _open_construction() -> void:
 		if is_instance_valid(hud): hud.set_construction_mode(false)
 		if is_instance_valid(camera): camera.enabled_input = true)
 	PauseController.acquire(&"menu")
+
+func _toggle_navigation() -> void:
+	navigation_overlay.cycle()
+	hud.controls[&"routes"].text = ["Маршруты [N]", "Клетки: мс [N]", "От точки: с [N]"][navigation_overlay.mode]
+	hud.toast(["Оценки скрыты", "Время входа в клетку, мс. Скорость муравья: 24. Приблизьте карту для чисел.", "ЛКМ: начало маршрута. Секунды + 0.5 × занятые места. Голод проверяется отдельно."][navigation_overlay.mode])
