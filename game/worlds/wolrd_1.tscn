@@ -22,6 +22,8 @@
 [ext_resource type="Script" path="res://game/entities/workplace.gd" id="workplace"]
 [ext_resource type="Script" path="res://game/wolrd.gd" id="world"]
 
+[ext_resource type="Resource" path="res://game/building/catalog.tres" id="catalog"]
+
 [sub_resource type="Resource" id="wood_stock"]
 script = ExtResource("amount")
 type = ExtResource("wood")
@@ -80,11 +82,12 @@ custom_data_layer_3/name = "terrain_name"
 custom_data_layer_3/type = 4
 sources/3 = SubResource("TileSetAtlasSource_qinhx")
 
+
 [node name="World" type="Node2D" unique_id=1653711899]
 process_mode = 4
 script = ExtResource("world")
 starting_resources = Array[ExtResource("amount")]([SubResource("wood_stock"), SubResource("stone_stock"), SubResource("food_stock")])
-build_options = Array[ExtResource("build_option")]([ExtResource("road"), ExtResource("ground"), ExtResource("nest_option"), ExtResource("berry_option")])
+build_catalog = ExtResource("catalog")
 auto_start = false
 
 [node name="Map" type="TileMapLayer" parent="." unique_id=1925920453]

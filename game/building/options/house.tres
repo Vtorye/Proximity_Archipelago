@@ -5,10 +5,17 @@
 [ext_resource type="PackedScene" path="res://game/entities/house.tscn" id="scene"]
 [ext_resource type="Resource" path="res://game/resources/dot_treses/wood.tres" id="wood"]
 
+[ext_resource type="Resource" path="res://game/resources/dot_treses/stone.tres" id="stone"]
+
+[sub_resource type="Resource" id="stone_cost"]
+script = ExtResource("amount")
+type = ExtResource("stone")
+amount = 20
+
 [sub_resource type="Resource" id="cost"]
 script = ExtResource("amount")
 type = ExtResource("wood")
-amount = 20
+amount = 10
 
 [resource]
 script = ExtResource("option")
@@ -17,4 +24,4 @@ blocks_movement = false
 spawn_count = 5
 id = &"house"
 display_name = "Муравейник"
-costs = Array[ExtResource("amount")]([SubResource("cost")])
+costs = Array[ExtResource("amount")]([SubResource("cost"), SubResource("stone_cost")])

@@ -1,0 +1,8 @@
+[gd_resource type="Resource" script_class="PriceRule" format=3]
+[ext_resource type="Script" path="res://game/economy/price_rule.gd" id="rule"]
+[resource]
+script = ExtResource("rule")
+event = 0
+subject = &"house"
+operation = 0
+value = 1.2

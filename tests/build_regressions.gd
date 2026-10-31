@@ -135,7 +135,7 @@ func _layered_plan(test: Node) -> void:
 	var before: int = world.inventory.quantity(world.inventory.type_by_id(&"wood"))
 	test.expect(draft.commit(), "layered plan commits regardless of painting order")
 	test.expect(world.registry.at(cell) is House and world.build_controller.map.get_cell_atlas_coords(cell) == Vector2i(2, 0), "committed road remains underneath its nest")
-	test.expect(world.population.count() == 10 and world.inventory.quantity(world.inventory.type_by_id(&"wood")) == before - 21, "layered commit charges both prices and spawns once")
+	test.expect(world.population.count() == 10 and world.inventory.quantity(world.inventory.type_by_id(&"wood")) == before - 11 and world.inventory.quantity(world.inventory.type_by_id(&"stone")) == 20, "layered commit charges both resources and spawns once")
 	world.free()
 	await test.get_tree().process_frame
 

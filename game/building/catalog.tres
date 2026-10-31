@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="BuildCatalog" format=3]
+[ext_resource type="Script" path="res://game/building/build_catalog.gd" id="catalog"]
+[ext_resource type="Script" path="res://game/building/build_option.gd" id="option"]
+[ext_resource type="Resource" path="res://game/building/options/road.tres" id="road"]
+[ext_resource type="Resource" path="res://game/building/options/ground.tres" id="ground"]
+[ext_resource type="Resource" path="res://game/building/options/house.tres" id="house"]
+[ext_resource type="Resource" path="res://game/building/options/apple_tree.tres" id="berry"]
+[resource]
+script = ExtResource("catalog")
+options = Array[ExtResource("option")]([ExtResource("road"), ExtResource("ground"), ExtResource("house"), ExtResource("berry")])
