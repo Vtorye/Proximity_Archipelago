@@ -1,17 +1,17 @@
 {
-  "assertions": 584,
+  "assertions": 586,
   "failures": [],
   "metrics": {
     "assignment_load": {
       "new_searches": 0,
       "requests": 1000,
-      "wall_ms": 617.615,
+      "wall_ms": 565.927,
       "workplaces": 103
     },
     "navigation_100x100": {
-      "10000_cached_reads_ms": 7.715,
+      "10000_cached_reads_ms": 8.941,
       "cache_limit": 8,
-      "cold_field_ms": 33.829,
+      "cold_field_ms": 38.633,
       "field_bytes": 50000
     },
     "navigation_50x50": {
@@ -31,7 +31,7 @@
           "stone": 40,
           "wood": 88
         },
-        "wall_ms": 243.208,
+        "wall_ms": 230.245,
         "won": false
       },
       "roads": {
@@ -46,10 +46,10 @@
           "stone": 238,
           "wood": 100
         },
-        "wall_ms": 273.963,
+        "wall_ms": 248.323,
         "won": true
       }
     }
   },
-  "source_revision": "25fb8d866842900c38d4c5b403780013cf4d7c9d"
+  "source_revision": "188e2271ff8c268ff86852f8f63a305dcf1fd8c1"
 }
