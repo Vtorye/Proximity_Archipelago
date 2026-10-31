@@ -2,7 +2,7 @@ class_name UiScaleBinding
 extends Node
 ## Resize native controls and fonts; never shrink a rasterized font through a root transform.
 var target: Control
-var _controls: Dictionary[Control, Dictionary] = {}
+var _controls: Dictionary[int, Dictionary] = {}
 var _styles: Dictionary[StyleBox, Dictionary] = {}
 var _constants: Dictionary[String, Dictionary] = {}
 var _captured := false
@@ -24,7 +24,7 @@ func _capture() -> void:
 			values["offsets"] = [control.offset_left, control.offset_top, control.offset_right, control.offset_bottom]
 		for key in ["panel", "normal", "background", "fill"]:
 			if control.has_theme_stylebox_override(key): _capture_style(control.get_theme_stylebox(key))
-		_controls[control] = values
+		_controls[control.get_instance_id()] = values
 		control.set_meta(&"ui_scale_bound", true)
 	for type in target.theme.get_type_list():
 		for key in target.theme.get_stylebox_list(type): _capture_style(target.theme.get_stylebox(key, type))
@@ -58,9 +58,12 @@ func _resize() -> void:
 		for key in _styles[style]:
 			var value: float = _styles[style][key]
 			if value >= 0: style.set(key, roundf(value * factor))
-	for control in _controls:
-		if not is_instance_valid(control): continue
-		var values: Dictionary = _controls[control]
+	for control_id in _controls.keys():
+		var control: Control = instance_from_id(control_id) as Control
+		if not is_instance_valid(control):
+			_controls.erase(control_id)
+			continue
+		var values: Dictionary = _controls[control_id]
 		if values.has("font"):
 			var font: Dictionary = ColonyStyle.pixel_font(values["font"], factor)
 			control.add_theme_font_override("font", font["font"])
