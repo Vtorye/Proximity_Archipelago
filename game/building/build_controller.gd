@@ -153,7 +153,7 @@ func try_build_plan(commands: Array[BuildCommand]) -> bool:
 				break
 			if building is House:
 				spawn_count += building.capacity
-	if last_result.allowed(): costs = prices.quote_plan(placements) if prices != null else _base_plan_price(placements)
+	if last_result.allowed(): costs = prices.quote_plan(commands) if prices != null else _base_plan_price(placements)
 	if last_result.allowed() and not inventory.can_afford_all(costs):
 		last_result = PlacementCheck.result(PlacementCheck.Code.RESOURCES)
 	if last_result.allowed():
@@ -184,8 +184,8 @@ func try_build_plan(commands: Array[BuildCommand]) -> bool:
 			map.set_cell(cell, option.source_id, option.atlas_coords, option.alternative_tile)
 	for building in removed:
 		_refund_for_demolish(building.option)
-		if prices != null: prices.record(GameEvents.Kind.BUILDING_DEMOLISHED, building.option.id if building.option != null else &"initial")
 		building.demolish()
+		if prices != null: prices.record(GameEvents.Kind.BUILDING_DEMOLISHED, building.option.id if building.option != null else &"initial")
 		building.free()
 	var blocked: Array[Vector2i] = registry.blocked_cells()
 	for candidate in candidates:

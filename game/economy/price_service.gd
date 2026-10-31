@@ -22,7 +22,7 @@ static func key(event: int, subject: StringName) -> String:
 	return GameEvents.key(event, subject)
 
 func quote(option: BuildOption, pending: Dictionary[String, int] = {}) -> Array[ResourceAmount]:
-	if option == null: return [null]
+	if option == null or not valid(option): return [null]
 	var totals: Dictionary[StringName, float] = {}
 	var types: Dictionary[StringName, ResourceType] = {}
 	for entry in option.costs:
@@ -48,6 +48,16 @@ func quote(option: BuildOption, pending: Dictionary[String, int] = {}) -> Array[
 func quote_plan(commands: Array[BuildCommand]) -> Array[ResourceAmount]:
 	var result: Array[ResourceAmount] = []
 	var pending: Dictionary[String, int] = {}
+	# Demolition commits before construction, regardless of brush insertion order.
+	for command in commands:
+		if command == null: return [null]
+		if not command.is_removal(): continue
+		var building: Building = command.removed_building
+		if not is_instance_valid(building): return [null]
+		var subject: StringName = building.option.id if building.option != null else &"initial"
+		for filter in [subject, &""]:
+			var id: String = key(GameEvents.Kind.BUILDING_DEMOLISHED, filter)
+			pending[id] = pending.get(id, 0) + 1
 	for command in commands:
 		if command == null: return [null]
 		if command.is_removal(): continue

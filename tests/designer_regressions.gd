@@ -10,6 +10,8 @@ func run(test: Node) -> void:
 	rule.subject = option.id
 	option.price_rules = [rule]
 	var service := PriceService.new()
+	service.events.publish(GameEvents.Kind.RESOURCE_PRODUCED, &"wood", 10)
+	test.expect(service.events.count(GameEvents.Kind.RESOURCE_PRODUCED, &"wood") == 1, "one produced batch is one fact even when it contains ten units")
 	test.expect(BuildController.price_amount(service.quote(option), stone) == 20, "base composite price is exact")
 	service.record(GameEvents.Kind.BUILDING_BUILT, option.id)
 	test.expect(BuildController.price_amount(service.quote(option), wood) == 12 and BuildController.price_amount(service.quote(option), stone) == 24, "one event increases both components by 1.2")
@@ -18,6 +20,15 @@ func run(test: Node) -> void:
 	test.expect(option.costs[0].amount == 10, "quotes never mutate base prices")
 	option.costs[0].amount = 5
 	test.expect(BuildController.price_amount(service.quote(option), wood) == 6, "editing base configuration preserves event history")
+	var demolished := Building.new()
+	demolished.option = option
+	var discount := PriceRule.new()
+	discount.event = GameEvents.Kind.BUILDING_DEMOLISHED
+	discount.subject = option.id
+	discount.value = 0.5
+	option.price_rules = [discount]
+	test.expect(BuildController.price_amount(service.quote_plan([BuildCommand.create(Vector2i.ONE, option), BuildCommand.remove(demolished)]), stone) == 10, "batch quotes include demolition-triggered price rules before construction")
+	demolished.free()
 	var recipe := WorkRecipe.new()
 	recipe.inputs = [test.entry(wood, 60), test.entry(stone, 41)]
 	recipe.outputs = [test.entry(stone, 2)]
