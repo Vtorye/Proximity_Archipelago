@@ -10,7 +10,7 @@ func _ready() -> void:
 	_content = VBoxContainer.new()
 	_content.add_theme_constant_override("separation", 3)
 	var scroll := ScrollContainer.new()
-	scroll.custom_minimum_size.y = 240
+	scroll.custom_minimum_size.y = 180
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	add_child(scroll)
 	_content.size_flags_horizontal = Control.SIZE_EXPAND_FILL

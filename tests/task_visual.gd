@@ -61,6 +61,7 @@ func _run() -> void:
 	expect(screen.navigation_overlay.reference_speed > 24.0, "navigation display reflects the speed upgrade")
 	await action(false)
 	expect(tasks.closed == 1, "task buttons remain usable in the navigation explanation mode")
+	expect(not screen.hud.task_panel.get_global_rect().intersects(screen.hud._toast.get_global_rect()), "task board leaves the navigation hint unobstructed at full scale")
 	await capture("09-navigation-and-task-actions", 30)
 	await key(KEY_N)
 	screen.world.match_controller._process(100000.0)
