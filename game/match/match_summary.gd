@@ -1,5 +1,8 @@
 class_name MatchSummary
 extends RefCounted
+var development_level := 0
+var tasks_completed := 0
+var tasks_skipped := 0
 ## Immutable values captured when a match commits its result.
 
 var won: bool

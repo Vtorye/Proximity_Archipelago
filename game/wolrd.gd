@@ -11,6 +11,8 @@ const CELL_SIZE := 16
 var map_size: Vector2i:
 	get: return ($Map as TileMapLayer).get_used_rect().size
 @export var diagnostics_enabled := false
+@export var task_deck: TaskDeck
+var tasks: TaskDirector
 var events: WorldEvents
 var prices: PriceService
 var inventory: WorldInventory
@@ -94,6 +96,18 @@ func _ready() -> void:
 		if building is House:
 			planner.prepare_home(building)
 	match_controller = get_node_or_null("MatchController") as MatchController
+	if task_deck != null:
+		var errors: Array[String] = task_deck.validate(inventory)
+		if not errors.is_empty():
+			for error in errors: push_error(error)
+			return
+		match_controller.task_mode = true
+		tasks = TaskDirector.new()
+		tasks.configure(self, task_deck, randi())
+		match_controller.completed.connect(func(summary: MatchSummary):
+			summary.development_level = tasks.level
+			summary.tasks_completed = tasks.completed_count
+			summary.tasks_skipped = tasks.skipped_count)
 	ready_for_play = true
 	if diagnostics_enabled:
 		var observer := DebugProbe.new()
@@ -144,7 +158,7 @@ func _configure_building(building: Building) -> void:
 				var resource_id: StringName = product.id if product != null else &""
 				sprite.texture = art.berries if resource_id == &"food" else (art.timber if resource_id == &"wood" else art.stone)
 		if sprite.texture != null:
-			sprite.scale = Vector2.ONE * CELL_SIZE / sprite.texture.get_width()
+			sprite.scale = Vector2.ONE * route_service.cell_size() / sprite.texture.get_width()
 
 func _on_workplace_produced(type: ResourceType, amount: int) -> void:
 	if inventory.add(type, amount):

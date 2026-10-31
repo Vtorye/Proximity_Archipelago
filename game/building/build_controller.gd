@@ -59,7 +59,7 @@ func placement_check(option: BuildOption, cell: Vector2i, removed: Array[Buildin
 		var source: TileSetAtlasSource = map.tile_set.get_source(tile.source_id) as TileSetAtlasSource if map.tile_set.has_source(tile.source_id) else null
 		if source == null or not source.has_tile(tile.atlas_coords) or not source.has_alternative_tile(tile.atlas_coords, tile.alternative_tile):
 			return PlacementCheck.result(PlacementCheck.Code.INVALID_TILE)
-		if map.get_cell_source_id(cell) == tile.source_id and map.get_cell_atlas_coords(cell) == tile.atlas_coords:
+		if map.get_cell_source_id(cell) == tile.source_id and map.get_cell_atlas_coords(cell) == tile.atlas_coords and map.get_cell_alternative_tile(cell) == tile.alternative_tile:
 			return PlacementCheck.result(PlacementCheck.Code.ALREADY_PLACED)
 	elif option is SceneBuildOption:
 		if option.scene == null or option.occupied_cells.is_empty() or not option.occupied_cells.has(Vector2i.ZERO) or option.spawn_count < 0 or option.spawn_speed <= 0.0:
@@ -200,7 +200,7 @@ func try_build_plan(commands: Array[BuildCommand]) -> bool:
 	_committing = false
 	inventory.end_update()
 	for command in placements:
-		if prices != null: prices.record(GameEvents.Kind.BUILDING_BUILT, command.option.id)
+		if prices != null: prices.record(GameEvents.Kind.BUILDING_BUILT if command.option is SceneBuildOption else GameEvents.Kind.TERRAIN_CHANGED, command.option.id)
 		built.emit(command.option, command.cell)
 	changed.emit()
 	return true

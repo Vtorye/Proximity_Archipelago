@@ -19,6 +19,7 @@ signal completed(summary: MatchSummary)
 @export var target_amount: int = 100
 @export var tracked_types: Array[ResourceType] = []
 
+var task_mode := false
 var time_remaining: float = 0.0
 var _finished := false
 var _started := false
@@ -96,7 +97,7 @@ func stop() -> void:
 	set_process(false)
 
 func _targets_met() -> bool:
-	if _inventory == null or tracked_types.is_empty():
+	if task_mode or _inventory == null or tracked_types.is_empty():
 		return false
 	for type in tracked_types:
 		if _inventory.quantity(type) < target_amount:
@@ -117,3 +118,15 @@ func _finish(result: Result, reason: Reason) -> void:
 	else:
 		match_lost.emit(reason)
 	completed.emit(summary)
+
+func add_time(seconds: float) -> void:
+	if _finished or not _started or seconds < 0 or not is_finite(seconds): return
+	time_remaining += seconds
+	_last_seconds = ceili(time_remaining)
+	time_changed.emit(_last_seconds)
+
+func complete_objective() -> void:
+	if _started and not _finished: _finish(Result.WIN, Reason.TARGET_REACHED)
+
+func is_active() -> bool:
+	return _started and not _finished
