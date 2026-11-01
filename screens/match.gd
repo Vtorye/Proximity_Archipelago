@@ -9,6 +9,7 @@ var navigation_overlay: NavigationOverlay
 var selection: TileSelection
 var hud: MatchHud
 var _active := false
+var _pointer := Vector2.ZERO
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -62,6 +63,7 @@ func _on_completed(summary: MatchSummary) -> void:
 func _input(event: InputEvent) -> void:
 	if not _active or Router.is_navigating():
 		return
+	if event is InputEventMouseMotion: _pointer = event.position
 	if event is InputEventMouseButton and not event.pressed and event.button_index in [MOUSE_BUTTON_LEFT, MOUSE_BUTTON_MIDDLE] and camera.dragging:
 		camera.dragging = false
 		get_viewport().set_input_as_handled()
@@ -101,7 +103,7 @@ func _process(_delta: float) -> void:
 	hud.lock_zoom(Router.has_overlay())
 	navigation_overlay.obstacles = hud.build_obstacles()
 	var map: TileMapLayer = world.get_node("Map")
-	navigation_overlay.hovered = map.local_to_map(map.get_global_transform_with_canvas().affine_inverse() * get_viewport().get_mouse_position())
+	navigation_overlay.hovered = map.local_to_map(map.get_global_transform_with_canvas().affine_inverse() * _pointer)
 
 func _open_settings() -> void:
 	selection.clear()
