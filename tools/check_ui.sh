@@ -7,7 +7,7 @@ python3 - "$project_root" "$ui_root/project" <<'PY'
 import shutil, sys
 from pathlib import Path
 source, destination = map(Path, sys.argv[1:])
-shutil.copytree(source, destination, ignore=shutil.ignore_patterns('.git', '.godot', 'evidence'))
+shutil.copytree(source, destination, ignore=shutil.ignore_patterns('.git', '.godot'))
 project = destination / 'project.godot'
 project.write_text(project.read_text().replace('config/name="archipelago"', 'config/name="archipelago-ui-validation"'))
 PY
@@ -15,7 +15,7 @@ godot_binary="${GODOT_BIN:-godot}"
 "$godot_binary" --headless --path "$ui_root/project" --editor --quit > "$ui_root/import.log" 2>&1
 mkdir -p "${COLONY_OUTPUT_ROOT:-/tmp/colony-validation}/after"
 export COLONY_SOURCE_REVISION="$(git -C "$project_root" rev-parse HEAD)"
-export COLONY_EVIDENCE_DIR="${COLONY_OUTPUT_ROOT:-/tmp/colony-validation}/after"
+export COLONY_CAPTURE_DIR="${COLONY_OUTPUT_ROOT:-/tmp/colony-validation}/after"
 if ! "$godot_binary" --path "$ui_root/project" --display-driver x11 --audio-driver Dummy --resolution 1280x720 --fixed-fps 30 --quit-after 3600 --write-movie "$ui_root/interface.avi" res://tests/ui_runner.tscn > "$ui_root/ui.log" 2>&1; then cat "$ui_root/ui.log"; exit 1; fi
 cat "$ui_root/ui.log"
 if rg -q 'SCRIPT ERROR|leaked|UI TESTS FAIL' "$ui_root/ui.log" || ! rg -q '^UI TESTS PASS$' "$ui_root/ui.log"; then exit 1; fi

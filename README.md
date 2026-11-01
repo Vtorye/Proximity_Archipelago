@@ -46,7 +46,7 @@ bash tools/check_designer_ui.sh
 bash tools/check_tasks_ui.sh
 ```
 
-Проверки выполняются в отдельных копиях проекта. GUI требует X11, OpenGL и ffmpeg. Снимки, видео и отчёты сохраняются **вне репозитория**, по умолчанию в `/tmp/colony-validation`. Другой путь задаётся `COLONY_OUTPUT_ROOT=/absolute/path`. Папка `evidence` удалена; прежние записи доступны в истории Git.
+Проверки выполняются в отдельных копиях проекта. GUI требует X11, OpenGL и ffmpeg. Снимки, видео и отчёты сохраняются **вне репозитория**, по умолчанию в `/tmp/colony-validation`. Другой путь задаётся `COLONY_OUTPUT_ROOT=/absolute/path`.
 
 `World.diagnostics_enabled` включает журнал колонии. [Диагностика Windows WASAPI](docs/WINDOWS_AUDIO.md); [разбор удалённого кода](docs/ISLAND_NAVIGATION.md#очистка).
 

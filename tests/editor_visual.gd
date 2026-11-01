@@ -54,11 +54,11 @@ func run(plugin: EditorPlugin) -> void:
 	FileAccess.open(path, FileAccess.WRITE).store_string(original)
 	await capture(plugin, "05-invalid-price-path")
 	var report := {"assertions": assertions, "failures": failures}
-	FileAccess.open(OS.get_environment("COLONY_EVIDENCE_DIR").path_join("editor-report.json"), FileAccess.WRITE).store_string(JSON.stringify(report, "  "))
+	FileAccess.open(OS.get_environment("COLONY_CAPTURE_DIR").path_join("editor-report.json"), FileAccess.WRITE).store_string(JSON.stringify(report, "  "))
 	print("EDITOR REPORT ", JSON.stringify(report))
 	print("EDITOR TESTS PASS" if failures.is_empty() else "EDITOR TESTS FAIL")
 	plugin.get_tree().quit(0 if failures.is_empty() else 1)
 func capture(plugin: EditorPlugin, label: String) -> void:
 	await frames(plugin, 15)
 	RenderingServer.force_draw()
-	plugin.get_viewport().get_texture().get_image().save_png(OS.get_environment("COLONY_EVIDENCE_DIR").path_join(label + ".png"))
+	plugin.get_viewport().get_texture().get_image().save_png(OS.get_environment("COLONY_CAPTURE_DIR").path_join(label + ".png"))

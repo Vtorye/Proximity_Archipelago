@@ -2,5 +2,4 @@
 .godot/
 /android/
 # Validation media belongs outside the source tree.
-/evidence/
 *.log
