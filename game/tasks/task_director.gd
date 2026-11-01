@@ -94,12 +94,19 @@ func _next_level() -> void:
 	changed.emit()
 
 func _apply_upgrade() -> void:
-	_upgrade_message = ["Открыта быстрая тропинка", "Строительство дешевле", "Муравьи быстрее"][stage().upgrade]
+	_upgrade_message = ["Тропинка заменена на быструю", "Строительство дешевле", "Муравьи быстрее"][stage().upgrade]
 	match stage().upgrade:
 		0:
 			if deck.unlocked_road != null and not world.build_controller.options.has(deck.unlocked_road):
-				world.build_controller.options.append(deck.unlocked_road)
-				if not world.prices.definitions.has(deck.unlocked_road): world.prices.definitions.append(deck.unlocked_road)
+				var position := -1
+				for index in range(world.build_controller.options.size()):
+					if world.build_controller.options[index].id == deck.replaced_road.id:
+						position = index
+						break
+				if position >= 0: world.build_controller.options[position] = deck.unlocked_road
+				else: world.build_controller.options.append(deck.unlocked_road)
+				world.prices.definitions = world.build_controller.options.duplicate()
+				world.prices.changed.emit()
 		1:
 			world.prices.global_multiplier *= stage().upgrade_factor
 			world.prices.changed.emit()

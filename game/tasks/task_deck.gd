@@ -4,7 +4,8 @@ extends Resource
 @export_range(0.0, 1.0) var cancellation_fraction := 0.3333333333
 @export var loop_last_stage := true
 @export var repeat_cost_multiplier := 1.25
-@export var unlocked_road: BuildOption
+@export var unlocked_road: TileBuildOption
+@export var replaced_road: TileBuildOption
 
 func validate(stock: WorldInventory) -> Array[String]:
 	var errors: Array[String] = []
@@ -15,7 +16,11 @@ func validate(stock: WorldInventory) -> Array[String]:
 		if stage == null or stage.tasks.is_empty():
 			errors.append(resource_path + ": empty stage")
 			continue
-		if stage.upgrade == 0 and unlocked_road == null: errors.append(resource_path + ": road upgrade has no road definition")
+		if stage.upgrade == 0:
+			if unlocked_road == null or replaced_road == null:
+				errors.append(resource_path + ": road upgrade needs both road definitions")
+			elif unlocked_road.id == replaced_road.id:
+				errors.append(resource_path + ": upgraded road must replace a different option")
 		if stage.upgrade not in [0, 1, 2] or stage.upgrade_factor <= 0 or not is_finite(stage.upgrade_factor): errors.append(resource_path + ": invalid upgrade")
 		if stage.upgrade == 1 and stage.upgrade_factor > 1: errors.append(resource_path + ": discount factor must not exceed one")
 		if stage.upgrade == 2 and stage.upgrade_factor < 1: errors.append(resource_path + ": speed upgrade must not slow ants")

@@ -11,6 +11,12 @@ func run(test: Node) -> void:
 	test.expect(seen.size() == 3, "initial requests do not repeat")
 	var food: ResourceType = world.inventory.type_by_id(&"food")
 	var royal: ResourceType = world.inventory.type_by_id(&"royal")
+	var ordinary: TileBuildOption = tasks.deck.replaced_road
+	var road_cell := Vector2i(26, 25)
+	var option_count: int = world.build_controller.options.size()
+	var road_position: int = world.build_controller.options.find(ordinary)
+	test.expect(world.build_controller.try_build(ordinary, road_cell), "ordinary road can be built before the upgrade")
+	var ordinary_price: int = BuildController.price_amount(world.build_controller.price(ordinary), world.inventory.type_by_id(&"wood"))
 	var before: float = world.match_controller.time_remaining
 	test.expect(tasks.submit(0), "affordable request submits")
 	test.expect(world.match_controller.time_remaining == before + 25 and world.inventory.quantity(royal) == 1 and tasks.closed == 1, "submission gives time rare currency and level progress once")
@@ -25,6 +31,10 @@ func run(test: Node) -> void:
 		while tasks.slots[index] == null: index += 1
 		tasks.submit(index)
 	test.expect(tasks.level == 2 and tasks.closed == 0 and world.build_controller.options.has(tasks.deck.unlocked_road), "closing the five-item pool unlocks the next level and improved road")
+	test.expect(not world.build_controller.options.has(ordinary) and world.build_controller.options.size() == option_count and world.build_controller.options[road_position] == tasks.deck.unlocked_road, "improved road replaces the ordinary palette slot instead of adding a competing choice")
+	test.expect(not world.prices.definitions.has(ordinary) and world.prices.definitions.has(tasks.deck.unlocked_road), "pricing reload tracks the active road definition")
+	test.expect(BuildController.price_amount(world.build_controller.price(tasks.deck.unlocked_road), world.inventory.type_by_id(&"wood")) == ordinary_price, "replacement road preserves the one-wood base price")
+	test.expect(not world.build_controller.try_build(ordinary, road_cell), "retired road option cannot be built after unlocking the replacement")
 	for step in range(5):
 		var index := 0
 		while tasks.slots[index] == null: index += 1
@@ -37,7 +47,7 @@ func run(test: Node) -> void:
 		tasks.submit(index)
 	test.expect(tasks.level == 4 and world.population.agents()[0].speed > speed, "repeated final-stage progression improves worker speed")
 	var tile: TileBuildOption = tasks.deck.unlocked_road
-	test.expect(world.build_controller.try_build(tile, Vector2i(26, 25)) and world.route_service.entry_cost(Vector2i(26, 25)) < 0.35, "unlocked road uses its own faster tile alternative")
+	test.expect(world.build_controller.try_build(tile, Vector2i(26, 25)) and world.route_service.entry_cost(Vector2i(26, 25)) < 0.35, "replacement brush upgrades an existing road to its faster tile alternative")
 	world.match_controller._process(100000)
 	var stock: int = world.inventory.quantity(food)
 	test.expect(not tasks.submit(0) and world.inventory.quantity(food) == stock, "expired match cannot exchange a request or revive its timer")

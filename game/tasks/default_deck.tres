@@ -4,6 +4,7 @@
 [ext_resource type="Script" path="res://game/tasks/task_spec.gd" id="task"]
 [ext_resource type="Script" path="res://game/resources/resource_amount.gd" id="amount"]
 [ext_resource type="Resource" path="res://game/building/options/road_plus.tres" id="road"]
+[ext_resource type="Resource" path="res://game/building/options/road.tres" id="old_road"]
 [ext_resource type="Resource" path="res://game/resources/dot_treses/wood.tres" id="wood"]
 [ext_resource type="Resource" path="res://game/resources/dot_treses/stone.tres" id="stone"]
 [ext_resource type="Resource" path="res://game/resources/dot_treses/food.tres" id="food"]
@@ -372,3 +373,4 @@ upgrade_factor = 1.15
 script = ExtResource("deck")
 stages = Array[ExtResource("stage")]([SubResource("stage_1"), SubResource("stage_2"), SubResource("stage_3")])
 unlocked_road = ExtResource("road")
+replaced_road = ExtResource("old_road")

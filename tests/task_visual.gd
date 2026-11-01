@@ -32,7 +32,7 @@ func _run() -> void:
 	await capture("04-level-two-and-road-unlock", 30)
 	await key(KEY_SPACE)
 	var editor: ConstructionMenu = Router.top_overlay() as ConstructionMenu
-	expect(editor.controls.has(&"road_plus") and editor.controls.has(&"canteen"), "palette offers the unlocked road and rare-resource canteen")
+	expect(editor.controls.has(&"road_plus") and not editor.controls.has(&"road") and editor.controls.has(&"canteen"), "palette replaces the ordinary road with its upgrade and offers the rare-resource canteen")
 	await click(editor.controls[&"road_plus"])
 	await click_at(cell_point(Vector2i(27, 24)))
 	await click(editor.controls[&"canteen"])
