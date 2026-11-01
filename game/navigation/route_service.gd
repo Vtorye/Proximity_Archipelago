@@ -68,6 +68,7 @@ func entry_cost(cell: Vector2i) -> float:
 
 ## Cost is in move_cost units, not seconds.
 func get_path_cost(from_cell: Vector2i, to_cell: Vector2i) -> float:
+	if not _grid.connected(from_cell, to_cell): return INF
 	if _fields.has(from_cell):
 		cache_hits += 1
 		return _fields[from_cell].cost(to_cell)
@@ -105,6 +106,7 @@ func reverse_field(goals: Array[Vector2i]) -> NavigationField:
 	return GridSearch.build(_grid, goals, true)
 
 func request_route(from_cell: Vector2i, to_cell: Vector2i) -> Route:
+	if not _grid.connected(from_cell, to_cell): return make_route([])
 	var cells: Array[Vector2i]
 	if _fields.has(from_cell):
 		cells = _fields[from_cell].path(to_cell)

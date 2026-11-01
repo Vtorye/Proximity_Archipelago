@@ -4,54 +4,34 @@ extends RefCounted
 
 static func build(grid: TileGrid, seeds: Array[Vector2i], reverse: bool = false, stop: Vector2i = Vector2i(2147483647, 2147483647)) -> NavigationField:
 	var field := NavigationField.new()
-	field.region = grid.rect()
-	field.reverse = reverse
-	var width: int = field.region.size.x
-	var count: int = width * field.region.size.y
+	field.setup(grid, seeds, reverse)
+	if field.costs.is_empty(): return field
 	var terrain: PackedFloat32Array = grid.packed_costs()
-	var distances := PackedFloat32Array()
-	distances.resize(count)
-	distances.fill(INF)
-	var parents := PackedByteArray()
-	parents.resize(count)
-	parents.fill(255)
+	var adjacency: PackedInt32Array = grid.packed_neighbors()
 	var heap: Array[Vector2] = []
 	for seed in seeds:
 		if grid.walkable(seed):
-			var id: int = grid.index(seed)
-			distances[id] = 0.0
-			_push(heap, Vector2(0.0, id))
-	var stop_id: int = grid.index(stop) if grid.in_bounds(stop) else -1
+			field.costs[field.index(seed)] = 0.0
+			_push(heap, Vector2(0.0, grid.index(seed)))
+	var stop_id: int = grid.index(stop)
 	while not heap.is_empty():
 		var item: Vector2 = _pop(heap)
 		var id: int = int(item.y)
-		if item.x > distances[id]:
-			continue
-		if id == stop_id:
-			break
-		var column: int = id % width
+		var current: int = field.node_index(id)
+		var offset: int = current - id
+		if item.x > field.costs[current]: continue
+		if id == stop_id: break
 		for direction in range(4):
-			var next: int = id
-			match direction:
-				0:
-					if column == 0: continue
-					next -= 1
-				1:
-					if column == width - 1: continue
-					next += 1
-				2: next -= width
-				3: next += width
-			if next < 0 or next >= count or terrain[next] <= 0.0:
-				continue
+			var next: int = adjacency[id * 4 + direction]
+			if next < 0: continue
 			# Reverse traversal preserves the original destination-entry edge weight.
 			var step: float = terrain[id] if reverse else terrain[next]
-			var candidate: float = distances[id] + step
-			if candidate < distances[next]:
-				distances[next] = candidate
-				parents[next] = direction ^ 1
+			var candidate: float = field.costs[current] + step
+			var target: int = next + offset
+			if candidate < field.costs[target]:
+				field.costs[target] = candidate
+				field.parents[target] = direction ^ 1
 				_push(heap, Vector2(candidate, next))
-	field.costs = distances
-	field.parents = parents
 	return field
 
 static func _push(heap: Array[Vector2], item: Vector2) -> void:

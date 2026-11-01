@@ -34,6 +34,7 @@ func _run() -> void:
 	_test_stock()
 	_test_composite_stock()
 	_test_navigation()
+	preload("res://tests/island_regressions.gd").new().run(self)
 	_test_resident_pruning()
 	await _test_worlds()
 	await preload("res://tests/build_regressions.gd").new().run(self)
@@ -209,7 +210,7 @@ func _test_worlds() -> void:
 		expect(map.get_used_rect().has_point(building.cell) and first.route_service.walkable(building.entry_cells()[0]), "smaller world keeps every starting building inside the map and accessible")
 	var field: NavigationField = first.route_service.food_field()
 	metrics["navigation_50x50"] = {"field_bytes": field.costs.size() * 4 + field.parents.size(), "cells": map.get_used_cells().size()}
-	expect(field.costs.size() * 4 + field.parents.size() == 12500, "fifty by fifty navigation field uses one quarter of the previous cell storage")
+	expect(field.costs.size() <= first.route_service.snapshot().node_count() and field.costs.size() < 2500, "navigation fields contain land only; water has no distance entry")
 	expect(first.population.count() == 5 and second.population.count() == 5, "worlds own independent ant populations")
 	for ant in second.population.agents():
 		expect(ant.get_parent() == second.units and ant.route_service == second.route_service and ant.planner.inventory == second.inventory, "second world has no first-world dependency")
