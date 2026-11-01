@@ -7,7 +7,7 @@ python3 - "$project_root" "$check_root/project" <<'PY'
 import shutil, sys
 from pathlib import Path
 source, destination = map(Path, sys.argv[1:])
-shutil.copytree(source, destination, ignore=shutil.ignore_patterns('.git', '.godot', 'evidence'))
+shutil.copytree(source, destination, ignore=shutil.ignore_patterns('.git', '.godot'))
 project = destination / 'project.godot'
 project.write_text(project.read_text().replace('config/name="archipelago"', 'config/name="archipelago-tests"'))
 PY
