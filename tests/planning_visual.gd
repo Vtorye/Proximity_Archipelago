@@ -43,6 +43,7 @@ func _run() -> void:
 	for frame in range(150):
 		if ants[0]._carrying and ants[0]._destination == &"home": break
 		await frames(1)
+	await hover(target)
 	panel.refresh()
 	expect(ants[0]._carrying and panel._detail.text.contains("0+0/3"), "returning carrier is no longer included in enterprise load")
 	await capture("04-returning-with-load")
@@ -88,6 +89,7 @@ func _until_working(ant: AntAgent) -> void:
 	expect(false, "walking ant reaches its selected workplace")
 
 func hover(cell: Vector2i) -> void:
+	get_viewport().warp_mouse(cell_point(cell))
 	var motion := InputEventMouseMotion.new()
 	motion.position = cell_point(cell)
 	motion.global_position = motion.position
