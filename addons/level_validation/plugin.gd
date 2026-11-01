@@ -7,6 +7,7 @@ var _output: RichTextLabel
 var controls: Dictionary[StringName, Button] = {}
 func _enter_tree() -> void:
 	add_tool_menu_item("Проверить сохранённый уровень", _validate)
+	add_tool_menu_item("Открыть инструменты уровня", _show_dock)
 	_dock = VBoxContainer.new()
 	_dock.name = "Уровень"
 	_dock.custom_minimum_size.x = 230
@@ -37,6 +38,7 @@ func _enter_tree() -> void:
 	_scene_changed(EditorInterface.get_edited_scene_root())
 func _exit_tree() -> void:
 	remove_tool_menu_item("Проверить сохранённый уровень")
+	remove_tool_menu_item("Открыть инструменты уровня")
 	if _dock != null:
 		remove_control_from_docks(_dock)
 		_dock.queue_free()
@@ -95,3 +97,17 @@ func _validate() -> void:
 	for line in output:
 		_output.text += str(line)
 		print(line)
+
+func _show_dock() -> void:
+	var child: Node = _dock
+	var parent: Node = child.get_parent()
+	while parent != null:
+		# Godot 4.7 wraps legacy docks in EditorDock; older versions use TabContainer.
+		if parent.is_class("EditorDock"):
+			parent.call("make_visible")
+			return
+		if parent is TabContainer:
+			parent.current_tab = child.get_index()
+			return
+		child = parent
+		parent = parent.get_parent()
