@@ -41,7 +41,8 @@ func _run() -> void:
 	_finish()
 
 func _check_full_map_overlay() -> void:
-	var regions: Array[Rect2] = [screen.hud.get_child(0).get_global_rect(), screen.hud.task_panel.get_global_rect(), screen.hud.navigation_panel.get_global_rect(), screen.hud._bottom.get_global_rect()]
+	var header: Control = screen.hud.controls[&"settings"].get_parent().get_parent()
+	var regions: Array[Rect2] = [header.get_global_rect(), screen.hud.task_panel.get_global_rect(), screen.hud.navigation_panel.get_global_rect(), screen.hud._bottom.get_global_rect()]
 	var probes: Array[Vector2] = []
 	for region in regions:
 		for cell in screen.world.route_service.snapshot().walkable_cells():
