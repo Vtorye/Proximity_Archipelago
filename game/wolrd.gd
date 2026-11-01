@@ -2,7 +2,6 @@ extends Node2D
 class_name World
 ## Composition root. Owns services and lifecycle, never shell navigation or input.
 
-const CELL_SIZE := 16
 @export var starting_resources: Array[ResourceAmount] = []
 @export var build_catalog: BuildCatalog
 @export var build_options: Array[BuildOption] = []
@@ -139,8 +138,6 @@ func _subscribe_workplace(node: Node) -> void:
 func _configure_building(building: Building) -> void:
 	if building is Workplace: building.inventory = inventory
 	_subscribe_workplace(building)
-	if building is Canteen:
-		building.configure(inventory, inventory.type_by_id(&"food"))
 	var sprite: Sprite2D = building.get_node_or_null("Sprite") as Sprite2D
 	if sprite != null:
 		if building.option != null and building.option.icon != null:

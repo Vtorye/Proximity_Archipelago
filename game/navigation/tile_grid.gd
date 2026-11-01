@@ -80,8 +80,6 @@ func index(cell: Vector2i) -> int:
 	return _ids.get(cell, -1)
 func cell_at(id: int) -> Vector2i:
 	return _cells[id]
-func size() -> Vector2i:
-	return _rect.size
 func rect() -> Rect2i:
 	return _rect
 func in_bounds(cell: Vector2i) -> bool:
