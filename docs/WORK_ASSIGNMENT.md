@@ -43,4 +43,4 @@
 
 Запуск визуальной проверки: `./tools/check_planning_ui.sh` (X11, OpenGL, ffmpeg).
 
-Результаты и видео: [evidence/assignment](../evidence/assignment/).
+Результаты и видео: /tmp/colony-validation/assignment (архивные материалы).

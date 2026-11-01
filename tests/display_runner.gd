@@ -7,7 +7,7 @@ var _failures: Array[String] = []
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
-	_output = OS.get_environment("COLONY_EVIDENCE_DIR")
+	_output = OS.get_environment("COLONY_CAPTURE_DIR")
 	_frames = OS.get_environment("COLONY_DISPLAY_FRAMES")
 	DirAccess.make_dir_recursive_absolute(_frames)
 	_run.call_deferred()
