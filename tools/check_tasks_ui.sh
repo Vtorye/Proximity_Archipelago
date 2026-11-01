@@ -14,7 +14,7 @@ if ! godot --headless --path "$task_root/project" --editor --quit > "$task_root/
 if rg -q 'SCRIPT ERROR|Parse Error|Failed to load' "$task_root/import.log"; then cat "$task_root/import.log"; exit 1; fi
 export COLONY_SOURCE_REVISION="$(git -C "$project_root" rev-parse HEAD)"
 for size in 1280x720 960x600; do
-  export COLONY_EVIDENCE_DIR="$project_root/evidence/tasks/$size"
+  export COLONY_EVIDENCE_DIR="${COLONY_OUTPUT_ROOT:-/tmp/colony-validation}/tasks/$size"
   mkdir -p "$COLONY_EVIDENCE_DIR"
   movie=()
   if [ "$size" = 1280x720 ]; then movie=(--write-movie "$task_root/tasks.avi"); fi
@@ -22,4 +22,4 @@ for size in 1280x720 960x600; do
   cat "$task_root/ui.log"
   if rg -q 'SCRIPT ERROR|ERROR:|UI FAIL|leaked' "$task_root/ui.log" || ! rg -q '^UI TESTS PASS$' "$task_root/ui.log"; then exit 1; fi
 done
-ffmpeg -hide_banner -loglevel error -y -i "$task_root/tasks.avi" -c:v libx264 -crf 18 -pix_fmt yuv420p -c:a aac "$project_root/evidence/tasks/tasks.mp4"
+ffmpeg -hide_banner -loglevel error -y -i "$task_root/tasks.avi" -c:v libx264 -crf 18 -pix_fmt yuv420p -c:a aac "${COLONY_OUTPUT_ROOT:-/tmp/colony-validation}/tasks/tasks.mp4"

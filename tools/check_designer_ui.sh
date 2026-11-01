@@ -13,7 +13,7 @@ PY
 if ! godot --headless --path "$preview_root/project" --editor --quit > "$preview_root/import.log" 2>&1; then cat "$preview_root/import.log"; exit 1; fi
 if rg -q 'SCRIPT ERROR|Parse Error|Failed to load' "$preview_root/import.log"; then cat "$preview_root/import.log"; exit 1; fi
 export COLONY_SOURCE_REVISION="$(git -C "$project_root" rev-parse HEAD)"
-export COLONY_EVIDENCE_DIR="$project_root/evidence/designer"
+export COLONY_EVIDENCE_DIR="${COLONY_OUTPUT_ROOT:-/tmp/colony-validation}/designer"
 mkdir -p "$COLONY_EVIDENCE_DIR"
 if ! godot --path "$preview_root/project" --display-driver x11 --audio-driver Dummy --resolution 1280x720 --fixed-fps 30 --quit-after 1500 --write-movie "$preview_root/designer.avi" res://tests/designer_visual.tscn > "$preview_root/ui.log" 2>&1; then cat "$preview_root/ui.log"; exit 1; fi
 cat "$preview_root/ui.log"

@@ -14,7 +14,7 @@ PY
 godot_binary="${GODOT_BIN:-godot}"
 "$godot_binary" --headless --path "$planning_root/project" --editor --quit > "$planning_root/import.log" 2>&1
 if rg -q 'SCRIPT ERROR|Failed to load|Parse Error' "$planning_root/import.log"; then cat "$planning_root/import.log"; exit 1; fi
-export COLONY_EVIDENCE_DIR="$project_root/evidence/assignment"
+export COLONY_EVIDENCE_DIR="${COLONY_OUTPUT_ROOT:-/tmp/colony-validation}/assignment"
 export COLONY_SOURCE_REVISION="$(git -C "$project_root" rev-parse HEAD)"
 mkdir -p "$COLONY_EVIDENCE_DIR"
 if ! "$godot_binary" --path "$planning_root/project" --display-driver x11 --audio-driver Dummy --resolution 1280x720 --fixed-fps 30 --quit-after 1800 --write-movie "$planning_root/planning.avi" res://tests/planning_visual.tscn > "$planning_root/ui.log" 2>&1; then cat "$planning_root/ui.log"; exit 1; fi
