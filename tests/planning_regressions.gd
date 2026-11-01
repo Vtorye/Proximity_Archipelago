@@ -202,23 +202,28 @@ func _workload_ui(test: Node) -> void:
 	var world: World = test.make_world()
 	var ant: AntAgent = world.population.agents()[0]
 	var workplace: Workplace = _stone_only(world, ant)
-	var menu: BuildMenu = load("res://overlays/build_menu.tscn").instantiate() as BuildMenu
-	var context := BuildMenuContext.new()
-	context.controller = world.build_controller
-	context.population = world.population
-	context.art = world.art
-	context.cell = workplace.cell
-	context.anchor = Rect2(300, 150, 32, 32)
-	menu.payload = context
-	test.add_child(menu)
-	test.expect(workplace.incoming_count() == 1 and workplace.working_count() == 0 and menu._description.text.contains("0+1/4"), "UI immediately includes a reserved walking worker")
+	var overlay := NavigationOverlay.new()
+	overlay.world = world
+	overlay.cycle()
+	overlay.cycle()
+	overlay.hovered = workplace.cell
+	var panel := NavigationPanel.new()
+	panel.overlay = overlay
+	test.add_child(panel)
+	test.expect(workplace.incoming_count() == 1 and workplace.working_count() == 0 and panel._detail.text.contains("0+1/4"), "UI immediately includes a reserved walking worker")
+	var before: float = overlay.sample(workplace.cell).score
 	for step in range(1200):
 		ant._physics_process(1.0 / 60.0)
 		if ant.status == AntAgent.Status.WORKING: break
-	test.expect(workplace.incoming_count() == 0 and workplace.working_count() == 1 and menu._description.text.contains("1+0/4"), "arrival transfers the same worker from incoming to working in the UI")
+	panel.refresh()
+	test.expect(workplace.incoming_count() == 0 and workplace.working_count() == 1 and panel._detail.text.contains("1+0/4"), "arrival transfers the same worker from incoming to working in the UI")
 	ant._physics_process(ant.work_time + 0.01)
-	test.expect(ant._carrying and ant._destination == &"home" and workplace.worker_count() == 0 and menu._description.text.contains("0+0/4"), "loaded return is excluded from the displayed enterprise load")
-	menu.free()
+	panel.refresh()
+	test.expect(ant._carrying and ant._destination == &"home" and workplace.worker_count() == 0 and panel._detail.text.contains("0+0/4"), "loaded return is excluded from the displayed enterprise load")
+	test.expect(is_equal_approx(before - overlay.sample(workplace.cell).score, 0.5), "the number on the workplace tile includes the live load penalty")
+	test.expect(overlay.sample(workplace.cell).kind == &"work" and overlay.sample(ant.home.cell).kind == &"home", "workplaces and homes use different map label categories")
+	panel.free()
+	overlay.free()
 	for place in world.registry.workplaces(): place.work_slots = 0
 	var waiting_ant: AntAgent = world.population.agents()[1]
 	var hud := MatchHud.new()

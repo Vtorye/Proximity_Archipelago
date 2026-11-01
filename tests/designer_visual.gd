@@ -13,7 +13,8 @@ func _run() -> void:
 	await click_at(cell_point(Vector2i(24, 25)))
 	expect(screen.navigation_overlay.origin == Vector2i(24, 25), "left click picks the distance origin")
 	await capture("02-distance-and-job-scores", 30)
-	var menu: BuildMenu = await select_cell(Vector2i(30, 24))
+	await key(KEY_SPACE)
+	var menu: ConstructionMenu = Router.top_overlay() as ConstructionMenu
 	expect(menu.controls[&"house"].cost_label.text == "10 Древесина + 20 Камень", "menu shows the configured composite nest price")
 	await capture("03-configured-house-price", 30)
 	var path := "res://game/building/options/house.tres"
@@ -25,7 +26,7 @@ func _run() -> void:
 	await capture("04-live-price-reload", 30)
 	FileAccess.open(path, FileAccess.WRITE).store_string(original)
 	await frames(65)
-	await key(KEY_ESCAPE)
+	await key(KEY_SPACE)
 	await key(KEY_N)
 	expect(screen.navigation_overlay.mode == 0, "third N restores the ordinary map")
 	screen.world.population.agents()[0].speed = 30.0

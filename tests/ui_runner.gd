@@ -87,26 +87,6 @@ func cell_point(cell: Vector2i) -> Vector2:
 	var map: TileMapLayer = screen.world.get_node("Map") as TileMapLayer
 	return map.get_global_transform_with_canvas() * map.map_to_local(cell)
 
-func select_cell(cell: Vector2i) -> BuildMenu:
-	await click_at(cell_point(cell), MOUSE_BUTTON_RIGHT)
-	await frames(6)
-	var menu: BuildMenu = Router.top_overlay() as BuildMenu
-	expect(menu != null and screen.selection.selected and screen.selection.cell == cell, "mouse selects the requested map cell")
-	return menu
-
-func validate_popup(menu: BuildMenu) -> void:
-	if menu == null:
-		return
-	var rect: Rect2 = menu._panel.get_global_rect()
-	var viewport: Rect2 = get_viewport().get_visible_rect()
-	expect(viewport.encloses(rect), "build menu stays fully inside viewport")
-	expect(not rect.intersects(screen.selection.screen_rect().grow(-1)), "build menu does not cover selected cell")
-	for obstacle in menu.context.obstacles:
-		expect(not rect.intersects(obstacle), "build menu does not cover objectives")
-	if menu._message.visible:
-		expect(not rect.intersects(menu._message.get_global_rect()), "help never covers construction choices")
-	expect(rect.position.y >= 60 * AppSettings.ui_scale and rect.end.y <= viewport.end.y - 72 * AppSettings.ui_scale, "build menu keeps permanent controls accessible")
-
 func _run() -> void:
 	seed(20261025)
 	AppSettings.reset_defaults()
@@ -152,102 +132,22 @@ func _run() -> void:
 	await capture("06-colony")
 	await click_at(Vector2(320, 200))
 	expect(not Router.has_overlay(), "left click never opens construction")
-	var cell := Vector2i(26, 25)
-	var menu: BuildMenu = await select_cell(cell)
-	preload("res://tests/pixel_font_checks.gd").verify(self, menu)
-	validate_popup(menu)
-	var locked_level: int = screen.camera.level
-	await click_at(Vector2(20, 280), MOUSE_BUTTON_WHEEL_UP)
-	expect(screen.camera.level == locked_level and Router.top_overlay() == menu, "wheel cannot zoom while construction is open")
-	await click_at(cell_point(Vector2i(27, 25)), MOUSE_BUTTON_RIGHT)
-	expect(not Router.has_overlay() and not screen.selection.selected, "second right click only closes construction")
-	menu = await select_cell(cell)
-	await click_at(Vector2(20, 280))
-	expect(not Router.has_overlay(), "left click outside closes construction")
-	menu = await select_cell(cell)
-	var motion := InputEventMouseMotion.new()
-	motion.position = menu.controls[&"road"].get_global_rect().get_center()
-	motion.global_position = motion.position
-	get_viewport().push_input(motion, true)
-	await frames(3)
-	expect(not menu._message.text.is_empty(), "disabled placement explains its reason inline")
-	validate_popup(menu)
-	await capture("07-placement-help")
-	await key(KEY_ESCAPE)
-	menu = await select_cell(cell)
-	await frames(2)
-	var bright: Image = await capture("07-selection-bright", 0)
-	await frames(18)
-	var dim: Image = await capture("08-selection-dim")
-	_check_brackets(bright, dim, screen.selection.screen_rect())
-	for item in [["left", Vector2(24, 196)], ["right", Vector2(616, 196)], ["top", Vector2(400, 84)], ["bottom", Vector2(350, 308)]]:
-		await key(KEY_ESCAPE)
-		var desired: Vector2 = item[1]
-		var viewport: Vector2 = get_viewport().get_visible_rect().size
-		screen.camera.position = screen.world.route_service.cell_to_world(cell) - (desired - viewport / 2.0) / screen.camera.zoom
-		screen.camera.force_update_scroll()
-		await frames(4)
-		menu = await select_cell(cell)
-		validate_popup(menu)
-		await capture("09-edge-" + item[0])
-	await key(KEY_ESCAPE)
-	screen.camera.position = Vector2(400, 400)
-	screen.camera.force_update_scroll()
-	await frames(4)
+	await click_at(cell_point(Vector2i(26, 25)), MOUSE_BUTTON_RIGHT)
+	expect(not Router.has_overlay(), "right click no longer opens the retired construction popup")
+	await key(KEY_SPACE)
+	expect(Router.top_overlay() is ConstructionMenu and get_tree().paused, "space opens the construction planner")
+	await capture("07-construction-planner")
+	await key(KEY_SPACE)
+	expect(not Router.has_overlay() and not get_tree().paused, "space commits the plan and resumes")
 	await click(screen.hud.controls[&"zoom_in"])
 	expect(screen.camera.level == 3, "zoom in button")
-	await capture("10-zoom-in")
 	await click(screen.hud.controls[&"zoom_out"])
 	expect(screen.camera.level == 2, "zoom out button")
 	await click_at(Vector2(320, 200), MOUSE_BUTTON_WHEEL_DOWN)
 	expect(screen.camera.level == 1, "mouse wheel changes zoom")
-	await capture("11-zoom-out")
 	screen.camera.set_level(2)
-	await frames(3)
-	var map: TileMapLayer = screen.world.get_node("Map") as TileMapLayer
-	menu = await select_cell(Vector2i(30, 29))
-	await click(menu.controls[&"road"])
-	expect(map.get_cell_atlas_coords(Vector2i(30, 29)) == Vector2i(2, 0), "road action paints the road material")
-	await capture("12a-road-built")
-	menu = await select_cell(Vector2i(30, 29))
-	await click(menu.controls[&"ground"])
-	expect(map.get_cell_atlas_coords(Vector2i(30, 29)) == Vector2i(1, 0), "soil action restores the soil material")
-	await capture("12b-soil-built")
-	menu = await select_cell(Vector2i(30, 29))
-	await click(menu.controls[&"apple_tree"])
-	var berries: Workplace = screen.world.registry.at(Vector2i(30, 29)) as Workplace
-	expect(berries != null and berries.output_amount == 3, "berry action creates a productive food workplace")
-	await capture("12c-berries-built")
-	menu = await select_cell(Vector2i(30, 29))
-	await click(menu.controls[&"demolish"])
-	await click(menu.controls[&"demolish"])
-	await frames(4)
-	menu = await select_cell(Vector2i(30, 29))
-	expect(menu != null and not menu.controls[&"house"].disabled, "empty safe cell permits a nest")
-	await capture("12-build-choices")
-	await click(menu.controls[&"house"])
-	await frames(8)
-	expect(screen.world.population.count() == 10 and not Router.has_overlay(), "nest builds and creates configured population")
-	await capture("13-nest-built")
-	menu = await select_cell(Vector2i(30, 29))
-	expect(menu.controls[&"house"].disabled, "occupied nest cell rejects replacement")
-	await click(menu.controls[&"demolish"])
-	validate_popup(menu)
-	await capture("14-demolition-confirmation")
-	expect(menu._confirming and screen.world.population.count() == 10, "demolition waits for confirmation")
-	await click(menu.controls[&"cancel_demolish"])
-	expect(not menu._confirming and screen.world.population.count() == 10, "cancel preserves the building and residents")
-	await capture("15-demolition-cancelled")
-	await click(menu.controls[&"demolish"])
-	await click(menu.controls[&"demolish"])
-	await frames(8)
-	expect(screen.world.population.count() == 5 and screen.world.registry.at(Vector2i(30, 29)) == null, "confirmed demolition removes exactly that nest")
-	await capture("16-demolition-complete")
-	menu = await select_cell(Vector2i(28, 26))
-	expect(menu.controls[&"demolish"].disabled, "last feeding point is protected")
-	await capture("17-feeding-point-protected")
 	await click(screen.hud.controls[&"settings"])
-	expect(not screen.selection.selected and not Router.top_overlay() is BuildMenu, "pause closes construction with a single click")
+	expect(not screen.selection.selected and not Router.top_overlay() is ConstructionMenu, "pause closes construction with a single click")
 	await frames(8)
 	var paused_time: float = screen.world.match_controller.time_remaining
 	var satiety: float = screen.world.population.agents()[0].needs.satiety
@@ -277,9 +177,6 @@ func _run() -> void:
 	expect(screen.world.population.count() == 5 and screen.world.match_controller.time_remaining > 178.0, "pause restart resets the population and match timer")
 	expect(AppSettings.show_grid and AppSettings.reduced_motion, "pause restart preserves player settings")
 	await capture("20a-pause-restart")
-	menu = await select_cell(Vector2i(26, 25))
-	await capture("21-reduced-motion-grid")
-	await key(KEY_ESCAPE)
 	# A real camera drag must move the map, not activate a cell.
 	var old_position: Vector2 = screen.camera.position
 	var press := InputEventMouseButton.new()
@@ -296,17 +193,6 @@ func _run() -> void:
 	await frames(5)
 	expect(screen.camera.position != old_position, "held left mouse pans without opening construction")
 	await capture("22-camera-pan")
-	# Select a water tile by centering its neighborhood in the live camera.
-	screen.camera.position = Vector2(25 * 16 + 8, 10 * 16 + 8)
-	screen.camera.force_update_scroll()
-	await frames(5)
-	menu = await select_cell(Vector2i(25, 10))
-	expect(menu.controls[&"road"].disabled and menu.controls[&"house"].disabled, "water denies construction")
-	await capture("23-water-selection")
-	await key(KEY_ESCAPE)
-	screen.camera.position = Vector2(400, 400)
-	screen.camera.force_update_scroll()
-	await frames(5)
 	var stock: WorldInventory = screen.world.inventory
 	stock.begin_update()
 	for type in stock.registered_types():
@@ -343,28 +229,6 @@ func _run() -> void:
 	AppSettings.reset_defaults()
 	_finish()
 
-func _check_brackets(bright: Image, dim: Image, rect: Rect2) -> void:
-	# Four independent pixel regions verify both presence and visible animation.
-	var factor: float = floorf(minf(float(bright.get_width()) / 640.0, float(bright.get_height()) / 360.0))
-	var scale := Vector2.ONE * factor
-	var offset: Vector2 = (Vector2(bright.get_size()) - Vector2(640, 360) * factor) / 2.0
-	for corner in [rect.position, Vector2(rect.end.x, rect.position.y), rect.end, Vector2(rect.position.x, rect.end.y)]:
-		var a := 0.0
-		var b := 0.0
-		var difference := 0.0
-		var pixel: Vector2i = Vector2i(corner * scale + offset)
-		for y in range(-4, 5):
-			for x in range(-4, 5):
-				var point: Vector2i = pixel + Vector2i(x, y)
-				if Rect2i(Vector2i.ZERO, bright.get_size()).has_point(point):
-					var first: Color = bright.get_pixelv(point)
-					var second: Color = dim.get_pixelv(point)
-					a = maxf(a, minf(first.r, minf(first.g, first.b)))
-					b = maxf(b, minf(second.r, minf(second.g, second.b)))
-					difference = maxf(difference, absf(first.r - second.r))
-		expect(maxf(a, b) > 0.8, "selected tile has a white corner bracket")
-		expect(difference > 0.1, "corner bracket visibly blinks")
-
 func _layout_only() -> void:
 	var dimensions: Vector2i = display_size if display_size != Vector2i.ZERO else get_window().size
 	var tag: String = "layout-%dx%d-" % [dimensions.x, dimensions.y]
@@ -378,10 +242,10 @@ func _layout_only() -> void:
 	screen = Router._current
 	# Legacy UI regression retains the fixed-goal fixture; task behavior has its own runner.
 	if screen.world != null: screen.world.match_controller.task_mode = false
-	var menu: BuildMenu = await select_cell(Vector2i(26, 25))
-	validate_popup(menu)
+	await key(KEY_SPACE)
+	expect(Router.top_overlay() is ConstructionMenu, "layout uses the single supported construction editor")
 	await capture(tag + "build")
-	await key(KEY_ESCAPE)
+	await key(KEY_SPACE)
 	await click(screen.hud.controls[&"settings"])
 	await frames(8)
 	await capture(tag + "pause")

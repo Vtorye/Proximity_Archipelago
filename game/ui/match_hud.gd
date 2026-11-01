@@ -19,6 +19,8 @@ var _warning: Label
 var _waiting: Label
 var _zoom_level := 2
 var _objectives: PanelContainer
+var navigation: NavigationOverlay
+var navigation_panel: NavigationPanel
 var task_panel: TaskPanel
 var _bottom: PanelContainer
 
@@ -120,7 +122,7 @@ func _ready() -> void:
 	var hints := HBoxContainer.new()
 	hints.add_theme_constant_override("separation", 6)
 	bottom.add_child(hints)
-	var help: Label = ColonyStyle.label("ЛКМ: камера  ПКМ: тайл", 8, ColonyStyle.MUTED)
+	var help: Label = ColonyStyle.label("ЛКМ: камера  Пробел: стройка", 8, ColonyStyle.MUTED)
 	help.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	help.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	hints.add_child(help)
@@ -162,6 +164,14 @@ func _ready() -> void:
 		task_panel.director = world.tasks
 		task_panel.position = Vector2(8, 64)
 		add_child(task_panel)
+	if navigation != null:
+		navigation_panel = NavigationPanel.new()
+		navigation_panel.overlay = navigation
+		add_child(navigation_panel)
+		navigation_panel.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
+		navigation_panel.offset_left = -198
+		navigation_panel.offset_right = -8
+		navigation_panel.offset_top = 64
 	refresh()
 	set_zoom(2)
 
@@ -216,6 +226,7 @@ func set_zoom(value: int) -> void:
 func build_obstacles() -> Array[Rect2]:
 	var result: Array[Rect2] = []
 	result.append(task_panel.get_global_rect() if task_panel != null else _objectives.get_global_rect())
+	if navigation_panel != null and navigation_panel.visible: result.append(navigation_panel.get_global_rect())
 	return result
 
 func lock_zoom(locked: bool) -> void:
@@ -232,6 +243,9 @@ func toast(message: String, danger: bool = false) -> void:
 func set_construction_mode(active: bool) -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS if active else Node.PROCESS_MODE_INHERIT
 	_bottom.visible = not active
+	if navigation_panel != null:
+		navigation_panel.suspended = active
+		navigation_panel.refresh()
 	_toast.hide()
 
 func _process(delta: float) -> void:
