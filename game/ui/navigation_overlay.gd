@@ -110,5 +110,3 @@ func _draw() -> void:
 			var text_position: Vector2 = center + Vector2(-font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, 8).x / 2, 3)
 			draw_string(font, text_position + Vector2.ONE, text, HORIZONTAL_ALIGNMENT_LEFT, -1, 8, Color.BLACK)
 			draw_string(font, text_position, text, HORIZONTAL_ALIGNMENT_LEFT, -1, 8, color)
-	var selected: Vector2 = canvas * map.map_to_local(origin)
-	draw_rect(Rect2(selected - screen_size / 2, screen_size), Color.WHITE, false, 1)

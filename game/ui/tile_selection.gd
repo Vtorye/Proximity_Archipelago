@@ -20,20 +20,18 @@ func clear() -> void:
 	selected = false
 	queue_redraw()
 
-func screen_rect() -> Rect2:
-	var size: Vector2 = Vector2(map.tile_set.tile_size)
-	return map.get_global_transform_with_canvas() * Rect2(map.map_to_local(cell) - size / 2.0, size)
-
 func _process(delta: float) -> void:
-	if selected:
-		_time += delta
-		queue_redraw()
+	if selected: _time += delta
+	if selected or AppSettings.show_grid: queue_redraw()
 
 func _draw() -> void:
 	if map == null:
 		return
 	if AppSettings.show_grid:
-		var region: Rect2i = map.get_used_rect()
+		var transform: Transform2D = map.get_global_transform_with_canvas().affine_inverse()
+		var first: Vector2i = map.local_to_map(transform * get_viewport_rect().position) - Vector2i.ONE
+		var last: Vector2i = map.local_to_map(transform * get_viewport_rect().end) + Vector2i(2, 2)
+		var region: Rect2i = Rect2i(first, last - first).intersection(map.get_used_rect())
 		for x in range(region.position.x, region.end.x + 1):
 			draw_line(_corner_at(Vector2i(x, region.position.y), Vector2(-0.5, -0.5)), _corner_at(Vector2i(x, region.end.y), Vector2(-0.5, -0.5)), Color(1, 1, 1, 0.1), 0.3)
 		for y in range(region.position.y, region.end.y + 1):
