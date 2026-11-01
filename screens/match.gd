@@ -132,5 +132,6 @@ func _open_construction() -> void:
 
 func _toggle_navigation() -> void:
 	navigation_overlay.cycle()
+	hud.set_navigation_mode(navigation_overlay.mode)
 	hud.controls[&"routes"].text = ["Пути [N]", "Клетки: мс [N]", "Приоритеты [N]"][navigation_overlay.mode]
 	hud.toast(["Оценки скрыты", "Время входа в клетку, мс. Скорость: %.1f. Приблизьте карту для чисел." % navigation_overlay.reference_speed, "ПКМ: начало маршрута. ЛКМ и стрелки: камера. Секунды + 0.5 × занятые места. Голод проверяется отдельно."][navigation_overlay.mode])

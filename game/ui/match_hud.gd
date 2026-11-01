@@ -253,3 +253,9 @@ func _process(delta: float) -> void:
 		_toast_time -= delta
 		if _toast_time <= 0.0:
 			_toast.hide()
+
+func set_navigation_mode(mode: int) -> void:
+	var texture: Texture2D = preload("res://game/assets/ui/opaque_panel.svg") if mode > 0 else preload("res://game/assets/ui/panel.svg")
+	# Keep world labels behind readable HUD surfaces without clipping the map layer.
+	for style in [theme.get_stylebox("panel", "PanelContainer"), theme.get_stylebox("panel", "TooltipPanel"), _bottom.get_theme_stylebox("panel"), _toast.get_theme_stylebox("normal")]:
+		(style as StyleBoxTexture).texture = texture

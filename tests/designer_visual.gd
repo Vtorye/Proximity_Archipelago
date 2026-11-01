@@ -31,6 +31,7 @@ func _run() -> void:
 	await key(KEY_SPACE)
 	await key(KEY_N)
 	expect(screen.navigation_overlay.mode == 0, "third N restores the ordinary map")
+	expect(screen.hud.theme.get_stylebox("panel", "PanelContainer").texture == load("res://game/assets/ui/panel.svg"), "ordinary HUD transparency returns when navigation is hidden")
 	screen.world.population.agents()[0].speed = 30.0
 	await key(KEY_N)
 	expect(screen.navigation_overlay.reference_speed == 30.0, "diagnostic times follow the actual reference ant speed")
