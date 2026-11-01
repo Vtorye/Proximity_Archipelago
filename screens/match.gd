@@ -101,7 +101,6 @@ func _process(_delta: float) -> void:
 		return
 	camera.enabled_input = not Router.has_overlay()
 	hud.lock_zoom(Router.has_overlay())
-	navigation_overlay.obstacles = hud.build_obstacles()
 	if navigation_overlay.mode == 2 and not Router.has_overlay():
 		if not selection.selected or selection.cell != navigation_overlay.origin: selection.select(navigation_overlay.origin)
 	elif selection.selected: selection.clear()

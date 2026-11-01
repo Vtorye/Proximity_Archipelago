@@ -7,7 +7,6 @@ var mode := 0
 var origin := Vector2i.ZERO
 var hovered := Vector2i.ZERO
 var reference_speed := 24.0
-var obstacles: Array[Rect2] = []
 var _field: NavigationField
 var _revision := -1
 var _refresh := 0.0
@@ -97,10 +96,7 @@ func _draw() -> void:
 			var cell := Vector2i(x, y)
 			if not world.route_service.walkable(cell) and not _points.has(cell): continue
 			var center: Vector2 = (canvas * map.map_to_local(cell)).round()
-			if not view.has_point(center) or center.y < 50 or center.y > view.end.y - 72: continue
-			var blocked := false
-			for obstacle in obstacles: blocked = blocked or obstacle.has_point(center)
-			if blocked: continue
+			if not view.intersects(Rect2(center - screen_size * 0.5, screen_size)): continue
 			var value: Dictionary = sample(cell)
 			var seconds: float = world.planner.travel_seconds(world.route_service.entry_cost(cell), reference_speed) if mode == 1 else value.score
 			var color: Color = value.color
