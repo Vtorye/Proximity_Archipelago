@@ -50,5 +50,5 @@ func refresh() -> void:
 		_detail.text = "%s\n%d+%d/%d · работают + идут\n%s" % [building.display_title(), building.working_count(), building.incoming_count(), building.work_slots, overlay.explanation(building)]
 	elif building != null:
 		_detail.text = "%s\n%s" % ["Муравейник" if building is House else "Столовая", "Пути нет" if not is_finite(value.seconds) else "Путь: %.2f с" % value.seconds]
-	else: _detail.text = "Наведите курсор на предприятие\nЛКМ — выбрать начало\nГолод проверяется отдельно"
+	else: _detail.text = "Наведите курсор на предприятие\nПКМ — выбрать начало\nЛКМ / стрелки — камера\nГолод проверяется отдельно"
 	_detail.add_theme_color_override("font_color", value.color)

@@ -127,7 +127,7 @@ func _ready() -> void:
 	help.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	hints.add_child(help)
 	var routes: Button = ColonyStyle.button("Пути [N]")
-	routes.tooltip_text = "Клетки в мс / путь в секундах / выключено. ЛКМ выбирает начало; СКМ двигает карту. Голод проверяется отдельно."
+	routes.tooltip_text = "Клетки в мс / путь в секундах / выключено. ПКМ выбирает начало; ЛКМ, СКМ и стрелки двигают карту. Голод проверяется отдельно."
 	routes.pressed.connect(func(): navigation_requested.emit())
 	hints.add_child(routes)
 	controls[&"routes"] = routes

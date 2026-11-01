@@ -11,8 +11,9 @@ func _run() -> void:
 	await capture("01-entry-milliseconds", 30)
 	await _check_full_map_overlay()
 	await key(KEY_N)
-	await click_at(cell_point(Vector2i(24, 25)))
-	expect(screen.navigation_overlay.origin == Vector2i(24, 25), "left click picks the distance origin")
+	await click_at(cell_point(Vector2i(26, 25)), MOUSE_BUTTON_RIGHT)
+	expect(screen.navigation_overlay.origin == Vector2i(26, 25), "right click picks the distance origin")
+	await _check_camera_controls()
 	await capture("02-distance-and-job-scores", 30)
 	await key(KEY_SPACE)
 	var menu: ConstructionMenu = Router.top_overlay() as ConstructionMenu
@@ -44,9 +45,12 @@ func _check_full_map_overlay() -> void:
 	var probes: Array[Vector2] = []
 	for region in regions:
 		for cell in screen.world.route_service.snapshot().walkable_cells():
-			var point: Vector2 = cell_point(cell) + Vector2(-8, -8)
-			if region.grow(-4).has_point(point):
-				probes.append(point)
+			var map: TileMapLayer = screen.world.get_node("Map")
+			var size: Vector2 = Vector2(map.tile_set.tile_size) * map.get_global_transform_with_canvas().get_scale()
+			var area := Rect2(cell_point(cell) - size / 2 + Vector2(2, 2), size - Vector2(4, 4))
+			var overlap: Rect2 = area.intersection(region.grow(-2))
+			if overlap.size.x >= 3 and overlap.size.y >= 3:
+				probes.append(overlap.position + Vector2.ONE)
 				break
 	expect(probes.size() == regions.size(), "land probes cover the header, task board, legend and footer")
 	var process: int = screen.world.units.process_mode
@@ -70,3 +74,49 @@ func _check_full_map_overlay() -> void:
 	await capture("01b-unbroken-world-overlay", 20)
 	screen.hud.show()
 	screen.world.units.process_mode = process
+
+func _check_camera_controls() -> void:
+	var origin: Vector2i = screen.navigation_overlay.origin
+	var position: Vector2 = screen.camera.position
+	var level: int = screen.camera.level
+	await click_at(cell_point(Vector2i(27, 26)))
+	expect(screen.navigation_overlay.origin == origin, "left click leaves the navigation origin unchanged")
+	var press := InputEventMouseButton.new()
+	press.button_index = MOUSE_BUTTON_LEFT
+	press.pressed = true
+	press.position = Vector2(360, 250)
+	get_viewport().push_input(press, true)
+	var drag := InputEventMouseMotion.new()
+	drag.position = Vector2(392, 266)
+	drag.relative = Vector2(32, 16)
+	drag.button_mask = MOUSE_BUTTON_MASK_LEFT
+	get_viewport().push_input(drag, true)
+	press.pressed = false
+	press.position = drag.position
+	get_viewport().push_input(press, true)
+	await frames(4)
+	expect(screen.camera.position != position and screen.navigation_overlay.origin == origin, "left drag pans the map while navigation remains active")
+	for code in [KEY_RIGHT, KEY_LEFT, KEY_UP, KEY_DOWN]:
+		await _hold_arrow(code)
+	screen.camera.set_level(4)
+	await _hold_arrow(KEY_RIGHT)
+	screen.camera.set_level(level)
+	screen.camera.position = position
+	screen.camera.force_update_scroll()
+	await click_at(screen.hud.task_panel.get_global_rect().get_center(), MOUSE_BUTTON_RIGHT)
+	expect(screen.navigation_overlay.origin == origin and not Router.has_overlay(), "right clicks on UI never select a cell behind it")
+
+func _hold_arrow(code: Key) -> void:
+	var position: Vector2 = screen.camera.position
+	var event := InputEventKey.new()
+	event.keycode = code
+	event.physical_keycode = code
+	event.pressed = true
+	Input.parse_input_event(event)
+	await frames(8)
+	event.pressed = false
+	Input.parse_input_event(event)
+	await frames(2)
+	var offset: Vector2 = screen.camera.position - position
+	var expected := Vector2.RIGHT if code == KEY_RIGHT else (Vector2.LEFT if code == KEY_LEFT else (Vector2.UP if code == KEY_UP else Vector2.DOWN))
+	expect(offset.dot(expected) > 0.01, "arrow key pans in the expected direction at the current zoom")

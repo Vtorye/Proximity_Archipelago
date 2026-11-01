@@ -30,11 +30,15 @@ func pan(relative: Vector2) -> void:
 func _process(delta: float) -> void:
 	if not enabled_input:
 		return
-	var direction := Vector2(float(Input.is_physical_key_pressed(KEY_D)) - float(Input.is_physical_key_pressed(KEY_A)), float(Input.is_physical_key_pressed(KEY_S)) - float(Input.is_physical_key_pressed(KEY_W)))
-	if not direction.is_zero_approx():
-		position += direction.normalized() * delta * 100.0 / zoom.x
-		position = position.round()
-		_clamp()
+	var direction: Vector2 = keyboard_direction()
+	if not direction.is_zero_approx(): pan(-direction.normalized() * delta * 100.0)
+
+static func keyboard_direction() -> Vector2:
+	var right: bool = Input.is_physical_key_pressed(KEY_D) or Input.is_physical_key_pressed(KEY_RIGHT)
+	var left: bool = Input.is_physical_key_pressed(KEY_A) or Input.is_physical_key_pressed(KEY_LEFT)
+	var down: bool = Input.is_physical_key_pressed(KEY_S) or Input.is_physical_key_pressed(KEY_DOWN)
+	var up: bool = Input.is_physical_key_pressed(KEY_W) or Input.is_physical_key_pressed(KEY_UP)
+	return Vector2(float(right) - float(left), float(down) - float(up))
 
 func set_level(value: int) -> void:
 	level = clampi(value, 0, ZOOMS.size() - 1)

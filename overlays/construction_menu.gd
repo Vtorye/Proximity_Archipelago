@@ -200,6 +200,9 @@ func _commit() -> void:
 
 func _input(event: InputEvent) -> void:
 	if not visible: return
+	if event is InputEventKey and event.physical_keycode in [KEY_LEFT, KEY_RIGHT, KEY_UP, KEY_DOWN]:
+		get_viewport().set_input_as_handled()
+		return
 	if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_Z and event.ctrl_pressed:
 		_undo()
 		get_viewport().set_input_as_handled()
@@ -314,7 +317,7 @@ func _process(delta: float) -> void:
 	panel.offset_bottom = -roundf(6 * AppSettings.ui_scale)
 	panel.offset_top = -panel.get_combined_minimum_size().y - roundf(6 * AppSettings.ui_scale)
 	if not _painting:
-		var direction := Vector2(float(Input.is_physical_key_pressed(KEY_D)) - float(Input.is_physical_key_pressed(KEY_A)), float(Input.is_physical_key_pressed(KEY_S)) - float(Input.is_physical_key_pressed(KEY_W)))
+		var direction: Vector2 = WorldCamera.keyboard_direction()
 		if not direction.is_zero_approx():
 			context.camera.pan(-direction.normalized() * delta * 100.0)
 	_update_hover(get_viewport().get_mouse_position())
