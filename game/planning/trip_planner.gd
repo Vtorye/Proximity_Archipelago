@@ -13,6 +13,8 @@ var food_type: ResourceType
 var _opportunities_queued := false
 var _home_fields: Dictionary[Vector2i, NavigationField] = {}
 var _revision := -1
+var _workplace_revision := -1
+var _workplace_components: Dictionary[int, Array] = {}
 
 func configure(buildings: BuildingRegistry, routes: RouteService, stock: WorldInventory, food: ResourceType) -> void:
 	registry = buildings
@@ -53,7 +55,7 @@ func plan_work(agent: Node2D, home: Building, needs: AntNeeds, speed: float, wor
 	var outward: NavigationField = navigation.distances_from(from_cell)
 	var approach: float = agent.global_position.distance_to(navigation.cell_to_world(from_cell)) * navigation.entry_cost(from_cell) / maxf(speed, 0.01)
 	var food_after_home: float = escape_energy(home_cell, speed)
-	var workplaces: Array[Workplace] = registry.workplaces()
+	var workplaces: Array[Workplace] = _reachable_workplaces(from_cell)
 	var best_score := INF
 	var best: WorkPlan
 	var feasible_busy := false
@@ -97,8 +99,9 @@ func plan_work(agent: Node2D, home: Building, needs: AntNeeds, speed: float, wor
 	return best
 
 func _on_workplace_membership_changed(building: Building) -> void:
-	if not building is Workplace or _opportunities_queued:
-		return
+	if not building is Workplace: return
+	_workplace_revision = -1
+	if _opportunities_queued: return
 	_opportunities_queued = true
 	_emit_opportunities_changed.call_deferred()
 
@@ -137,3 +140,18 @@ func home_route(home: Building, from_cell: Vector2i) -> Route:
 	if not _home_fields.has(cell):
 		return Route.invalid()
 	return navigation.make_route(_home_fields[cell].path(from_cell))
+
+func _reachable_workplaces(cell: Vector2i) -> Array[Workplace]:
+	var grid: TileGrid = navigation.snapshot()
+	if _workplace_revision != navigation.revision:
+		_workplace_components.clear()
+		for workplace in registry.workplaces():
+			for entry in workplace.entry_cells():
+				var component: int = grid.component(entry)
+				if component < 0: continue
+				if not _workplace_components.has(component): _workplace_components[component] = []
+				if not _workplace_components[component].has(workplace): _workplace_components[component].append(workplace)
+		_workplace_revision = navigation.revision
+	var result: Array[Workplace] = []
+	result.assign(_workplace_components.get(grid.component(cell), []))
+	return result
