@@ -24,7 +24,7 @@ func _ready() -> void:
 				child.display_size = Vector2i(int(dimensions[0]), int(dimensions[1]))
 				viewport.add_child(child)
 				return
-	_output = OS.get_environment("COLONY_EVIDENCE_DIR")
+	_output = OS.get_environment("COLONY_CAPTURE_DIR")
 	DirAccess.make_dir_recursive_absolute(_output)
 	_run.call_deferred()
 
