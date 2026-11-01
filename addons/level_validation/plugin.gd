@@ -1,22 +1,27 @@
 @tool
 extends EditorPlugin
 const DEFAULT_LEVEL := "res://game/worlds/wolrd_1.tscn"
-var _dock: VBoxContainer
+var _dock: ScrollContainer
+var _content: VBoxContainer
 var _status: Label
 var _output: RichTextLabel
 var controls: Dictionary[StringName, Button] = {}
 func _enter_tree() -> void:
 	add_tool_menu_item("Проверить сохранённый уровень", _validate)
 	add_tool_menu_item("Открыть инструменты уровня", _show_dock)
-	_dock = VBoxContainer.new()
+	_dock = ScrollContainer.new()
+	_dock.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_content = VBoxContainer.new()
+	_content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_dock.add_child(_content)
 	_dock.name = "Уровень"
 	_dock.custom_minimum_size.x = 230
 	var title := Label.new()
 	title.text = "Настройка колонии"
-	_dock.add_child(title)
+	_content.add_child(title)
 	_status = Label.new()
 	_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_dock.add_child(_status)
+	_content.add_child(_status)
 	_button(&"map", "1. Открыть карту и рисовать", _open_map)
 	_button(&"catalog", "2. Постройки и цены", func(): _edit_property(&"build_catalog"))
 	_button(&"resources", "3. Начальные ресурсы", _select_world)
@@ -24,15 +29,15 @@ func _enter_tree() -> void:
 	_button(&"tiles", "Свойства и текстуры тайлов", _edit_tiles)
 	_button(&"validate", "Проверить сохранённый уровень", _validate)
 	var help := Label.new()
-	help.text = "Карта: выберите Map, затем TileMap внизу.\nРисуйте кистью; Ctrl+S сохраняет карту.\n\nКаталог: Options → постройка → Costs.\nPrice Rules меняют цены по событиям.\n\nНовый ресурс: создайте ResourceType,\nдобавьте в Starting Resources мира.\nНовая работа: сцена Workplace, Output\nили Recipe, слоты и точка входа."
+	help.text = "Map → TileMap внизу → кисть.\nCtrl+S сохраняет карту.\n\nЦены: Options → постройка → Costs.\nПравила: Price Rules.\nПодробности: docs/DESIGNER_WORKFLOW.md."
 	help.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_dock.add_child(help)
+	_content.add_child(help)
 	_output = RichTextLabel.new()
 	_output.custom_minimum_size = Vector2(230, 160)
 	_output.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_output.selection_enabled = true
 	_output.text = "Проверка выводит ошибки здесь. Перед проверкой сохраните сцену и ресурсы."
-	_dock.add_child(_output)
+	_content.add_child(_output)
 	add_control_to_dock(DOCK_SLOT_LEFT_BR, _dock)
 	scene_changed.connect(_scene_changed)
 	_scene_changed(EditorInterface.get_edited_scene_root())
@@ -46,7 +51,7 @@ func _button(id: StringName, text: String, action: Callable) -> void:
 	var button := Button.new()
 	button.text = text
 	button.pressed.connect(action)
-	_dock.add_child(button)
+	_content.add_child(button)
 	controls[id] = button
 func _scene_changed(_scene: Node) -> void:
 	var world: Node = _world()
@@ -94,9 +99,11 @@ func _validate() -> void:
 	var output: Array = []
 	var result: int = OS.execute(OS.get_executable_path(), ["--headless", "--path", ProjectSettings.globalize_path("res://"), "--script", "res://tools/validate_level.gd", "--", scene.scene_file_path], output, true)
 	_output.text = "Уровень корректен.\n" if result == 0 else "Найдены ошибки. Исправьте данные перед запуском.\n"
-	for line in output:
-		_output.text += str(line)
-		print(line)
+	for chunk in output:
+		for line in str(chunk).split("\n"):
+			if line.is_empty() or line.begins_with("Godot Engine"): continue
+			_output.text += line + "\n"
+			print(line)
 
 func _show_dock() -> void:
 	var child: Node = _dock
