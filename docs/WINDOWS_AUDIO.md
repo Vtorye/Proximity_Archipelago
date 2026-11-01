@@ -14,3 +14,11 @@
 [Настройка mix_rate в Godot](https://docs.godotengine.org/en/stable/classes/class_projectsettings.html#class-projectsettings-property-audio-driver-mix-rate), [реализация WASAPI](https://github.com/godotengine/godot/blob/master/drivers/wasapi/audio_driver_wasapi.cpp).
 
 Предупреждения GDScript из присланного снимка исправлены отдельно: локальные `top` и `fill` переименованы, намеренно неиспользуемый параметр темы обозначен `_border`. Они не являются причиной отказа WASAPI.
+
+## GetBufferSize во время игры
+
+Сообщение `thread_func: WASAPI: GetBufferSize error` спустя несколько минут относится к работающему аудиопотоку. Это другая точка отказа, чем прежний Initialize с HRESULT 0xffffffff88890008. Переносить диагноз неподдерживаемого формата на новый лог нельзя.
+
+[Microsoft GetBufferSize](https://learn.microsoft.com/en-us/windows/win32/api/audioclient/nf-audioclient-iaudioclient-getbuffersize) допускает несколько причин отказа: неинициализированный поток, недоступное устройство, потерянные ресурсы или остановленную аудиослужбу. Конкретный HRESULT в присланной строке отсутствует. [Драйвер Godot](https://github.com/godotengine/godot/blob/master/drivers/wasapi/audio_driver_wasapi.cpp) пишет эту строку внутри аудиопотока; навигация и число островов не вызывают этот API из GDScript.
+
+Для воспроизведения на Windows нужны полный verbose-лог, версия движка и сведения об устройстве. Отметьте, совпал ли сбой с отключением USB/Bluetooth, сменой устройства или выходом из сна. Эти события — проверяемые гипотезы, не установленная причина. Исправление Windows-драйвера на Linux не подтверждено; звук не отключается скрытым переключением на Dummy.
