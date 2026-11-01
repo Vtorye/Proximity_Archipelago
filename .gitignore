@@ -1,6 +1,4 @@
 # Godot 4+ specific ignores
 .godot/
 /android/
-# Uncompressed capture intermediates are replaced by compact MP4 evidence.
-evidence/**/*.avi
 *.log

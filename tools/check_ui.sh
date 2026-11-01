@@ -7,20 +7,20 @@ python3 - "$project_root" "$ui_root/project" <<'PY'
 import shutil, sys
 from pathlib import Path
 source, destination = map(Path, sys.argv[1:])
-shutil.copytree(source, destination, ignore=shutil.ignore_patterns('.git', '.godot', 'evidence'))
+shutil.copytree(source, destination, ignore=shutil.ignore_patterns('.git', '.godot'))
 project = destination / 'project.godot'
 project.write_text(project.read_text().replace('config/name="archipelago"', 'config/name="archipelago-ui-validation"'))
 PY
 godot_binary="${GODOT_BIN:-godot}"
 "$godot_binary" --headless --path "$ui_root/project" --editor --quit > "$ui_root/import.log" 2>&1
-mkdir -p "$project_root/evidence/after"
+mkdir -p "${COLONY_OUTPUT_ROOT:-/tmp/colony-validation}/after"
 export COLONY_SOURCE_REVISION="$(git -C "$project_root" rev-parse HEAD)"
-export COLONY_EVIDENCE_DIR="$project_root/evidence/after"
+export COLONY_CAPTURE_DIR="${COLONY_OUTPUT_ROOT:-/tmp/colony-validation}/after"
 if ! "$godot_binary" --path "$ui_root/project" --display-driver x11 --audio-driver Dummy --resolution 1280x720 --fixed-fps 30 --quit-after 3600 --write-movie "$ui_root/interface.avi" res://tests/ui_runner.tscn > "$ui_root/ui.log" 2>&1; then cat "$ui_root/ui.log"; exit 1; fi
 cat "$ui_root/ui.log"
 if rg -q 'SCRIPT ERROR|leaked|UI TESTS FAIL' "$ui_root/ui.log" || ! rg -q '^UI TESTS PASS$' "$ui_root/ui.log"; then exit 1; fi
-ffmpeg -hide_banner -loglevel error -y -i "$ui_root/interface.avi" -vf "scale=1280:720:flags=neighbor" -c:v libx264 -crf 20 -pix_fmt yuv420p -c:a aac -b:a 96k "$project_root/evidence/after/interface-walkthrough.mp4"
-cp "$project_root/evidence/after/ui-report.json" "$project_root/evidence/after/ui-report-1280.json"
+ffmpeg -hide_banner -loglevel error -y -i "$ui_root/interface.avi" -vf "scale=1280:720:flags=neighbor" -c:v libx264 -crf 20 -pix_fmt yuv420p -c:a aac -b:a 96k "${COLONY_OUTPUT_ROOT:-/tmp/colony-validation}/after/interface-walkthrough.mp4"
+cp "${COLONY_OUTPUT_ROOT:-/tmp/colony-validation}/after/ui-report.json" "${COLONY_OUTPUT_ROOT:-/tmp/colony-validation}/after/ui-report-1280.json"
 for resolution in 960x600 1920x1080; do
   layout_args=(--resolution "$resolution")
   virtual_args=()
@@ -28,11 +28,11 @@ for resolution in 960x600 1920x1080; do
   if ! "$godot_binary" --path "$ui_root/project" --display-driver x11 --audio-driver Dummy "${layout_args[@]}" --fixed-fps 30 --quit-after 1200 res://tests/ui_runner.tscn -- --layout-only "${virtual_args[@]}" > "$ui_root/layout.log" 2>&1; then cat "$ui_root/layout.log"; exit 1; fi
   cat "$ui_root/layout.log"
   if rg -q 'SCRIPT ERROR|UI TESTS FAIL|leaked' "$ui_root/layout.log"; then exit 1; fi
-  cp "$project_root/evidence/after/ui-report.json" "$project_root/evidence/after/ui-report-$resolution.json"
+  cp "${COLONY_OUTPUT_ROOT:-/tmp/colony-validation}/after/ui-report.json" "${COLONY_OUTPUT_ROOT:-/tmp/colony-validation}/after/ui-report-$resolution.json"
 done
 
 export COLONY_DISPLAY_FRAMES="$ui_root/display-frames"
 if ! "$godot_binary" --path "$ui_root/project" --display-driver x11 --audio-driver Dummy --resolution 1280x720 --fixed-fps 30 res://tests/display_runner.tscn > "$ui_root/display.log" 2>&1; then cat "$ui_root/display.log"; exit 1; fi
 cat "$ui_root/display.log"
 if rg -q 'SCRIPT ERROR' "$ui_root/display.log"; then exit 1; fi
-ffmpeg -hide_banner -loglevel error -y -framerate 30 -i "$ui_root/display-frames/frame-%04d.png" -vf "scale=1280:720:force_original_aspect_ratio=decrease:flags=neighbor,pad=1280:720:(ow-iw)/2:(oh-ih)/2" -c:v libx264 -crf 20 -pix_fmt yuv420p "$project_root/evidence/after/display-settings.mp4"
+ffmpeg -hide_banner -loglevel error -y -framerate 30 -i "$ui_root/display-frames/frame-%04d.png" -vf "scale=1280:720:force_original_aspect_ratio=decrease:flags=neighbor,pad=1280:720:(ow-iw)/2:(oh-ih)/2" -c:v libx264 -crf 20 -pix_fmt yuv420p "${COLONY_OUTPUT_ROOT:-/tmp/colony-validation}/after/display-settings.mp4"
