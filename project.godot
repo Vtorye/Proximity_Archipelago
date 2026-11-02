@@ -53,6 +53,10 @@ pause={
 ]
 }
 
+[internationalization]
+
+locale/translations=PackedStringArray("res://language/keys.en.translation", "res://language/keys.ru.translation")
+
 [physics]
 
 3d/physics_engine="Jolt Physics"

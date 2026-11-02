@@ -18,10 +18,11 @@ func _ready() -> void:
 	var content := VBoxContainer.new()
 	content.add_theme_constant_override("separation", 14)
 	center.add_child(content)
-	_add_action(content, &"play", "Играть", func(): Router.goto(&"match"))
-	_add_action(content, &"tutorial", "Обучение", func(): Router.goto(&"tutorial"))
-	_add_action(content, &"settings", "Настройки", func(): Router.push_overlay(&"settings"))
-	_add_action(content, &"quit", "Выход", AppSettings.quit_game)
+	_add_action(content, &"play", "ui.menu.play", func(): Router.goto(&"match"))
+	_add_action(content, &"tutorial", "ui.menu.tutorial", func(): Router.goto(&"tutorial"))
+	_add_action(content, &"settings", "ui.menu.settings", func(): Router.push_overlay(&"settings"))
+	_add_action(content, &"language", "ui.menu.language", _toggle_language)
+	_add_action(content, &"quit", "ui.menu.quit", AppSettings.quit_game)
 
 func _add_action(parent: VBoxContainer, key: StringName, text: String, action: Callable) -> void:
 	var button: Button = ColonyStyle.button(text, false, key != &"quit")
@@ -37,3 +38,9 @@ func _add_action(parent: VBoxContainer, key: StringName, text: String, action: C
 
 func on_focus() -> void:
 	controls[&"play"].grab_focus()
+
+func _toggle_language() -> void:
+	AppSettings.language = "en" if TranslationServer.get_locale().begins_with("ru") else "ru"
+	var error := AppSettings.save()
+	if error != OK:
+		push_warning("Could not save language preference: %s" % error_string(error))

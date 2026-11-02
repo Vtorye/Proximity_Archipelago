@@ -12,6 +12,6 @@ type = ExtResource("wood")
 script = ExtResource("option")
 atlas_coords = Vector2i(1, 0)
 id = &"ground"
-display_name = "Почва"
+display_name = "ui.building.ground"
 costs = Array[ExtResource("amount")]([SubResource("cost")])
 allow_when_occupied = true

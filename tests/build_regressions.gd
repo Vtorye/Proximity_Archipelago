@@ -31,7 +31,7 @@ func _composite_price(test: Node) -> void:
 	test.expect(world.inventory.quantity(stone) == stone_before - 5 and world.inventory.quantity(food) == 10, "composite nest charges every price component exactly once")
 	test.expect(world.inventory.available(food) == 0 and world.population.count() == 10, "paid nest retains every resident's meal reservation")
 	test.expect(notifications[0] == 1 and complete == [true], "composite build sends one complete stock and world update")
-	test.expect(BuildCostText.format(nest.costs) == "5 Камень + 20 Пища", "construction price text identifies both resource types")
+	test.expect(BuildCostText.format(nest.costs) == ("5 %s + 20 %s" % [TranslationServer.translate("ui.resource.stone"), TranslationServer.translate("ui.resource.food")]), "construction price text identifies both resource types")
 	world.free()
 	await test.get_tree().process_frame
 

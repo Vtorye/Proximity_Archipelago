@@ -7,11 +7,11 @@ static func format(costs: Array[ResourceAmount]) -> String:
 	var names: Dictionary[StringName, String] = {}
 	for cost in costs:
 		if cost == null or cost.type == null or cost.amount < 0:
-			return "Некорректная цена"
+			return TranslationServer.translate("ui.cost.invalid")
 		totals[cost.type.id] = totals.get(cost.type.id, 0) + cost.amount
-		names[cost.type.id] = cost.type.display_name
+		names[cost.type.id] = TranslationServer.translate(cost.type.display_name)
 	var parts := PackedStringArray()
 	for id in totals:
 		if totals[id] > 0:
 			parts.append("%d %s" % [totals[id], names[id]])
-	return " + ".join(parts) if not parts.is_empty() else "Бесплатно"
+	return " + ".join(parts) if not parts.is_empty() else TranslationServer.translate("ui.cost.free")

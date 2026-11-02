@@ -7,6 +7,8 @@ var fullscreen := false
 var vsync := true
 var reduced_motion := false
 var show_grid := false
+## Empty keeps the system locale until the player chooses a language.
+var language := ""
 const MIN_UI_SCALE := 0.5
 const MAX_UI_SCALE := 1.0
 const DEFAULT_UI_SCALE := 0.75
@@ -17,6 +19,9 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	var config := ConfigFile.new()
 	if config.load(PATH) == OK:
+		language = str(config.get_value("interface", "language", ""))
+		if language not in ["en", "ru"]:
+			language = ""
 		master_volume = clampf(float(config.get_value("audio", "master", 70.0)), 0.0, 100.0)
 		fullscreen = bool(config.get_value("video", "fullscreen", false))
 		vsync = bool(config.get_value("video", "vsync", true))
@@ -38,6 +43,8 @@ func _ready() -> void:
 	apply()
 
 func apply() -> void:
+	if not language.is_empty() and TranslationServer.get_locale() != language:
+		TranslationServer.set_locale(language)
 	ui_scale = clampf(snappedf(ui_scale, 0.25), MIN_UI_SCALE, MAX_UI_SCALE)
 	AudioServer.set_bus_volume_db(0, linear_to_db(maxf(master_volume / 100.0, 0.0001)))
 	AudioServer.set_bus_mute(0, master_volume <= 0.0)
@@ -58,6 +65,7 @@ func save() -> Error:
 	config.set_value("accessibility", "reduced_motion", reduced_motion)
 	config.set_value("interface", "grid", show_grid)
 	config.set_value("interface", "scale", ui_scale)
+	config.set_value("interface", "language", language)
 	apply()
 	return config.save(PATH)
 

@@ -76,11 +76,11 @@ func _ready() -> void:
 	_message.offset_top = -66
 	_message.offset_bottom = -34
 	_message.hide()
-	_demolish = ColonyStyle.button("Снести")
+	_demolish = ColonyStyle.button("ui.build.demolish")
 	_demolish.pressed.connect(_on_demolish_pressed)
 	content.add_child(_demolish)
 	controls[&"demolish"] = _demolish
-	_cancel = ColonyStyle.button("Отменить снос")
+	_cancel = ColonyStyle.button("ui.build.cancel_demolition")
 	_cancel.pressed.connect(_cancel_confirmation)
 	_cancel.hide()
 	content.add_child(_cancel)
@@ -136,14 +136,14 @@ func _refresh() -> void:
 	_title.text = "%d:%d" % [context.cell.x, context.cell.y]
 	var occupant: Building = context.controller.registry.at(context.cell)
 	_observe_workplace(occupant as Workplace)
-	_description.text = "Строительство"
+	_description.text = "ui.build.title"
 	if occupant is Workplace:
 		_title.text = occupant.display_title()
-		_description.text = "Работают+идут: %d+%d/%d" % [occupant.working_count(), occupant.incoming_count(), occupant.work_slots]
+		_description.text = tr("ui.build.workers") % [occupant.working_count(), occupant.incoming_count(), occupant.work_slots]
 	elif occupant != null:
 		_description.text = occupant.display_title()
 	elif not context.controller.route_service.walkable(context.cell):
-		_description.text = "Вода"
+		_description.text = "ui.build.water"
 	for option in _buttons:
 		var button: Button = _buttons[option]
 		var result: PlacementCheck = context.controller.check(option, context.cell)
@@ -174,9 +174,9 @@ func _show_help(option: BuildOption) -> void:
 	var result: PlacementCheck = context.controller.check(option, context.cell)
 	var help: String = PlacementMessages.text(result.code)
 	if result.allowed():
-		help = "%s: %s" % [option.display_name, BuildCostText.format(option.costs)]
+		help = "%s: %s" % [tr(option.display_name), BuildCostText.format(option.costs)]
 		if option is SceneBuildOption and option.spawn_count > 0:
-			help += ". +%d муравьёв; нужно %d порций." % [option.spawn_count, option.spawn_count]
+			help += tr("ui.build.spawn_help") % [option.spawn_count, option.spawn_count]
 	_set_message(help)
 
 func _on_cell_changed(old: Vector2i, next: Vector2i) -> void:
@@ -185,7 +185,7 @@ func _on_cell_changed(old: Vector2i, next: Vector2i) -> void:
 
 func _choose(option: BuildOption) -> void:
 	if context.controller.try_build(option, context.cell):
-		action_completed.emit("%s: готово" % option.display_name, false)
+		action_completed.emit(tr("ui.build.completed") % tr(option.display_name), false)
 		close_requested.emit(self)
 	else:
 		_set_message(PlacementMessages.text(context.controller.last_result.code))
@@ -195,14 +195,14 @@ func _on_demolish_pressed() -> void:
 	if not _confirming:
 		_confirming = true
 		var building: Building = context.controller.registry.at(context.cell)
-		_set_message("Жители погибнут: %d. Снести муравейник?" % building.residents.size() if building is House else "Снести здание без возврата ресурсов?")
-		_demolish.text = "Да, снести"
+		_set_message(tr("ui.build.confirm_residents") % building.residents.size() if building is House else "ui.build.confirm_demolition")
+		_demolish.text = "ui.build.confirm"
 		_demolish.add_theme_color_override("font_color", ColonyStyle.DANGER)
 		_cancel.show()
 		_refresh()
 		return
 	if context.controller.demolish_at(context.cell):
-		action_completed.emit("Здание снесено", false)
+		action_completed.emit("ui.build.demolished", false)
 		close_requested.emit(self)
 	else:
 		_set_message(PlacementMessages.text(context.controller.last_result.code))
@@ -211,7 +211,7 @@ func _on_demolish_pressed() -> void:
 func _cancel_confirmation() -> void:
 	_confirming = false
 	_set_message("")
-	_demolish.text = "Снести"
+	_demolish.text = "ui.build.demolish"
 	_demolish.remove_theme_color_override("font_color")
 	_cancel.hide()
 	_refresh()

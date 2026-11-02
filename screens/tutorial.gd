@@ -1,10 +1,10 @@
 extends Screen
 ## A readable, paged introduction using the same native pixel controls as the game.
 const LESSONS := [
-	["Колония за три минуты", "Соберите по 100 древесины, камня и пищи.\nНа всё есть три минуты. Запас проверяется одновременно.\n\nМуравьи сами выбирают близкую и свободную работу.\nРазмещайте предприятия и соединяйте их тропинками."],
-	["Дороги и пища", "Тропинки ускоряют дорогу на работу и домой.\nДеревья дают древесину, каменоломни — камень, кусты — пищу.\n\nМуравьям нужны еда и безопасный путь к столовой.\nНовый муравейник даёт пять жителей; им тоже нужна пища.\nНагрузка предприятия показана как работают+идут / места."],
-	["Стройка на паузе", "Пробел включает стройку и останавливает время и голод.\nВыберите постройку, зажмите ЛКМ и проведите по клеткам.\nДорога и здание помещаются на одной клетке.\n\nПКМ снимает последнее добавление на выбранной клетке.\nCtrl+Z отменяет мазок. Крестик отменяет весь план.\nПробел или треугольник применяют план и продолжают игру."],
-	["Камера и снос", "Колесо меняет масштаб, СКМ и WASD двигают камеру.\nВ стройке инструмент «Перемещение» включает перенос ЛКМ.\n\nИнструмент «Снос» отмечает здания и дороги для удаления.\nОтметки применяются вместе с планом, без возврата ресурсов.\nСнос муравейника убивает жителей и требует подтверждения.\nМеню вверху содержит настройки, перезапуск и выход."]
+	["ui.tutorial.lesson1.title", "ui.tutorial.lesson1.body"],
+	["ui.tutorial.lesson2.title", "ui.tutorial.lesson2.body"],
+	["ui.tutorial.lesson3.title", "ui.tutorial.lesson3.body"],
+	["ui.tutorial.lesson4.title", "ui.tutorial.lesson4.body"]
 ]
 var controls: Dictionary[StringName, Button] = {}
 var _page := 0
@@ -23,7 +23,7 @@ func _ready() -> void:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 8)
 	content.add_child(row)
-	for entry in [[&"back", "В меню", func(): Router.goto(&"main_menu")], [&"previous", "Назад", func(): _show_page(_page - 1)], [&"next", "Далее", func(): _show_page(_page + 1)], [&"play", "Играть", func(): Router.goto(&"match")]]:
+	for entry in [[&"back", "ui.common.main_menu", func(): Router.goto(&"main_menu")], [&"previous", "ui.common.back", func(): _show_page(_page - 1)], [&"next", "ui.common.next", func(): _show_page(_page + 1)], [&"play", "ui.menu.play", func(): Router.goto(&"match")]]:
 		var button: Button = ColonyStyle.button(entry[1], entry[0] == &"play")
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		button.pressed.connect(entry[2])

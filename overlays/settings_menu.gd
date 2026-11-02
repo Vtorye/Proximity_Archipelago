@@ -9,10 +9,10 @@ func _ready() -> void:
 	if Router.current_screen_is_pausable():
 		PauseController.acquire(&"settings")
 	var content: VBoxContainer = ColonyStyle.modal(self, 256)
-	content.add_child(ColonyStyle.label("Настройки", 12))
+	content.add_child(ColonyStyle.label("ui.menu.settings", 12))
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 8)
-	var title: Label = ColonyStyle.label("Громкость")
+	var title: Label = ColonyStyle.label("ui.settings.volume")
 	title.custom_minimum_size.x = 180
 	row.add_child(title)
 	var slider := HSlider.new()
@@ -34,7 +34,7 @@ func _ready() -> void:
 	content.add_child(row)
 	var scale_row := HBoxContainer.new()
 	scale_row.add_theme_constant_override("separation", 8)
-	var scale_title: Label = ColonyStyle.label("Масштаб интерфейса")
+	var scale_title: Label = ColonyStyle.label("ui.settings.ui_scale")
 	scale_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scale_row.add_child(scale_title)
 	for key in [&"ui_scale_minus", &"ui_scale_plus"]:
@@ -50,19 +50,19 @@ func _ready() -> void:
 			scale_row.add_child(_scale_value)
 	content.add_child(scale_row)
 	_refresh_scale()
-	_add_toggle(content, &"fullscreen", "Полный экран", AppSettings.fullscreen)
-	_add_toggle(content, &"vsync", "Вертикальная синхронизация", AppSettings.vsync)
-	_add_toggle(content, &"show_grid", "Сетка клеток", AppSettings.show_grid)
-	_add_toggle(content, &"reduced_motion", "Уменьшить анимацию", AppSettings.reduced_motion)
-	_saved = ColonyStyle.label("Сохранено", 8, ColonyStyle.MUTED)
+	_add_toggle(content, &"fullscreen", "ui.settings.fullscreen", AppSettings.fullscreen)
+	_add_toggle(content, &"vsync", "ui.settings.vsync", AppSettings.vsync)
+	_add_toggle(content, &"show_grid", "ui.settings.grid", AppSettings.show_grid)
+	_add_toggle(content, &"reduced_motion", "ui.settings.reduced_motion", AppSettings.reduced_motion)
+	_saved = ColonyStyle.label("ui.settings.saved", 8, ColonyStyle.MUTED)
 	content.add_child(_saved)
 	var actions := HBoxContainer.new()
 	actions.add_theme_constant_override("separation", 8)
-	var reset: Button = ColonyStyle.button("Сбросить")
+	var reset: Button = ColonyStyle.button("ui.settings.reset")
 	reset.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	reset.pressed.connect(_reset)
 	actions.add_child(reset)
-	var done: Button = ColonyStyle.button("Готово", true)
+	var done: Button = ColonyStyle.button("ui.common.done", true)
 	done.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	done.pressed.connect(func(): close_requested.emit(self))
 	actions.add_child(done)
@@ -91,7 +91,7 @@ func _add_toggle(content: VBoxContainer, key: StringName, text: String, value: b
 func _store() -> void:
 	var error: Error = AppSettings.save()
 	if _saved != null:
-		_saved.text = "Сохранено" if error == OK else "Ошибка сохранения"
+		_saved.text = "ui.settings.saved" if error == OK else "ui.settings.save_error"
 		_saved.add_theme_color_override("font_color", ColonyStyle.MUTED if error == OK else ColonyStyle.DANGER)
 
 func _change_scale(delta: float) -> void:
