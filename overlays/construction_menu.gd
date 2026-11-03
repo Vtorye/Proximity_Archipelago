@@ -1,6 +1,8 @@
 class_name ConstructionMenu
 extends MenuBase
 ## Paused construction editor. The draft owns edits; the controller commits the final plan.
+signal origin_requested(cell: Vector2i)
+
 var context: ConstructionContext
 var draft := BuildDraft.new()
 var controls: Dictionary[StringName, Button] = {}
@@ -252,8 +254,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif event.button_index == MOUSE_BUTTON_RIGHT:
 			_end_stroke()
 			draft.begin_stroke()
-			draft.remove_last(_cell(event.position))
+			var cell: Vector2i = _cell(event.position)
+			var removed: bool = draft.remove_last(cell)
 			draft.end_stroke()
+			if not removed:
+				origin_requested.emit(cell)
 			_refresh()
 			get_viewport().set_input_as_handled()
 		elif event.button_index in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN]:
@@ -263,7 +268,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _point_allowed(point: Vector2) -> bool:
 	if point.y < 60 * AppSettings.ui_scale or point.y >= panel.get_global_rect().position.y or not get_viewport_rect().has_point(point): return false
-	for obstacle in context.obstacles:
+	for obstacle: Rect2 in context.obstacles.call():
 		if obstacle.has_point(point): return false
 	return true
 

@@ -1,8 +1,9 @@
+class_name PauseMenu
 extends MenuBase
 var controls: Dictionary[StringName, Button] = {}
 
 func _ready() -> void:
-	var content: VBoxContainer = ColonyStyle.modal(self, 144)
+	var content: VBoxContainer = ColonyStyle.modal(self, 144, true)
 	content.add_child(ColonyStyle.label("ui.pause.title", 12))
 	var resume: Button = ColonyStyle.button("ui.pause.resume", true)
 	resume.pressed.connect(PauseController.resume)

@@ -32,6 +32,7 @@ func _run() -> void:
 	await key(KEY_N)
 	expect(screen.navigation_overlay.mode == 0, "third N restores the ordinary map")
 	expect(screen.hud.theme.get_stylebox("panel", "PanelContainer").texture == load("res://game/assets/ui/panel.svg"), "ordinary HUD transparency returns when navigation is hidden")
+	await _check_paused_navigation()
 	screen.world.population.agents()[0].speed = 30.0
 	await key(KEY_N)
 	expect(screen.navigation_overlay.reference_speed == 30.0, "diagnostic times follow the actual reference ant speed")
@@ -41,6 +42,46 @@ func _run() -> void:
 	await frames(40)
 	await _check_saved_map()
 	_finish()
+
+func _check_paused_navigation() -> void:
+	var routes: Button = screen.hud.controls[&"routes"]
+	var settings: Button = screen.hud.controls[&"settings"]
+	expect(routes.get_parent() == settings.get_parent() and get_viewport().get_visible_rect().encloses(routes.get_global_rect()), "navigation button fits in the top bar next to settings")
+	await key(KEY_SPACE)
+	var construction := Router.top_overlay() as ConstructionMenu
+	var time: float = screen.world.match_controller.time_remaining
+	var ant: AntAgent = screen.world.population.agents()[0]
+	var satiety: float = ant.needs.satiety
+	await key(KEY_N)
+	expect(get_tree().paused and screen.navigation_overlay.mode == 1 and screen.hud.navigation_panel.visible, "N opens the cell view during construction")
+	await click(routes)
+	var origin := Vector2i(26, 25)
+	await click_at(cell_point(origin), MOUSE_BUTTON_RIGHT)
+	expect(screen.navigation_overlay.mode == 2 and screen.navigation_overlay.origin == origin and screen.selection.selected, "the header button opens priorities and right click selects an origin during construction")
+	var draft_cell := Vector2i(27, 25)
+	await click_at(cell_point(draft_cell))
+	expect(construction.draft.size() == 1, "priority view leaves construction painting available")
+	await click_at(cell_point(draft_cell), MOUSE_BUTTON_RIGHT)
+	expect(construction.draft.size() == 0 and screen.navigation_overlay.origin == origin, "right click still undoes a draft placement before selecting an origin")
+	expect(screen.world.match_controller.time_remaining == time and ant.needs.satiety == satiety, "navigation during construction keeps time and hunger frozen")
+	await capture("02b-navigation-during-construction")
+	await key(KEY_N)
+	await key(KEY_SPACE)
+	await click(settings)
+	var pause := Router.top_overlay() as PauseMenu
+	time = screen.world.match_controller.time_remaining
+	await key(KEY_N)
+	await click(routes)
+	expect(pause != null and Router.top_overlay() == pause and get_tree().paused and screen.navigation_overlay.mode == 2, "N and the top bar button both work with the pause menu open")
+	expect(screen.world.match_controller.time_remaining == time, "the pause menu keeps the timer frozen while cycling views")
+	await capture("02c-navigation-during-pause")
+	await click(pause.controls[&"settings"])
+	await key(KEY_N)
+	expect(screen.navigation_overlay.mode == 2, "settings keep their modal keyboard boundary")
+	await key(KEY_ESCAPE)
+	await key(KEY_N)
+	await click(pause.controls[&"resume"])
+	expect(screen.navigation_overlay.mode == 0 and not get_tree().paused, "view stays selected when resuming the game")
 
 func _check_full_map_overlay() -> void:
 	var header: Control = screen.hud.controls[&"settings"].get_parent().get_parent()

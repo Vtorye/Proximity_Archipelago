@@ -25,6 +25,7 @@ var task_panel: TaskPanel
 var _bottom: PanelContainer
 
 func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_PAUSABLE
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	ColonyStyle.fill(self)
 	ColonyStyle.apply(self)
@@ -66,6 +67,7 @@ func _ready() -> void:
 	_timer.custom_minimum_size.x = 48
 	row.add_child(_timer)
 	var routes: Button = _square_button("N", 32)
+	routes.process_mode = Node.PROCESS_MODE_ALWAYS
 	routes.toggle_mode = true
 	routes.pressed.connect(func(): navigation_requested.emit())
 	row.add_child(routes)
@@ -166,6 +168,7 @@ func _ready() -> void:
 		add_child(task_panel)
 	if navigation != null:
 		navigation_panel = NavigationPanel.new()
+		navigation_panel.process_mode = Node.PROCESS_MODE_ALWAYS
 		navigation_panel.overlay = navigation
 		add_child(navigation_panel)
 		navigation_panel.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
@@ -242,11 +245,7 @@ func toast(message: String, danger: bool = false) -> void:
 	_toast.show()
 
 func set_construction_mode(active: bool) -> void:
-	process_mode = Node.PROCESS_MODE_ALWAYS if active else Node.PROCESS_MODE_INHERIT
 	_bottom.visible = not active
-	if navigation_panel != null:
-		navigation_panel.suspended = active
-		navigation_panel.refresh()
 	_toast.hide()
 
 func _process(delta: float) -> void:
@@ -259,6 +258,8 @@ func set_navigation_mode(mode: int) -> void:
 	var routes: Button = controls[&"routes"]
 	routes.set_pressed_no_signal(mode > 0)
 	routes.tooltip_text = ["Пути [N]", "Время входа в клетку [N]", "Приоритеты маршрутов [N]"][mode]
+	if navigation_panel != null:
+		navigation_panel.refresh()
 	var texture: Texture2D = preload("res://game/assets/ui/opaque_panel.svg") if mode > 0 else preload("res://game/assets/ui/panel.svg")
 	# Keep world labels behind readable HUD surfaces without clipping the map layer.
 	for style in [theme.get_stylebox("panel", "PanelContainer"), theme.get_stylebox("panel", "TooltipPanel"), _bottom.get_theme_stylebox("panel"), _toast.get_theme_stylebox("normal")]:

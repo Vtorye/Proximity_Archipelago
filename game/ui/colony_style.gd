@@ -129,7 +129,7 @@ static func margin(parent: Node, pixels: int = 4) -> MarginContainer:
 	parent.add_child(result)
 	return result
 
-static func modal(root: Control, width: float = 248.0) -> VBoxContainer:
+static func modal(root: Control, width: float = 248.0, pass_background_input: bool = false) -> VBoxContainer:
 	apply(root)
 	var shade := ColorRect.new()
 	shade.color = Color(0, 0, 0, 0.5)
@@ -138,6 +138,10 @@ static func modal(root: Control, width: float = 248.0) -> VBoxContainer:
 	var center := CenterContainer.new()
 	root.add_child(center)
 	fill(center)
+	if pass_background_input:
+		root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		center.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var panel := PanelContainer.new()
 	var opaque_panel: StyleBoxTexture = dialog_box()
 	opaque_panel.modulate_color.a = 1.0

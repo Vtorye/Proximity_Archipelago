@@ -123,7 +123,7 @@ func _ready() -> void:
 func start() -> void:
 	if not ready_for_play:
 		return
-	process_mode = Node.PROCESS_MODE_INHERIT
+	process_mode = Node.PROCESS_MODE_PAUSABLE
 	if match_controller != null:
 		match_controller.start(inventory)
 

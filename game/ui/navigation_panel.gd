@@ -2,7 +2,6 @@ class_name NavigationPanel
 extends PanelContainer
 ## Compact key and live enterprise breakdown, separate from the world labels.
 var overlay: NavigationOverlay
-var suspended := false
 var _heading: Label
 var _source: Label
 var _detail: Label
@@ -40,7 +39,7 @@ func _process(delta: float) -> void:
 		_elapsed = 0.0
 		refresh()
 func refresh() -> void:
-	visible = overlay != null and overlay.mode > 0 and not suspended
+	visible = overlay != null and overlay.mode > 0
 	if not visible: return
 	_heading.text = "Вход в клетку · мс" if overlay.mode == 1 else "Приоритеты · секунды"
 	_source.text = "От (%d, %d) · скорость %.1f" % [overlay.origin.x, overlay.origin.y, overlay.reference_speed]
