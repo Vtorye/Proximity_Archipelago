@@ -2,7 +2,6 @@ class_name LevelValidator
 extends RefCounted
 ## Runs on saved authored data without entering the world or creating agents.
 static func validate(path: String) -> Array[String]:
-	var errors: Array[String] = []
 	var scene: PackedScene = load(path) as PackedScene
 	if scene == null: return [path + ": cannot load level"]
 	var root: Node = scene.instantiate()
@@ -10,6 +9,12 @@ static func validate(path: String) -> Array[String]:
 	if world == null:
 		root.free()
 		return [path + ": root must be World"]
+	var errors: Array[String] = validate_world(world, path)
+	world.free()
+	return errors
+
+static func validate_world(world: World, path: String) -> Array[String]:
+	var errors: Array[String] = []
 	var map: TileMapLayer = world.get_node_or_null("Map") as TileMapLayer
 	if map == null or map.tile_set == null or map.get_used_cells().is_empty():
 		errors.append(path + ": missing painted TileMap/TileSet")
@@ -55,6 +60,8 @@ static func validate(path: String) -> Array[String]:
 			if entry == null or entry.type == null or entry.type.id == &"" or entry.amount < 0: errors.append(path + ": invalid starting resource")
 			elif types.has(entry.type.id): errors.append(path + ": duplicate resource " + str(entry.type.id))
 			else: types[entry.type.id] = true
+		if not buildings.any(func(building: Building): return building is House):
+			errors.append(path + ": no starting ant nest")
 		var residents := 0
 		for building in buildings:
 			if building is House:
@@ -102,5 +109,4 @@ static func validate(path: String) -> Array[String]:
 			errors.append_array(world.task_deck.validate(stock))
 		prices.free()
 		stock.free()
-	world.free()
 	return errors
