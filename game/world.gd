@@ -94,6 +94,8 @@ func _ready() -> void:
 	for building in registry.all():
 		if building is House:
 			planner.prepare_home(building)
+	for ant in population.agents():
+		ant.refresh_meal_reservation()
 	match_controller = get_node_or_null("MatchController") as MatchController
 	if task_deck != null:
 		var errors: Array[String] = task_deck.validate(inventory)

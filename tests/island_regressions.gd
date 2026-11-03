@@ -53,3 +53,93 @@ func run(test: Node) -> void:
 	registry.free()
 	stock.free()
 	routes.free()
+
+func test_foodless_colonies(test: Node) -> void:
+	var tiles: Array = []
+	var working_nest := Vector2i(1, 1)
+	var idle_nest := Vector2i(11, 1)
+	var job_cell := Vector2i(3, 1)
+	for start_x in [0, 10]:
+		for x in range(start_x, start_x + 4):
+			for y in range(3):
+				tiles.append([x, y, 3, 0, 0, 0])
+	var objects := [[idle_nest.x, idle_nest.y, "Home"], [job_cell.x, job_cell.y, "Workplace"]]
+	var layout := {"version": LevelLayout.VERSION, "tiles": tiles, "objects": objects}
+	var title := "Foodless islands test " + str(OS.get_process_id())
+	var filename: String = title.sha256_text() + ".json"
+	test.expect(LevelStore.save_level(title, layout) == OK, "save a map with no canteens")
+	var world: World = LevelLayout.create_world(LevelStore.load_level(filename))
+	DirAccess.remove_absolute(LevelStore.DIRECTORY.path_join(filename))
+	test.expect(world != null, "restore a map with no canteens")
+	if world == null:
+		return
+	for index in range(world.starting_resources.size()):
+		var entry: ResourceAmount = world.starting_resources[index]
+		if entry.type.id == &"food":
+			world.starting_resources[index] = test.entry(entry.type, 0)
+	test.expect(LevelValidator.validate_world(world, title).is_empty(), "validator accepts nests and workplaces without canteens or starting food")
+	world.auto_start = false
+	test.add_child(world)
+	var stock: WorldInventory = world.inventory
+	var wood: ResourceType = stock.type_by_id(&"wood")
+	var nest: BuildOption = preload("res://game/building/options/house.tres")
+	var draft := BuildDraft.new()
+	draft.controller = world.build_controller
+	test.expect(draft.paint(nest, working_nest) and draft.budget_check().allowed() and draft.commit(), "build a nest on a dry island with work")
+	var second_idle_nest := Vector2i(13, 2)
+	test.expect(world.build_controller.try_build(nest, second_idle_nest), "build a nest on a dry island without work while other ants are stranded")
+	var start_wood: int = stock.quantity(wood)
+	var work_house := world.registry.at(working_nest) as House
+	var idle_house := world.registry.at(second_idle_nest) as House
+	if work_house == null or idle_house == null or work_house.residents.is_empty() or idle_house.residents.is_empty():
+		test.expect(false, "both dry nests spawn residents")
+		world.free()
+		return
+	var worker := work_house.residents[0] as AntAgent
+	var wanderer := idle_house.residents[0] as AntAgent
+	var workplace := world.registry.at(job_cell) as Workplace
+	var walked: Array[Vector2i] = []
+	var deaths: Array[int] = []
+	worker.died.connect(func(_ant: Node2D, cause: int): deaths.append(cause))
+	wanderer.cell_changed.connect(func(_old: Vector2i, next: Vector2i): walked.append(next))
+	worker._decide()
+	wanderer._decide()
+	test.expect(worker._destination == &"work" and workplace.incoming_count() == 1 and worker._meal == null, "dry ant leaves its nest and immediately reserves a job slot without a meal")
+	test.expect(wanderer._destination == &"wander" and wanderer.current_workplace == null, "idle ant leaves its nest to wander instead of choosing work across water")
+	var worked_near_death := false
+	for step in range(30 * 12):
+		for ant in [worker, wanderer]:
+			ant._physics_process(1.0 / 30.0)
+		if step == 90:
+			test.expect(workplace.working_count() == 1 and worker.status == AntAgent.Status.WORKING, "dry ant reaches the workplace")
+		if worker.needs.satiety < 1.0 and worker.status == AntAgent.Status.WORKING:
+			worked_near_death = true
+	test.expect(stock.quantity(wood) > start_wood + workplace.output_amount, "dry worker completes successive production cycles")
+	test.expect(walked.size() >= 2 and wanderer.needs.satiety < AntNeeds.CAPACITY, "idle ant visits neighboring cells while losing satiety")
+	test.expect(walked.all(func(cell: Vector2i) -> bool:
+		return world.route_service.walkable(cell) and absi(cell.x - second_idle_nest.x) + absi(cell.y - second_idle_nest.y) <= 2), "wander stays on walkable cells near the nest")
+	for step in range(30 * 120):
+		worker._physics_process(1.0 / 30.0)
+		wanderer._physics_process(1.0 / 30.0)
+		if worker.needs.satiety < 1.0 and worker.status == AntAgent.Status.WORKING:
+			worked_near_death = true
+	test.expect(worked_near_death and deaths == [AntAgent.DeathCause.STARVATION], "dry worker stays on the job until starvation")
+	test.expect(workplace.worker_count() == 0 and not work_house.residents.has(worker), "starvation releases the work slot and nest resident")
+	var successor := work_house.residents[0] as AntAgent
+	successor._decide()
+	for step in range(90):
+		successor._physics_process(1.0 / 30.0)
+	var food: ResourceType = stock.type_by_id(&"food")
+	stock.add(food, 1)
+	test.expect(successor.status == AntAgent.Status.WORKING and stock.available(food) == 1, "isolated workers leave global food unreserved")
+	var canteen: BuildOption = preload("res://game/building/options/canteen.tres")
+	if not world.build_controller.options.has(canteen):
+		world.build_controller.options.append(canteen)
+	stock.add(stock.type_by_id(&"royal"), 3)
+	test.expect(world.build_controller.try_build(canteen, job_cell + Vector2i.UP), "new canteen restores access to food on the working island")
+	successor._reconsider_route()
+	test.expect(successor._destination == &"food" and successor._meal != null and workplace.worker_count() == 0, "worker switches to a reachable meal when a canteen opens")
+	for step in range(90):
+		successor._physics_process(1.0 / 30.0)
+	test.expect(stock.quantity(food) == 0 and successor.needs.satiety > 119.0, "restored meal replenishes the worker's satiety")
+	world.free()

@@ -37,6 +37,9 @@ func reserve_meal() -> StockReservation:
 func escape_energy(cell: Vector2i, speed: float) -> float:
 	return travel_energy(navigation.food_field().cost(cell), speed) + AntNeeds.MEAL_SECONDS * AntNeeds.EAT_RATE
 
+func food_within_range(cell: Vector2i, speed: float) -> bool:
+	return escape_energy(cell, speed) + AntNeeds.SAFETY_MARGIN <= AntNeeds.CAPACITY
+
 func travel_seconds(cost: float, speed: float) -> float:
 	return cost * navigation.cell_size() / maxf(speed, 0.01)
 
@@ -44,18 +47,25 @@ func travel_energy(cost: float, speed: float) -> float:
 	return travel_seconds(cost, speed) * AntNeeds.WALK_RATE
 
 func plan_work(agent: Node2D, home: Building, needs: AntNeeds, speed: float, work_time: float, ticket: StockReservation, current: Workplace = null) -> WorkPlan:
-	if ticket == null or not ticket.active or not is_instance_valid(home):
+	if not is_instance_valid(home):
 		return null
 	var home_cell: Vector2i = accessible_entry(home)
 	if not navigation.walkable(home_cell):
 		return null
-	prepare_home(home)
-	var home_field: NavigationField = _home_fields[home_cell]
 	var from_cell: Vector2i = navigation.world_to_cell(agent.global_position)
+	var foodless: bool = not food_within_range(from_cell, speed)
+	var workplaces: Array[Workplace] = _reachable_workplaces(from_cell)
+	if foodless and workplaces.is_empty():
+		return null
+	var home_field: NavigationField
+	if not foodless:
+		if ticket == null or not ticket.active:
+			return null
+		prepare_home(home)
+		home_field = _home_fields[home_cell]
 	var outward: NavigationField = navigation.distances_from(from_cell)
 	var approach: float = agent.global_position.distance_to(navigation.cell_to_world(from_cell)) * navigation.entry_cost(from_cell) / maxf(speed, 0.01)
-	var food_after_home: float = escape_energy(home_cell, speed)
-	var workplaces: Array[Workplace] = _reachable_workplaces(from_cell)
+	var food_after_home: float = escape_energy(home_cell, speed) if not foodless else INF
 	var best_score := INF
 	var best: WorkPlan
 	var feasible_busy := false
@@ -67,11 +77,16 @@ func plan_work(agent: Node2D, home: Building, needs: AntNeeds, speed: float, wor
 			continue
 		for entry in workplace.entry_cells():
 			var to_work: float = approach + travel_seconds(outward.cost(entry), speed)
-			var back_home: float = travel_energy(home_field.cost(entry), speed * CARRY_SPEED_RATIO)
-			var energy: float = to_work * AntNeeds.WALK_RATE + work_time * AntNeeds.WORK_RATE + back_home + food_after_home + 2.0
-			possible_after_meal = possible_after_meal or energy + AntNeeds.SAFETY_MARGIN <= AntNeeds.CAPACITY
-			if not needs.can_afford(energy):
-				continue
+			var energy: float = to_work * AntNeeds.WALK_RATE
+			if foodless:
+				if energy >= needs.satiety:
+					continue
+			else:
+				var back_home: float = travel_energy(home_field.cost(entry), speed * CARRY_SPEED_RATIO)
+				energy += work_time * AntNeeds.WORK_RATE + back_home + food_after_home + 2.0
+				possible_after_meal = possible_after_meal or energy + AntNeeds.SAFETY_MARGIN <= AntNeeds.CAPACITY
+				if not needs.can_afford(energy):
+					continue
 			if not workplace.has_worker(agent) and not workplace.has_free_slot():
 				feasible_busy = true
 				continue
@@ -81,12 +96,13 @@ func plan_work(agent: Node2D, home: Building, needs: AntNeeds, speed: float, wor
 			if score < best_score or is_equal_approx(score, best_score) and workplace == current:
 				best_score = score
 				best = WorkPlan.new()
+				best.foodless = foodless
 				best.workplace = workplace
 				best.job_cell = entry
 				best.home_cell = home_cell
 				best.estimated_energy = energy
 				best.navigation_revision = navigation.revision
-	if best == null and (feasible_busy or not possible_after_meal and needs.can_afford(food_after_home + 2.0)):
+	if not foodless and best == null and (feasible_busy or not possible_after_meal and needs.can_afford(food_after_home + 2.0)):
 		best = WorkPlan.new()
 		best.waiting_for_slot = true
 		best.waiting_reason = WorkPlan.WaitReason.SLOTS_FULL if feasible_busy else (WorkPlan.WaitReason.MISSING_INPUTS if missing_inputs else WorkPlan.WaitReason.NO_SAFE_WORK)

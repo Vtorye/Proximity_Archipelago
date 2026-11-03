@@ -3,7 +3,7 @@ extends Node2D
 ## Executes plans; needs, route execution, and assignment policy are separate objects.
 
 enum DeathCause { STARVATION, DEMOLISHED, OTHER }
-enum Status { HOME, WALKING, WORKING, EATING, WAITING_FOR_FOOD, DEAD }
+enum Status { HOME, WALKING, WORKING, EATING, WAITING_FOR_FOOD, DEAD, WANDERING }
 signal work_completed(human: Node2D, workplace: Node2D)
 signal died(human: Node2D, cause: DeathCause)
 signal status_changed(status: Status)
@@ -50,7 +50,17 @@ func _ready() -> void:
 	route_service.food_sources_changed.connect(_on_food_sources_changed)
 	planner.opportunities_changed.connect(_on_work_opportunities_changed)
 	_timer = departure_delay + randf_range(0.3, 0.5)
-	_meal = planner.reserve_meal()
+	refresh_meal_reservation()
+
+func refresh_meal_reservation() -> void:
+	if _is_foodless():
+		planner.inventory.release(_meal)
+		_meal = null
+	elif _meal == null or not _meal.active:
+		_meal = planner.reserve_meal()
+
+func _is_foodless() -> bool:
+	return not planner.food_within_range(route_service.world_to_cell(global_position), speed)
 
 func _exit_tree() -> void:
 	_release_work()
@@ -100,9 +110,15 @@ func _physics_process(delta: float) -> void:
 					_seek_food()
 					return
 				work_completed.emit(self, current_workplace)
-				_release_work()
-				_carrying = true
-				_go_home()
+				if _plan != null and _plan.foodless:
+					if _can_recover():
+						_seek_food()
+					else:
+						_timer = work_time
+				else:
+					_release_work()
+					_carrying = true
+					_go_home()
 		Status.EATING:
 			_timer -= delta
 			if _timer <= 0.0:
@@ -111,6 +127,10 @@ func _physics_process(delta: float) -> void:
 				_meal = null
 				_carrying = false
 				_go_home()
+		Status.WANDERING:
+			_timer -= delta
+			if _timer <= 0.0:
+				_decide()
 		Status.WAITING_FOR_FOOD:
 			_timer -= delta
 			if _timer <= 0.0:
@@ -118,8 +138,10 @@ func _physics_process(delta: float) -> void:
 	queue_redraw()
 
 func _decide() -> void:
-	if _meal == null or not _meal.active:
-		_meal = planner.reserve_meal()
+	var foodless: bool = _is_foodless()
+	refresh_meal_reservation()
+	if foodless:
+		_carrying = false
 	_plan = planner.plan_work(self, home, needs, speed, work_time, _meal, current_workplace)
 	if _plan != null and _plan.waiting_for_slot:
 		_waiting_for_work = true
@@ -138,9 +160,35 @@ func _decide() -> void:
 	else:
 		_waiting_for_work = false
 		_set_waiting_reason(WorkPlan.WaitReason.NONE)
-		_seek_food()
+		if foodless:
+			_release_work()
+			_wander()
+		else:
+			_seek_food()
+
+func _wander() -> void:
+	var cell: Vector2i = route_service.world_to_cell(global_position)
+	var origin: Vector2i = planner.accessible_entry(home) if is_instance_valid(home) else cell
+	var radius: int = maxi(2, absi(cell.x - origin.x) + absi(cell.y - origin.y))
+	var neighbors: Array[Vector2i] = route_service.snapshot().neighbors(cell)
+	var nearby := neighbors.filter(func(next: Vector2i) -> bool:
+		return absi(next.x - origin.x) + absi(next.y - origin.y) <= radius)
+	if nearby.is_empty():
+		_set_status(Status.WANDERING)
+		_timer = 1.0
+	else:
+		_walk(route_service.make_route([cell, nearby.pick_random()]), &"wander")
+
+func _can_recover() -> bool:
+	if not needs.can_afford(planner.escape_energy(route_service.world_to_cell(global_position), speed)):
+		return false
+	refresh_meal_reservation()
+	return _meal != null and _meal.active
 
 func _seek_food() -> void:
+	if _is_foodless() and is_instance_valid(home):
+		_decide()
+		return
 	_waiting_for_work = false
 	_set_waiting_reason(WorkPlan.WaitReason.NONE)
 	_release_work()
@@ -177,11 +225,14 @@ func _arrive() -> void:
 	match _destination:
 		&"work":
 			var cell: Vector2i = route_service.world_to_cell(global_position)
-			if not is_instance_valid(current_workplace) or not planner.can_finish_work(cell, needs, speed, work_time) or not current_workplace.begin_work(self):
+			if not is_instance_valid(current_workplace) or (not _plan.foodless and not planner.can_finish_work(cell, needs, speed, work_time)) or not current_workplace.begin_work(self):
 				_seek_food()
 				return
 			_set_status(Status.WORKING)
 			_timer = work_time
+		&"wander":
+			_set_status(Status.WANDERING)
+			_timer = randf_range(0.2, 0.7)
 		&"food":
 			_set_status(Status.EATING)
 			_timer = AntNeeds.MEAL_SECONDS
@@ -200,7 +251,7 @@ func _on_food_sources_changed() -> void:
 		_on_navigation_changed()
 
 func _on_work_opportunities_changed() -> void:
-	if status == Status.HOME and _waiting_for_work:
+	if status == Status.WANDERING or (status == Status.HOME and _waiting_for_work):
 		_timer = 0.0
 	elif status == Status.WALKING and _destination == &"work":
 		_queue_reconsideration(false)
@@ -221,8 +272,16 @@ func _reconsider_route() -> void:
 		return
 	var cell: Vector2i = route_service.world_to_cell(global_position)
 	if status == Status.WORKING:
-		if geometry_changed and not planner.can_finish_work(cell, needs, speed, _timer):
-			_seek_food()
+		if geometry_changed and _plan != null:
+			if _plan.foodless:
+				if _can_recover():
+					_seek_food()
+			elif _is_foodless():
+				_plan.foodless = true
+				planner.inventory.release(_meal)
+				_meal = null
+			elif not planner.can_finish_work(cell, needs, speed, _timer):
+				_seek_food()
 	elif status == Status.WALKING:
 		if _destination == &"work":
 			_decide()
@@ -230,6 +289,8 @@ func _reconsider_route() -> void:
 			_go_home()
 		elif geometry_changed and _destination == &"food":
 			_seek_food()
+		elif geometry_changed and _destination == &"wander":
+			_decide()
 
 func workplace_removed(workplace: Workplace) -> void:
 	if current_workplace == workplace:
