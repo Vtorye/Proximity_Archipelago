@@ -270,8 +270,11 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and not event.pressed and event.button_index == _drag_button:
 		_drag_button = MOUSE_BUTTON_NONE
 	elif event is InputEventMouseMotion:
-		_camera.pan(event.relative)
-		get_viewport().set_input_as_handled()
+		if event.button_mask & MOUSE_BUTTON_MASK_MIDDLE:
+			_camera.pan(event.relative)
+			get_viewport().set_input_as_handled()
+		else:
+			_drag_button = MOUSE_BUTTON_NONE
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not _active:

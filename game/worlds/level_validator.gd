@@ -60,8 +60,6 @@ static func validate_world(world: World, path: String) -> Array[String]:
 			if entry == null or entry.type == null or entry.type.id == &"" or entry.amount < 0: errors.append(path + ": invalid starting resource")
 			elif types.has(entry.type.id): errors.append(path + ": duplicate resource " + str(entry.type.id))
 			else: types[entry.type.id] = true
-		if not buildings.any(func(building: Building): return building is House):
-			errors.append(path + ": no starting ant nest")
 		var residents := 0
 		for building in buildings:
 			if building is House:

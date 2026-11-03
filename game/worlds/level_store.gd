@@ -55,4 +55,9 @@ static func load_level(filename: String) -> Dictionary:
 	if json.parse(file.get_as_text()) != OK:
 		return {}
 	var data: Variant = json.data
-	return data if data is Dictionary and data.get("version") == LevelLayout.VERSION else {}
+	if not data is Dictionary or data.get("version") != LevelLayout.VERSION:
+		return {}
+	var title: Variant = data.get("title")
+	if not title is String or title.strip_edges().is_empty() or title.length() > 64:
+		return {}
+	return data
