@@ -30,6 +30,9 @@ func _ready() -> void:
 
 func _run() -> void:
 	seed(20261025)
+	await _test_translations()
+	await _test_language_toggle()
+	TranslationServer.set_locale("ru")
 	_test_manifest()
 	_test_stock()
 	_test_composite_stock()
@@ -433,3 +436,51 @@ func _test_assignment_lifecycle() -> void:
 	expect(ant.current_workplace == null and ant._destination != &"work", "removed workplace immediately cancels the walking assignment")
 	world.free()
 	await get_tree().process_frame
+
+func _test_translations() -> void:
+	var original_locale := TranslationServer.get_locale()
+	var csv := FileAccess.open("res://language/keys.csv", FileAccess.READ)
+	var header := csv.get_csv_line()
+	var rows: Array[PackedStringArray] = []
+	while not csv.eof_reached():
+		var row := csv.get_csv_line()
+		if row.size() == header.size():
+			rows.append(row)
+	for column in [1, 2]:
+		TranslationServer.set_locale(header[column])
+		for row in rows:
+			expect(TranslationServer.translate(row[0]) == row[column].c_unescape(), "translation matches CSV: %s / %s" % [header[column], row[0]])
+		for scene in ["screens/main_menu", "screens/tutorial", "overlays/settings_menu", "overlays/pause_menu", "overlays/match_result"]:
+			var screen: Control = load("res://%s.tscn" % scene).instantiate()
+			add_child(screen)
+			await get_tree().process_frame
+			for control in screen.find_children("*", "Control", true, false):
+				if control is Label or control is Button:
+					var text: String = control.text
+					if text.begins_with("ui."):
+						expect(control.atr(text) != text, "screen label resolves: " + text)
+			screen.queue_free()
+			await get_tree().process_frame
+	TranslationServer.set_locale(original_locale)
+
+func _test_language_toggle() -> void:
+	var original_locale := TranslationServer.get_locale()
+	var original_language := AppSettings.language
+	var menu: Control = load("res://screens/main_menu.tscn").instantiate()
+	add_child(menu)
+	TranslationServer.set_locale("en")
+	for expected in ["ru", "en"]:
+		menu.controls[&"language"].pressed.emit()
+		await get_tree().process_frame
+		expect(TranslationServer.get_locale() == expected, "language button switches the active locale")
+		var button: Button = menu.controls[&"language"]
+		expect(button.atr(button.text) == ("Язык: Русский" if expected == "ru" else "Language: English"), "language button updates its caption immediately")
+		var play: Button = menu.controls[&"play"]
+		expect(play.atr(play.text) == TranslationServer.translate("ui.menu.play"), "existing menu actions use the selected language")
+		var saved := ConfigFile.new()
+		expect(saved.load(AppSettings.PATH) == OK and saved.get_value("interface", "language") == expected, "language selection is persisted")
+	menu.queue_free()
+	await get_tree().process_frame
+	AppSettings.language = original_language
+	AppSettings.save()
+	TranslationServer.set_locale(original_locale)

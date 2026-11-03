@@ -3,20 +3,20 @@ var controls: Dictionary[StringName, Button] = {}
 
 func _ready() -> void:
 	var content: VBoxContainer = ColonyStyle.modal(self, 144)
-	content.add_child(ColonyStyle.label("Пауза", 12))
-	var resume: Button = ColonyStyle.button("Продолжить", true)
+	content.add_child(ColonyStyle.label("ui.pause.title", 12))
+	var resume: Button = ColonyStyle.button("ui.pause.resume", true)
 	resume.pressed.connect(PauseController.resume)
 	content.add_child(resume)
 	controls[&"resume"] = resume
-	var restart: Button = ColonyStyle.button("Заново")
+	var restart: Button = ColonyStyle.button("ui.pause.restart")
 	restart.pressed.connect(_restart)
 	content.add_child(restart)
 	controls[&"restart"] = restart
-	var settings: Button = ColonyStyle.button("Настройки")
+	var settings: Button = ColonyStyle.button("ui.menu.settings")
 	settings.pressed.connect(_open_settings)
 	content.add_child(settings)
 	controls[&"settings"] = settings
-	var main: Button = ColonyStyle.button("В меню")
+	var main: Button = ColonyStyle.button("ui.common.main_menu")
 	main.pressed.connect(_quit_to_menu)
 	content.add_child(main)
 	controls[&"main"] = main

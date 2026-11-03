@@ -59,16 +59,16 @@ func _ready() -> void:
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(spacer)
 	_ants = ColonyStyle.label("5")
-	_ants.tooltip_text = "Муравьи"
+	_ants.tooltip_text = "ui.hud.ants"
 	row.add_child(_ants)
-	row.add_child(ColonyStyle.label("м.", 8, ColonyStyle.MUTED))
+	row.add_child(ColonyStyle.label("ui.hud.ants_short", 8, ColonyStyle.MUTED))
 	_timer = ColonyStyle.label("3:00", 8, ColonyStyle.ACCENT)
 	_timer.custom_minimum_size.x = 48
 	row.add_child(_timer)
 	var settings: Button = _square_button("", 32)
 	settings.icon = preload("res://game/assets/ui/menu_dots.svg")
 	settings.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	settings.tooltip_text = "Меню (Esc)"
+	settings.tooltip_text = "ui.hud.menu"
 	settings.pressed.connect(func(): settings_requested.emit())
 	row.add_child(settings)
 	controls[&"settings"] = settings
@@ -80,7 +80,7 @@ func _ready() -> void:
 	var goals := VBoxContainer.new()
 	goals.add_theme_constant_override("separation", 2)
 	objectives.add_child(goals)
-	goals.add_child(ColonyStyle.label("Цель: по %d" % world.match_controller.target_amount, 8, ColonyStyle.MUTED))
+	goals.add_child(ColonyStyle.label(tr("ui.hud.goal") % world.match_controller.target_amount, 8, ColonyStyle.MUTED))
 	for type in world.match_controller.tracked_types:
 		var line := HBoxContainer.new()
 		line.add_theme_constant_override("separation", 4)
@@ -122,7 +122,7 @@ func _ready() -> void:
 	var hints := HBoxContainer.new()
 	hints.add_theme_constant_override("separation", 6)
 	bottom.add_child(hints)
-	var help: Label = ColonyStyle.label("ЛКМ: камера  Пробел: стройка", 8, ColonyStyle.MUTED)
+	var help: Label = ColonyStyle.label("ui.hud.controls", 8, ColonyStyle.MUTED)
 	help.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	help.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	hints.add_child(help)
@@ -131,7 +131,7 @@ func _ready() -> void:
 	routes.pressed.connect(func(): navigation_requested.emit())
 	hints.add_child(routes)
 	controls[&"routes"] = routes
-	var build: Button = ColonyStyle.button("Пауза / стройка [Пробел]")
+	var build: Button = ColonyStyle.button("ui.hud.build")
 	build.pressed.connect(func(): construction_requested.emit())
 	hints.add_child(build)
 	controls[&"build"] = build
@@ -191,7 +191,7 @@ func _resource_icon(id: StringName) -> Texture2D:
 func refresh() -> void:
 	for type in world.inventory.registered_types():
 		stock_labels[type.id].text = "%d(%d)" % [world.inventory.quantity(type), world.inventory.available(type)] if type.id == &"food" else str(world.inventory.quantity(type))
-		stock_chips[type.id].tooltip_text = "%s: %d, свободно %d" % [type.display_name, world.inventory.quantity(type), world.inventory.available(type)]
+		stock_chips[type.id].tooltip_text = tr("ui.hud.stock") % [tr(type.display_name), world.inventory.quantity(type), world.inventory.available(type)]
 		if progress.has(type.id):
 			progress[type.id].value = world.inventory.quantity(type)
 	var agents: Array[AntAgent] = world.population.agents()
@@ -204,14 +204,14 @@ func refresh() -> void:
 		if ant.waiting_reason == WorkPlan.WaitReason.SLOTS_FULL: busy += 1
 		elif ant.waiting_reason == WorkPlan.WaitReason.NO_SAFE_WORK: unsafe_work += 1
 		elif ant.waiting_reason == WorkPlan.WaitReason.MISSING_INPUTS: missing_inputs += 1
-	_waiting.text = "Ждут мест: %d" % busy if busy > 0 else ""
+	_waiting.text = tr("ui.hud.waiting") % busy if busy > 0 else ""
 	if unsafe_work > 0:
-		_waiting.text += ("\n" if busy > 0 else "") + "Нет безопасной работы: %d" % unsafe_work
+		_waiting.text += ("\n" if busy > 0 else "") + tr("ui.hud.no_safe_work") % unsafe_work
 	if missing_inputs > 0:
-		_waiting.text += ("\n" if not _waiting.text.is_empty() else "") + "Ждут сырья: %d" % missing_inputs
+		_waiting.text += ("\n" if not _waiting.text.is_empty() else "") + tr("ui.hud.missing_inputs") % missing_inputs
 	_waiting.visible = busy > 0 or unsafe_work > 0 or missing_inputs > 0
 	var food: ResourceType = world.inventory.type_by_id(&"food")
-	_warning.text = "Нужна пища" if world.inventory.available(food) < 3 else ""
+	_warning.text = "ui.hud.need_food" if world.inventory.available(food) < 3 else ""
 
 func _on_time_changed(seconds: int) -> void:
 	_timer.text = "%d:%02d" % [seconds / 60, seconds % 60]

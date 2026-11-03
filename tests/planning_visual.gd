@@ -65,7 +65,7 @@ func _run() -> void:
 	ants[4]._decide()
 	panel.refresh()
 	expect(panel._detail.text.contains("2+2/4"), "last slot is reserved before the fourth ant arrives")
-	expect(screen.hud._waiting.visible and screen.hud._waiting.text == "Ждут мест: 1", "full slots have a visible home waiting reason")
+	expect(screen.hud._waiting.visible and screen.hud._waiting.text == (TranslationServer.translate("ui.hud.waiting") % 1), "full slots have a visible home waiting reason")
 	await capture("06-full-slots-and-waiting")
 	Router.goto(&"main_menu")
 	await frames(45)

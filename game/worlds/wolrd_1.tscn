@@ -116,7 +116,7 @@ script = ExtResource("workplace")
 work_slots = 4
 output = ExtResource("wood")
 output_amount = 2
-title = "Участок древесины"
+title = "ui.building.timber"
 
 [node name="Sprite" type="Sprite2D" parent="Workplace" unique_id=303097433]
 texture = ExtResource("timber_art")
@@ -127,7 +127,7 @@ script = ExtResource("workplace")
 work_slots = 4
 output = ExtResource("stone")
 output_amount = 2
-title = "Каменная россыпь"
+title = "ui.building.stone"
 
 [node name="Sprite" type="Sprite2D" parent="Workplace2" unique_id=587804168]
 texture = ExtResource("stone_art")
@@ -135,7 +135,7 @@ texture = ExtResource("stone_art")
 [node name="Food" type="Node2D" parent="." unique_id=812127111]
 position = Vector2(456, 424)
 script = ExtResource("canteen")
-title = "Столовая"
+title = "ui.building.canteen"
 
 [node name="Sprite" type="Sprite2D" parent="Food" unique_id=95982103]
 texture = ExtResource("18_j2ppp")

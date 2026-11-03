@@ -230,7 +230,7 @@ func _workload_ui(test: Node) -> void:
 	hud.world = world
 	test.add_child(hud)
 	waiting_ant._decide()
-	test.expect(waiting_ant.waiting_reason == WorkPlan.WaitReason.SLOTS_FULL and hud._waiting.text == "Ждут мест: 1" and hud._waiting.visible, "home waiting has a visible full-workplace explanation")
+	test.expect(waiting_ant.waiting_reason == WorkPlan.WaitReason.SLOTS_FULL and hud._waiting.text == (TranslationServer.translate("ui.hud.waiting") % 1) and hud._waiting.visible, "home waiting has a visible full-workplace explanation")
 	hud.free()
 	world.free()
 	await test.get_tree().process_frame

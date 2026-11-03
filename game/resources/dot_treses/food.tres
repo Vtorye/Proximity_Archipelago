@@ -6,6 +6,6 @@
 [resource]
 script = ExtResource("1_sh6p8")
 id = &"food"
-display_name = "Пища"
+display_name = "ui.resource.food"
 icon = ExtResource("1_mw0mp")
 metadata/_custom_type_script = "uid://cbbq05pxmjloa"

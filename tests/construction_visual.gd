@@ -50,12 +50,12 @@ func _run() -> void:
 	var menu: ConstructionMenu = Router.top_overlay() as ConstructionMenu
 	expect(menu != null and get_tree().paused, "construction mode pauses the simulation")
 	_validate_palette(menu)
-	expect((menu.controls[&"house"] as BuildChoiceButton).cost_label.text == "5 Камень + 20 Пища", "palette shows both components of an editable price")
+	expect((menu.controls[&"house"] as BuildChoiceButton).cost_label.text == ("5 %s + 20 %s" % [TranslationServer.translate("ui.resource.stone"), TranslationServer.translate("ui.resource.food")]), "palette shows both components of an editable price")
 	await capture("03-bottom-palette-and-composite-price")
 	var time: float = world.match_controller.time_remaining
 	var satiety: float = world.population.agents()[0].needs.satiety
 	await _stroke(Vector2i(23, 28), Vector2i(29, 28))
-	expect(menu.draft.size() == 7 and menu._cost.text.contains("7 Древесина"), "one fast drag fills every road cell and totals its price")
+	expect(menu.draft.size() == 7 and menu._cost.text.contains(("7 %s" % TranslationServer.translate("ui.resource.wood"))), "one fast drag fills every road cell and totals its price")
 	expect(world.route_service.revision == revision and world.inventory.quantity(wood) == stock, "draft leaves navigation and inventory unchanged")
 	expect(world.match_controller.time_remaining == time and world.population.agents()[0].needs.satiety == satiety, "painting pauses both the timer and hunger")
 	await capture("04-road-stroke-preview")
@@ -71,7 +71,7 @@ func _run() -> void:
 	await click(menu.controls[&"house"])
 	await click_at(cell_point(Vector2i(29, 27)))
 	expect(menu.draft.size() == 8 and not menu.controls[&"apply"].disabled, "road and nest share an affordable plan")
-	expect(menu._cost.text.contains("7 Древесина") and menu._cost.text.contains("5 Камень") and menu._cost.text.contains("20 Пища"), "plan total includes every resource across all placements")
+	expect(menu._cost.text.contains(("7 %s" % TranslationServer.translate("ui.resource.wood"))) and menu._cost.text.contains(("5 %s" % TranslationServer.translate("ui.resource.stone"))) and menu._cost.text.contains(("20 %s" % TranslationServer.translate("ui.resource.food"))), "plan total includes every resource across all placements")
 	expect(world.population.count() == 5 and world.registry.at(Vector2i(29, 27)) == null, "draft nest has no residents or world occupancy before commit")
 	await capture("05-composite-plan-total")
 	var food_before: int = world.inventory.quantity(food)
@@ -95,7 +95,7 @@ func _run() -> void:
 	await key(KEY_B)
 	menu = Router.top_overlay() as ConstructionMenu
 	await click_at(cell_point(Vector2i(30, 28)))
-	expect(menu.draft.size() == 1 and menu.controls[&"apply"].disabled and menu._status.text == "Не хватает свободных ресурсов", "unaffordable draft explains its budget and blocks continuation")
+	expect(menu.draft.size() == 1 and menu.controls[&"apply"].disabled and menu._status.text == (TranslationServer.translate("ui.placement.resources")), "unaffordable draft explains its budget and blocks continuation")
 	await capture("07-unaffordable-plan")
 	await key(KEY_ESCAPE)
 	expect(Router.top_overlay() == menu and get_tree().paused, "Esc cannot partly commit an unaffordable draft")
@@ -104,7 +104,7 @@ func _run() -> void:
 	menu = Router.top_overlay() as ConstructionMenu
 	await click(menu.controls[&"apple_tree"])
 	await click_at(cell_point(Vector2i(29, 27)))
-	expect(menu.draft.size() == 0 and menu._status.text == "Сначала снесите существующее здание", "occupied cells explain why the brush cannot paint")
+	expect(menu.draft.size() == 0 and menu._status.text == (TranslationServer.translate("ui.placement.occupied")), "occupied cells explain why the brush cannot paint")
 	await capture("08-occupied-cell-feedback")
 	var camera_before: Vector2 = screen.camera.position
 	await _pan()

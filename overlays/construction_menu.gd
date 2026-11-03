@@ -66,14 +66,14 @@ func _ready() -> void:
 		button.art = context.art
 		button.card_width = 96
 		button.compact = true
-		button.tooltip_text = "%s: %s" % [option.display_name, BuildCostText.format(context.controller.price(option))]
+		button.tooltip_text = "%s: %s" % [tr(option.display_name), BuildCostText.format(context.controller.price(option))]
 		button.toggle_mode = true
 		button.button_group = group
 		button.pressed.connect(_select.bind(option))
 		choices.add_child(button)
 		controls[option.id] = button
 		if _selected == null: _select(option)
-	for entry in [[&"move", "Перемещение: ЛКМ двигает карту", "move"], [&"demolish", "Снос: отметить здание или дорогу", "demolish"]]:
+	for entry in [[&"move", "ui.construction.move", "move"], [&"demolish", "ui.construction.demolish", "demolish"]]:
 		var tool: Button = ColonyStyle.button("")
 		tool.custom_minimum_size = Vector2(32, 32)
 		tool.size_flags_vertical = Control.SIZE_SHRINK_CENTER
@@ -88,7 +88,7 @@ func _ready() -> void:
 	var actions := HBoxContainer.new()
 	actions.add_theme_constant_override("separation", 4)
 	toolbar.add_child(actions)
-	for entry in [[&"undo", "Отменить ход (Ctrl+Z)", "undo", _undo], [&"cancel", "Отменить всё", "cancel", _cancel], [&"apply", "Применить и продолжить (Пробел)", "apply", apply_and_resume]]:
+	for entry in [[&"undo", "ui.construction.undo", "undo", _undo], [&"cancel", "ui.construction.cancel", "cancel", _cancel], [&"apply", "ui.construction.apply", "apply", apply_and_resume]]:
 		var button: Button = ColonyStyle.button("", entry[0] == &"apply")
 		button.custom_minimum_size = Vector2(32, 32)
 		button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
@@ -117,7 +117,7 @@ func _ready() -> void:
 	_confirm_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_confirm_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_confirmation.add_child(_confirm_label)
-	for entry in [[&"confirm_demolish", "Да, снести", _commit], [&"keep_residents", "Назад", _cancel_confirmation]]:
+	for entry in [[&"confirm_demolish", "ui.build.confirm", _commit], [&"keep_residents", "ui.common.back", _cancel_confirmation]]:
 		var button: Button = ColonyStyle.button(entry[1])
 		button.pressed.connect(entry[2])
 		_confirmation.add_child(button)
@@ -159,9 +159,9 @@ func _cancel_confirmation() -> void:
 
 func _refresh() -> void:
 	_refresh_queued = false
-	_hint.text = "ЛКМ: строить · ПКМ: убрать слой" if _tool == &"build" else ("ЛКМ/СКМ: камера · колесо: зум" if _tool == &"move" else "ЛКМ: снос · ПКМ: убрать отметку")
+	_hint.text = "ui.construction.build_hint" if _tool == &"build" else ("ui.construction.move_hint" if _tool == &"move" else "ui.construction.demolish_hint")
 	var budget: PlacementCheck = draft.budget_check()
-	_cost.text = "План: %d · %s" % [draft.size(), BuildCostText.format(draft.costs())]
+	_cost.text = tr("ui.construction.cost") % [draft.size(), BuildCostText.format(draft.costs())]
 	_cost.add_theme_color_override("font_color", ColonyStyle.TEXT if budget.allowed() else ColonyStyle.DANGER)
 	controls[&"undo"].disabled = not draft.can_undo()
 	controls[&"apply"].disabled = not budget.allowed()
@@ -189,7 +189,7 @@ func apply_and_resume() -> void:
 	_end_stroke()
 	var residents: int = draft.residents_to_demolish()
 	if residents > 0:
-		_confirm_label.text = "Жители погибнут: %d. Снести муравейник?" % residents
+		_confirm_label.text = tr("ui.build.confirm_residents") % residents
 		_confirmation.show()
 		return
 	_commit()

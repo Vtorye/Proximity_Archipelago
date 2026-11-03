@@ -7,5 +7,5 @@
 [resource]
 script = ExtResource("1")
 id = &"wood"
-display_name = "Древесина"
+display_name = "ui.resource.wood"
 icon = ExtResource("icon")

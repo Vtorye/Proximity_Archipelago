@@ -1,0 +1,97 @@
+KEYS,en,ru
+ui.menu.play,Play,Играть
+ui.menu.settings,Settings,Настройки
+ui.menu.quit,Quit,Выйти
+ui.menu.tutorial,Tutorial,Обучение
+ui.common.main_menu,Main menu,В меню
+ui.common.back,Back,Назад
+ui.common.next,Next,Далее
+ui.settings.volume,Volume,Громкость
+ui.settings.ui_scale,UI scale,Масштаб интерфейса
+ui.settings.fullscreen,Fullscreen,Полный экран
+ui.settings.vsync,Vertical sync,Вертикальная синхронизация
+ui.settings.grid,Tile grid,Сетка клеток
+ui.settings.reduced_motion,Reduce motion,Уменьшить анимацию
+ui.settings.saved,Saved,Сохранено
+ui.settings.reset,Reset,Сбросить
+ui.common.done,Done,Готово
+ui.settings.save_error,Save failed,Ошибка сохранения
+ui.pause.title,Paused,Пауза
+ui.pause.resume,Resume,Продолжить
+ui.pause.restart,Restart,Заново
+ui.result.victory,Victory,Победа
+ui.result.defeat,Defeat,Поражение
+ui.result.goal_reached,Goal reached,Цель достигнута
+ui.result.time_up,Time is up,Время вышло
+ui.result.time_left,Time left: %02d:%02d,Осталось %02d:%02d
+ui.result.new_game,New game,Новая игра
+ui.hud.ants,Ants,Муравьи
+ui.hud.ants_short,ants,м.
+ui.hud.menu,Menu (Esc),Меню (Esc)
+ui.hud.goal,Goal: %d each,Цель: по %d
+ui.hud.controls,LMB: pan  Space: build,ЛКМ: камера  Пробел: стройка
+ui.hud.build,Pause / build [Space],Пауза / стройка [Пробел]
+ui.hud.stock,"%s: %d, available %d","%s: %d, свободно %d"
+ui.hud.waiting,Waiting for slots: %d,Ждут мест: %d
+ui.hud.no_safe_work,No safe work: %d,Нет безопасной работы: %d
+ui.hud.need_food,Food needed,Нужна пища
+ui.cost.invalid,Invalid cost,Некорректная цена
+ui.cost.free,Free,Бесплатно
+ui.build.demolish,Demolish,Снести
+ui.build.cancel_demolition,Cancel demolition,Отменить снос
+ui.build.title,Construction,Строительство
+ui.build.workers,Working+en route: %d+%d/%d,Работают+идут: %d+%d/%d
+ui.build.water,Water,Вода
+ui.build.spawn_help,. +%d ants; requires %d food portions.,. +%d муравьёв; нужно %d порций.
+ui.build.completed,%s: complete,%s: готово
+ui.build.confirm_residents,Residents will die: %d. Demolish the nest?,Жители погибнут: %d. Снести муравейник?
+ui.build.confirm_demolition,Demolish the building without a refund?,Снести здание без возврата ресурсов?
+ui.build.confirm,"Yes, demolish","Да, снести"
+ui.build.demolished,Building demolished,Здание снесено
+ui.construction.move,Move: LMB pans the map,Перемещение: ЛКМ двигает карту
+ui.construction.demolish,Demolish: mark a building or road,Снос: отметить здание или дорогу
+ui.construction.undo,Undo stroke (Ctrl+Z),Отменить ход (Ctrl+Z)
+ui.construction.cancel,Cancel all,Отменить всё
+ui.construction.apply,Apply and resume (Space),Применить и продолжить (Пробел)
+ui.construction.build_hint,LMB: build · RMB: remove layer,ЛКМ: строить · ПКМ: убрать слой
+ui.construction.move_hint,LMB/MMB: pan · wheel: zoom,ЛКМ/СКМ: камера · колесо: зум
+ui.construction.demolish_hint,LMB: demolish · RMB: unmark,ЛКМ: снос · ПКМ: убрать отметку
+ui.construction.cost,Plan: %d · %s,План: %d · %s
+ui.placement.busy,Wait for construction to finish,Дождитесь завершения строительства
+ui.placement.invalid_option,This object is unavailable,Этот объект недоступен
+ui.placement.resources,Not enough available resources,Не хватает свободных ресурсов
+ui.placement.invalid_tile,Invalid terrain,Недопустимое покрытие
+ui.placement.already_placed,This terrain is already placed,Это покрытие уже уложено
+ui.placement.outside_map,Cannot build outside the map,За пределами карты строить нельзя
+ui.placement.occupied,Demolish the existing building first,Сначала снесите существующее здание
+ui.placement.ant_present,Wait for the ant to leave the tile,"Подождите, пока муравей освободит клетку"
+ui.placement.invalid_building,Invalid building definition,Ошибка определения здания
+ui.placement.no_building,There is no building on this tile,На клетке нет здания
+ui.placement.spawn_food,New residents need available food portions,Нужны свободные порции пищи для новых жителей
+ui.placement.no_escape,This would block the ants' safe route to food,Это лишит муравьёв безопасного пути к еде
+ui.placement.unavailable,Action unavailable,Действие недоступно
+ui.resource.wood,Wood,Древесина
+ui.resource.stone,Stone,Камень
+ui.resource.food,Food,Пища
+ui.building.berries,Berry bush,Ягодный куст
+ui.building.nest,Ant nest,Муравейник
+ui.building.ground,Soil,Почва
+ui.building.road,Path,Тропинка
+ui.building.generic,Building,Строение
+ui.building.timber,Timber grove,Участок древесины
+ui.building.stone,Stone deposit,Каменная россыпь
+ui.building.canteen,Canteen,Столовая
+ui.tutorial.lesson1.title,Colony requests,Запросы колонии
+ui.tutorial.lesson1.body,"Three resource requests are available at a time.\nDeliver resources to gain time and colony marks.\nIf the timer reaches zero, the colony loses.\n\nYou need the same stock for requests and building.\nAnts pick nearby jobs with free slots.","Одновременно доступны три запроса ресурсов.\nСдавайте ресурсы и получайте дополнительные секунды и знаки колонии.\nЕсли таймер обнулится, партия закончится поражением.\n\nЗапасы нужны и для заданий, и для строительства.\nМуравьи выбирают близкую и свободную работу."
+ui.tutorial.lesson2.title,Paths and food,Дороги и пища
+ui.tutorial.lesson2.body,"Paths speed up trips to work and home.\nTrees provide wood, quarries stone, and bushes food.\n\nAnts need food and a safe route to the canteen.\nA new nest adds five residents; they also need food.\nWorkplace load shows working+en route / slots.","Тропинки ускоряют дорогу на работу и домой.\nДеревья дают древесину, каменоломни — камень, кусты — пищу.\n\nМуравьям нужны еда и безопасный путь к столовой.\nНовый муравейник даёт пять жителей; им тоже нужна пища.\nНагрузка предприятия показана как работают+идут / места."
+ui.tutorial.lesson3.title,Build while paused,Стройка на паузе
+ui.tutorial.lesson3.body,"Space opens construction and pauses time and hunger.\nChoose a building, hold LMB, and drag across tiles.\nA road and a building can share a tile.\n\nRMB removes the latest addition on the selected tile.\nCtrl+Z undoes a stroke. The cross cancels the whole plan.\nSpace or the triangle applies the plan and resumes play.","Пробел включает стройку и останавливает время и голод.\nВыберите постройку, зажмите ЛКМ и проведите по клеткам.\nДорога и здание помещаются на одной клетке.\n\nПКМ снимает последнее добавление на выбранной клетке.\nCtrl+Z отменяет мазок. Крестик отменяет весь план.\nПробел или треугольник применяют план и продолжают игру."
+ui.tutorial.lesson4.title,Camera and demolition,Камера и снос
+ui.tutorial.lesson4.body,"Use the wheel to zoom, and MMB, arrows or WASD to pan.\nIn construction, the Move tool lets you pan with LMB.\n\nThe Demolish tool marks buildings and roads for removal.\nRemoval happens when you apply the plan, with no refund.\nDemolishing a nest kills residents and needs confirmation.\nThe top menu offers settings, restart, and exit.","Колесо меняет масштаб, СКМ, стрелки и WASD двигают камеру.\nВ стройке инструмент «Перемещение» включает перенос ЛКМ.\n\nИнструмент «Снос» отмечает здания и дороги для удаления.\nОтметки применяются вместе с планом, без возврата ресурсов.\nСнос муравейника убивает жителей и требует подтверждения.\nМеню вверху содержит настройки, перезапуск и выход."
+ui.menu.language,Language: English,Язык: Русский
+ui.hud.missing_inputs,Waiting for inputs: %d,Ждут сырья: %d
+ui.placement.unbuildable,This terrain cannot be built on,Это покрытие запрещает строительство
+ui.placement.impassable,Tile is impassable,Клетка непроходима
+ui.tutorial.progress.title,Rewards and upgrades,Награды и развитие
+ui.tutorial.progress.body,"Each level has five requests in random order.\nSkipping usually costs one third and gives no reward.\nHover over Skip to see its price.\n\nClosing a level grants faster paths, cheaper building or faster ants.\nSpend colony marks on new canteens.","На уровне пять запросов в случайном порядке.\nОтказ обычно стоит треть цены, не даёт награды и закрывает запрос.\nЦена отказа видна в подсказке кнопки.\n\nЗакрытие уровня даёт быструю дорогу, скидку или скорость муравьёв.\nЗа знаки колонии можно строить новые столовые."

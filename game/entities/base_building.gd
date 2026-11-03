@@ -8,7 +8,7 @@ var cell: Vector2i
 @export var option: BuildOption
 var _is_setup := false
 var _is_demolished := false
-@export var title := "Строение"
+@export var title := "ui.building.generic"
 
 func display_title() -> String:
 	return option.display_name if option != null else title
