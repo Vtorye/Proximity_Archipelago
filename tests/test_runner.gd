@@ -257,11 +257,11 @@ func _test_worlds() -> void:
 	expect(not first.build_controller.try_build(invalid, Vector2i(28, 29)), "invalid nest setup fails")
 	expect(first.inventory.quantity(wood) == stock_before and first.registry.at(Vector2i(28, 29)) == null, "invalid setup leaves stock and world unchanged")
 	var far: BuildOption = load("res://game/building/options/house.tres")
-	expect(first.build_controller.check(far, Vector2i(9, 10)).code == PlacementCheck.Code.NO_ESCAPE, "nest with unreachable feeding rejected")
+	expect(first.build_controller.check(far, Vector2i(9, 10)).allowed(), "nest with unreachable feeding can be placed")
 	var slow: SceneBuildOption = far.duplicate(true) as SceneBuildOption
 	slow.spawn_speed = 1.0
 	options.append(slow)
-	expect(first.build_controller.check(slow, Vector2i(39, 25)).code == PlacementCheck.Code.NO_ESCAPE, "nest outside its movement profile budget rejected")
+	expect(first.build_controller.check(slow, Vector2i(39, 25)).allowed(), "slow nest outside its feeding budget can be placed")
 	# A slower tile must not consume a hungry ant's last safe escape budget.
 	map.set_cell(Vector2i(28, 26), 3, Vector2i(2, 0))
 	first.route_service.rebuild(first.registry.blocked_cells())
@@ -275,7 +275,7 @@ func _test_worlds() -> void:
 	ant.needs.eat()
 	var saved_available: int = first.inventory.available(food)
 	first.inventory.try_spend(entry(food, saved_available))
-	expect(first.build_controller.check(far, Vector2i(26, 28)).code == PlacementCheck.Code.SPAWN_FOOD, "nest needs food for its residents")
+	expect(first.build_controller.check(far, Vector2i(26, 28)).allowed(), "nest can be placed without free food portions")
 	first.free()
 	second.free()
 	await get_tree().process_frame

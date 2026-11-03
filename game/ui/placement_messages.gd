@@ -16,6 +16,5 @@ static func text(code: PlacementCheck.Code) -> String:
 		PlacementCheck.Code.ANT_PRESENT: return TranslationServer.translate("ui.placement.ant_present")
 		PlacementCheck.Code.INVALID_BUILDING: return TranslationServer.translate("ui.placement.invalid_building")
 		PlacementCheck.Code.NO_BUILDING: return TranslationServer.translate("ui.placement.no_building")
-		PlacementCheck.Code.SPAWN_FOOD: return TranslationServer.translate("ui.placement.spawn_food")
 		PlacementCheck.Code.NO_ESCAPE: return TranslationServer.translate("ui.placement.no_escape")
 	return TranslationServer.translate("ui.placement.unavailable")

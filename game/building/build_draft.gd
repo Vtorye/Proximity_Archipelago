@@ -93,17 +93,6 @@ func costs() -> Array[ResourceAmount]:
 func budget_check() -> PlacementCheck:
 	if not controller.inventory.can_afford_all(costs()):
 		return PlacementCheck.result(PlacementCheck.Code.RESOURCES)
-	var food: ResourceType = controller.inventory.type_by_id(&"food")
-	var meals := 0
-	var food_cost := 0
-	for command in _commands:
-		if command.is_removal(): continue
-		var option: BuildOption = command.option
-		pass # Food is calculated from the same sequential quote used for payment.
-		if option is SceneBuildOption: meals += option.spawn_count
-	food_cost = BuildController.price_amount(costs(), food)
-	if controller.inventory.available(food) - food_cost < meals:
-		return PlacementCheck.result(PlacementCheck.Code.SPAWN_FOOD)
 	return PlacementCheck.new()
 
 func commit() -> bool:

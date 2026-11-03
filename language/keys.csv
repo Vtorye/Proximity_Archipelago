@@ -67,7 +67,6 @@ ui.placement.occupied,Demolish the existing building first,Сначала сне
 ui.placement.ant_present,Wait for the ant to leave the tile,"Подождите, пока муравей освободит клетку"
 ui.placement.invalid_building,Invalid building definition,Ошибка определения здания
 ui.placement.no_building,There is no building on this tile,На клетке нет здания
-ui.placement.spawn_food,New residents need available food portions,Нужны свободные порции пищи для новых жителей
 ui.placement.no_escape,This would block the ants' safe route to food,Это лишит муравьёв безопасного пути к еде
 ui.placement.unavailable,Action unavailable,Действие недоступно
 ui.resource.wood,Wood,Древесина

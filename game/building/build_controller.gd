@@ -38,14 +38,6 @@ func check(option: BuildOption, cell: Vector2i) -> PlacementCheck:
 		return placement
 	if not inventory.can_afford_all(price(option)):
 		return PlacementCheck.result(PlacementCheck.Code.RESOURCES)
-	if option is SceneBuildOption and option.spawn_count > 0:
-		var food: ResourceType = inventory.type_by_id(&"food")
-		if inventory.available(food) - price_amount(price(option), food) < option.spawn_count:
-			return PlacementCheck.result(PlacementCheck.Code.SPAWN_FOOD)
-		var escape_units: float = route_service.food_field().cost(cell)
-		var energy: float = escape_units * route_service.cell_size() / option.spawn_speed * 2.25 + AntNeeds.MEAL_SECONDS + AntNeeds.SAFETY_MARGIN
-		if energy > AntNeeds.CAPACITY:
-			return PlacementCheck.result(PlacementCheck.Code.NO_ESCAPE)
 	return PlacementCheck.new()
 
 ## Geometry-only check for a draft. The final command validates its entire budget and grid.
@@ -123,7 +115,6 @@ func try_build_plan(commands: Array[BuildCommand]) -> bool:
 	var occupied: Dictionary[Vector2i, bool] = {}
 	var terrain: Dictionary[Vector2i, bool] = {}
 	var candidates: Array[Building] = []
-	var spawn_count := 0
 	for command in placements:
 		var cell: Vector2i = command.cell
 		var option: BuildOption = command.option
@@ -151,18 +142,9 @@ func try_build_plan(commands: Array[BuildCommand]) -> bool:
 			if not building.setup(cell, option):
 				last_result = PlacementCheck.result(PlacementCheck.Code.INVALID_BUILDING)
 				break
-			if building is House:
-				spawn_count += building.capacity
 	if last_result.allowed(): costs = prices.quote_plan(commands) if prices != null else _base_plan_price(placements)
 	if last_result.allowed() and not inventory.can_afford_all(costs):
 		last_result = PlacementCheck.result(PlacementCheck.Code.RESOURCES)
-	if last_result.allowed():
-		var food: ResourceType = inventory.type_by_id(&"food")
-		var food_cost := 0
-		for cost in costs:
-			if food != null and cost.type.id == food.id: food_cost += cost.amount
-		if inventory.available(food) - food_cost < spawn_count:
-			last_result = PlacementCheck.result(PlacementCheck.Code.SPAWN_FOOD)
 	if last_result.allowed() and not _safety().preserves_escape(placements, candidates, removed):
 		last_result = PlacementCheck.result(PlacementCheck.Code.NO_ESCAPE)
 	if not last_result.allowed():
@@ -212,7 +194,7 @@ func demolition_check(cell: Vector2i) -> PlacementCheck:
 	if _committing:
 		return PlacementCheck.result(PlacementCheck.Code.BUSY)
 	var building: Building = registry.at(cell)
-	if building is Canteen and registry.canteens().size() <= 1 and population.count() > 0:
+	if not _safety().can_remove_food(building):
 		return PlacementCheck.result(PlacementCheck.Code.NO_ESCAPE)
 	return PlacementCheck.result(PlacementCheck.Code.OK if building != null else PlacementCheck.Code.NO_BUILDING)
 
@@ -223,10 +205,6 @@ func demolish_at(cell: Vector2i) -> bool:
 	if not last_result.allowed():
 		return false
 	var building: Building = registry.at(cell)
-	# Removing the last feeding point while ants are alive would invalidate every safe plan.
-	if not _safety().can_remove_food(building):
-		last_result = PlacementCheck.result(PlacementCheck.Code.NO_ESCAPE)
-		return false
 	_committing = true
 	inventory.begin_update()
 	_refund_for_demolish(building.option)
