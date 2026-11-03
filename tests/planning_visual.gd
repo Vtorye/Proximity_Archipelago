@@ -17,18 +17,19 @@ func _run() -> void:
 	for workplace in world.registry.workplaces(): workplace.work_slots = 0
 	stone.work_slots = 4
 	ants[0]._decide()
-	world.process_mode = Node.PROCESS_MODE_INHERIT
+	world.process_mode = Node.PROCESS_MODE_PAUSABLE
 	await key(KEY_N)
 	await key(KEY_N)
 	var panel: NavigationPanel = screen.hud.navigation_panel
 	await hover(stone.cell)
 	expect(panel._detail.text.contains("0+1/4"), "walking ant is visible in workplace load")
 	await capture("01-heading-to-stone")
-	await frames(45)
-	var target: Vector2i = world.route_service.world_to_cell(ants[0].global_position) + Vector2i(0, -1)
+	var target := Vector2i(25, 24)
 	await key(KEY_SPACE)
-	await click(Router.top_overlay().controls[&"apple_tree"])
+	var construction := Router.top_overlay() as ConstructionMenu
+	await click(construction.controls[&"apple_tree"])
 	await click_at(cell_point(target))
+	expect(construction.draft.size() == 1, "bush fixture is painted on a free cell outside the HUD")
 	await key(KEY_SPACE)
 	await frames(4)
 	var bush: Workplace = world.registry.at(target) as Workplace
@@ -57,7 +58,7 @@ func _run() -> void:
 			ants[index]._physics_process(1.0 / 60.0)
 			if ants[index].status == AntAgent.Status.WORKING: break
 	ants[2]._decide()
-	world.process_mode = Node.PROCESS_MODE_INHERIT
+	world.process_mode = Node.PROCESS_MODE_PAUSABLE
 	await hover(stone.cell)
 	expect(panel._detail.text.contains("2+1/4"), "UI separates two working ants from one incoming ant")
 	await capture("05-working-plus-incoming")
