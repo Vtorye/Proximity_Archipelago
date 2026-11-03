@@ -95,3 +95,26 @@ ui.placement.unbuildable,This terrain cannot be built on,Это покрытие
 ui.placement.impassable,Tile is impassable,Клетка непроходима
 ui.tutorial.progress.title,Rewards and upgrades,Награды и развитие
 ui.tutorial.progress.body,"Each level has five requests in random order.\nSkipping usually costs one third and gives no reward.\nHover over Skip to see its price.\n\nClosing a level grants faster paths, cheaper building or faster ants.\nSpend colony marks on new canteens.","На уровне пять запросов в случайном порядке.\nОтказ обычно стоит треть цены, не даёт награды и закрывает запрос.\nЦена отказа видна в подсказке кнопки.\n\nЗакрытие уровня даёт быструю дорогу, скидку или скорость муравьёв.\nЗа знаки колонии можно строить новые столовые."
+ui.menu.maps,Maps,Карты
+ui.map.new,New,Новая
+ui.map.name,Map name,Имя карты
+ui.map.save,Save,Сохранить
+ui.map.load,Load,Загрузить
+ui.map.move_object,Move object,Перенести объект
+ui.map.controls,LMB: edit · RMB: erase · MMB/arrows: pan · wheel: zoom,ЛКМ: правка · ПКМ: стереть · СКМ/стрелки: камера · колесо: зум
+ui.map.default,Starter map,Стартовая карта
+ui.map.dirty,Unsaved changes,Есть несохранённые правки
+ui.map.discard,Repeat the action to discard edits,"Повторите действие, чтобы отбросить правки"
+ui.map.load_failed,Could not open the map,Не удалось открыть карту
+ui.map.loaded,Map loaded,Карта загружена
+ui.map.name_needed,Enter a map name,Введите имя карты
+ui.map.save_failed,Could not save: %s,Не удалось сохранить: %s
+ui.map.saved,Map saved,Карта сохранена
+ui.map.save_first,Save the map before playing,Сохраните карту перед запуском
+ui.map.move_target,Choose the destination tile,Выберите клетку назначения
+ui.map.invalid_object_cell,Choose a free land tile,Выберите свободную клетку суши
+Трава,Grass,Трава
+Почва,Soil,Почва
+Дорога,Path,Дорога
+Быстрая тропинка,Fast path,Быстрая тропинка
+Вода,Water,Вода

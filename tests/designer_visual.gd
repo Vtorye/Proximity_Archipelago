@@ -39,6 +39,7 @@ func _run() -> void:
 	await key(KEY_N)
 	Router.goto(&"main_menu")
 	await frames(40)
+	await _check_saved_map()
 	_finish()
 
 func _check_full_map_overlay() -> void:
@@ -122,3 +123,65 @@ func _hold_arrow(code: Key) -> void:
 	var offset: Vector2 = screen.camera.position - position
 	var expected := Vector2.RIGHT if code == KEY_RIGHT else (Vector2.LEFT if code == KEY_LEFT else (Vector2.UP if code == KEY_UP else Vector2.DOWN))
 	expect(offset.dot(expected) > 0.01, "arrow key pans in the expected direction at the current zoom")
+
+func _check_saved_map() -> void:
+	await click(Router._current.controls[&"maps"])
+	await frames(40)
+	var editor: Control = Router._current
+	expect(Router.current_screen_key() == &"level_editor", "Maps opens the level editor")
+	var original := Vector2i(21, 22)
+	var destination := Vector2i(22, 23)
+	var road := Vector4i(3, 2, 0, 0)
+	editor._brush.select(editor._brushes.find(road))
+	await click_at(_editor_point(editor, destination))
+	editor._brush.select(0)
+	await click_at(_editor_point(editor, original))
+	await click_at(_editor_point(editor, destination) + Vector2(3, 4))
+	var workplace: Building = editor._object_at(destination)
+	expect(workplace is Workplace and editor._object_at(original) == null, "move tool relocates the authored workplace")
+	expect(workplace.global_position.is_equal_approx(editor._map.to_global(editor._map.map_to_local(destination))), "workplaces snap to the center of the destination tile")
+	expect(editor._map.get_cell_atlas_coords(destination) == Vector2i(2, 0), "terrain and workplace can share the edited cell")
+	await capture("05-level-editor")
+	var title: String = "Map check %d %d" % [OS.get_process_id(), Time.get_ticks_usec()]
+	editor._title.text = title
+	await click(_editor_button(editor, "ui.map.save"))
+	var filename: String = title.sha256_text() + ".json"
+	expect(not LevelStore.load_level(filename).is_empty(), "edited layout is persisted to disk")
+	await click(_editor_button(editor, "ui.common.main_menu"))
+	await frames(40)
+	await click(Router._current.controls[&"maps"])
+	await frames(40)
+	editor = Router._current
+	for index in range(editor._saved.item_count):
+		if editor._saved.get_item_metadata(index) == filename:
+			editor._saved.select(index)
+			break
+	await click(_editor_button(editor, "ui.map.load"))
+	expect(editor._title.text == title and editor._object_at(destination) is Workplace and editor._map.get_cell_atlas_coords(destination) == Vector2i(2, 0), "a fresh editor loads the saved tiles and objects")
+	await click(_editor_button(editor, "ui.menu.play"))
+	await frames(50)
+	DirAccess.remove_absolute(LevelStore.DIRECTORY.path_join(filename))
+	expect(Router.current_screen_key() == &"match", "saved map launches as a match")
+	if Router.current_screen_key() != &"match":
+		Router.goto(&"main_menu")
+		await frames(40)
+		return
+	screen = Router._current
+	expect(screen.world.registry.at(destination) is Workplace and screen.world.route_service.entry_cost(destination) < 1.0, "match uses the saved placement and terrain for navigation")
+	await capture("06-saved-map-in-play")
+	await click(screen.hud.controls[&"settings"])
+	await click(Router.top_overlay().controls[&"restart"])
+	await frames(50)
+	screen = Router._current
+	expect(screen.world.registry.at(destination) is Workplace, "restart keeps the selected map")
+	Router.goto(&"main_menu")
+	await frames(40)
+
+func _editor_point(editor: Control, cell: Vector2i) -> Vector2:
+	return editor._map.get_global_transform_with_canvas() * editor._map.map_to_local(cell)
+
+func _editor_button(editor: Control, label: String) -> Button:
+	for button in editor.find_children("*", "Button", true, false):
+		if button.text == label:
+			return button
+	return null
