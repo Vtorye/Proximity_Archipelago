@@ -4,7 +4,8 @@ extends RefCounted
 
 const WALK_RATE := 1.0
 const WORK_RATE := 1.2
-const REST_RATE := 0.25
+## A full ant can rest for 150 seconds without a meal.
+const REST_RATE := 0.8
 const EAT_RATE := 0.25
 const SAFETY_MARGIN := 8.0
 const MEAL_SECONDS := 2.0

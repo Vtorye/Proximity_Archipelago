@@ -72,7 +72,9 @@ func test_foodless_colonies(test: Node) -> void:
 		for x in range(start_x, start_x + 4):
 			for y in range(3):
 				tiles.append([x, y, 3, 0, 0, 0])
-	var objects := [[idle_nest.x, idle_nest.y, "Home"], [job_cell.x, job_cell.y, "Workplace"]]
+	var stranded_nest := Vector2i(20, 1)
+	tiles.append([stranded_nest.x, stranded_nest.y, 3, 0, 0, 0])
+	var objects := [[idle_nest.x, idle_nest.y, "Home"], [job_cell.x, job_cell.y, "Workplace"], [stranded_nest.x, stranded_nest.y, "Home"]]
 	var layout := {"version": LevelLayout.VERSION, "tiles": tiles, "objects": objects}
 	var title := "Foodless islands test " + str(OS.get_process_id())
 	var filename: String = title.sha256_text() + ".json"
@@ -106,18 +108,25 @@ func test_foodless_colonies(test: Node) -> void:
 		return
 	var worker := work_house.residents[0] as AntAgent
 	var wanderer := idle_house.residents[0] as AntAgent
+	var stranded_house := world.registry.at(stranded_nest) as House
+	var stranded := stranded_house.residents[0] as AntAgent
 	var workplace := world.registry.at(job_cell) as Workplace
 	var walked: Array[Vector2i] = []
 	var deaths: Array[int] = []
+	var idle_deaths: Array[int] = []
+	for ant in [wanderer, stranded]:
+		ant.died.connect(func(_ant: Node2D, cause: int): idle_deaths.append(cause))
 	worker.died.connect(func(_ant: Node2D, cause: int): deaths.append(cause))
 	wanderer.cell_changed.connect(func(_old: Vector2i, next: Vector2i): walked.append(next))
 	worker._decide()
 	wanderer._decide()
+	stranded._decide()
+	test.expect(stranded.status == AntAgent.Status.WANDERING and stranded.motion.route == null, "isolated ant waits if there are no walkable neighbors")
 	test.expect(worker._destination == &"work" and workplace.incoming_count() == 1 and worker._meal == null, "dry ant leaves its nest and immediately reserves a job slot without a meal")
 	test.expect(wanderer._destination == &"wander" and wanderer.current_workplace == null, "idle ant leaves its nest to wander instead of choosing work across water")
 	var worked_near_death := false
 	for step in range(30 * 12):
-		for ant in [worker, wanderer]:
+		for ant in [worker, wanderer, stranded]:
 			ant._physics_process(1.0 / 30.0)
 		if step == 90:
 			test.expect(workplace.working_count() == 1 and worker.status == AntAgent.Status.WORKING, "dry ant reaches the workplace")
@@ -127,13 +136,15 @@ func test_foodless_colonies(test: Node) -> void:
 	test.expect(walked.size() >= 2 and wanderer.needs.satiety < AntNeeds.CAPACITY, "idle ant visits neighboring cells while losing satiety")
 	test.expect(walked.all(func(cell: Vector2i) -> bool:
 		return world.route_service.walkable(cell) and absi(cell.x - second_idle_nest.x) + absi(cell.y - second_idle_nest.y) <= 2), "wander stays on walkable cells near the nest")
-	for step in range(30 * 120):
-		worker._physics_process(1.0 / 30.0)
-		wanderer._physics_process(1.0 / 30.0)
+	for step in range(30 * (ceili(world.match_controller.match_duration) - 12) - 1):
+		for ant in [worker, wanderer, stranded]:
+			ant._physics_process(1.0 / 30.0)
 		if worker.needs.satiety < 1.0 and worker.status == AntAgent.Status.WORKING:
 			worked_near_death = true
 	test.expect(worked_near_death and deaths == [AntAgent.DeathCause.STARVATION], "dry worker stays on the job until starvation")
 	test.expect(workplace.worker_count() == 0 and not work_house.residents.has(worker), "starvation releases the work slot and nest resident")
+	test.expect(idle_deaths == [AntAgent.DeathCause.STARVATION, AntAgent.DeathCause.STARVATION], "both wandering and stationary ants without food starve before a standard match ends")
+	test.expect(not idle_house.residents.has(wanderer) and not stranded_house.residents.has(stranded), "idle starvation removes residents from their nests")
 	var successor := work_house.residents[0] as AntAgent
 	successor._decide()
 	for step in range(90):
@@ -151,4 +162,18 @@ func test_foodless_colonies(test: Node) -> void:
 	for step in range(90):
 		successor._physics_process(1.0 / 30.0)
 	test.expect(stock.quantity(food) == 0 and successor.needs.satiety > 119.0, "restored meal replenishes the worker's satiety")
+	for step in range(150):
+		successor._physics_process(1.0 / 30.0)
+	test.expect(successor.status == AntAgent.Status.WAITING_FOR_FOOD, "ant waits for food when the accessible canteen runs out")
+	var waiting_deaths: Array[int] = []
+	successor.died.connect(func(_ant: Node2D, cause: int): waiting_deaths.append(cause))
+	for step in range(30 * ceili(world.match_controller.match_duration) - 1):
+		successor._physics_process(1.0 / 30.0)
+	test.expect(waiting_deaths == [AntAgent.DeathCause.STARVATION], "waiting at an empty canteen still leads to starvation within a match")
+	var fed_idle := work_house.residents[0] as AntAgent
+	workplace.work_slots = 0
+	stock.add(food, 1)
+	for step in range(30 * ceili(world.match_controller.match_duration)):
+		fed_idle._physics_process(1.0 / 30.0)
+	test.expect(stock.quantity(food) == 0 and fed_idle.status != AntAgent.Status.DEAD, "an idle ant survives if it can reach and eat its reserved meal")
 	world.free()
