@@ -33,41 +33,23 @@ static func validate_world(world: World, path: String) -> Array[String]:
 		grid.setup(map, [])
 		var buildings: Array[Building] = []
 		world._collect_buildings(world, buildings)
-		var food: Array[Vector2i] = []
 		for building in buildings:
 			building.cell = map.local_to_map(map.to_local(building.global_position))
 			for error in building.validate_definition(): errors.append(path + ":" + str(world.get_path_to(building)) + ": " + error)
-			if building is Canteen: food.append_array(building.entry_cells())
 			if building.option is SceneBuildOption and building.option.blocks_movement:
 				var changes: Dictionary[Vector2i, float] = {}
 				for cell in building.footprint(): changes[cell] = 0.0
 				grid = grid.with_costs(changes)
-		var field: NavigationField = GridSearch.build(grid, food, true)
 		for building in buildings:
 			var prefix: String = path + ":" + str(world.get_path_to(building))
-			var reachable := false
-			for entry in building.entry_cells(): reachable = reachable or is_finite(field.cost(entry))
-			if not reachable: errors.append(prefix + ": no accessible entry or route to food")
-			if building is House and reachable:
-				var nearest := INF
-				for entry in building.entry_cells(): nearest = minf(nearest, field.cost(entry))
-				var speed: float = building.option.spawn_speed if building.option is SceneBuildOption else 24.0
-				if nearest * map.tile_set.tile_size.x / speed * 2.25 + AntNeeds.MEAL_SECONDS + AntNeeds.SAFETY_MARGIN > AntNeeds.CAPACITY:
-					errors.append(prefix + ": food is beyond a resident's energy budget")
+			if not building.entry_cells().any(grid.walkable):
+				errors.append(prefix + ": no accessible entry")
 		var stock := WorldInventory.new()
 		var types: Dictionary[StringName, bool] = {}
 		for entry in world.starting_resources:
 			if entry == null or entry.type == null or entry.type.id == &"" or entry.amount < 0: errors.append(path + ": invalid starting resource")
 			elif types.has(entry.type.id): errors.append(path + ": duplicate resource " + str(entry.type.id))
 			else: types[entry.type.id] = true
-		var residents := 0
-		for building in buildings:
-			if building is House:
-				residents += building.option.spawn_count if building.option is SceneBuildOption and building.option.spawn_count > 0 else building.capacity
-		var portions := 0
-		for entry in world.starting_resources:
-			if entry != null and entry.type != null and entry.type.id == &"food": portions += entry.amount
-		if residents > portions: errors.append(path + ": starting residents need a registered food resource and at least one reserved portion each")
 		for building in buildings:
 			if building is Workplace:
 				var ingredients: Array[ResourceAmount] = []

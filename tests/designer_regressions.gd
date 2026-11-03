@@ -56,7 +56,7 @@ func run(test: Node) -> void:
 	var path := "user://designer-invalid-level.tscn"
 	ResourceSaver.save(packed, path)
 	var issues: Array[String] = LevelValidator.validate(path)
-	test.expect(not issues.is_empty() and str(issues).contains("Workplace") and str(issues).contains("food"), "validator reports bad slots and unreachable food with level paths")
+	test.expect(not issues.is_empty() and str(issues).contains("Workplace") and str(issues).contains("no accessible entry"), "validator reports bad slots and inaccessible entrances with level paths")
 	invalid.free()
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 	await test.get_tree().process_frame

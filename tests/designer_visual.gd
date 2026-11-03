@@ -141,6 +141,9 @@ func _check_saved_map() -> void:
 	expect(workplace is Workplace and editor._object_at(original) == null, "move tool relocates the authored workplace")
 	expect(workplace.global_position.is_equal_approx(editor._map.to_global(editor._map.map_to_local(destination))), "workplaces snap to the center of the destination tile")
 	expect(editor._map.get_cell_atlas_coords(destination) == Vector2i(2, 0), "terrain and workplace can share the edited cell")
+	var canteen_cell := Vector2i(28, 26)
+	await click_at(_editor_point(editor, canteen_cell), MOUSE_BUTTON_RIGHT)
+	expect(editor._object_at(canteen_cell) == null and editor._map.get_cell_source_id(canteen_cell) != -1, "editor removes the only canteen and keeps its terrain")
 	await capture("05-level-editor")
 	var title: String = "Map check %d %d" % [OS.get_process_id(), Time.get_ticks_usec()]
 	editor._title.text = title
@@ -161,12 +164,13 @@ func _check_saved_map() -> void:
 	await click(_editor_button(editor, "ui.menu.play"))
 	await frames(50)
 	DirAccess.remove_absolute(LevelStore.DIRECTORY.path_join(filename))
-	expect(Router.current_screen_key() == &"match", "saved map launches as a match")
+	expect(Router.current_screen_key() == &"match", "saved map without a canteen launches as a match")
 	if Router.current_screen_key() != &"match":
 		Router.goto(&"main_menu")
 		await frames(40)
 		return
 	screen = Router._current
+	expect(screen.world.registry.canteens().is_empty(), "the saved match keeps the canteen removed")
 	expect(screen.world.registry.at(destination) is Workplace and screen.world.route_service.entry_cost(destination) < 1.0, "match uses the saved placement and terrain for navigation")
 	await capture("06-saved-map-in-play")
 	await click(screen.hud.controls[&"settings"])
