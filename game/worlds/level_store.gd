@@ -33,6 +33,8 @@ static func save_level(title: String, layout: Dictionary) -> Error:
 
 static func saved_levels() -> Array[Dictionary]:
 	var levels: Array[Dictionary] = []
+	if not DirAccess.dir_exists_absolute(DIRECTORY):
+		return levels
 	for filename in DirAccess.get_files_at(DIRECTORY):
 		if filename.get_extension() != "json":
 			continue
@@ -49,5 +51,8 @@ static func load_level(filename: String) -> Dictionary:
 	var file := FileAccess.open(DIRECTORY.path_join(filename), FileAccess.READ)
 	if file == null or file.get_length() > MAX_BYTES:
 		return {}
-	var data: Variant = JSON.parse_string(file.get_as_text())
+	var json := JSON.new()
+	if json.parse(file.get_as_text()) != OK:
+		return {}
+	var data: Variant = json.data
 	return data if data is Dictionary and data.get("version") == LevelLayout.VERSION else {}

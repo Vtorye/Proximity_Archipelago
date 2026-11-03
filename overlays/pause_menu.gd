@@ -27,7 +27,7 @@ func _open_settings() -> void:
 	Router.push_overlay(&"settings")
 
 func _restart() -> void:
-	Router.goto(&"match")
+	Router.restart_current()
 
 func _quit_to_menu() -> void:
 	# Explicitly unpause before navigating away through the owning pause boundary.

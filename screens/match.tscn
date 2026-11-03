@@ -1,6 +1,5 @@
-[gd_scene load_steps=3 format=3 uid="uid://be2ypvwrx3kfg"]
+[gd_scene load_steps=2 format=3 uid="uid://be2ypvwrx3kfg"]
 [ext_resource type="Script" path="res://screens/match.gd" id="screen"]
-[ext_resource type="PackedScene" path="res://game/worlds/world_1.tscn" id="world"]
 [node name="Match" type="Control"]
 layout_mode = 3
 anchors_preset = 15
@@ -11,5 +10,3 @@ grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("screen")
 pausable = true
-[node name="World" parent="." instance=ExtResource("world")]
-auto_start = false

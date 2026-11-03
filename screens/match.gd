@@ -13,7 +13,13 @@ var _pointer := Vector2.ZERO
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	world = $World
+	if payload is Dictionary:
+		world = LevelLayout.create_world(payload)
+	if world == null:
+		world = LevelLayout.DEFAULT_WORLD.instantiate()
+	world.name = "World"
+	world.auto_start = false
+	add_child(world)
 	world.match_controller.completed.connect(_on_completed)
 	camera = WorldCamera.new()
 	camera.name = "ColonyCamera"

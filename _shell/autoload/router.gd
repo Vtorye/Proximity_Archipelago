@@ -90,6 +90,10 @@ func _swap_screen(key: StringName, next_screen: Screen) -> void:
 	_screen_layer.add_child(_current)
 	_current_key = key
 
+func restart_current() -> void:
+	if is_instance_valid(_current):
+		goto(_current_key, _current.payload)
+
 func is_navigating() -> bool:
 	return _busy
 

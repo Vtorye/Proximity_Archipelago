@@ -17,7 +17,7 @@ func _ready() -> void:
 		content.add_child(ColonyStyle.label("Уровень: %d" % summary.development_level))
 		content.add_child(ColonyStyle.label("Выполнено: %d · отказов: %d" % [summary.tasks_completed, summary.tasks_skipped]))
 	var again: Button = ColonyStyle.button("ui.result.new_game", true)
-	again.pressed.connect(func(): Router.goto(&"match"))
+	again.pressed.connect(Router.restart_current)
 	content.add_child(again)
 	controls[&"again"] = again
 	var main: Button = ColonyStyle.button("ui.common.main_menu")
