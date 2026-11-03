@@ -47,7 +47,7 @@ func refresh() -> void:
 	var value: Dictionary = overlay.sample(overlay.hovered)
 	var building: Building = value.building
 	if building is Workplace:
-		_detail.text = "%s\n%d+%d/%d · работают + идут\n%s" % [building.display_title(), building.working_count(), building.incoming_count(), building.work_slots, overlay.explanation(building)]
+		_detail.text = "%s\n%d+%d/%d · работают + идут\n%s" % [tr(building.display_title()), building.working_count(), building.incoming_count(), building.work_slots, overlay.explanation(building)]
 	elif building != null:
 		_detail.text = "%s\n%s" % ["Муравейник" if building is House else "Столовая", "Пути нет" if not is_finite(value.seconds) else "Путь: %.2f с" % value.seconds]
 	else: _detail.text = "Наведите курсор на предприятие\nПКМ — выбрать начало\nЛКМ / стрелки — камера\nГолод проверяется отдельно"

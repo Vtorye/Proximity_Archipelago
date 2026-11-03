@@ -4,9 +4,9 @@ extends Screen
 var _template: World
 var _prototypes: Dictionary[String, Building]
 var _map: TileMapLayer
-var _objects := Node2D.new()
-var _camera := WorldCamera.new()
-var _selection := TileSelection.new()
+var _objects: Node2D
+var _camera: WorldCamera
+var _selection: TileSelection
 var _brush: OptionButton
 var _saved: OptionButton
 var _title: LineEdit
@@ -22,11 +22,14 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_template = LevelLayout.DEFAULT_WORLD.instantiate()
 	_prototypes = LevelLayout.prototypes(_template)
+	_objects = Node2D.new()
 	add_child(_objects)
 	_objects.z_index = 1
+	_camera = WorldCamera.new()
 	add_child(_camera)
 	_camera.enabled_input = false
 	_camera.make_current()
+	_selection = TileSelection.new()
 	add_child(_selection)
 	_make_ui()
 	_show_world(LevelLayout.DEFAULT_WORLD.instantiate())
@@ -137,6 +140,7 @@ func _show_world(world: World) -> void:
 	for child in _objects.get_children():
 		child.free()
 	_map = world.get_node("Map")
+	_map.owner = null
 	world.remove_child(_map)
 	add_child(_map)
 	for id in LevelLayout.prototypes(world):
@@ -145,6 +149,10 @@ func _show_world(world: World) -> void:
 		building.cell = _map.local_to_map(position_in_map)
 		if not building.has_meta(&"layout_kind"):
 			building.set_meta(&"layout_kind", id)
+		building.owner = null
+		for child in building.find_children("*", "", true, false):
+			if child.owner == world:
+				child.owner = null
 		building.reparent(_objects)
 		building.global_position = _map.to_global(_map.map_to_local(building.cell))
 	world.free()
