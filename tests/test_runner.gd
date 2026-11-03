@@ -296,7 +296,6 @@ func _test_worlds() -> void:
 
 func _test_assignment_load() -> void:
 	var world: World = make_world()
-	var added := 0
 	for y in range(11, 31, 2):
 		for x in range(11, 31, 2):
 			var cell := Vector2i(x, y)
@@ -308,21 +307,32 @@ func _test_assignment_load() -> void:
 			workplace.setup(cell, null)
 			world.buildings.add_child(workplace)
 			world.registry.register(workplace)
-			added += 1
+	var preparation_started: int = Time.get_ticks_usec()
+	world.planner.prepare_workplaces()
+	var preparation_ms: float = (Time.get_ticks_usec() - preparation_started) / 1000.0
 	await get_tree().process_frame
 	var ant: AntAgent = world.population.agents()[0]
+	var origins: Array[Vector2i] = []
+	for y in range(22, 27):
+		for x in range(22, 27):
+			var cell := Vector2i(x, y)
+			if world.route_service.snapshot().connected(ant.home.cell, cell):
+				origins.append(cell)
+	expect(origins.size() > RouteService.MAX_CACHED_FIELDS, "assignment load fixture exceeds the manual overlay's origin cache")
 	var searches_before: int = world.route_service.search_count
 	var started: int = Time.get_ticks_usec()
 	var assigned := 0
 	for request in range(1000):
+		var origin: Vector2i = origins[request % origins.size()]
+		ant.global_position = world.route_service.cell_to_world(origin)
 		var plan: WorkPlan = world.planner.plan_work(ant, ant.home, ant.needs, ant.speed, ant.work_time, ant._meal)
-		if plan != null:
+		if plan != null and plan.workplace != null:
 			assigned += 1
 			plan.workplace.release_worker(ant)
 	var elapsed_ms: float = (Time.get_ticks_usec() - started) / 1000.0
-	expect(assigned == 1000, "one thousand assignments remain feasible with many POIs")
-	expect(world.route_service.search_count == searches_before, "repeated assignments do not start new searches")
-	metrics["assignment_load"] = {"requests": 1000, "workplaces": world.registry.workplaces().size(), "wall_ms": elapsed_ms, "new_searches": world.route_service.search_count - searches_before}
+	expect(assigned == 1000, "one thousand assignments remain feasible with many POIs and starting cells")
+	expect(world.route_service.search_count == searches_before and world.route_service._fields.is_empty(), "assignments from different cells never build origin fields")
+	metrics["assignment_load"] = {"requests": 1000, "origins": origins.size(), "workplaces": world.registry.workplaces().size(), "work_fields": world.planner._work_fields.size(), "preparation_ms": preparation_ms, "wall_ms": elapsed_ms, "new_searches": world.route_service.search_count - searches_before}
 	world.free()
 	await get_tree().process_frame
 

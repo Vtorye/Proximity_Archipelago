@@ -14,6 +14,8 @@ var _opportunities_queued := false
 var _home_fields: Dictionary[Vector2i, NavigationField] = {}
 var _revision := -1
 var _workplace_revision := -1
+var _workplaces_dirty := true
+var _work_fields: Dictionary[Vector2i, NavigationField] = {}
 var _workplace_components: Dictionary[int, Array] = {}
 
 func configure(buildings: BuildingRegistry, routes: RouteService, stock: WorldInventory, food: ResourceType) -> void:
@@ -24,6 +26,7 @@ func configure(buildings: BuildingRegistry, routes: RouteService, stock: WorldIn
 	registry.changed.connect(refresh_food)
 	registry.added.connect(_on_workplace_membership_changed)
 	registry.removed.connect(_on_workplace_membership_changed)
+	navigation.navigation_changed.connect(_queue_workplace_refresh)
 
 func refresh_food() -> void:
 	var cells: Array[Vector2i] = []
@@ -53,8 +56,11 @@ func plan_work(agent: Node2D, home: Building, needs: AntNeeds, speed: float, wor
 	if not navigation.walkable(home_cell):
 		return null
 	var from_cell: Vector2i = navigation.world_to_cell(agent.global_position)
+	var from_node: int = navigation.snapshot().index(from_cell)
+	if from_node < 0:
+		return null
 	var foodless: bool = not food_within_range(from_cell, speed)
-	var workplaces: Array[Workplace] = _reachable_workplaces(from_cell)
+	var workplaces: Array = _reachable_workplaces(from_node)
 	if foodless and workplaces.is_empty():
 		return null
 	var home_field: NavigationField
@@ -63,7 +69,6 @@ func plan_work(agent: Node2D, home: Building, needs: AntNeeds, speed: float, wor
 			return null
 		prepare_home(home)
 		home_field = _home_fields[home_cell]
-	var outward: NavigationField = navigation.distances_from(from_cell)
 	var approach: float = agent.global_position.distance_to(navigation.cell_to_world(from_cell)) * navigation.entry_cost(from_cell) / maxf(speed, 0.01)
 	var food_after_home: float = escape_energy(home_cell, speed) if not foodless else INF
 	var best_score := INF
@@ -71,12 +76,15 @@ func plan_work(agent: Node2D, home: Building, needs: AntNeeds, speed: float, wor
 	var feasible_busy := false
 	var missing_inputs := false
 	var possible_after_meal := false
-	for workplace in workplaces:
+	for workplace: Workplace in workplaces:
 		if not workplace.can_run_recipe():
 			missing_inputs = true
 			continue
-		for entry in workplace.entry_cells():
-			var to_work: float = approach + travel_seconds(outward.cost(entry), speed)
+		for entry: Vector2i in workplace.entry_cells():
+			var field: NavigationField = _work_fields.get(entry)
+			if field == null:
+				continue
+			var to_work: float = approach + travel_seconds(field.cost_at_node(from_node), speed)
 			var energy: float = to_work * AntNeeds.WALK_RATE
 			if foodless:
 				if energy >= needs.satiety:
@@ -109,20 +117,24 @@ func plan_work(agent: Node2D, home: Building, needs: AntNeeds, speed: float, wor
 	if best != null and not best.waiting_for_slot:
 		if not best.workplace.has_worker(agent) and not best.workplace.reserve_worker(agent):
 			return null
-		best.outward = navigation.make_route(outward.path(best.job_cell))
+		best.outward = navigation.make_route(_work_fields[best.job_cell].path(from_cell))
 	if best != null and is_instance_valid(current) and current != best.workplace:
 		current.release_worker(agent)
 	return best
 
 func _on_workplace_membership_changed(building: Building) -> void:
 	if not building is Workplace: return
-	_workplace_revision = -1
+	_workplaces_dirty = true
+	_queue_workplace_refresh()
+
+func _queue_workplace_refresh() -> void:
 	if _opportunities_queued: return
 	_opportunities_queued = true
-	_emit_opportunities_changed.call_deferred()
+	_refresh_workplaces.call_deferred()
 
-func _emit_opportunities_changed() -> void:
+func _refresh_workplaces() -> void:
 	_opportunities_queued = false
+	prepare_workplaces()
 	opportunities_changed.emit()
 
 func accessible_entry(building: Building) -> Vector2i:
@@ -148,7 +160,6 @@ func prepare_home(home: Building) -> void:
 		if _home_fields.size() >= 8:
 			_home_fields.erase(_home_fields.keys()[0])
 		_home_fields[cell] = navigation.reverse_field([cell])
-	navigation.distances_from(cell)
 
 func home_route(home: Building, from_cell: Vector2i) -> Route:
 	prepare_home(home)
@@ -157,17 +168,30 @@ func home_route(home: Building, from_cell: Vector2i) -> Route:
 		return Route.invalid()
 	return navigation.make_route(_home_fields[cell].path(from_cell))
 
-func _reachable_workplaces(cell: Vector2i) -> Array[Workplace]:
+## Each walkable entrance owns a reverse field on the shared island graph.
+## Keep fields for existing entrances when only the workplace list changes.
+func prepare_workplaces() -> void:
+	if not _workplaces_dirty and _workplace_revision == navigation.revision:
+		return
 	var grid: TileGrid = navigation.snapshot()
-	if _workplace_revision != navigation.revision:
-		_workplace_components.clear()
-		for workplace in registry.workplaces():
-			for entry in workplace.entry_cells():
-				var component: int = grid.component(entry)
-				if component < 0: continue
-				if not _workplace_components.has(component): _workplace_components[component] = []
-				if not _workplace_components[component].has(workplace): _workplace_components[component].append(workplace)
-		_workplace_revision = navigation.revision
-	var result: Array[Workplace] = []
-	result.assign(_workplace_components.get(grid.component(cell), []))
-	return result
+	var fields: Dictionary[Vector2i, NavigationField] = {}
+	_workplace_components.clear()
+	for workplace in registry.workplaces():
+		for entry in workplace.entry_cells():
+			var component: int = grid.component(entry)
+			if component < 0:
+				continue
+			if not fields.has(entry):
+				var previous: NavigationField = _work_fields.get(entry) if _workplace_revision == navigation.revision else null
+				fields[entry] = previous if previous != null else navigation.reverse_field([entry])
+			if not _workplace_components.has(component):
+				_workplace_components[component] = []
+			if not _workplace_components[component].has(workplace):
+				_workplace_components[component].append(workplace)
+	_work_fields = fields
+	_workplace_revision = navigation.revision
+	_workplaces_dirty = false
+
+func _reachable_workplaces(node_id: int) -> Array:
+	prepare_workplaces()
+	return _workplace_components.get(navigation.snapshot().component_id(node_id), [])

@@ -98,7 +98,7 @@ func _coalesced_updates(test: Node) -> void:
 	for cell in [Vector2i(24, 24), Vector2i(25, 24), Vector2i(26, 24)]:
 		test.expect(world.build_controller.try_build(road, cell), "several road edits can be committed in the same frame")
 	await test.get_tree().process_frame
-	test.expect(world.route_service.search_count - searches <= 3, "one frame of edits shares a single home outward and food refresh")
+	test.expect(world.route_service.search_count - searches == world.registry.workplaces().size() + 2, "one frame of edits rebuilds one field per job plus home and food")
 	test.expect(ant.current_workplace == stone and ant.motion.route.revision == world.route_service.revision, "coalesced reconsideration uses the final navigation snapshot")
 	world.free()
 	await test.get_tree().process_frame

@@ -91,6 +91,7 @@ func _ready() -> void:
 	route_service.rebuild(registry.blocked_cells())
 	planner.refresh_food()
 	route_service.food_field()
+	planner.prepare_workplaces()
 	for building in registry.all():
 		if building is House:
 			planner.prepare_home(building)

@@ -39,14 +39,23 @@ func run(test: Node) -> void:
 	b.setup(Vector2i(2, -1), null)
 	registry.register(a)
 	registry.register(b)
-	test.expect(planner._reachable_workplaces(a.cell) == [a], "assignment candidates exclude another island")
+	test.expect(planner._reachable_workplaces(routes.snapshot().index(a.cell)) == [a], "assignment candidates exclude another island")
+	var field_a: NavigationField = planner._work_fields[a.cell]
+	var field_b: NavigationField = planner._work_fields[b.cell]
+	test.expect(field_a.costs.size() == 2 and field_b.costs.size() == 2 and is_inf(field_b.cost_at_node(bridge.index(a.cell))), "each job stores distances only for its connected island")
 	routes.configure_grid(joined)
-	test.expect(planner._reachable_workplaces(a.cell).size() == 2, "opening a bridge refreshes assignment component membership")
+	test.expect(planner._reachable_workplaces(routes.snapshot().index(a.cell)).size() == 2, "opening a bridge refreshes assignment component membership")
+	field_b = planner._work_fields[b.cell]
+	test.expect(is_equal_approx(field_b.cost_at_node(joined.index(a.cell)), 3.25) and field_b.path(a.cell).back() == b.cell, "a workplace field returns the weighted approach cost and route from the querying node")
 	routes.configure_grid(split)
-	test.expect(planner._reachable_workplaces(a.cell) == [a], "closing a bridge removes disconnected candidates")
+	test.expect(planner._reachable_workplaces(routes.snapshot().index(a.cell)) == [a], "closing a bridge removes disconnected candidates")
+	field_a = planner._work_fields[a.cell]
+	var searches_before: int = routes.search_count
+	var removed_cell: Vector2i = b.cell
 	b.demolish()
 	b.free()
-	test.expect(planner._reachable_workplaces(Vector2i(2, -1)).is_empty(), "workplace removal invalidates candidate lists immediately")
+	test.expect(planner._reachable_workplaces(routes.snapshot().index(removed_cell)).is_empty(), "workplace removal invalidates candidate lists immediately")
+	test.expect(planner._work_fields[a.cell] == field_a and not planner._work_fields.has(removed_cell) and routes.search_count == searches_before, "removing a job releases its field without rebuilding existing job fields")
 	a.demolish()
 	a.free()
 	planner.free()
