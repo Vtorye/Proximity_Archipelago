@@ -9,6 +9,8 @@ static func build(grid: TileGrid, seeds: Array[Vector2i], reverse: bool = false,
 	var terrain: PackedFloat32Array = grid.packed_costs()
 	var adjacency: PackedInt32Array = grid.packed_neighbors()
 	var heap: Array[Vector2] = []
+	var settled := PackedByteArray()
+	settled.resize(field.costs.size())
 	for seed in seeds:
 		if grid.walkable(seed):
 			field.costs[field.index(seed)] = 0.0
@@ -19,7 +21,9 @@ static func build(grid: TileGrid, seeds: Array[Vector2i], reverse: bool = false,
 		var id: int = int(item.y)
 		var current: int = field.node_index(id)
 		var offset: int = current - id
-		if item.x > field.costs[current]: continue
+		# Equal heap entries can survive the float32 cost comparison after rounding.
+		if settled[current] or item.x > field.costs[current]: continue
+		settled[current] = 1
 		if id == stop_id: break
 		for direction in range(4):
 			var next: int = adjacency[id * 4 + direction]
@@ -28,7 +32,7 @@ static func build(grid: TileGrid, seeds: Array[Vector2i], reverse: bool = false,
 			var step: float = terrain[id] if reverse else terrain[next]
 			var candidate: float = field.costs[current] + step
 			var target: int = next + offset
-			if candidate < field.costs[target]:
+			if not settled[target] and candidate < field.costs[target]:
 				field.costs[target] = candidate
 				field.parents[target] = direction ^ 1
 				_push(heap, Vector2(candidate, next))
