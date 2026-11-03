@@ -46,7 +46,15 @@ func _run() -> void:
 func _check_paused_navigation() -> void:
 	var routes: Button = screen.hud.controls[&"routes"]
 	var settings: Button = screen.hud.controls[&"settings"]
-	expect(routes.get_parent() == settings.get_parent() and get_viewport().get_visible_rect().encloses(routes.get_global_rect()), "navigation button fits in the top bar next to settings")
+	AppSettings.ui_scale = AppSettings.MAX_UI_SCALE
+	AppSettings.apply()
+	await frames(3)
+	for caption_key in ["ui.hud.routes", "ui.hud.routes_cells", "ui.hud.routes_priority"]:
+		expect(routes.text == caption_key and routes.atr(routes.text) != caption_key, "each navigation mode shows a translated caption")
+		expect(routes.get_parent() == settings.get_parent() and get_viewport().get_visible_rect().encloses(settings.get_global_rect()), "full-size top bar fits the route caption next to settings")
+		await key(KEY_N)
+	AppSettings.reset_defaults()
+	await frames(3)
 	await key(KEY_SPACE)
 	var construction := Router.top_overlay() as ConstructionMenu
 	var time: float = screen.world.match_controller.time_remaining

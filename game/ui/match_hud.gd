@@ -41,7 +41,7 @@ func _ready() -> void:
 	top.add_child(row)
 	for type in world.inventory.registered_types():
 		var chip := HBoxContainer.new()
-		chip.custom_minimum_size.x = 100
+		chip.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		chip.add_theme_constant_override("separation", 4)
 		stock_chips[type.id] = chip
 		var icon := TextureRect.new()
@@ -56,9 +56,6 @@ func _ready() -> void:
 		chip.add_child(amount)
 		stock_labels[type.id] = amount
 		row.add_child(chip)
-	var spacer := Control.new()
-	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_child(spacer)
 	_ants = ColonyStyle.label("5")
 	_ants.tooltip_text = "ui.hud.ants"
 	row.add_child(_ants)
@@ -66,7 +63,7 @@ func _ready() -> void:
 	_timer = ColonyStyle.label("3:00", 8, ColonyStyle.ACCENT)
 	_timer.custom_minimum_size.x = 48
 	row.add_child(_timer)
-	var routes: Button = _square_button("N", 32)
+	var routes: Button = _square_button("", 32)
 	routes.process_mode = Node.PROCESS_MODE_ALWAYS
 	routes.toggle_mode = true
 	routes.pressed.connect(func(): navigation_requested.emit())
@@ -257,7 +254,7 @@ func _process(delta: float) -> void:
 func set_navigation_mode(mode: int) -> void:
 	var routes: Button = controls[&"routes"]
 	routes.set_pressed_no_signal(mode > 0)
-	routes.tooltip_text = ["Пути [N]", "Время входа в клетку [N]", "Приоритеты маршрутов [N]"][mode]
+	routes.text = ["ui.hud.routes", "ui.hud.routes_cells", "ui.hud.routes_priority"][mode]
 	if navigation_panel != null:
 		navigation_panel.refresh()
 	var texture: Texture2D = preload("res://game/assets/ui/opaque_panel.svg") if mode > 0 else preload("res://game/assets/ui/panel.svg")
