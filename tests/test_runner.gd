@@ -1,6 +1,6 @@
 extends Node
 ## Executable regressions: a failure changes the process exit code.
-const WORLD := preload("res://game/worlds/wolrd_1.tscn")
+const WORLD := preload("res://game/worlds/world_1.tscn")
 const ASTAR := preload("res://game/navigation/astar_path_finder.gd")
 const DIJKSTRA := preload("res://game/navigation/dijkstra_path_finder.gd")
 var failures: Array[String] = []

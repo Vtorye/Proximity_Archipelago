@@ -1,6 +1,6 @@
 [gd_scene load_steps=3 format=3 uid="uid://be2ypvwrx3kfg"]
 [ext_resource type="Script" path="res://screens/match.gd" id="screen"]
-[ext_resource type="PackedScene" path="res://game/worlds/wolrd_1.tscn" id="world"]
+[ext_resource type="PackedScene" path="res://game/worlds/world_1.tscn" id="world"]
 [node name="Match" type="Control"]
 layout_mode = 3
 anchors_preset = 15

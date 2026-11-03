@@ -1,6 +1,6 @@
 extends RefCounted
 func run(test: Node) -> void:
-	var world: World = load("res://game/worlds/wolrd_1.tscn").instantiate()
+	var world: World = load("res://game/worlds/world_1.tscn").instantiate()
 	world.auto_start = false
 	test.add_child(world)
 	world.match_controller.start(world.inventory)

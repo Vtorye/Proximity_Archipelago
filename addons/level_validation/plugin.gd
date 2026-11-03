@@ -1,6 +1,6 @@
 @tool
 extends EditorPlugin
-const DEFAULT_LEVEL := "res://game/worlds/wolrd_1.tscn"
+const DEFAULT_LEVEL := "res://game/worlds/world_1.tscn"
 var _dock: ScrollContainer
 var _content: VBoxContainer
 var _status: Label

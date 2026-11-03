@@ -46,8 +46,8 @@ func run(test: Node) -> void:
 	workplace.free()
 	service.free()
 	world.free()
-	test.expect(LevelValidator.validate("res://game/worlds/wolrd_1.tscn").is_empty(), "authored production level passes offline validation")
-	var invalid: World = load("res://game/worlds/wolrd_1.tscn").instantiate()
+	test.expect(LevelValidator.validate("res://game/worlds/world_1.tscn").is_empty(), "authored production level passes offline validation")
+	var invalid: World = load("res://game/worlds/world_1.tscn").instantiate()
 	invalid.get_node("Workplace").work_slots = 0
 	var map: TileMapLayer = invalid.get_node("Map")
 	map.set_cell(Vector2i(28, 26), 3, Vector2i(3, 0))
