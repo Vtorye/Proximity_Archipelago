@@ -65,6 +65,11 @@ func _ready() -> void:
 	_timer = ColonyStyle.label("3:00", 8, ColonyStyle.ACCENT)
 	_timer.custom_minimum_size.x = 48
 	row.add_child(_timer)
+	var routes: Button = _square_button("N", 32)
+	routes.toggle_mode = true
+	routes.pressed.connect(func(): navigation_requested.emit())
+	row.add_child(routes)
+	controls[&"routes"] = routes
 	var settings: Button = _square_button("", 32)
 	settings.icon = preload("res://game/assets/ui/menu_dots.svg")
 	settings.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -126,11 +131,6 @@ func _ready() -> void:
 	help.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	help.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	hints.add_child(help)
-	var routes: Button = ColonyStyle.button("Пути [N]")
-	routes.tooltip_text = "Клетки в мс / путь в секундах / выключено. ПКМ выбирает начало; ЛКМ, СКМ и стрелки двигают карту. Голод проверяется отдельно."
-	routes.pressed.connect(func(): navigation_requested.emit())
-	hints.add_child(routes)
-	controls[&"routes"] = routes
 	var build: Button = ColonyStyle.button("ui.hud.build")
 	build.pressed.connect(func(): construction_requested.emit())
 	hints.add_child(build)
@@ -174,6 +174,7 @@ func _ready() -> void:
 		navigation_panel.offset_top = 64
 	refresh()
 	set_zoom(2)
+	set_navigation_mode(0)
 
 func _square_button(text: String, side: int, font_size: int = 16) -> Button:
 	var button: Button = ColonyStyle.button(text)
@@ -255,6 +256,9 @@ func _process(delta: float) -> void:
 			_toast.hide()
 
 func set_navigation_mode(mode: int) -> void:
+	var routes: Button = controls[&"routes"]
+	routes.set_pressed_no_signal(mode > 0)
+	routes.tooltip_text = ["Пути [N]", "Время входа в клетку [N]", "Приоритеты маршрутов [N]"][mode]
 	var texture: Texture2D = preload("res://game/assets/ui/opaque_panel.svg") if mode > 0 else preload("res://game/assets/ui/panel.svg")
 	# Keep world labels behind readable HUD surfaces without clipping the map layer.
 	for style in [theme.get_stylebox("panel", "PanelContainer"), theme.get_stylebox("panel", "TooltipPanel"), _bottom.get_theme_stylebox("panel"), _toast.get_theme_stylebox("normal")]:
