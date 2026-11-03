@@ -18,11 +18,20 @@ func _run() -> void:
 	stone.work_slots = 4
 	ants[0]._decide()
 	world.process_mode = Node.PROCESS_MODE_PAUSABLE
-	await key(KEY_N)
-	await key(KEY_N)
 	var panel: NavigationPanel = screen.hud.navigation_panel
+	world.units.process_mode = Node.PROCESS_MODE_DISABLED
+	await click_at(cell_point(stone.cell))
+	expect(screen.navigation_overlay.mode == 0 and panel.visible and panel.inspected_workplace == stone and panel._detail.text.contains("0+1 / 4"), "a left click shows incoming ants with the navigation overlay off")
+	await hover(Vector2i(26, 25))
+	expect(panel.inspected_workplace == stone and panel._detail.text.contains("0+1 / 4"), "inspection stays on the clicked workplace when the cursor moves")
+	await capture("00-workplace-inspector")
+	await click_at(cell_point(Vector2i(26, 25)))
+	expect(not panel.visible and panel.inspected_workplace == null, "clicking empty ground closes the workload card")
+	world.units.process_mode = Node.PROCESS_MODE_INHERIT
+	await key(KEY_N)
+	await key(KEY_N)
 	await hover(stone.cell)
-	expect(panel._detail.text.contains("0+1/4"), "walking ant is visible in workplace load")
+	expect(panel._detail.text.contains("0+1 / 4"), "walking ant is visible in workplace load")
 	await capture("01-heading-to-stone")
 	var target := Vector2i(25, 24)
 	await key(KEY_SPACE)
@@ -34,20 +43,22 @@ func _run() -> void:
 	await frames(4)
 	var bush: Workplace = world.registry.at(target) as Workplace
 	expect(bush != null and ants[0].current_workplace == bush, "construction redirects the moving ant")
-	await hover(target)
-	expect(panel._detail.text.contains("0+1/3"), "new workplace immediately shows its incoming ant")
+	await click_at(cell_point(target))
+	await hover(Vector2i(26, 25))
+	expect(panel.inspected_workplace == bush and panel._detail.text.contains("0+1 / 3"), "click pins the new workplace and shows its incoming ant")
 	await capture("02-nearer-bush-selected")
 	await _until_working(ants[0])
 	panel.refresh()
-	expect(panel._detail.text.contains("1+0/3"), "workplace panel updates on arrival")
+	expect(panel._detail.text.contains("1+0 / 3"), "workplace panel updates on arrival")
 	await capture("03-arrived-at-bush")
 	for frame in range(150):
 		if ants[0]._carrying and ants[0]._destination == &"home": break
 		await frames(1)
 	await hover(target)
 	panel.refresh()
-	expect(ants[0]._carrying and panel._detail.text.contains("0+0/3"), "returning carrier is no longer included in enterprise load")
+	expect(ants[0]._carrying and panel._detail.text.contains("0+0 / 3"), "returning carrier is no longer included in enterprise load")
 	await capture("04-returning-with-load")
+	await click_at(cell_point(Vector2i(26, 25)))
 	world.process_mode = Node.PROCESS_MODE_DISABLED
 	_reset_ants(ants)
 	for workplace in world.registry.workplaces(): workplace.work_slots = 0
@@ -60,12 +71,12 @@ func _run() -> void:
 	ants[2]._decide()
 	world.process_mode = Node.PROCESS_MODE_PAUSABLE
 	await hover(stone.cell)
-	expect(panel._detail.text.contains("2+1/4"), "UI separates two working ants from one incoming ant")
+	expect(panel._detail.text.contains("2+1 / 4"), "UI separates two working ants from one incoming ant")
 	await capture("05-working-plus-incoming")
 	ants[3]._decide()
 	ants[4]._decide()
 	panel.refresh()
-	expect(panel._detail.text.contains("2+2/4"), "last slot is reserved before the fourth ant arrives")
+	expect(panel._detail.text.contains("2+2 / 4"), "last slot is reserved before the fourth ant arrives")
 	expect(screen.hud._waiting.visible and screen.hud._waiting.text == (TranslationServer.translate("ui.hud.waiting") % 1), "full slots have a visible home waiting reason")
 	await capture("06-full-slots-and-waiting")
 	Router.goto(&"main_menu")

@@ -1,7 +1,7 @@
 class_name ConstructionMenu
 extends MenuBase
 ## Paused construction editor. The draft owns edits; the controller commits the final plan.
-signal origin_requested(cell: Vector2i)
+signal map_inspection_requested(cell: Vector2i)
 
 var context: ConstructionContext
 var draft := BuildDraft.new()
@@ -258,7 +258,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			var removed: bool = draft.remove_last(cell)
 			draft.end_stroke()
 			if not removed:
-				origin_requested.emit(cell)
+				map_inspection_requested.emit(cell)
 			_refresh()
 			get_viewport().set_input_as_handled()
 		elif event.button_index in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN]:

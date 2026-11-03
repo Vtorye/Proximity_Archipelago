@@ -210,16 +210,16 @@ func _workload_ui(test: Node) -> void:
 	var panel := NavigationPanel.new()
 	panel.overlay = overlay
 	test.add_child(panel)
-	test.expect(workplace.incoming_count() == 1 and workplace.working_count() == 0 and panel._detail.text.contains("0+1/4"), "UI immediately includes a reserved walking worker")
+	test.expect(workplace.incoming_count() == 1 and workplace.working_count() == 0 and panel._detail.text.contains("0+1 / 4"), "UI immediately includes a reserved walking worker")
 	var before: float = overlay.sample(workplace.cell).score
 	for step in range(1200):
 		ant._physics_process(1.0 / 60.0)
 		if ant.status == AntAgent.Status.WORKING: break
 	panel.refresh()
-	test.expect(workplace.incoming_count() == 0 and workplace.working_count() == 1 and panel._detail.text.contains("1+0/4"), "arrival transfers the same worker from incoming to working in the UI")
+	test.expect(workplace.incoming_count() == 0 and workplace.working_count() == 1 and panel._detail.text.contains("1+0 / 4"), "arrival transfers the same worker from incoming to working in the UI")
 	ant._physics_process(ant.work_time + 0.01)
 	panel.refresh()
-	test.expect(ant._carrying and ant._destination == &"home" and workplace.worker_count() == 0 and panel._detail.text.contains("0+0/4"), "loaded return is excluded from the displayed enterprise load")
+	test.expect(ant._carrying and ant._destination == &"home" and workplace.worker_count() == 0 and panel._detail.text.contains("0+0 / 4"), "loaded return is excluded from the displayed enterprise load")
 	test.expect(is_equal_approx(before - overlay.sample(workplace.cell).score, 0.5), "the number on the workplace tile includes the live load penalty")
 	test.expect(overlay.sample(workplace.cell).kind == &"work" and overlay.sample(ant.home.cell).kind == &"home", "workplaces and homes use different map label categories")
 	panel.free()

@@ -10,6 +10,7 @@ var selection: TileSelection
 var hud: MatchHud
 var _active := false
 var _pointer := Vector2.ZERO
+var _camera_moved := false
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -76,11 +77,17 @@ func _input(event: InputEvent) -> void:
 	var top: MenuBase = Router.top_overlay()
 	if top != null:
 		camera.dragging = false
-	if event is InputEventMouseButton and not event.pressed and event.button_index in [MOUSE_BUTTON_LEFT, MOUSE_BUTTON_MIDDLE] and camera.dragging:
-		camera.dragging = false
-		get_viewport().set_input_as_handled()
-		return
+	if event is InputEventMouseButton and event.button_index in [MOUSE_BUTTON_LEFT, MOUSE_BUTTON_MIDDLE]:
+		if event.pressed:
+			_camera_moved = false
+		elif camera.dragging:
+			camera.dragging = false
+			if event.button_index == MOUSE_BUTTON_LEFT and not _camera_moved:
+				_inspect_workplace(_cell_at(event.position))
+			get_viewport().set_input_as_handled()
+			return
 	if event is InputEventMouseMotion and camera.dragging:
+		_camera_moved = _camera_moved or not event.relative.is_zero_approx()
 		camera.pan(event.relative)
 		get_viewport().set_input_as_handled()
 		return
@@ -99,12 +106,15 @@ func _input(event: InputEvent) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if not _active or Router.is_navigating(): return
 	var top: MenuBase = Router.top_overlay()
-	if (top == null or top is PauseMenu) and navigation_overlay.mode == 2 and event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_RIGHT:
-		var map: TileMapLayer = world.get_node("Map")
-		var cell: Vector2i = map.local_to_map(map.get_global_transform_with_canvas().affine_inverse() * event.position)
-		_select_navigation_origin(cell)
-		get_viewport().set_input_as_handled()
-		return
+	if event is InputEventMouseButton and (top == null or top is PauseMenu):
+		if event.pressed and event.button_index == MOUSE_BUTTON_RIGHT:
+			_inspect_secondary_cell(_cell_at(event.position))
+			get_viewport().set_input_as_handled()
+			return
+		if top is PauseMenu and not event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+			_inspect_workplace(_cell_at(event.position))
+			get_viewport().set_input_as_handled()
+			return
 	if top == null and event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_B:
 		_open_construction()
 		get_viewport().set_input_as_handled()
@@ -118,9 +128,23 @@ func _process(_delta: float) -> void:
 	hud.lock_zoom(top != null)
 	if navigation_overlay.mode == 2 and _navigation_available():
 		if not selection.selected or selection.cell != navigation_overlay.origin: selection.select(navigation_overlay.origin)
+	elif _navigation_available() and is_instance_valid(hud.navigation_panel.inspected_workplace):
+		var cell: Vector2i = hud.navigation_panel.inspected_workplace.cell
+		if not selection.selected or selection.cell != cell: selection.select(cell)
 	elif selection.selected: selection.clear()
+	navigation_overlay.hovered = _cell_at(_pointer)
+
+func _cell_at(point: Vector2) -> Vector2i:
 	var map: TileMapLayer = world.get_node("Map")
-	navigation_overlay.hovered = map.local_to_map(map.get_global_transform_with_canvas().affine_inverse() * _pointer)
+	return map.local_to_map(map.get_global_transform_with_canvas().affine_inverse() * point)
+
+func _inspect_workplace(cell: Vector2i) -> void:
+	hud.navigation_panel.inspect(world.registry.at(cell) as Workplace)
+
+func _inspect_secondary_cell(cell: Vector2i) -> void:
+	if navigation_overlay.mode == 2:
+		navigation_overlay.select_origin(cell)
+	_inspect_workplace(cell)
 
 func _open_settings() -> void:
 	selection.clear()
@@ -138,7 +162,7 @@ func _open_construction() -> void:
 	if menu == null: return
 	camera.dragging = false
 	camera.enabled_input = false
-	menu.origin_requested.connect(_select_navigation_origin)
+	menu.map_inspection_requested.connect(_inspect_secondary_cell)
 	hud.set_construction_mode(true)
 	menu.tree_exiting.connect(func():
 		if is_instance_valid(hud): hud.set_construction_mode(false)
@@ -148,11 +172,6 @@ func _open_construction() -> void:
 func _navigation_available() -> bool:
 	var top: MenuBase = Router.top_overlay()
 	return _active and not Router.is_navigating() and (top == null or top is ConstructionMenu or top is PauseMenu)
-
-func _select_navigation_origin(cell: Vector2i) -> void:
-	if navigation_overlay.mode == 2:
-		navigation_overlay.select_origin(cell)
-		hud.navigation_panel.refresh()
 
 func _toggle_navigation() -> void:
 	if not _navigation_available(): return

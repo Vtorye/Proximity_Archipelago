@@ -33,6 +33,7 @@ ui.hud.controls,LMB: pan  Space: build,ЛКМ: камера  Пробел: ст�
 ui.hud.routes,Routes [N],Пути [N]
 ui.hud.routes_cells,Cells: ms [N],Клетки: мс [N]
 ui.hud.routes_priority,Priorities [N],Приоритеты [N]
+ui.hud.workload,%d+%d / %d · working + incoming,%d+%d / %d · работают + идут
 ui.hud.build,Pause / build [Space],Пауза / стройка [Пробел]
 ui.hud.stock,"%s: %d, available %d","%s: %d, свободно %d"
 ui.hud.waiting,Waiting for slots: %d,Ждут мест: %d
