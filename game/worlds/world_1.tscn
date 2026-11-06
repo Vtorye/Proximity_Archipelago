@@ -22,6 +22,8 @@
 [ext_resource type="Script" path="res://game/entities/workplace.gd" id="workplace"]
 [ext_resource type="Script" path="res://game/world.gd" id="world"]
 
+[ext_resource type="Texture2D" path="res://game/assets/sprites/coast.svg" id="coast"]
+
 [sub_resource type="Resource" id="wood_stock"]
 script = ExtResource("amount")
 type = ExtResource("wood")
@@ -81,6 +83,14 @@ texture = SubResource("ImageTexture_2ssl1")
 3:0/0 = 0
 3:0/0/custom_data_3 = "Вода"
 
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_coast"]
+texture = ExtResource("coast")
+0:0/0 = 0
+0:0/0/custom_data_0 = 1.2
+0:0/0/custom_data_1 = true
+0:0/0/custom_data_2 = true
+0:0/0/custom_data_3 = "ui.terrain.coast"
+
 [sub_resource type="TileSet" id="TileSet_bm7sp"]
 custom_data_layer_0/name = "move_cost"
 custom_data_layer_0/type = 3
@@ -91,6 +101,7 @@ custom_data_layer_2/type = 1
 custom_data_layer_3/name = "terrain_name"
 custom_data_layer_3/type = 4
 sources/3 = SubResource("TileSetAtlasSource_qinhx")
+sources/4 = SubResource("TileSetAtlasSource_coast")
 
 [node name="World" type="Node2D" unique_id=1653711899]
 process_mode = 4

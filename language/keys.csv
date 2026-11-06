@@ -121,3 +121,4 @@ ui.map.invalid_object_cell,Choose a free land tile,Выберите свобод
 Дорога,Path,Дорога
 Быстрая тропинка,Fast path,Быстрая тропинка
 Вода,Water,Вода
+ui.terrain.coast,Coast,Побережье
