@@ -121,4 +121,13 @@ ui.map.invalid_object_cell,Choose a free land tile,Выберите свобод
 Дорога,Path,Дорога
 Быстрая тропинка,Fast path,Быстрая тропинка
 Вода,Water,Вода
+ui.storage.main,Main nest,Главный муравейник
+ui.storage.local,Small nest,Маленький муравейник
+ui.storage.fill,Storage %d / %d,Заполнено %d / %d
+ui.storage.auto,Automatic dispatch,Автоотправка
+ui.storage.threshold,Dispatch at %d%%,Отправка при %d%%
+ui.storage.in_main,In main nest %d,В главном складе %d
+ui.storage.protected,The main nest and nonempty depots cannot be demolished,Главный или непустой склад нельзя снести
+ui.terrain.entry,Entry %d ms,Вход %d мс
+ui.terrain.impassable,Impassable,Непроходимо
 ui.terrain.coast,Coast,Побережье

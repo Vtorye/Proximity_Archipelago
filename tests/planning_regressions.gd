@@ -219,7 +219,7 @@ func _workload_ui(test: Node) -> void:
 	test.expect(workplace.incoming_count() == 0 and workplace.working_count() == 1 and panel._detail.text.contains("1+0 / 4"), "arrival transfers the same worker from incoming to working in the UI")
 	ant._physics_process(ant.work_time + 0.01)
 	panel.refresh()
-	test.expect(ant._carrying and ant._destination == &"home" and workplace.worker_count() == 0 and panel._detail.text.contains("0+0 / 4"), "loaded return is excluded from the displayed enterprise load")
+	test.expect(ant._carrying and ant._destination == &"delivery" and workplace.worker_count() == 0 and panel._detail.text.contains("0+0 / 4"), "loaded return is excluded from the displayed enterprise load")
 	test.expect(is_equal_approx(before - overlay.sample(workplace.cell).score, 0.5), "the number on the workplace tile includes the live load penalty")
 	test.expect(overlay.sample(workplace.cell).kind == &"work" and overlay.sample(ant.home.cell).kind == &"home", "workplaces and homes use different map label categories")
 	panel.free()

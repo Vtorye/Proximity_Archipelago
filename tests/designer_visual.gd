@@ -33,6 +33,7 @@ func _run() -> void:
 	expect(screen.navigation_overlay.mode == 0, "third N restores the ordinary map")
 	expect(screen.hud.theme.get_stylebox("panel", "PanelContainer").texture == load("res://game/assets/ui/panel.svg"), "ordinary HUD transparency returns when navigation is hidden")
 	await _check_paused_navigation()
+	await _check_storage_and_hover()
 	screen.world.population.agents()[0].speed = 30.0
 	await key(KEY_N)
 	expect(screen.navigation_overlay.reference_speed == 30.0, "diagnostic times follow the actual reference ant speed")
@@ -90,6 +91,32 @@ func _check_paused_navigation() -> void:
 	await key(KEY_N)
 	await click(pause.controls[&"resume"])
 	expect(screen.navigation_overlay.mode == 0 and not get_tree().paused, "view stays selected when resuming the game")
+
+func _check_storage_and_hover() -> void:
+	var hud: MatchHud = screen.hud
+	var panel: NavigationPanel = hud.navigation_panel
+	var workplace: Workplace = screen.world.get_node("Workplace2")
+	await click(hud.controls[&"settings"])
+	var pause := Router.top_overlay() as PauseMenu
+	var move := InputEventMouseMotion.new()
+	move.position = cell_point(workplace.cell)
+	get_viewport().push_input(move, true)
+	await frames(10)
+	expect(get_tree().paused and screen.navigation_overlay.mode == 0 and panel.visible and panel._detail.text.contains(" / 4"), "hovering an unselected workplace shows its load during pause")
+	await capture("02d-workplace-hover-paused")
+	await click(pause.controls[&"resume"])
+	var cell := Vector2i(27, 27)
+	var nest: BuildOption = load("res://game/building/options/house.tres")
+	expect(screen.world.build_controller.try_build(nest, cell), "fixture builds a small warehouse")
+	var depot: House = screen.world.registry.at(cell) as House
+	await click_at(cell_point(cell))
+	expect(panel.inspected_building == depot and panel._dispatch.visible and panel._threshold.value == 70 and panel._detail.text.contains("0 / 100"), "small nest inspector shows capacity and the default threshold")
+	await click(panel._dispatch)
+	expect(not depot.auto_dispatch, "the depot auto-dispatch toggle updates this nest")
+	await click_at(Vector2(panel._threshold.get_global_rect().position.x + panel._threshold.size.x / 2, panel._threshold.get_global_rect().get_center().y))
+	expect(depot.dispatch_threshold == int(panel._threshold.value) and depot.dispatch_threshold != 70, "the slider updates the individual threshold")
+	await capture("02e-small-nest-settings")
+	await click_at(cell_point(Vector2i(26, 25)))
 
 func _check_full_map_overlay() -> void:
 	var header: Control = screen.hud.controls[&"settings"].get_parent().get_parent()
@@ -193,6 +220,12 @@ func _check_saved_map() -> void:
 	var canteen_cell := Vector2i(28, 26)
 	await click_at(_editor_point(editor, canteen_cell), MOUSE_BUTTON_RIGHT)
 	expect(editor._object_at(canteen_cell) == null and editor._map.get_cell_source_id(canteen_cell) != -1, "editor removes the only canteen and keeps its terrain")
+	var coast_cell := Vector2i(25, 23)
+	var coast: int = editor._brushes.find(Vector4i(4, 0, 0, 0))
+	expect(coast >= 0 and editor._brush.get_item_text(coast) == tr("ui.terrain.coast"), "the sixteen-pixel coast tile is available as an editor brush")
+	editor._brush.select(coast)
+	await click_at(_editor_point(editor, coast_cell))
+	expect(editor._map.get_cell_source_id(coast_cell) == 4, "the coast brush paints authored terrain")
 	await capture("05-level-editor")
 	var title: String = "Map check %d %d" % [OS.get_process_id(), Time.get_ticks_usec()]
 	editor._title.text = title
@@ -220,6 +253,7 @@ func _check_saved_map() -> void:
 		return
 	screen = Router._current
 	expect(screen.world.registry.canteens().is_empty(), "the saved match keeps the canteen removed")
+	expect(is_equal_approx(screen.world.route_service.entry_cost(coast_cell), 1.2), "the authored coast keeps its distinct movement cost after saving and loading")
 	expect(screen.world.registry.at(destination) is Workplace and screen.world.route_service.entry_cost(destination) < 1.0, "match uses the saved placement and terrain for navigation")
 	await capture("06-saved-map-in-play")
 	await click(screen.hud.controls[&"settings"])

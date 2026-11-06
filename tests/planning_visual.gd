@@ -21,12 +21,12 @@ func _run() -> void:
 	var panel: NavigationPanel = screen.hud.navigation_panel
 	world.units.process_mode = Node.PROCESS_MODE_DISABLED
 	await click_at(cell_point(stone.cell))
-	expect(screen.navigation_overlay.mode == 0 and panel.visible and panel.inspected_workplace == stone and panel._detail.text.contains("0+1 / 4"), "a left click shows incoming ants with the navigation overlay off")
+	expect(screen.navigation_overlay.mode == 0 and panel.visible and panel.inspected_building == stone and panel._detail.text.contains("0+1 / 4"), "a left click shows incoming ants with the navigation overlay off")
 	await hover(Vector2i(26, 25))
-	expect(panel.inspected_workplace == stone and panel._detail.text.contains("0+1 / 4"), "inspection stays on the clicked workplace when the cursor moves")
+	expect(panel.inspected_building == stone and panel._detail.text.contains("0+1 / 4"), "inspection stays on the clicked workplace when the cursor moves")
 	await capture("00-workplace-inspector")
 	await click_at(cell_point(Vector2i(26, 25)))
-	expect(panel.inspected_workplace == null, "clicking empty ground unpins the workload card")
+	expect(panel.inspected_building == null, "clicking empty ground unpins the workload card")
 	world.units.process_mode = Node.PROCESS_MODE_INHERIT
 	await key(KEY_N)
 	await key(KEY_N)
@@ -45,14 +45,14 @@ func _run() -> void:
 	expect(bush != null and ants[0].current_workplace == bush, "construction redirects the moving ant")
 	await click_at(cell_point(target))
 	await hover(Vector2i(26, 25))
-	expect(panel.inspected_workplace == bush and panel._detail.text.contains("0+1 / 3"), "click pins the new workplace and shows its incoming ant")
+	expect(panel.inspected_building == bush and panel._detail.text.contains("0+1 / 3"), "click pins the new workplace and shows its incoming ant")
 	await capture("02-nearer-bush-selected")
 	await _until_working(ants[0])
 	panel.refresh()
 	expect(panel._detail.text.contains("1+0 / 3"), "workplace panel updates on arrival")
 	await capture("03-arrived-at-bush")
 	for frame in range(150):
-		if ants[0]._carrying and ants[0]._destination == &"home": break
+		if ants[0]._carrying and ants[0]._destination == &"delivery": break
 		await frames(1)
 	await hover(target)
 	panel.refresh()

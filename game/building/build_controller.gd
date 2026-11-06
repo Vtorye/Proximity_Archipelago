@@ -7,6 +7,7 @@ signal changed
 var prices: PriceService
 var registry: BuildingRegistry
 var population: ColonyPopulation
+var logistics: ColonyLogistics
 var map: TileMapLayer
 var buildings: Node2D
 var inventory: WorldInventory
@@ -36,7 +37,7 @@ func check(option: BuildOption, cell: Vector2i) -> PlacementCheck:
 	var placement: PlacementCheck = placement_check(option, cell)
 	if not placement.allowed():
 		return placement
-	if not inventory.can_afford_all(price(option)):
+	if not inventory.can_afford_all(price(option), true):
 		return PlacementCheck.result(PlacementCheck.Code.RESOURCES)
 	return PlacementCheck.new()
 
@@ -106,6 +107,9 @@ func try_build_plan(commands: Array[BuildCommand]) -> bool:
 			if not is_instance_valid(building) or registry.at(command.cell) != building or removed.has(building):
 				last_result = PlacementCheck.result(PlacementCheck.Code.NO_BUILDING)
 				return false
+			if building is House and logistics != null and not logistics.can_remove(building):
+				last_result = PlacementCheck.result(PlacementCheck.Code.STOCK_DEPOT)
+				return false
 			removed.append(building)
 		else:
 			placements.append(command)
@@ -143,7 +147,7 @@ func try_build_plan(commands: Array[BuildCommand]) -> bool:
 				last_result = PlacementCheck.result(PlacementCheck.Code.INVALID_BUILDING)
 				break
 	if last_result.allowed(): costs = prices.quote_plan(commands) if prices != null else _base_plan_price(placements)
-	if last_result.allowed() and not inventory.can_afford_all(costs):
+	if last_result.allowed() and not inventory.can_afford_all(costs, true):
 		last_result = PlacementCheck.result(PlacementCheck.Code.RESOURCES)
 	if last_result.allowed() and not _safety().preserves_escape(placements, candidates, removed):
 		last_result = PlacementCheck.result(PlacementCheck.Code.NO_ESCAPE)
@@ -153,7 +157,7 @@ func try_build_plan(commands: Array[BuildCommand]) -> bool:
 	# No awaits or notifications until the world and inventory agree.
 	_committing = true
 	inventory.begin_update()
-	if not inventory.try_spend_all(costs):
+	if not inventory.try_spend_all(costs, true):
 		for candidate in candidates: candidate.free()
 		last_result = PlacementCheck.result(PlacementCheck.Code.RESOURCES)
 		_committing = false
@@ -194,6 +198,8 @@ func demolition_check(cell: Vector2i) -> PlacementCheck:
 	if _committing:
 		return PlacementCheck.result(PlacementCheck.Code.BUSY)
 	var building: Building = registry.at(cell)
+	if building is House and logistics != null and not logistics.can_remove(building):
+		return PlacementCheck.result(PlacementCheck.Code.STOCK_DEPOT)
 	if not _safety().can_remove_food(building):
 		return PlacementCheck.result(PlacementCheck.Code.NO_ESCAPE)
 	return PlacementCheck.result(PlacementCheck.Code.OK if building != null else PlacementCheck.Code.NO_BUILDING)

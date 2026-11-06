@@ -13,6 +13,7 @@ signal worker_left(worker: Node2D)
 ## Resource produced at the end of each work cycle. Leave empty for no output.
 @export var output: ResourceType
 @export var output_amount: int = 1
+var _pending_output: Array[ResourceAmount] = []
 var _workers: Array[Node2D] = []
 var _working: Array[Node2D] = []
 var workers: Array[Node2D]:
@@ -86,8 +87,12 @@ func work_complete(_human: Node2D) -> void:
 
 
 ## Called by the worker when a work cycle finishes. Runs work_complete() and emits produced() if output is set.
-func complete_cycle(human: Node2D) -> bool:
-	if not _workers.has(human) or not can_run_recipe():
+func complete_cycle(human: Node2D, keep_output: bool = false) -> bool:
+	if not _workers.has(human):
+		return false
+	if keep_output and not _pending_output.is_empty():
+		return true
+	if not can_run_recipe():
 		return false
 	if recipe != null:
 		inventory.begin_update()
@@ -95,13 +100,36 @@ func complete_cycle(human: Node2D) -> bool:
 			inventory.end_update()
 			return false
 		work_complete(human)
-		for entry in recipe.outputs: produced.emit(entry.type, entry.amount)
+		for entry in recipe.outputs: _produce(entry.type, entry.amount, keep_output)
 		inventory.end_update()
 		return true
 	work_complete(human)
 	if output != null:
-		produced.emit(output, output_amount)
+		_produce(output, output_amount, keep_output)
 	return true
+
+func _produce(type: ResourceType, amount: int, keep_output: bool) -> void:
+	if keep_output and inventory != null and inventory.is_registered(type):
+		var item := ResourceAmount.new()
+		item.type = type
+		item.amount = amount
+		_pending_output.append(item)
+	produced.emit(type, amount)
+
+func take_output(limit: int) -> Array[ResourceAmount]:
+	var cargo: Array[ResourceAmount] = []
+	while limit > 0 and not _pending_output.is_empty():
+		var pending: ResourceAmount = _pending_output[0]
+		var amount: int = mini(pending.amount, limit)
+		var item := ResourceAmount.new()
+		item.type = pending.type
+		item.amount = amount
+		cargo.append(item)
+		pending.amount -= amount
+		limit -= amount
+		if pending.amount == 0:
+			_pending_output.pop_front()
+	return cargo
 
 func validate_definition() -> Array[String]:
 	var errors: Array[String] = []
@@ -111,6 +139,7 @@ func validate_definition() -> Array[String]:
 	return errors
 
 func can_run_recipe() -> bool:
+	if not _pending_output.is_empty(): return true
 	if recipe == null: return true
 	if inventory == null or not recipe.valid(): return false
 	for entry in recipe.outputs:

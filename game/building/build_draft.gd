@@ -91,7 +91,7 @@ func costs() -> Array[ResourceAmount]:
 	return controller.prices.quote_plan(_commands) if controller.prices != null else controller._base_plan_price(_commands)
 
 func budget_check() -> PlacementCheck:
-	if not controller.inventory.can_afford_all(costs()):
+	if not controller.inventory.can_afford_all(costs(), true):
 		return PlacementCheck.result(PlacementCheck.Code.RESOURCES)
 	return PlacementCheck.new()
 

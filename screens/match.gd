@@ -83,7 +83,7 @@ func _input(event: InputEvent) -> void:
 		elif camera.dragging:
 			camera.dragging = false
 			if event.button_index == MOUSE_BUTTON_LEFT and not _camera_moved:
-				_inspect_workplace(_cell_at(event.position))
+				_inspect_building(_cell_at(event.position))
 			get_viewport().set_input_as_handled()
 			return
 	if event is InputEventMouseMotion and camera.dragging:
@@ -112,7 +112,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 			return
 		if top is PauseMenu and not event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-			_inspect_workplace(_cell_at(event.position))
+			_inspect_building(_cell_at(event.position))
 			get_viewport().set_input_as_handled()
 			return
 	if top == null and event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_B:
@@ -128,8 +128,8 @@ func _process(_delta: float) -> void:
 	hud.lock_zoom(top != null)
 	if navigation_overlay.mode == 2 and _navigation_available():
 		if not selection.selected or selection.cell != navigation_overlay.origin: selection.select(navigation_overlay.origin)
-	elif _navigation_available() and is_instance_valid(hud.navigation_panel.inspected_workplace):
-		var cell: Vector2i = hud.navigation_panel.inspected_workplace.cell
+	elif _navigation_available() and is_instance_valid(hud.navigation_panel.inspected_building):
+		var cell: Vector2i = hud.navigation_panel.inspected_building.cell
 		if not selection.selected or selection.cell != cell: selection.select(cell)
 	elif selection.selected: selection.clear()
 	var hovered_control: Control = get_viewport().gui_get_hovered_control()
@@ -144,13 +144,13 @@ func _cell_at(point: Vector2) -> Vector2i:
 	var map: TileMapLayer = world.get_node("Map")
 	return map.local_to_map(map.get_global_transform_with_canvas().affine_inverse() * point)
 
-func _inspect_workplace(cell: Vector2i) -> void:
-	hud.navigation_panel.inspect(world.registry.at(cell) as Workplace)
+func _inspect_building(cell: Vector2i) -> void:
+	hud.navigation_panel.inspect(world.registry.at(cell))
 
 func _inspect_secondary_cell(cell: Vector2i) -> void:
 	if navigation_overlay.mode == 2:
 		navigation_overlay.select_origin(cell)
-	_inspect_workplace(cell)
+	_inspect_building(cell)
 
 func _open_settings() -> void:
 	selection.clear()

@@ -192,7 +192,8 @@ func _resource_icon(id: StringName) -> Texture2D:
 func refresh() -> void:
 	for type in world.inventory.registered_types():
 		stock_labels[type.id].text = "%d(%d)" % [world.inventory.quantity(type), world.inventory.available(type)] if type.id == &"food" else str(world.inventory.quantity(type))
-		stock_chips[type.id].tooltip_text = tr("ui.hud.stock") % [tr(type.display_name), world.inventory.quantity(type), world.inventory.available(type)]
+		var total: String = tr("ui.hud.stock") % [tr(type.display_name), world.inventory.quantity(type), world.inventory.available(type)]
+		stock_chips[type.id].tooltip_text = total + "\n" + (tr("ui.storage.in_main") % world.inventory.main_quantity(type))
 		if progress.has(type.id):
 			progress[type.id].value = world.inventory.quantity(type)
 	var agents: Array[AntAgent] = world.population.agents()
@@ -227,7 +228,8 @@ func set_zoom(value: int) -> void:
 func build_obstacles() -> Array[Rect2]:
 	var result: Array[Rect2] = []
 	result.append(task_panel.get_global_rect() if task_panel != null else _objectives.get_global_rect())
-	if navigation_panel != null and navigation_panel.visible: result.append(navigation_panel.get_global_rect())
+	if navigation_panel != null and navigation_panel.visible and navigation_panel.mouse_filter == Control.MOUSE_FILTER_STOP:
+		result.append(navigation_panel.get_global_rect())
 	return result
 
 func lock_zoom(locked: bool) -> void:

@@ -124,24 +124,21 @@ func test_foodless_colonies(test: Node) -> void:
 	test.expect(stranded.status == AntAgent.Status.WANDERING and stranded.motion.route == null, "isolated ant waits if there are no walkable neighbors")
 	test.expect(worker._destination == &"work" and workplace.incoming_count() == 1 and worker._meal == null, "dry ant leaves its nest and immediately reserves a job slot without a meal")
 	test.expect(wanderer._destination == &"wander" and wanderer.current_workplace == null, "idle ant leaves its nest to wander instead of choosing work across water")
-	var worked_near_death := false
+	var cycles: Array[int] = [0]
+	worker.work_completed.connect(func(_ant: Node2D, _job: Node2D): cycles[0] += 1)
 	for step in range(30 * 12):
 		for ant in [worker, wanderer, stranded]:
 			ant._physics_process(1.0 / 30.0)
 		if step == 90:
 			test.expect(workplace.working_count() == 1 and worker.status == AntAgent.Status.WORKING, "dry ant reaches the workplace")
-		if worker.needs.satiety < 1.0 and worker.status == AntAgent.Status.WORKING:
-			worked_near_death = true
-	test.expect(stock.quantity(wood) > start_wood + workplace.output_amount, "dry worker completes successive production cycles")
+	test.expect(stock.quantity(wood) > start_wood, "dry worker carries the first batch to its local nest")
 	test.expect(walked.size() >= 2 and wanderer.needs.satiety < AntNeeds.CAPACITY, "idle ant visits neighboring cells while losing satiety")
 	test.expect(walked.all(func(cell: Vector2i) -> bool:
 		return world.route_service.walkable(cell) and absi(cell.x - second_idle_nest.x) + absi(cell.y - second_idle_nest.y) <= 2), "wander stays on walkable cells near the nest")
 	for step in range(30 * (ceili(world.match_controller.match_duration) - 12) - 1):
 		for ant in [worker, wanderer, stranded]:
 			ant._physics_process(1.0 / 30.0)
-		if worker.needs.satiety < 1.0 and worker.status == AntAgent.Status.WORKING:
-			worked_near_death = true
-	test.expect(worked_near_death and deaths == [AntAgent.DeathCause.STARVATION], "dry worker stays on the job until starvation")
+	test.expect(cycles[0] > 1 and deaths == [AntAgent.DeathCause.STARVATION], "dry worker continues producing and delivering until starvation")
 	test.expect(workplace.worker_count() == 0 and not work_house.residents.has(worker), "starvation releases the work slot and nest resident")
 	test.expect(idle_deaths == [AntAgent.DeathCause.STARVATION, AntAgent.DeathCause.STARVATION], "both wandering and stationary ants without food starve before a standard match ends")
 	test.expect(not idle_house.residents.has(wanderer) and not stranded_house.residents.has(stranded), "idle starvation removes residents from their nests")
@@ -177,3 +174,69 @@ func test_foodless_colonies(test: Node) -> void:
 		fed_idle._physics_process(1.0 / 30.0)
 	test.expect(stock.quantity(food) == 0 and fed_idle.status != AntAgent.Status.DEAD, "an idle ant survives if it can reach and eat its reserved meal")
 	world.free()
+
+func test_physical_logistics(test: Node) -> void:
+	var tiles: Array = []
+	for x in range(11):
+		for y in range(3):
+			tiles.append([x, y, 3, 0, 0, 0])
+	var world: World = LevelLayout.create_world({"version": LevelLayout.VERSION, "tiles": tiles,
+		"objects": [[0, 1, "Home"], [6, 1, "Home"], [9, 1, "Home"], [7, 1, "Workplace"], [1, 1, "Food"]]})
+	world.auto_start = false
+	test.add_child(world)
+	var stock: WorldInventory = world.inventory
+	var main := world.registry.at(Vector2i(0, 1)) as House
+	var depot := world.registry.at(Vector2i(6, 1)) as House
+	var other := world.registry.at(Vector2i(9, 1)) as House
+	var job := world.registry.at(Vector2i(7, 1)) as Workplace
+	var wood: ResourceType = stock.type_by_id(&"wood")
+	var stone: ResourceType = stock.type_by_id(&"stone")
+	var food: ResourceType = stock.type_by_id(&"food")
+	depot.storage_capacity = 5
+	job.output_amount = 5
+	test.expect(world.logistics.main_nest == main and not world.build_controller.demolition_check(main.cell).allowed(), "the first nest is the single protected construction center")
+	var ant := main.residents[0] as AntAgent
+	ant.global_position = world.route_service.cell_to_world(job.cell)
+	ant._decide()
+	ant._physics_process(0.05)
+	var before: int = stock.quantity(wood)
+	ant._physics_process(ant.work_time)
+	test.expect(WorldInventory.cargo_size(ant.cargo) == ant.carry_capacity and stock.quantity(wood) == before and job.worker_count() == 0, "production loads only what the ant can carry and credits nothing before delivery")
+	_step_until(ant, func() -> bool: return ant.cargo.is_empty())
+	test.expect(stock.depot_quantity(depot, wood) == 2 and stock.main_quantity(wood) == before and stock.quantity(wood) == before + 2, "the nearest depot receives the physical cargo and counts toward colony totals")
+	var central_price: Array[ResourceAmount] = [test.entry(wood, before + 1)]
+	test.expect(stock.can_afford_all(central_price) and not stock.can_afford_all(central_price, true), "construction cannot spend timber stored outside the main nest")
+	test.expect(stock.deposit(depot, [test.entry(stone, 1)]), "mixed resources occupy the same depot")
+	ant.global_position = world.route_service.cell_to_world(job.cell)
+	ant.cargo = job.take_output(ant.carry_capacity)
+	ant._deliver()
+	test.expect(ant._delivery_nest == depot and stock.deposit(depot, [test.entry(food, 2)]), "another delivery can fill the chosen depot while a carrier is moving")
+	test.expect(stock.depot_fill(depot) == 5 and not stock.deposit(depot, [test.entry(stone, 1)]) and not world.build_controller.demolition_check(depot.cell).allowed(), "a full depot rejects additional stock and cannot be demolished")
+	ant.needs.satiety = 11.0
+	for step in range(90):
+		ant._physics_process(1.0 / 60.0)
+		if ant._destination == &"food":
+			break
+	test.expect(ant._main_delivery and ant._destination == &"food" and WorldInventory.cargo_size(ant.cargo) == 2, "a rejected carrier keeps the cargo and goes to eat before continuing to the main nest")
+	_step_until(ant, func() -> bool: return ant.cargo.is_empty())
+	test.expect(stock.main_quantity(wood) == before + 2 and stock.depot_fill(other) == 0, "rejected cargo goes to the main nest rather than another small nest")
+	var courier := depot.residents[0] as AntAgent
+	test.expect(depot.dispatch_threshold == 70 and depot.auto_dispatch, "local depots default to automatic dispatch at seventy percent")
+	depot.auto_dispatch = false
+	test.expect(not courier._try_dispatch(), "automatic dispatch can be disabled per depot")
+	depot.auto_dispatch = true
+	depot.dispatch_threshold = 90
+	var total: int = stock.quantity(wood)
+	var main_before: int = stock.main_quantity(wood)
+	test.expect(courier._try_dispatch() and courier._shipment and courier._delivery_nest == main, "eligible resident dispatches a capacity-limited load only to the main nest")
+	test.expect(stock.quantity(wood) == total and stock.main_quantity(wood) == main_before and stock.depot_quantity(depot, wood) == 0, "dispatched cargo counts in totals during transport but cannot be spent centrally")
+	_step_until(courier, func() -> bool: return courier.cargo.is_empty())
+	test.expect(stock.quantity(wood) == total and stock.main_quantity(wood) == main_before + 2, "shipment arrival moves stock without counting it twice")
+	test.expect(not world.logistics.ready_to_dispatch(depot), "a depot below its configured threshold stops dispatching")
+	world.free()
+
+func _step_until(ant: AntAgent, condition: Callable) -> void:
+	for step in range(1800):
+		if condition.call() or ant.status == AntAgent.Status.DEAD:
+			return
+		ant._physics_process(1.0 / 60.0)

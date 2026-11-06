@@ -12,9 +12,11 @@ signal waiting_changed
 
 @export var speed := 24.0
 @export var work_time := 3.0
+@export_range(1, 100) var carry_capacity := 2
 var home: House
 var planner: TripPlanner
 var route_service: RouteService
+var logistics: ColonyLogistics
 var needs := AntNeeds.new()
 var motion := AntMotion.new()
 var status: Status = Status.HOME
@@ -25,6 +27,10 @@ var _destination: StringName = &"home"
 var _timer := 0.0
 var departure_delay := 0.0
 var _carrying := false
+var cargo: Array[ResourceAmount] = []
+var _shipment := false
+var _main_delivery := false
+var _delivery_nest: House
 var _angle := 0.0
 var _animation_time := 0.0
 var _last_direction := Vector2.UP
@@ -35,11 +41,12 @@ var waiting_reason: WorkPlan.WaitReason:
 var _reconsider_queued := false
 var _navigation_pending := false
 
-func configure(nest: House, policy: TripPlanner, navigation: RouteService) -> void:
+func configure(nest: House, policy: TripPlanner, navigation: RouteService, storage: ColonyLogistics) -> void:
 	home = nest
 	planner = policy
 	route_service = navigation
 	motion.navigation = navigation
+	logistics = storage
 
 func _ready() -> void:
 	assert(home != null and planner != null and route_service != null, "Ant dependencies must be configured before entering the tree")
@@ -65,6 +72,7 @@ func _is_foodless() -> bool:
 func _exit_tree() -> void:
 	_release_work()
 	if planner != null and is_instance_valid(planner.inventory):
+		_discard_cargo()
 		planner.inventory.release(_meal)
 	if is_instance_valid(home):
 		home.remove_resident(self)
@@ -105,19 +113,19 @@ func _physics_process(delta: float) -> void:
 			if not is_instance_valid(current_workplace) or not current_workplace.is_inside_tree():
 				_seek_food()
 			elif _timer <= 0.0:
-				if not current_workplace.complete_cycle(self):
+				if not current_workplace.complete_cycle(self, true):
 					# Contended ingredients must not trap the worker in unbudgeted repeat cycles.
 					_seek_food()
 					return
+				cargo = current_workplace.take_output(carry_capacity)
 				work_completed.emit(self, current_workplace)
-				if _plan != null and _plan.foodless:
-					if _can_recover():
-						_seek_food()
-					else:
-						_timer = work_time
+				if not cargo.is_empty():
+					_release_work()
+					_deliver()
+				elif _plan != null and _plan.foodless and not _can_recover():
+					_timer = work_time
 				else:
 					_release_work()
-					_carrying = true
 					_go_home()
 		Status.EATING:
 			_timer -= delta
@@ -125,8 +133,11 @@ func _physics_process(delta: float) -> void:
 				if planner.inventory.consume(_meal):
 					needs.eat()
 				_meal = null
-				_carrying = false
-				_go_home()
+				if cargo.is_empty():
+					_carrying = false
+					_go_home()
+				else:
+					_deliver()
 		Status.WANDERING:
 			_timer -= delta
 			if _timer <= 0.0:
@@ -134,12 +145,20 @@ func _physics_process(delta: float) -> void:
 		Status.WAITING_FOR_FOOD:
 			_timer -= delta
 			if _timer <= 0.0:
-				_seek_food()
+				if cargo.is_empty():
+					_seek_food()
+				else:
+					_deliver()
 	queue_redraw()
 
 func _decide() -> void:
+	if not cargo.is_empty():
+		_deliver()
+		return
 	var foodless: bool = _is_foodless()
 	refresh_meal_reservation()
+	if _try_dispatch():
+		return
 	if foodless:
 		_carrying = false
 	_plan = planner.plan_work(self, home, needs, speed, work_time, _meal, current_workplace)
@@ -166,6 +185,74 @@ func _decide() -> void:
 		else:
 			_seek_food()
 
+func _try_dispatch() -> bool:
+	if status != Status.HOME or not is_instance_valid(home) or not logistics.ready_to_dispatch(home):
+		return false
+	var cell: Vector2i = route_service.world_to_cell(global_position)
+	var route: Route = logistics.route_to(logistics.main_nest, cell)
+	if not route.is_valid() or not _can_deliver(route, cell):
+		return false
+	cargo = planner.inventory.dispatch(home, carry_capacity)
+	if cargo.is_empty():
+		return false
+	_shipment = true
+	_main_delivery = true
+	_delivery_nest = logistics.main_nest
+	_carrying = true
+	_walk(route, &"delivery")
+	return true
+
+func _deliver() -> void:
+	_carrying = true
+	var cell: Vector2i = route_service.world_to_cell(global_position)
+	_delivery_nest = logistics.main_nest if _main_delivery else logistics.closest_depot(cell, WorldInventory.cargo_size(cargo))
+	var route: Route = logistics.route_to(_delivery_nest, cell)
+	if route.is_valid() and _can_deliver(route, cell):
+		_walk(route, &"delivery")
+		return
+	var meal_energy: float = planner.escape_energy(cell, speed * TripPlanner.CARRY_SPEED_RATIO)
+	var meal_would_enable_delivery: bool = route.is_valid() and _delivery_energy(route, cell) + AntNeeds.SAFETY_MARGIN <= AntNeeds.CAPACITY
+	var meal_due: bool = meal_would_enable_delivery or needs.satiety <= meal_energy + AntNeeds.SAFETY_MARGIN + 2.0
+	if meal_due and needs.satiety > meal_energy and not _is_foodless():
+		_seek_food()
+	else:
+		_set_status(Status.WAITING_FOR_FOOD)
+		_timer = 1.0
+
+func _can_deliver(route: Route, from_cell: Vector2i) -> bool:
+	var energy: float = _delivery_energy(route, from_cell)
+	return needs.satiety > energy if _is_foodless() else needs.can_afford(energy)
+
+func _delivery_energy(route: Route, from_cell: Vector2i) -> float:
+	var loaded_speed: float = speed * TripPlanner.CARRY_SPEED_RATIO
+	var approach: float = global_position.distance_to(route_service.cell_to_world(from_cell)) * route_service.entry_cost(from_cell) / loaded_speed
+	var energy: float = planner.travel_energy(route.cost, loaded_speed) + approach
+	if not _is_foodless():
+		energy += planner.escape_energy(route.cells.back(), speed)
+	return energy
+
+func _unload() -> void:
+	if _shipment and is_instance_valid(_delivery_nest) and _delivery_nest == logistics.main_nest:
+		planner.inventory.close_shipment(cargo, true)
+	elif _shipment or not logistics.deposit(_delivery_nest, cargo):
+		_main_delivery = true
+		_deliver()
+		return
+	_clear_cargo()
+	_go_home()
+
+func _clear_cargo() -> void:
+	cargo.clear()
+	_shipment = false
+	_main_delivery = false
+	_delivery_nest = null
+	_carrying = false
+
+func _discard_cargo() -> void:
+	if _shipment:
+		planner.inventory.close_shipment(cargo, false)
+	_clear_cargo()
+
 func _wander() -> void:
 	var cell: Vector2i = route_service.world_to_cell(global_position)
 	var origin: Vector2i = planner.accessible_entry(home) if is_instance_valid(home) else cell
@@ -186,7 +273,7 @@ func _can_recover() -> bool:
 	return _meal != null and _meal.active
 
 func _seek_food() -> void:
-	if _is_foodless() and is_instance_valid(home):
+	if cargo.is_empty() and _is_foodless() and is_instance_valid(home):
 		_decide()
 		return
 	_waiting_for_work = false
@@ -230,6 +317,8 @@ func _arrive() -> void:
 				return
 			_set_status(Status.WORKING)
 			_timer = work_time
+		&"delivery":
+			_unload()
 		&"wander":
 			_set_status(Status.WANDERING)
 			_timer = randf_range(0.2, 0.7)
@@ -291,6 +380,8 @@ func _reconsider_route() -> void:
 			_seek_food()
 		elif geometry_changed and _destination == &"wander":
 			_decide()
+		elif geometry_changed and _destination == &"delivery":
+			_deliver()
 
 func workplace_removed(workplace: Workplace) -> void:
 	if current_workplace == workplace:
@@ -318,6 +409,7 @@ func die(cause: DeathCause = DeathCause.OTHER) -> void:
 		return
 	_set_status(Status.DEAD)
 	_release_work()
+	_discard_cargo()
 	planner.inventory.release(_meal)
 	if is_instance_valid(home):
 		home.remove_resident(self)

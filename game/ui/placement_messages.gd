@@ -11,6 +11,7 @@ static func text(code: PlacementCheck.Code) -> String:
 		PlacementCheck.Code.ALREADY_PLACED: return TranslationServer.translate("ui.placement.already_placed")
 		PlacementCheck.Code.OUTSIDE_MAP: return TranslationServer.translate("ui.placement.outside_map")
 		PlacementCheck.Code.UNBUILDABLE: return TranslationServer.translate("ui.placement.unbuildable")
+		PlacementCheck.Code.STOCK_DEPOT: return TranslationServer.translate("ui.storage.protected")
 		PlacementCheck.Code.IMPASSABLE: return TranslationServer.translate("ui.placement.impassable")
 		PlacementCheck.Code.OCCUPIED: return TranslationServer.translate("ui.placement.occupied")
 		PlacementCheck.Code.ANT_PRESENT: return TranslationServer.translate("ui.placement.ant_present")

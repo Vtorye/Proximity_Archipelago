@@ -15,6 +15,7 @@ var tasks: TaskDirector
 var events: WorldEvents
 var prices: PriceService
 var inventory: WorldInventory
+var logistics: ColonyLogistics
 var build_controller: BuildController
 var route_service: RouteService
 var registry: BuildingRegistry
@@ -55,6 +56,10 @@ func _ready() -> void:
 	add_child(registry)
 	registry.added.connect(_configure_building)
 	registry.changed.connect(_queue_navigation_update)
+	logistics = ColonyLogistics.new()
+	logistics.name = "Logistics"
+	add_child(logistics)
+	logistics.configure(inventory, route_service, registry)
 	planner = TripPlanner.new()
 	planner.name = "TripPlanner"
 	add_child(planner)
@@ -69,7 +74,7 @@ func _ready() -> void:
 	population = ColonyPopulation.new()
 	population.name = "Population"
 	add_child(population)
-	population.configure(units, route_service, planner, registry)
+	population.configure(units, route_service, planner, registry, logistics)
 	build_controller = BuildController.new()
 	build_controller.name = "BuildController"
 	build_controller.prices = prices
@@ -78,6 +83,7 @@ func _ready() -> void:
 	build_controller.configure(map, buildings, inventory, build_options)
 	build_controller.registry = registry
 	build_controller.population = population
+	build_controller.logistics = logistics
 	build_controller.changed.connect(func(): _navigation_update_queued = false)
 	# All setup() calls must finish before navigation is generated,
 	# otherwise units spawned by houses would appear before the grid exists.
@@ -133,7 +139,7 @@ func stop() -> void:
 		match_controller.stop()
 	process_mode = Node.PROCESS_MODE_DISABLED
 
-## Connects a workplace's output to the world inventory. Safe to call more than once.
+## Publishes production events when work completes. Safe to call more than once.
 func _subscribe_workplace(node: Node) -> void:
 	if node is Workplace and not node.produced.is_connected(_on_workplace_produced):
 		node.produced.connect(_on_workplace_produced)
@@ -161,10 +167,7 @@ func _configure_building(building: Building) -> void:
 			sprite.scale = Vector2.ONE * route_service.cell_size() / sprite.texture.get_width()
 
 func _on_workplace_produced(type: ResourceType, amount: int) -> void:
-	if inventory.add(type, amount):
-		events.publish(GameEvents.Kind.RESOURCE_PRODUCED, type.id, amount)
-	else:
-		push_warning("World could not store %d of %s" % [amount, type.id])
+	events.publish(GameEvents.Kind.RESOURCE_PRODUCED, type.id, amount)
 
 func _queue_navigation_update() -> void:
 	if ready_for_play and not _navigation_update_queued:

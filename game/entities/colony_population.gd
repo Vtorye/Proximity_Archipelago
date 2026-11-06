@@ -8,11 +8,13 @@ signal cell_changed(old: Vector2i, next: Vector2i)
 var units: Node2D
 var navigation: RouteService
 var planner: TripPlanner
+var logistics: ColonyLogistics
 
-func configure(root: Node2D, routes: RouteService, policy: TripPlanner, registry: BuildingRegistry) -> void:
+func configure(root: Node2D, routes: RouteService, policy: TripPlanner, registry: BuildingRegistry, storage: ColonyLogistics) -> void:
 	units = root
 	navigation = routes
 	planner = policy
+	logistics = storage
 	registry.added.connect(_on_building_added)
 	registry.removed.connect(_on_building_removed)
 
@@ -33,7 +35,7 @@ func _on_building_added(building: Building) -> void:
 		if house.option is SceneBuildOption and house.option.spawn_count > 0:
 			ant.speed = house.option.spawn_speed
 		ant.departure_delay = index * 1.25
-		ant.configure(house, planner, navigation)
+		ant.configure(house, planner, navigation, logistics)
 		house.add_resident(ant)
 		ant.position = units.to_local(navigation.cell_to_world(entry))
 		units.add_child(ant)
