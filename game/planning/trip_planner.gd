@@ -50,7 +50,7 @@ func travel_energy(cost: float, speed: float) -> float:
 	return travel_seconds(cost, speed) * AntNeeds.WALK_RATE
 
 func plan_work(agent: Node2D, home: Building, needs: AntNeeds, speed: float, work_time: float, ticket: StockReservation, current: Workplace = null) -> WorkPlan:
-	if not is_instance_valid(home):
+	if not is_instance_valid(home) or (agent is AntAgent and agent.role == AntAgent.Role.CARRIER):
 		return null
 	var home_cell: Vector2i = accessible_entry(home)
 	if not navigation.walkable(home_cell):
@@ -121,6 +121,31 @@ func plan_work(agent: Node2D, home: Building, needs: AntNeeds, speed: float, wor
 	if best != null and is_instance_valid(current) and current != best.workplace:
 		current.release_worker(agent)
 	return best
+
+func nearest_pickup(from_cell: Vector2i, can_collect: Callable) -> Dictionary:
+	var node_id: int = navigation.snapshot().index(from_cell)
+	if node_id < 0:
+		return {}
+	var nearest: Workplace
+	var pickup: Route
+	var lowest := INF
+	for workplace: Workplace in _reachable_workplaces(node_id):
+		if workplace.pending_output_amount() == 0:
+			continue
+		for entry in workplace.entry_cells():
+			var field: NavigationField = _work_fields.get(entry)
+			if field == null:
+				continue
+			var cost: float = field.cost_at_node(node_id)
+			if cost < lowest:
+				var route: Route = navigation.make_route(field.path(from_cell))
+				if can_collect.call(workplace, route):
+					lowest = cost
+					nearest = workplace
+					pickup = route
+	if nearest == null:
+		return {}
+	return {"workplace": nearest, "route": pickup}
 
 func _on_workplace_membership_changed(building: Building) -> void:
 	if not building is Workplace: return

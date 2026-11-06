@@ -66,6 +66,8 @@ func _prune_workers() -> void:
 
 
 func reserve_worker(human: Node2D) -> bool:
+	if human is AntAgent and human.role == AntAgent.Role.CARRIER:
+		return false
 	if not is_instance_valid(human) or _workers.has(human) or not has_free_slot():
 		return false
 	_workers.append(human)
@@ -115,6 +117,9 @@ func _produce(type: ResourceType, amount: int, keep_output: bool) -> void:
 		item.amount = amount
 		_pending_output.append(item)
 	produced.emit(type, amount)
+
+func pending_output_amount() -> int:
+	return WorldInventory.cargo_size(_pending_output)
 
 func take_output(limit: int) -> Array[ResourceAmount]:
 	var cargo: Array[ResourceAmount] = []

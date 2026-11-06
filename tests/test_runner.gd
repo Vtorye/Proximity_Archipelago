@@ -244,9 +244,13 @@ func _test_worlds() -> void:
 	if built:
 		var new_home: House = first.registry.at(Vector2i(27, 29)) as House
 		expect(not first.route_service.walkable(new_home.cell), "blocking footprint is closed")
-		for resident in new_home.residents:
+		var carriers := 0
+		for resident: AntAgent in new_home.residents:
+			if resident.role == AntAgent.Role.CARRIER:
+				carriers += 1
 			var cell: Vector2i = first.route_service.world_to_cell(resident.global_position)
 			expect(first.route_service.walkable(cell) and cell != new_home.cell, "residents spawn at an accessible entrance")
+		expect(new_home.residents.size() == 5 and carriers == 1, "a built nest spawns four workers and one carrier")
 	var bad := House.new()
 	var packed := PackedScene.new()
 	packed.pack(bad)
@@ -402,8 +406,8 @@ func _test_simulation() -> void:
 		if roads:
 			var road: BuildOption = load("res://game/building/options/road.tres")
 			var network: Array[Vector2i] = []
-			for x in range(21, 31): network.append(Vector2i(x, 25))
-			for item in [Vector3i(21, 22, 24), Vector3i(24, 21, 24), Vector3i(29, 21, 24), Vector3i(28, 26, 26), Vector3i(30, 26, 27)]:
+			for x in range(21, 30): network.append(Vector2i(x, 25))
+			for item in [Vector3i(21, 22, 24), Vector3i(24, 21, 24), Vector3i(29, 21, 24), Vector3i(28, 26, 26)]:
 				for y in range(item.y, item.z + 1): network.append(Vector2i(item.x, y))
 			for cell in network:
 				expect(world.build_controller.try_build(road, cell), "safe road network can be built from starting stock")

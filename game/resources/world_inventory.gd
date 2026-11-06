@@ -171,6 +171,13 @@ func deposit(house: House, cargo: Array[ResourceAmount]) -> bool:
 		_notify()
 	return true
 
+func has_dispatchable_stock(house: House) -> bool:
+	var stock: Dictionary = _depots.get(house, {})
+	for id: StringName in stock:
+		if stock[id] > 0 and available(_types[id]) > 0:
+			return true
+	return false
+
 ## Move unreserved stock out of a depot. It stays in colony totals while in transit.
 func dispatch(house: House, limit: int) -> Array[ResourceAmount]:
 	var cargo: Array[ResourceAmount] = []

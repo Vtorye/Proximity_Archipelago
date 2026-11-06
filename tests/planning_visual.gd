@@ -62,7 +62,7 @@ func _run() -> void:
 	world.process_mode = Node.PROCESS_MODE_DISABLED
 	_reset_ants(ants)
 	for workplace in world.registry.workplaces(): workplace.work_slots = 0
-	stone.work_slots = 4
+	stone.work_slots = 3
 	for index in range(2):
 		ants[index]._decide()
 		for step in range(1200):
@@ -71,14 +71,33 @@ func _run() -> void:
 	ants[2]._decide()
 	world.process_mode = Node.PROCESS_MODE_PAUSABLE
 	await hover(stone.cell)
-	expect(panel._detail.text.contains("2+1 / 4"), "UI separates two working ants from one incoming ant")
+	expect(panel._detail.text.contains("2+1 / 3"), "UI separates two working ants from one incoming ant")
 	await capture("05-working-plus-incoming")
 	ants[3]._decide()
 	ants[4]._decide()
 	panel.refresh()
-	expect(panel._detail.text.contains("2+2 / 4"), "last slot is reserved before the fourth ant arrives")
+	expect(panel._detail.text.contains("2+1 / 3") and ants[4].role == AntAgent.Role.CARRIER and not stone.has_worker(ants[4]), "the carrier leaves all work slots available to workers")
 	expect(screen.hud._waiting.visible and screen.hud._waiting.text == (TranslationServer.translate("ui.hud.waiting") % 1), "full slots have a visible home waiting reason")
 	await capture("06-full-slots-and-waiting")
+	var depot_cell := Vector2i(27, 27)
+	var nest: BuildOption = load("res://game/building/options/house.tres")
+	expect(world.build_controller.try_build(nest, depot_cell), "the carrier scenario builds a small depot")
+	var depot: House = world.registry.at(depot_cell) as House
+	var courier: AntAgent = ants[4]
+	if depot != null:
+		depot.storage_capacity = 8
+		var wood: ResourceType = world.inventory.type_by_id(&"wood")
+		var stock := ResourceAmount.new()
+		stock.type = wood
+		stock.amount = 6
+		world.inventory.deposit(depot, [stock])
+		courier._decide()
+		for frame in range(150):
+			if courier._shipment: break
+			await frames(1)
+		expect(courier._shipment and WorldInventory.cargo_size(courier.cargo) == 6, "the main carrier loads six units from the small depot")
+		await key(KEY_N)
+		await capture("07-carrier-with-load")
 	Router.goto(&"main_menu")
 	await frames(45)
 	_finish()

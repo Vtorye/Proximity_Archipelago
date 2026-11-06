@@ -65,7 +65,34 @@ func deposit(house: House, cargo: Array[ResourceAmount]) -> bool:
 	return is_instance_valid(house) and inventory.deposit(null if house == main_nest else house, cargo)
 
 func ready_to_dispatch(house: House) -> bool:
-	return _depots.has(house) and house.auto_dispatch and inventory.depot_fill(house) * 100 >= house.storage_capacity * house.dispatch_threshold
+	return (
+		_depots.has(house) and house.auto_dispatch
+		and inventory.depot_fill(house) * 100 >= house.storage_capacity * house.dispatch_threshold
+		and inventory.has_dispatchable_stock(house)
+	)
+
+func nearest_dispatch(from_cell: Vector2i, can_collect: Callable) -> Dictionary:
+	if not is_instance_valid(main_nest):
+		return {}
+	var source: House
+	var pickup: Route
+	var lowest := INF
+	for house in _depots:
+		if not ready_to_dispatch(house):
+			continue
+		var field: NavigationField = _field(house)
+		var cost: float = field.cost(from_cell)
+		if cost >= lowest:
+			continue
+		var route: Route = navigation.make_route(field.path(from_cell))
+		if not can_collect.call(route):
+			continue
+		lowest = cost
+		source = house
+		pickup = route
+	if source == null:
+		return {}
+	return {"source": source, "route": pickup}
 
 func _field(house: House) -> NavigationField:
 	if _revision != navigation.revision:

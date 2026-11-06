@@ -34,6 +34,10 @@ func _on_building_added(building: Building) -> void:
 		var ant: AntAgent = instance as AntAgent
 		if house.option is SceneBuildOption and house.option.spawn_count > 0:
 			ant.speed = house.option.spawn_speed
+		if house.capacity > 1 and index == house.capacity - 1:
+			ant.role = AntAgent.Role.CARRIER
+			ant.speed *= house.carrier_speed_multiplier
+			ant.carry_capacity = house.carrier_capacity
 		ant.departure_delay = index * 1.25
 		ant.configure(house, planner, navigation, logistics)
 		house.add_resident(ant)

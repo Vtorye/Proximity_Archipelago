@@ -2,6 +2,7 @@ class_name AntAgent
 extends Node2D
 ## Executes plans; needs, route execution, and assignment policy are separate objects.
 
+enum Role { WORKER, CARRIER }
 enum DeathCause { STARVATION, DEMOLISHED, OTHER }
 enum Status { HOME, WALKING, WORKING, EATING, WAITING_FOR_FOOD, DEAD, WANDERING }
 signal work_completed(human: Node2D, workplace: Node2D)
@@ -13,6 +14,7 @@ signal waiting_changed
 @export var speed := 24.0
 @export var work_time := 3.0
 @export_range(1, 100) var carry_capacity := 2
+var role: Role = Role.WORKER
 var home: House
 var planner: TripPlanner
 var route_service: RouteService
@@ -31,6 +33,7 @@ var cargo: Array[ResourceAmount] = []
 var _shipment := false
 var _main_delivery := false
 var _delivery_nest: House
+var _pickup_source: Building
 var _angle := 0.0
 var _animation_time := 0.0
 var _last_direction := Vector2.UP
@@ -157,7 +160,8 @@ func _decide() -> void:
 		return
 	var foodless: bool = _is_foodless()
 	refresh_meal_reservation()
-	if _try_dispatch():
+	if role == Role.CARRIER:
+		_decide_pickup(foodless)
 		return
 	if foodless:
 		_carrying = false
@@ -185,22 +189,66 @@ func _decide() -> void:
 		else:
 			_seek_food()
 
-func _try_dispatch() -> bool:
-	if status != Status.HOME or not is_instance_valid(home) or not logistics.ready_to_dispatch(home):
-		return false
+func _decide_pickup(foodless: bool) -> void:
 	var cell: Vector2i = route_service.world_to_cell(global_position)
-	var route: Route = logistics.route_to(logistics.main_nest, cell)
-	if not route.is_valid() or not _can_deliver(route, cell):
+	var dispatch: Dictionary = logistics.nearest_dispatch(cell, _can_collect_shipment)
+	if not dispatch.is_empty():
+		_pickup_source = dispatch.source
+		_walk(dispatch.route, &"pickup")
+		return
+	var collection: Dictionary = planner.nearest_pickup(cell, _can_collect_output)
+	if not collection.is_empty():
+		_pickup_source = collection.workplace
+		_walk(collection.route, &"pickup")
+		return
+	_pickup_source = null
+	if foodless:
+		_wander()
+	elif not needs.can_afford(planner.escape_energy(cell, speed) + 2.0):
+		_seek_food()
+	elif is_instance_valid(home) and global_position.distance_squared_to(route_service.cell_to_world(planner.accessible_entry(home))) > 0.01:
+		_go_home()
+	else:
+		_set_status(Status.HOME)
+		_timer = 0.75
+
+func _can_collect_shipment(pickup: Route) -> bool:
+	return _can_start_pickup(pickup, logistics.route_to(logistics.main_nest, pickup.cells.back()))
+
+func _can_collect_output(workplace: Workplace, pickup: Route) -> bool:
+	var count: int = mini(workplace.pending_output_amount(), carry_capacity)
+	var cell: Vector2i = pickup.cells.back()
+	return _can_start_pickup(pickup, logistics.route_to(logistics.closest_depot(cell, count), cell))
+
+func _can_start_pickup(pickup: Route, delivery: Route) -> bool:
+	if not delivery.is_valid():
 		return false
-	cargo = planner.inventory.dispatch(home, carry_capacity)
+	var cell: Vector2i = pickup.cells.front()
+	var approach: float = global_position.distance_to(route_service.cell_to_world(cell)) * route_service.entry_cost(cell) / speed
+	var energy: float = approach + planner.travel_energy(pickup.cost, speed)
+	energy += planner.travel_energy(delivery.cost, speed * TripPlanner.CARRY_SPEED_RATIO)
+	if _is_foodless():
+		return needs.satiety > energy
+	return needs.can_afford(energy + planner.escape_energy(delivery.cells.back(), speed))
+
+func _load_pickup() -> void:
+	var source: Building = _pickup_source
+	_pickup_source = null
+	if is_instance_valid(source) and source.is_inside_tree():
+		if source is House and logistics.ready_to_dispatch(source):
+			var cell: Vector2i = route_service.world_to_cell(global_position)
+			var delivery: Route = logistics.route_to(logistics.main_nest, cell)
+			if delivery.is_valid() and _can_deliver(delivery, cell):
+				cargo = planner.inventory.dispatch(source, carry_capacity)
+				_shipment = not cargo.is_empty()
+				_main_delivery = _shipment
+		elif source is Workplace:
+			cargo = source.take_output(carry_capacity)
 	if cargo.is_empty():
-		return false
-	_shipment = true
-	_main_delivery = true
-	_delivery_nest = logistics.main_nest
-	_carrying = true
-	_walk(route, &"delivery")
-	return true
+		# Stock may have changed while this carrier was en route.
+		_decide()
+	else:
+		_deliver()
 
 func _deliver() -> void:
 	_carrying = true
@@ -319,6 +367,8 @@ func _arrive() -> void:
 			_timer = work_time
 		&"delivery":
 			_unload()
+		&"pickup":
+			_load_pickup()
 		&"wander":
 			_set_status(Status.WANDERING)
 			_timer = randf_range(0.2, 0.7)
@@ -378,7 +428,7 @@ func _reconsider_route() -> void:
 			_go_home()
 		elif geometry_changed and _destination == &"food":
 			_seek_food()
-		elif geometry_changed and _destination == &"wander":
+		elif geometry_changed and _destination in [&"wander", &"pickup"]:
 			_decide()
 		elif geometry_changed and _destination == &"delivery":
 			_deliver()
@@ -417,7 +467,7 @@ func die(cause: DeathCause = DeathCause.OTHER) -> void:
 	queue_free()
 
 func debug_snapshot() -> Dictionary:
-	return {"status": Status.keys()[status], "satiety": needs.satiety, "destination": _destination, "route_cells": motion.route.cells.size() if motion.route != null else 0}
+	return {"role": Role.keys()[role], "status": Status.keys()[status], "satiety": needs.satiety, "destination": _destination, "route_cells": motion.route.cells.size() if motion.route != null else 0}
 
 func _draw() -> void:
 	# Pixel-native ant art remains crisp at every integer camera zoom.
@@ -431,7 +481,8 @@ func _draw() -> void:
 		for sign_value in [-1.0, 1.0]:
 			var foot: Vector2 = origin + side * sign_value * 3.5 + forward * leg_phase * sign_value
 			draw_line(origin, foot.round(), Color("222521"), 1.0)
-	draw_circle(-forward * 3.0, 2.0, Color("38271e"))
+	var abdomen := Color("50677b") if role == Role.CARRIER else Color("38271e")
+	draw_circle(-forward * 3.0, 2.0, abdomen)
 	draw_circle(Vector2.ZERO, 1.5, Color("241e19"))
 	draw_circle(forward * 3.0, 1.7, Color("33251d"))
 	for sign_value in [-1.0, 1.0]:
