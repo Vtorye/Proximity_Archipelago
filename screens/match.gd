@@ -9,7 +9,7 @@ var navigation_overlay: NavigationOverlay
 var selection: TileSelection
 var hud: MatchHud
 var _active := false
-var _pointer := Vector2.ZERO
+var _pointer := Vector2(-1, -1)
 var _camera_moved := false
 
 func _ready() -> void:
@@ -132,7 +132,13 @@ func _process(_delta: float) -> void:
 		var cell: Vector2i = hud.navigation_panel.inspected_workplace.cell
 		if not selection.selected or selection.cell != cell: selection.select(cell)
 	elif selection.selected: selection.clear()
-	navigation_overlay.hovered = _cell_at(_pointer)
+	var hovered_control: Control = get_viewport().gui_get_hovered_control()
+	var panel: NavigationPanel = hud.navigation_panel
+	if hovered_control == null or (hovered_control != panel and not panel.is_ancestor_of(hovered_control)):
+		navigation_overlay.hover_active = _navigation_available() and hovered_control == null and get_viewport_rect().has_point(_pointer)
+		if navigation_overlay.hover_active or not panel.is_visible_in_tree():
+			navigation_overlay.hovered = _cell_at(_pointer)
+
 
 func _cell_at(point: Vector2) -> Vector2i:
 	var map: TileMapLayer = world.get_node("Map")

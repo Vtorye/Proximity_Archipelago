@@ -26,7 +26,7 @@ func _run() -> void:
 	expect(panel.inspected_workplace == stone and panel._detail.text.contains("0+1 / 4"), "inspection stays on the clicked workplace when the cursor moves")
 	await capture("00-workplace-inspector")
 	await click_at(cell_point(Vector2i(26, 25)))
-	expect(not panel.visible and panel.inspected_workplace == null, "clicking empty ground closes the workload card")
+	expect(panel.inspected_workplace == null, "clicking empty ground unpins the workload card")
 	world.units.process_mode = Node.PROCESS_MODE_INHERIT
 	await key(KEY_N)
 	await key(KEY_N)

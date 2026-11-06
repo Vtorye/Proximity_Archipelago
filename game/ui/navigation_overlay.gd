@@ -6,6 +6,7 @@ var world: World
 var mode := 0
 var origin := Vector2i.ZERO
 var hovered := Vector2i.ZERO
+var hover_active := false
 var reference_speed := 24.0
 var _field: NavigationField
 var _revision := -1

@@ -51,7 +51,11 @@ func refresh() -> void:
 	if not is_instance_valid(inspected_workplace) or not inspected_workplace.is_inside_tree():
 		inspected_workplace = null
 	var show_routes: bool = overlay != null and overlay.mode > 0
-	visible = show_routes or inspected_workplace != null
+	var terrain: TileData
+	if overlay != null and overlay.hover_active:
+		var map: TileMapLayer = overlay.world.get_node("Map")
+		terrain = map.get_cell_tile_data(overlay.hovered)
+	visible = show_routes or inspected_workplace != null or terrain != null
 	if not visible:
 		return
 	_legend.visible = show_routes
@@ -59,15 +63,20 @@ func refresh() -> void:
 		_heading.text = "Вход в клетку · мс" if overlay.mode == 1 else "Приоритеты · секунды"
 		_source.text = "От (%d, %d) · скорость %.1f" % [overlay.origin.x, overlay.origin.y, overlay.reference_speed]
 	var cell: Vector2i = inspected_workplace.cell if inspected_workplace != null else overlay.hovered
-	var value: Dictionary = overlay.sample(cell) if show_routes else {}
-	var building: Building = inspected_workplace if inspected_workplace != null else value.building
+	var value: Dictionary = overlay.sample(cell) if show_routes or terrain != null else {}
+	var building: Building = inspected_workplace if inspected_workplace != null else value.get("building")
 	if building is Workplace:
 		var workload: String = tr("ui.hud.workload") % [building.working_count(), building.incoming_count(), building.work_slots]
 		_detail.text = "%s\n%s" % [tr(building.display_title()), workload]
 		if show_routes:
 			_detail.text += "\n" + overlay.explanation(building)
 	elif building != null:
-		_detail.text = "%s\n%s" % ["Муравейник" if building is House else "Столовая", "Пути нет" if not is_finite(value.seconds) else "Путь: %.2f с" % value.seconds]
+		_detail.text = tr(building.display_title())
+		if show_routes:
+			_detail.text += "\n" + ("Пути нет" if not is_finite(value.seconds) else "Путь: %.2f с" % value.seconds)
+	elif terrain != null:
+		var time: float = overlay.world.planner.travel_seconds(overlay.world.route_service.entry_cost(cell), overlay.reference_speed)
+		_detail.text = "%s\n%s" % [terrain.get_custom_data("terrain_name"), ("Вход: %d мс" % roundi(time * 1000)) if is_finite(time) else "Непроходимо"]
 	else:
 		_detail.text = "Клик — нагрузка предприятия\nПКМ — выбрать начало\nЛКМ / стрелки — камера\nГолод проверяется отдельно"
 	_detail.add_theme_color_override("font_color", value.get("color", ColonyStyle.TEXT))
