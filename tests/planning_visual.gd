@@ -70,7 +70,7 @@ func _run() -> void:
 			if ants[index].status == AntAgent.Status.WORKING: break
 	ants[2]._decide()
 	world.process_mode = Node.PROCESS_MODE_PAUSABLE
-	await hover(stone.cell)
+	await click_at(cell_point(stone.cell))
 	expect(panel._detail.text.contains("2+1 / 3"), "UI separates two working ants from one incoming ant")
 	await capture("05-working-plus-incoming")
 	ants[3]._decide()
@@ -79,20 +79,28 @@ func _run() -> void:
 	expect(panel._detail.text.contains("2+1 / 3") and ants[4].role == AntAgent.Role.CARRIER and not stone.has_worker(ants[4]), "the carrier leaves all work slots available to workers")
 	expect(screen.hud._waiting.visible and screen.hud._waiting.text == (TranslationServer.translate("ui.hud.waiting") % 1), "full slots have a visible home waiting reason")
 	await capture("06-full-slots-and-waiting")
+	panel.inspect(null)
 	world.units.process_mode = Node.PROCESS_MODE_DISABLED
 	var courier: AntAgent = ants[4]
 	bush._produce(bush.output, 1, true)
 	var pending: int = bush.pending_output_amount()
 	courier.global_position = world.route_service.cell_to_world(bush.cell)
 	courier._decide()
+	var walked: Array[Vector2i] = []
+	courier.cell_changed.connect(func(_old: Vector2i, next: Vector2i): walked.append(next))
 	var attempted_work := false
 	for frame in range(90):
 		courier._physics_process(1.0 / 30.0)
 		attempted_work = attempted_work or courier._pickup_source is Workplace or courier._destination == &"work" or courier.status == AntAgent.Status.WORKING
 		await frames(1)
-	expect(not attempted_work and courier.cargo.is_empty() and bush.pending_output_amount() == pending and not bush.has_worker(courier), "the carrier leaves a bush without working or collecting its output")
+	expect(not attempted_work and courier.cargo.is_empty() and bush.pending_output_amount() == pending and not bush.has_worker(courier), "the carrier ignores a bush without working or collecting its output")
+	expect(walked.size() >= 2 and courier._destination == &"wander", "an idle carrier visibly walks around its nest")
 	await hover(bush.cell)
 	await capture("06b-carrier-ignores-bush")
+	await key(KEY_N)
+	await capture("06c-idle-carrier-walk")
+	await key(KEY_N)
+	await key(KEY_N)
 	world.units.process_mode = Node.PROCESS_MODE_INHERIT
 	var depot_cell := Vector2i(27, 27)
 	var nest: BuildOption = load("res://game/building/options/house.tres")

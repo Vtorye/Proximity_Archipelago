@@ -237,12 +237,18 @@ func test_physical_logistics(test: Node) -> void:
 	_step_until(courier, func() -> bool: return courier.cargo.is_empty())
 	test.expect(stock.quantity(wood) == total and stock.main_quantity(wood) == main_before + 2, "shipment arrival moves stock without counting it twice")
 	test.expect(not world.logistics.ready_to_dispatch(depot), "an empty depot has nothing to dispatch")
+	var walked: Array[Vector2i] = []
+	courier.cell_changed.connect(func(_old: Vector2i, next: Vector2i): walked.append(next))
+	var satiety_before: float = courier.needs.satiety
 	courier._decide()
 	var visited_workplace := false
 	for step in range(600):
 		courier._physics_process(1.0 / 60.0)
 		visited_workplace = visited_workplace or courier._pickup_source is Workplace or courier._destination == &"work" or courier.status == AntAgent.Status.WORKING
 	test.expect(not visited_workplace and courier.cargo.is_empty() and job.pending_output_amount() == 1 and job.worker_count() == 0, "an idle carrier ignores workplace surplus and never attempts production")
+	test.expect(walked.size() >= 2 and courier.needs.satiety < satiety_before, "a fed idle carrier leaves the nest and loses satiety while wandering")
+	test.expect(walked.all(func(cell: Vector2i) -> bool:
+		return world.route_service.walkable(cell) and absi(cell.x - main.cell.x) + absi(cell.y - main.cell.y) <= 2), "carrier walks remain on nearby walkable cells")
 	# Even a stale pickup target must not let a carrier collect from a workplace.
 	courier._pickup_source = job
 	courier._load_pickup()
@@ -254,12 +260,26 @@ func test_physical_logistics(test: Node) -> void:
 	test.expect(WorldInventory.cargo_size(ant.cargo) == 1 and job.pending_output_amount() == 0 and job.worker_count() == 0 and stock.quantity(wood) == total, "a worker collects remaining output before producing another batch")
 	_step_until(ant, func() -> bool: return ant.cargo.is_empty())
 	test.expect(stock.quantity(wood) == total + 1 and stock.depot_quantity(depot, wood) == 1, "the worker delivers workshop surplus to the nearest depot")
-	courier._decide()
-	test.expect(courier._pickup_source == depot, "carrier picks up a single unit from a depot below the old filling threshold")
+	_step_until(courier, func() -> bool: return courier._pickup_source == depot)
+	test.expect(courier._pickup_source == depot, "a wandering carrier automatically resumes hauling even a single available unit")
 	_step_until(courier, func() -> bool: return courier._shipment)
 	test.expect(WorldInventory.cargo_size(courier.cargo) == 1 and stock.quantity(wood) == total + 1, "a partial carrier load starts immediately without changing colony totals")
 	_step_until(courier, func() -> bool: return courier.cargo.is_empty())
 	test.expect(stock.depot_fill(depot) == 0 and stock.main_quantity(wood) == main_before + 3, "the single-unit shipment reaches the main nest")
+	courier.global_position = world.route_service.cell_to_world(main.cell)
+	courier.needs.satiety = 10.0
+	courier._decide()
+	test.expect(courier._destination == &"food", "a hungry idle carrier seeks a meal instead of wandering")
+	_step_until(courier, func() -> bool: return courier.status == AntAgent.Status.EATING)
+	_step_until(courier, func() -> bool: return courier.status != AntAgent.Status.EATING)
+	test.expect(courier.needs.satiety > 119.0, "the wandering carrier can reach its meal and recover")
+	var canteen: Building = world.registry.at(Vector2i(1, 1))
+	canteen.demolish()
+	canteen.free()
+	courier.needs.satiety = 0.1
+	courier._decide()
+	_step_until(courier, func() -> bool: return courier.status == AntAgent.Status.DEAD)
+	test.expect(courier.status == AntAgent.Status.DEAD and not main.residents.has(courier), "an idle carrier without accessible food still starves")
 	world.free()
 
 func _step_until(ant: AntAgent, condition: Callable) -> void:

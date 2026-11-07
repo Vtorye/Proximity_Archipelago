@@ -201,11 +201,10 @@ func _decide_pickup(foodless: bool) -> void:
 		_wander()
 	elif not needs.can_afford(planner.escape_energy(cell, speed) + 2.0):
 		_seek_food()
-	elif is_instance_valid(home) and global_position.distance_squared_to(route_service.cell_to_world(planner.accessible_entry(home))) > 0.01:
+	elif is_instance_valid(home) and (cell - planner.accessible_entry(home)).length_squared() > 4:
 		_go_home()
 	else:
-		_set_status(Status.HOME)
-		_timer = 0.75
+		_wander()
 
 func _can_collect_shipment(pickup: Route) -> bool:
 	return _can_start_pickup(pickup, logistics.route_to(logistics.main_nest, pickup.cells.back()))
@@ -296,6 +295,14 @@ func _wander() -> void:
 	var neighbors: Array[Vector2i] = route_service.snapshot().neighbors(cell)
 	var nearby := neighbors.filter(func(next: Vector2i) -> bool:
 		return absi(next.x - origin.x) + absi(next.y - origin.y) <= radius)
+	if not _is_foodless():
+		var approach: float = global_position.distance_to(route_service.cell_to_world(cell)) * route_service.entry_cost(cell) / speed
+		nearby = nearby.filter(func(next: Vector2i) -> bool:
+			var step_energy: float = planner.travel_energy(route_service.entry_cost(next), speed)
+			return needs.can_afford(approach + step_energy + planner.escape_energy(next, speed) + 2.0))
+		if nearby.is_empty() and not neighbors.is_empty():
+			_seek_food()
+			return
 	if nearby.is_empty():
 		_set_status(Status.WANDERING)
 		_timer = 1.0
