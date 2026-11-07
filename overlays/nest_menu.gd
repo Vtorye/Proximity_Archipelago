@@ -24,7 +24,7 @@ func _ready() -> void:
 	if not is_instance_valid(world) or not world.logistics.owns(house):
 		close_requested.emit.call_deferred(self)
 		return
-	var content: VBoxContainer = ColonyStyle.modal(self, 224)
+	var content: VBoxContainer = ColonyStyle.modal(self, 240 if world.combat != null else 224)
 	var header := HBoxContainer.new()
 	content.add_child(header)
 	var title: Label = ColonyStyle.label("ui.storage.main" if house.is_main_nest else "ui.storage.local", 12, ColonyStyle.ACCENT)
@@ -67,7 +67,7 @@ func _ready() -> void:
 	content.add_child(_residents_tab)
 	_population = ColonyStyle.label("", 8, ColonyStyle.ACCENT)
 	_residents_tab.add_child(_population)
-	for role in [AntAgent.Role.WORKER, AntAgent.Role.CARRIER]:
+	for role in world.population.roles():
 		var line := HBoxContainer.new()
 		line.add_theme_constant_override("separation", 8)
 		_residents_tab.add_child(line)
@@ -78,18 +78,20 @@ func _ready() -> void:
 		labels.add_child(count)
 		_role_labels[role] = count
 		var price: Label = ColonyStyle.label("", 4, ColonyStyle.MUTED)
+		price.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		price.custom_minimum_size.x = 104
 		labels.add_child(price)
 		_purchase_labels[role] = price
 		var buy: Button = ColonyStyle.button("ui.nest.buy")
 		buy.pressed.connect(_recruit.bind(role))
 		line.add_child(buy)
-		controls[&"buy_worker" if role == AntAgent.Role.WORKER else &"buy_carrier"] = buy
+		controls[_control_key("buy", role)] = buy
 		var kill: Button = ColonyStyle.button("ui.nest.kill")
 		kill.add_theme_color_override("font_color", ColonyStyle.DANGER)
 		kill.tooltip_text = "ui.nest.kill_hint"
 		kill.pressed.connect(_kill.bind(role))
 		line.add_child(kill)
-		controls[&"kill_worker" if role == AntAgent.Role.WORKER else &"kill_carrier"] = kill
+		controls[_control_key("kill", role)] = kill
 	_residents_tab.add_child(ColonyStyle.label("ui.nest.assigned", 4, ColonyStyle.MUTED))
 	world.inventory.changed.connect(refresh)
 	world.population.changed.connect(refresh)
@@ -123,14 +125,19 @@ func refresh() -> void:
 	_dispatch_hint.visible = not main
 	_dispatch.set_pressed_no_signal(house.auto_dispatch)
 	_population.text = tr("ui.nest.population") % [house.residents.size(), house.resident_limit()]
-	var counts := {AntAgent.Role.WORKER: 0, AntAgent.Role.CARRIER: 0}
+	var counts := {}
+	for role in world.population.roles(): counts[role] = 0
 	for ant: AntAgent in house.residents:
 		counts[ant.role] += 1
 	for role in counts:
-		var title: String = tr("ui.nest.worker" if role == AntAgent.Role.WORKER else "ui.nest.carrier")
+		var title: String = tr("ui.nest." + AntAgent.Role.keys()[role].to_lower())
 		_role_labels[role].text = "%s · %d" % [title, counts[role]]
-		controls[&"kill_worker" if role == AntAgent.Role.WORKER else &"kill_carrier"].disabled = counts[role] == 0
-		var buy: Button = controls[&"buy_worker" if role == AntAgent.Role.WORKER else &"buy_carrier"]
+		if role == AntAgent.Role.WARRIOR: _role_labels[role].tooltip_text = tr("ui.warrior.hint") % [world.wave_rules.warrior_health, world.wave_rules.attack_damage]
+		controls[_control_key("kill", role)].disabled = counts[role] == 0
+		var buy: Button = controls[_control_key("buy", role)]
 		buy.disabled = not world.population.can_recruit(house, role)
 		_purchase_labels[role].text = BuildCostText.format(world.recruitment.price(role)) if world.recruitment != null else "—"
 		buy.tooltip_text = "ui.nest.full" if not house.has_space() else ("ui.nest.unaffordable" if buy.disabled else "ui.nest.from_main")
+
+func _control_key(action: String, role: int) -> StringName:
+	return StringName(action + "_" + AntAgent.Role.keys()[role].to_lower())

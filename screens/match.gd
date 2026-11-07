@@ -19,6 +19,7 @@ func _ready() -> void:
 		world = LevelLayout.create_world(payload)
 	if world == null:
 		world = LevelLayout.DEFAULT_WORLD.instantiate()
+	if payload is Dictionary and payload.get("wave_mode", false): world.wave_rules = load("res://game/combat/default_waves.tres")
 	world.name = "World"
 	world.auto_start = false
 	add_child(world)

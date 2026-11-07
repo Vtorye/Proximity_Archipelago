@@ -8,7 +8,7 @@ func _ready() -> void:
 	var content: VBoxContainer = ColonyStyle.modal(self, 192)
 	var won: bool = summary != null and summary.won
 	content.add_child(ColonyStyle.label("ui.result.victory" if won else "ui.result.defeat", 12, ColonyStyle.ACCENT))
-	content.add_child(ColonyStyle.label("ui.result.goal_reached" if won else "ui.result.time_up"))
+	content.add_child(ColonyStyle.label("ui.result.colony_destroyed" if summary != null and summary.reason == &"colony_destroyed" else ("ui.result.goal_reached" if won else "ui.result.time_up")))
 	if summary != null:
 		for entry in summary.resources:
 			content.add_child(ColonyStyle.label("%s: %d" % [tr(entry.type.display_name), entry.amount]))

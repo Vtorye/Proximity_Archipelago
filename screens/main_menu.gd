@@ -19,6 +19,7 @@ func _ready() -> void:
 	content.add_theme_constant_override("separation", 14)
 	center.add_child(content)
 	_add_action(content, &"play", "ui.menu.play", func(): Router.goto(&"match"))
+	_add_action(content, &"waves", "ui.menu.waves", func(): Router.goto(&"match", {"wave_mode": true}))
 	_add_action(content, &"maps", "ui.menu.maps", func(): Router.goto(&"level_editor"))
 	_add_action(content, &"tutorial", "ui.menu.tutorial", func(): Router.goto(&"tutorial"))
 	_add_action(content, &"settings", "ui.menu.settings", func(): Router.push_overlay(&"settings"))

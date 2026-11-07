@@ -172,6 +172,10 @@ func _ready() -> void:
 		navigation_panel.offset_left = -198
 		navigation_panel.offset_right = -8
 		navigation_panel.offset_top = 64
+	if world.combat != null:
+		var waves := WaveHud.new()
+		waves.director = world.combat
+		add_child(waves)
 	refresh()
 	set_zoom(2)
 	set_navigation_mode(0)

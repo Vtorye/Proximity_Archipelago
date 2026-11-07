@@ -157,3 +157,18 @@ ui.task.unlocks,Unlocks: %s,Откроет: %s
 ui.site.title,Construction: %s,Стройка: %s
 ui.site.assembly,Assembly: %d%%,Сборка: %d%%
 ui.site.delivery,Waiting for material delivery,Ожидает доставку материалов
+ui.menu.waves,Spider waves,Волны пауков
+ui.defense.wall,Wall,Стена
+ui.defense.tower,Battle tower,Боевая вышка
+ui.nest.warrior,Warriors,Боевые муравьи
+ui.warrior.hint,%d HP; %d damage. Hunts spiders or staffs a tower. Eats at its nest; never gathers resources.,%d HP; %d урон. Ищет пауков или служит на вышке. Ест дома; ресурсы не добывает.
+ui.tower.active,Active: one warrior on duty,Работает: один боец на посту
+ui.tower.inactive,Offline: needs a warrior on duty,Отключена: нужен боевой муравей
+ui.combat.health,HP: %d / %d,HP: %d / %d
+ui.trap.title,Spider trap,Паучья ловушка
+ui.trap.hint,Kills civilian ants. Remains after triggering.,Убивает мирных муравьёв. Не исчезает после срабатывания.
+ui.trap.clear,Remove: %s,Убрать: %s
+ui.waves.next,Wave %d in %d:%02d,Волна %d через %d:%02d
+ui.waves.enemies,Spiders: %d,Пауков: %d
+ui.waves.hint,Recruit warriors in a nest. Build staffed towers and walls before the next wave.,Покупайте бойцов в муравейнике. До волны стройте стены и вышки с бойцами.
+ui.result.colony_destroyed,All nests were destroyed,Все муравейники уничтожены

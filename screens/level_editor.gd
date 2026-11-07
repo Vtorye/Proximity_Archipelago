@@ -80,6 +80,7 @@ func _make_ui() -> void:
 	actions.add_child(_title)
 	_button(actions, "ui.map.save", _save_map)
 	_button(actions, "ui.menu.play", _play)
+	_button(actions, "ui.menu.waves", func(): _play(true))
 	var files := HBoxContainer.new()
 	rows.add_child(files)
 	_saved = OptionButton.new()
@@ -276,7 +277,7 @@ func _save_map() -> void:
 			_saved.select(index)
 			break
 
-func _play() -> void:
+func _play(waves := false) -> void:
 	if _dirty:
 		_status.text = "ui.map.save_first"
 		return
@@ -291,6 +292,7 @@ func _play() -> void:
 		_status.text = errors[0]
 		_status.tooltip_text = "\n".join(errors)
 		return
+	if waves: layout["wave_mode"] = true
 	Router.goto(&"match", layout)
 
 func _process(delta: float) -> void:
