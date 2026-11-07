@@ -8,7 +8,6 @@ var is_main_nest := false
 @export_range(1.0, 4.0, 0.05) var carrier_speed_multiplier := 1.5
 @export_range(1, 100) var carrier_capacity := 6
 @export_range(1, 10000) var storage_capacity := 100
-@export_range(1, 100) var dispatch_threshold := 70
 @export var auto_dispatch := true
 
 var _residents: Array[Node2D] = []

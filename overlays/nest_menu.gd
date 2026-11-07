@@ -13,8 +13,7 @@ var _purchase_labels: Dictionary[int, Label] = {}
 var _population: Label
 var _capacity: Label
 var _dispatch: CheckButton
-var _threshold: HSlider
-var _threshold_label: Label
+var _dispatch_hint: Label
 
 func _ready() -> void:
 	if not payload is Dictionary:
@@ -60,17 +59,9 @@ func _ready() -> void:
 	_dispatch.toggled.connect(func(enabled: bool):
 		if is_instance_valid(house): house.auto_dispatch = enabled)
 	_inventory_tab.add_child(_dispatch)
-	_threshold_label = ColonyStyle.label("")
-	_inventory_tab.add_child(_threshold_label)
-	_threshold = HSlider.new()
-	_threshold.min_value = 1
-	_threshold.max_value = 100
-	_threshold.step = 1
-	_threshold.value_changed.connect(func(value: float):
-		if is_instance_valid(house):
-			house.dispatch_threshold = int(value)
-			_threshold_label.text = tr("ui.storage.threshold") % int(value))
-	_inventory_tab.add_child(_threshold)
+	_dispatch_hint = ColonyStyle.label("ui.nest.dispatch_hint", 4, ColonyStyle.MUTED)
+	_dispatch_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_inventory_tab.add_child(_dispatch_hint)
 	_residents_tab = VBoxContainer.new()
 	_residents_tab.add_theme_constant_override("separation", 8)
 	content.add_child(_residents_tab)
@@ -129,11 +120,8 @@ func refresh() -> void:
 		var amount: int = world.inventory.main_quantity(type) if main else world.inventory.depot_quantity(house, type)
 		_stock_labels[type.id].text = "%s · %d" % [tr(type.display_name), amount]
 	_dispatch.visible = not main
-	_threshold.visible = not main
-	_threshold_label.visible = not main
+	_dispatch_hint.visible = not main
 	_dispatch.set_pressed_no_signal(house.auto_dispatch)
-	_threshold.set_value_no_signal(house.dispatch_threshold)
-	_threshold_label.text = tr("ui.storage.threshold") % house.dispatch_threshold
 	_population.text = tr("ui.nest.population") % [house.residents.size(), house.resident_limit()]
 	var counts := {AntAgent.Role.WORKER: 0, AntAgent.Role.CARRIER: 0}
 	for ant: AntAgent in house.residents:

@@ -223,11 +223,10 @@ func test_physical_logistics(test: Node) -> void:
 	var courier := main.residents.back() as AntAgent
 	test.expect(courier.role == AntAgent.Role.CARRIER and courier.speed > ant.speed and courier.carry_capacity > ant.carry_capacity, "main nest spawns a faster carrier with a larger load")
 	test.expect(world.planner.plan_work(courier, main, courier.needs, courier.speed, courier.work_time, courier._meal) == null and not job.reserve_worker(courier), "a carrier cannot get a production assignment or take a worker slot")
-	test.expect(depot.dispatch_threshold == 70 and depot.auto_dispatch, "local depots default to automatic dispatch at seventy percent")
+	test.expect(depot.auto_dispatch, "local depots enable automatic dispatch by default")
 	depot.auto_dispatch = false
 	test.expect(not world.logistics.ready_to_dispatch(depot), "automatic dispatch can be disabled per depot")
 	depot.auto_dispatch = true
-	depot.dispatch_threshold = 90
 	var total: int = stock.quantity(wood)
 	var main_before: int = stock.main_quantity(wood)
 	courier._decide()
@@ -237,13 +236,19 @@ func test_physical_logistics(test: Node) -> void:
 	test.expect(stock.quantity(wood) == total and stock.main_quantity(wood) == main_before and stock.depot_quantity(depot, wood) == 0, "dispatched cargo counts in totals during transport but cannot be spent centrally")
 	_step_until(courier, func() -> bool: return courier.cargo.is_empty())
 	test.expect(stock.quantity(wood) == total and stock.main_quantity(wood) == main_before + 2, "shipment arrival moves stock without counting it twice")
-	test.expect(not world.logistics.ready_to_dispatch(depot), "a depot below its configured threshold stops dispatching")
+	test.expect(not world.logistics.ready_to_dispatch(depot), "an empty depot has nothing to dispatch")
 	courier._decide()
 	test.expect(courier._pickup_source == job, "a carrier can collect production already waiting at a workplace")
 	_step_until(courier, func() -> bool: return not courier.cargo.is_empty())
 	test.expect(WorldInventory.cargo_size(courier.cargo) == 1 and job.pending_output_amount() == 0 and job.worker_count() == 0 and stock.quantity(wood) == total, "collecting surplus neither produces new goods nor occupies a work slot")
 	_step_until(courier, func() -> bool: return courier.cargo.is_empty())
 	test.expect(stock.quantity(wood) == total + 1 and stock.depot_quantity(depot, wood) == 1, "the carrier physically delivers workshop surplus to the nearest depot")
+	courier._decide()
+	test.expect(courier._pickup_source == depot, "carrier picks up a single unit from a depot below the old filling threshold")
+	_step_until(courier, func() -> bool: return courier._shipment)
+	test.expect(WorldInventory.cargo_size(courier.cargo) == 1 and stock.quantity(wood) == total + 1, "a partial carrier load starts immediately without changing colony totals")
+	_step_until(courier, func() -> bool: return courier.cargo.is_empty())
+	test.expect(stock.depot_fill(depot) == 0 and stock.main_quantity(wood) == main_before + 3, "the single-unit shipment reaches the main nest")
 	world.free()
 
 func _step_until(ant: AntAgent, condition: Callable) -> void:
@@ -292,7 +297,6 @@ func test_recruitment(test: Node) -> void:
 	test.expect(local.resident_limit() == 5 and not population.recruit(local, AntAgent.Role.WORKER), "small nests preserve their five-resident capacity")
 	var wood: ResourceType = stock.type_by_id(&"wood")
 	stock.deposit(local, [test.entry(wood, 6)])
-	local.dispatch_threshold = 1
 	var carrier: AntAgent
 	for resident: AntAgent in main.residents:
 		if resident.role == AntAgent.Role.CARRIER:

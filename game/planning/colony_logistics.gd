@@ -72,7 +72,6 @@ func deposit(house: House, cargo: Array[ResourceAmount]) -> bool:
 func ready_to_dispatch(house: House) -> bool:
 	return (
 		_depots.has(house) and house.auto_dispatch
-		and inventory.depot_fill(house) * 100 >= house.storage_capacity * house.dispatch_threshold
 		and inventory.has_dispatchable_stock(house)
 	)
 

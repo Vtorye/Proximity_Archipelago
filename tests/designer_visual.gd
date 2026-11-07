@@ -111,11 +111,10 @@ func _check_storage_and_hover() -> void:
 	var depot: House = screen.world.registry.at(cell) as House
 	await click_at(cell_point(cell))
 	var menu := Router.top_overlay() as NestMenu
-	expect(menu != null and menu.house == depot and menu._inventory_tab.visible and menu._threshold.value == 70 and menu._capacity.text.contains("0 / 100"), "click opens a warehouse window with its inventory and dispatch settings")
+	expect(menu != null and menu.house == depot and menu._inventory_tab.visible and menu._dispatch_hint.visible and menu._capacity.text.contains("0 / 100"), "click opens a warehouse window with its inventory and dispatch settings")
 	await click(menu._dispatch)
 	expect(not depot.auto_dispatch, "the depot auto-dispatch toggle updates this nest")
-	await click_at(Vector2(menu._threshold.get_global_rect().position.x + menu._threshold.size.x / 2, menu._threshold.get_global_rect().get_center().y))
-	expect(depot.dispatch_threshold == int(menu._threshold.value) and depot.dispatch_threshold != 70, "the slider updates the individual threshold")
+	expect(menu._dispatch_hint.text == "ui.nest.dispatch_hint", "local inventory explains that carriers collect at any fill level")
 	await capture("02e-small-nest-settings")
 	await click(menu.controls[&"residents"])
 	expect(menu._role_labels[AntAgent.Role.WORKER].text == "Рабочие · 4" and menu._role_labels[AntAgent.Role.CARRIER].text == "Носильщики · 1", "the residents tab counts roles assigned to this small nest")

@@ -125,7 +125,6 @@ ui.storage.main,Main nest,Главный муравейник
 ui.storage.local,Small nest,Маленький муравейник
 ui.storage.fill,Storage %d / %d,Заполнено %d / %d
 ui.storage.auto,Automatic dispatch,Автоотправка
-ui.storage.threshold,Dispatch at %d%%,Отправка при %d%%
 ui.storage.in_main,In main nest %d,В главном складе %d
 ui.storage.protected,The main nest and nonempty depots cannot be demolished,Главный или непустой склад нельзя снести
 ui.terrain.entry,Entry %d ms,Вход %d мс
@@ -144,3 +143,4 @@ ui.nest.unaffordable,Insufficient resources in the main nest,В главном �
 ui.nest.from_main,Paid from the main nest inventory,Оплата из главного муравейника
 ui.nest.kill,Kill,Убить
 ui.nest.kill_hint,Kill one assigned ant of this type. Its cargo is lost.,Убить одного жителя этого типа. Его груз будет потерян.
+ui.nest.dispatch_hint,Carriers collect available resources at any fill level.,Носильщики забирают доступные ресурсы при любом заполнении.
