@@ -42,6 +42,7 @@ func _run() -> void:
 	islands.test_foodless_colonies(self)
 	islands.test_physical_logistics(self)
 	islands.test_multiple_bases(self)
+	await islands.test_authored_map(self)
 	islands.test_recruitment(self)
 	_test_resident_pruning()
 	await _test_worlds()

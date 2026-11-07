@@ -3,6 +3,9 @@ extends RefCounted
 
 const DIRECTORY := "user://maps"
 const MAX_BYTES := 32 * 1024 * 1024
+const BUILT_IN_LEVELS := {
+	"builtin/tidal_shards": preload("res://game/worlds/maps/tidal_shards.tres"),
+}
 
 static func save_level(title: String, layout: Dictionary) -> Error:
 	title = title.strip_edges()
@@ -33,6 +36,8 @@ static func save_level(title: String, layout: Dictionary) -> Error:
 
 static func saved_levels() -> Array[Dictionary]:
 	var levels: Array[Dictionary] = []
+	for id: String in BUILT_IN_LEVELS:
+		levels.append({"file": id, "title": BUILT_IN_LEVELS[id].title})
 	if not DirAccess.dir_exists_absolute(DIRECTORY):
 		return levels
 	for filename in DirAccess.get_files_at(DIRECTORY):
@@ -46,6 +51,8 @@ static func saved_levels() -> Array[Dictionary]:
 	return levels
 
 static func load_level(filename: String) -> Dictionary:
+	if BUILT_IN_LEVELS.has(filename):
+		return BUILT_IN_LEVELS[filename].data()
 	if filename.length() != 69 or filename.get_extension() != "json" or not filename.get_basename().is_valid_hex_number():
 		return {}
 	var file := FileAccess.open(DIRECTORY.path_join(filename), FileAccess.READ)

@@ -352,6 +352,77 @@ func test_multiple_bases(test: Node) -> void:
 		test.expect(restored.filter(func(building: Building) -> bool: return building is House and building.is_main_nest).size() == 2, "both base nests retain their type through map save/load")
 		world.free()
 
+func test_authored_map(test: Node) -> void:
+	var data: Dictionary = LevelStore.load_level("builtin/tidal_shards")
+	test.expect(LevelValidator.validate("res://game/worlds/maps/tidal_shards.tres").is_empty(), "bundled maps support the same editor and command-line validator as scenes")
+	test.expect(data.title == "Осколки прилива" and LevelStore.saved_levels().any(func(item: Dictionary) -> bool: return item.file == "builtin/tidal_shards"), "the authored archipelago is bundled and listed without a user save")
+	var copy: Dictionary = LevelStore.load_level("builtin/tidal_shards")
+	copy.tiles[0][0] = -100
+	test.expect(LevelStore.load_level("builtin/tidal_shards").tiles[0][0] == 0, "editing a bundled map cannot mutate its shipped resource")
+	var world: World = LevelLayout.create_world(data)
+	test.expect(world != null and LevelValidator.validate_world(world, "tidal shards").is_empty(), "the new authored level passes offline validation")
+	if world == null:
+		return
+	world.auto_start = false
+	test.add_child(world)
+	var grid: TileGrid = world.route_service.snapshot()
+	test.expect(world.map_size == Vector2i(136, 84) and grid.component_count() >= 6 and grid.node_count() < 3000, "the large map has separate island graphs and stores only its land nodes")
+	test.expect(world.population.count() == 5 and world.logistics.main_nest.cell == Vector2i(68, 44), "the archipelago starts with one populated central base")
+	var resources := {&"wood": 0, &"stone": 0, &"food": 0}
+	var dry := 0
+	for workplace in world.registry.workplaces():
+		resources[workplace.output.id] += 1
+		if not world.planner.food_within_range(workplace.cell, 24.0): dry += 1
+	test.expect(resources[&"wood"] >= 10 and resources[&"stone"] >= 10 and resources[&"food"] >= 8 and dry > 0, "distinct islands offer all resource types and optional frontiers needing a canteen")
+	world.free()
+	var idle: Dictionary = await _play_authored_map(test, false)
+	var developed: Dictionary = await _play_authored_map(test, true)
+	test.metrics["tidal_shards"] = {"idle": idle, "developed": developed}
+	test.expect(developed.tasks > idle.tasks and developed.cycles > idle.cycles, "roads and production camps improve progression over an unchanged colony")
+	test.expect(developed.deaths == 0 and developed.tasks >= 5, "the development route completes a stage without starvation")
+
+func _play_authored_map(test: Node, develop: bool) -> Dictionary:
+	seed(20261107)
+	var world: World = LevelLayout.create_world(LevelStore.load_level("builtin/tidal_shards"))
+	world.auto_start = false
+	test.add_child(world)
+	var road: BuildOption = load("res://game/building/options/road.tres")
+	if develop:
+		var camp: BuildOption = load("res://game/building/options/house.tres")
+		test.expect(world.build_controller.try_build(camp, Vector2i(64, 42)) and world.build_controller.try_build(camp, Vector2i(74, 40)), "the starter budget supports separate timber and stone camps")
+		for x in range(64, 76):
+			if world.build_controller.can_build(road, Vector2i(x, 44)): world.build_controller.try_build(road, Vector2i(x, 44))
+		for y in range(39, 44):
+			world.build_controller.try_build(road, Vector2i(75, y))
+		for y in range(41, 44):
+			world.build_controller.try_build(road, Vector2i(65, y))
+		world.build_controller.try_build(road, Vector2i(68, 45))
+		world.build_controller.try_build(road, Vector2i(68, 46))
+	var deaths: Array[int] = [0]
+	var cycles: Array[int] = [0]
+	world.population.spawned.connect(func(ant: AntAgent):
+		ant.died.connect(func(_ant: Node2D, _cause: int): deaths[0] += 1)
+		ant.work_completed.connect(func(_ant: Node2D, _site: Node2D): cycles[0] += 1))
+	for ant in world.population.agents():
+		ant.died.connect(func(_ant: Node2D, _cause: int): deaths[0] += 1)
+		ant.work_completed.connect(func(_ant: Node2D, _site: Node2D): cycles[0] += 1)
+	world.match_controller.start(world.inventory)
+	for tick in range(60 * 240):
+		for ant in world.population.agents(): ant._physics_process(1.0 / 60.0)
+		world.match_controller._process(1.0 / 60.0)
+		if world.match_controller.is_finished(): break
+		if tick % 60 == 0:
+			for index in range(world.tasks.slots.size()):
+				if world.tasks.can_pay(index): world.tasks.submit(index)
+			if develop:
+				var farm: BuildOption = load("res://game/building/options/farm.tres")
+				if world.inventory.available(world.inventory.type_by_id(&"food")) >= 10 and world.build_controller.can_build(farm, Vector2i(68, 46)):
+					world.build_controller.try_build(farm, Vector2i(68, 46))
+			await test.get_tree().process_frame
+	var result := {"tasks": world.tasks.completed_count, "level": world.tasks.level, "cycles": cycles[0], "deaths": deaths[0], "ants": world.population.count(), "time_left": snappedf(world.match_controller.time_remaining, 0.1)}
+	world.free()
+	return result
+
 func _step_until(ant: AntAgent, condition: Callable) -> void:
 	for step in range(1800):
 		if condition.call() or ant.status == AntAgent.Status.DEAD:

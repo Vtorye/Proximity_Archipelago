@@ -2,9 +2,13 @@ class_name LevelValidator
 extends RefCounted
 ## Runs on saved authored data without entering the world or creating agents.
 static func validate(path: String) -> Array[String]:
-	var scene: PackedScene = load(path) as PackedScene
-	if scene == null: return [path + ": cannot load level"]
-	var root: Node = scene.instantiate()
+	var definition: Resource = load(path)
+	var root: Node
+	if definition is AuthoredLevel:
+		root = LevelLayout.create_world(definition.data())
+	elif definition is PackedScene:
+		root = definition.instantiate()
+	if root == null: return [path + ": cannot load level"]
 	var world: World = root as World
 	if world == null:
 		root.free()

@@ -200,7 +200,10 @@ func _refresh_saved() -> void:
 	_saved.add_item(tr("ui.map.default"))
 	_saved.set_item_metadata(0, "")
 	for data in LevelStore.saved_levels():
-		_saved.add_item(data.title)
+		var title: String = data.title
+		if LevelStore.BUILT_IN_LEVELS.has(data.file):
+			title += " · " + tr("ui.map.bundled")
+		_saved.add_item(title)
 		_saved.set_item_metadata(_saved.item_count - 1, data.file)
 
 func _mark_dirty() -> void:
@@ -231,11 +234,13 @@ func _load_map() -> void:
 	if not _confirm_discard("load"):
 		return
 	var filename: String = _saved.get_selected_metadata()
+	var description := ""
 	if filename.is_empty():
 		_show_world(LevelLayout.DEFAULT_WORLD.instantiate())
 		_title.clear()
 	else:
 		var data: Dictionary = LevelStore.load_level(filename)
+		description = data.get("description", "")
 		var world: World = LevelLayout.create_world(data)
 		if world == null:
 			_status.text = "ui.map.load_failed"
@@ -246,6 +251,9 @@ func _load_map() -> void:
 	_discard_action = ""
 	_status.text = "ui.map.loaded"
 	_status.tooltip_text = ""
+	if not description.is_empty():
+		_status.text = description
+		_status.tooltip_text = description.replace(". ", ".\n")
 
 func _save_map() -> void:
 	var title: String = _title.text.strip_edges()

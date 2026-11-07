@@ -110,6 +110,7 @@ ui.map.dirty,Unsaved changes,Есть несохранённые правки
 ui.map.discard,Repeat the action to discard edits,"Повторите действие, чтобы отбросить правки"
 ui.map.load_failed,Could not open the map,Не удалось открыть карту
 ui.map.loaded,Map loaded,Карта загружена
+ui.map.bundled,Bundled,Встроенная
 ui.map.name_needed,Enter a map name,Введите имя карты
 ui.map.save_failed,Could not save: %s,Не удалось сохранить: %s
 ui.map.saved,Map saved,Карта сохранена
