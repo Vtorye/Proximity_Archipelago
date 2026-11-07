@@ -222,8 +222,8 @@ func _on_time_changed(seconds: int) -> void:
 func set_zoom(value: int) -> void:
 	_zoom_level = value
 	_zoom.text = "%sx" % str(WorldCamera.ZOOMS[value])
-	controls[&"zoom_in"].disabled = value >= WorldCamera.ZOOMS.size() - 1
-	controls[&"zoom_out"].disabled = value <= 0
+	controls[&"zoom_in"].disabled = value >= WorldCamera.MAX_LEVEL
+	controls[&"zoom_out"].disabled = value <= WorldCamera.MIN_LEVEL
 
 func build_obstacles() -> Array[Rect2]:
 	var result: Array[Rect2] = []
@@ -234,8 +234,8 @@ func build_obstacles() -> Array[Rect2]:
 
 func lock_zoom(locked: bool) -> void:
 	_toast.visible = _toast_time > 0.0 and not locked
-	controls[&"zoom_in"].disabled = locked or _zoom_level >= WorldCamera.ZOOMS.size() - 1
-	controls[&"zoom_out"].disabled = locked or _zoom_level <= 0
+	controls[&"zoom_in"].disabled = locked or _zoom_level >= WorldCamera.MAX_LEVEL
+	controls[&"zoom_out"].disabled = locked or _zoom_level <= WorldCamera.MIN_LEVEL
 
 func toast(message: String, danger: bool = false) -> void:
 	_toast.text = message
