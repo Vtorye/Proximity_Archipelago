@@ -6,6 +6,7 @@ extends Resource
 @export var icon: Texture2D
 ## Empty means free. Each entry pairs a resource with its required quantity.
 @export var costs: Array[ResourceAmount] = []
+@export_range(0.1, 120.0, 0.1) var construction_seconds := 4.0
 @export var price_rules: Array[PriceRule] = []
 
 ## Allows terrain below existing structures and placement around units.

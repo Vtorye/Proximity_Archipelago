@@ -88,6 +88,34 @@ func try_spend_all(costs: Array[ResourceAmount], main_only: bool = false) -> boo
 	return true
 
 
+## Prepaid construction crates stay at their actual base until an ant collects them.
+## They leave spendable colony stock once; the site owns their subsequent lifecycle.
+func claim_build_materials(costs: Array[ResourceAmount], primary: House) -> Dictionary:
+	if not can_afford_all(costs, true):
+		return {}
+	var crates: Dictionary = {}
+	for cost in costs:
+		var remaining: int = cost.amount
+		for house in [primary] + _depots.keys():
+			if house != primary and not house.is_main_nest:
+				continue
+			var stock: Dictionary = _main_stock if house == primary else _depots[house]
+			var taken: int = mini(remaining, stock.get(cost.type.id, 0))
+			if taken <= 0:
+				continue
+			stock[cost.type.id] -= taken
+			_amounts[cost.type.id] -= taken
+			var item := ResourceAmount.new()
+			item.type = cost.type
+			item.amount = taken
+			if not crates.has(house): crates[house] = []
+			crates[house].append(item)
+			remaining -= taken
+			if remaining == 0: break
+	if not costs.is_empty(): _notify()
+	return crates
+
+
 func add(type: ResourceType, amount: int) -> bool:
 	if not is_registered(type) or amount < 0:
 		return false
