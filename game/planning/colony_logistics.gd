@@ -21,6 +21,7 @@ func _add_building(building: Building) -> void:
 	var house: House = building as House
 	if not is_instance_valid(main_nest):
 		main_nest = house
+		house.is_main_nest = true
 	else:
 		_depots.append(house)
 		inventory.register_depot(house)
@@ -34,10 +35,14 @@ func _remove_building(building: Building) -> void:
 		main_nest = null
 		if not _depots.is_empty():
 			main_nest = _depots.pop_front()
+			main_nest.is_main_nest = true
 			inventory.unregister_depot(main_nest)
 	else:
 		_depots.erase(house)
 		inventory.unregister_depot(house)
+
+func owns(house: House) -> bool:
+	return is_instance_valid(house) and (house == main_nest or _depots.has(house))
 
 func can_remove(house: House) -> bool:
 	return house != main_nest and inventory.depot_fill(house) == 0

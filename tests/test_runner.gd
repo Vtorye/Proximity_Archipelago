@@ -41,6 +41,7 @@ func _run() -> void:
 	islands.run(self)
 	islands.test_foodless_colonies(self)
 	islands.test_physical_logistics(self)
+	islands.test_recruitment(self)
 	_test_resident_pruning()
 	await _test_worlds()
 	await preload("res://tests/build_regressions.gd").new().run(self)

@@ -9,6 +9,8 @@ var units: Node2D
 var navigation: RouteService
 var planner: TripPlanner
 var logistics: ColonyLogistics
+var recruitment: RecruitmentCatalog
+var _recruiting := false
 
 func configure(root: Node2D, routes: RouteService, policy: TripPlanner, registry: BuildingRegistry, storage: ColonyLogistics) -> void:
 	units = root
@@ -25,30 +27,71 @@ func _on_building_added(building: Building) -> void:
 	var entry: Vector2i = planner.accessible_entry(house)
 	if not navigation.walkable(entry):
 		return
-	for index in range(house.capacity):
-		var instance: Node = house.human_scene.instantiate()
-		if not instance is AntAgent:
-			instance.free()
+	var initial_count: int = mini(house.capacity, house.resident_limit())
+	for index in range(initial_count):
+		var role: AntAgent.Role = AntAgent.Role.CARRIER if initial_count > 1 and index == initial_count - 1 else AntAgent.Role.WORKER
+		var ant: AntAgent = _create_resident(house, role)
+		if ant == null:
 			push_error("Nest scene must contain an AntAgent root")
 			return
-		var ant: AntAgent = instance as AntAgent
-		if house.option is SceneBuildOption and house.option.spawn_count > 0:
-			ant.speed = house.option.spawn_speed
-		if house.capacity > 1 and index == house.capacity - 1:
-			ant.role = AntAgent.Role.CARRIER
-			ant.speed *= house.carrier_speed_multiplier
-			ant.carry_capacity = house.carrier_capacity
 		ant.departure_delay = index * 1.25
-		ant.configure(house, planner, navigation, logistics)
-		house.add_resident(ant)
-		ant.position = units.to_local(navigation.cell_to_world(entry))
-		units.add_child(ant)
-		ant.cell_changed.connect(func(old: Vector2i, next: Vector2i): cell_changed.emit(old, next))
-		ant.status_changed.connect(func(_status: AntAgent.Status): changed.emit())
-		ant.waiting_changed.connect(func(): changed.emit())
-		ant.died.connect(func(_ant: Node2D, _cause: int): changed.emit())
-		spawned.emit(ant)
+		_add_resident(house, ant)
 	changed.emit()
+
+func can_recruit(house: House, role: AntAgent.Role) -> bool:
+	return (
+		not _recruiting and recruitment != null and logistics.owns(house)
+		and role in [AntAgent.Role.WORKER, AntAgent.Role.CARRIER]
+		and house.has_space() and navigation.walkable(planner.accessible_entry(house))
+		and planner.inventory.can_afford_all(recruitment.price(role), true)
+	)
+
+func recruit(house: House, role: AntAgent.Role) -> bool:
+	if not can_recruit(house, role):
+		return false
+	var ant: AntAgent = _create_resident(house, role)
+	if ant == null:
+		return false
+	_recruiting = true
+	planner.inventory.begin_update()
+	if not planner.inventory.try_spend_all(recruitment.price(role), true):
+		ant.free()
+		_recruiting = false
+		planner.inventory.end_update()
+		return false
+	_add_resident(house, ant)
+	_recruiting = false
+	planner.inventory.end_update()
+	changed.emit()
+	return true
+
+func _create_resident(house: House, role: AntAgent.Role) -> AntAgent:
+	if house.human_scene == null:
+		return null
+	var instance: Node = house.human_scene.instantiate()
+	if not instance is AntAgent:
+		instance.free()
+		return null
+	var ant: AntAgent = instance as AntAgent
+	ant.role = role
+	if house.option is SceneBuildOption and house.option.spawn_count > 0:
+		ant.speed = house.option.spawn_speed
+	if role == AntAgent.Role.CARRIER:
+		ant.speed *= house.carrier_speed_multiplier
+		ant.carry_capacity = house.carrier_capacity
+	ant.configure(house, planner, navigation, logistics)
+	return ant
+
+func _add_resident(house: House, ant: AntAgent) -> void:
+	var entry: Vector2i = planner.accessible_entry(house)
+	house.add_resident(ant)
+	ant.position = units.to_local(navigation.cell_to_world(entry))
+	units.add_child(ant)
+	ant.cell_changed.connect(func(old: Vector2i, next: Vector2i): cell_changed.emit(old, next))
+	ant.status_changed.connect(func(_status: AntAgent.Status): changed.emit())
+	ant.waiting_changed.connect(func(): changed.emit())
+	ant.died.connect(func(_ant: Node2D, _cause: int): changed.emit())
+	spawned.emit(ant)
 
 func _on_building_removed(building: Building) -> void:
 	if building is House:

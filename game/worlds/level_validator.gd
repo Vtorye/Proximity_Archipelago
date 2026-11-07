@@ -60,6 +60,13 @@ static func validate_world(world: World, path: String) -> Array[String]:
 					ingredients.append(product)
 				for entry in ingredients:
 					if entry == null or entry.type == null or not types.has(entry.type.id): errors.append(path + ":" + str(world.get_path_to(building)) + ": unknown recipe resource")
+		if world.recruitment == null:
+			errors.append(path + ": missing recruitment catalog")
+		else:
+			for costs in [world.recruitment.worker_costs, world.recruitment.carrier_costs]:
+				for cost in costs:
+					if cost == null or cost.type == null or cost.amount < 0 or not types.has(cost.type.id):
+						errors.append(path + ": invalid recruitment price")
 		var options: Array[BuildOption] = world.build_catalog.options if world.build_catalog != null else world.build_options
 		var ids: Dictionary[StringName, bool] = {}
 		var prices := PriceService.new()

@@ -7,6 +7,7 @@ class_name World
 @export var build_options: Array[BuildOption] = []
 @export var art: ArtCatalog = preload("res://game/art/colony_art.tres")
 @export var auto_start := true
+@export var recruitment: RecruitmentCatalog = preload("res://game/resources/recruitment.tres")
 var map_size: Vector2i:
 	get: return ($Map as TileMapLayer).get_used_rect().size
 @export var diagnostics_enabled := false
@@ -75,6 +76,7 @@ func _ready() -> void:
 	population.name = "Population"
 	add_child(population)
 	population.configure(units, route_service, planner, registry, logistics)
+	population.recruitment = recruitment
 	build_controller = BuildController.new()
 	build_controller.name = "BuildController"
 	build_controller.prices = prices

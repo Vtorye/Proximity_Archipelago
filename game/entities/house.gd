@@ -1,7 +1,9 @@
 class_name House
 extends Building
 
+const MAIN_RESIDENT_LIMIT := 20
 @export var capacity: int = 5
+var is_main_nest := false
 @export var human_scene: PackedScene
 @export_range(1.0, 4.0, 0.05) var carrier_speed_multiplier := 1.5
 @export_range(1, 100) var carrier_capacity := 6
@@ -16,9 +18,12 @@ var residents: Array[Node2D]:
 		return _residents.duplicate()
 
 
+func resident_limit() -> int:
+	return MAIN_RESIDENT_LIMIT if is_main_nest else capacity
+
 func has_space() -> bool:
 	_prune()
-	return _residents.size() < capacity
+	return _residents.size() < resident_limit()
 
 
 func add_resident(human: Node2D) -> bool:

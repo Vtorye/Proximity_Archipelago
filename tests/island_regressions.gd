@@ -251,3 +251,36 @@ func _step_until(ant: AntAgent, condition: Callable) -> void:
 		if condition.call() or ant.status == AntAgent.Status.DEAD:
 			return
 		ant._physics_process(1.0 / 60.0)
+
+func test_recruitment(test: Node) -> void:
+	var world: World = test.make_world()
+	var main: House = world.logistics.main_nest
+	var population: ColonyPopulation = world.population
+	var stock: WorldInventory = world.inventory
+	var food: ResourceType = stock.type_by_id(&"food")
+	test.expect(main.residents.size() == 5 and main.resident_limit() == 20, "main nest starts with five residents and room for twenty")
+	stock.try_spend(test.entry(food, stock.available(food)))
+	var before: int = stock.quantity(food)
+	test.expect(not population.recruit(main, AntAgent.Role.WORKER) and stock.quantity(food) == before and main.residents.size() == 5, "unaffordable recruitment leaves residents and stock intact")
+	stock.add(food, 300)
+	var nested_recruits: Array[bool] = []
+	population.spawned.connect(func(_ant: AntAgent):
+		nested_recruits.append(population.recruit(main, AntAgent.Role.CARRIER)))
+	for index in range(15):
+		var role: AntAgent.Role = AntAgent.Role.WORKER if index % 2 == 0 else AntAgent.Role.CARRIER
+		before = stock.quantity(food)
+		var price: int = BuildController.price_amount(world.recruitment.price(role), food)
+		test.expect(population.recruit(main, role) and stock.quantity(food) == before - price, "each recruit is spawned after exactly one price payment")
+	test.expect(main.residents.size() == 20 and nested_recruits.size() == 15 and not nested_recruits.has(true), "reentrant requests cannot exceed the twenty-resident limit")
+	before = stock.quantity(food)
+	test.expect(not population.recruit(main, AntAgent.Role.WORKER) and stock.quantity(food) == before, "a full main nest rejects a purchase without spending")
+	var dead := main.residents[0] as AntAgent
+	dead.die(AntAgent.DeathCause.STARVATION)
+	test.expect(population.recruit(main, AntAgent.Role.CARRIER) and main.residents.size() == 20, "a resident death frees one slot for recruitment")
+	var recruited := main.residents.back() as AntAgent
+	test.expect(recruited.home == main and recruited.role == AntAgent.Role.CARRIER and recruited.speed == 36.0 and recruited.carry_capacity == 6, "recruited carriers belong to the selected nest and retain their role parameters")
+	var nest: BuildOption = load("res://game/building/options/house.tres")
+	test.expect(world.build_controller.try_build(nest, Vector2i(30, 29)), "recruitment fixture creates a small nest")
+	var local := world.registry.at(Vector2i(30, 29)) as House
+	test.expect(local.resident_limit() == 5 and not population.recruit(local, AntAgent.Role.WORKER), "small nests preserve their five-resident capacity")
+	world.free()

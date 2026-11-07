@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="RecruitmentCatalog" format=3]
+
+[ext_resource type="Script" path="res://game/resources/recruitment_catalog.gd" id="catalog"]
+[ext_resource type="Script" path="res://game/resources/resource_amount.gd" id="amount"]
+[ext_resource type="Resource" path="res://game/resources/dot_treses/food.tres" id="food"]
+
+[sub_resource type="Resource" id="worker"]
+script = ExtResource("amount")
+type = ExtResource("food")
+amount = 5
+
+[sub_resource type="Resource" id="carrier"]
+script = ExtResource("amount")
+type = ExtResource("food")
+amount = 8
+
+[resource]
+script = ExtResource("catalog")
+worker_costs = Array[ExtResource("amount")]([SubResource("worker")])
+carrier_costs = Array[ExtResource("amount")]([SubResource("carrier")])
