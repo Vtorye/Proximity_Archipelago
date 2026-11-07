@@ -110,13 +110,40 @@ func _check_storage_and_hover() -> void:
 	expect(screen.world.build_controller.try_build(nest, cell), "fixture builds a small warehouse")
 	var depot: House = screen.world.registry.at(cell) as House
 	await click_at(cell_point(cell))
-	expect(panel.inspected_building == depot and panel._dispatch.visible and panel._threshold.value == 70 and panel._detail.text.contains("0 / 100"), "small nest inspector shows capacity and the default threshold")
-	await click(panel._dispatch)
+	var menu := Router.top_overlay() as NestMenu
+	expect(menu != null and menu.house == depot and menu._inventory_tab.visible and menu._threshold.value == 70 and menu._capacity.text.contains("0 / 100"), "click opens a warehouse window with its inventory and dispatch settings")
+	await click(menu._dispatch)
 	expect(not depot.auto_dispatch, "the depot auto-dispatch toggle updates this nest")
-	await click_at(Vector2(panel._threshold.get_global_rect().position.x + panel._threshold.size.x / 2, panel._threshold.get_global_rect().get_center().y))
-	expect(depot.dispatch_threshold == int(panel._threshold.value) and depot.dispatch_threshold != 70, "the slider updates the individual threshold")
+	await click_at(Vector2(menu._threshold.get_global_rect().position.x + menu._threshold.size.x / 2, menu._threshold.get_global_rect().get_center().y))
+	expect(depot.dispatch_threshold == int(menu._threshold.value) and depot.dispatch_threshold != 70, "the slider updates the individual threshold")
 	await capture("02e-small-nest-settings")
-	await click_at(cell_point(Vector2i(26, 25)))
+	await click(menu.controls[&"residents"])
+	expect(menu._role_labels[AntAgent.Role.WORKER].text == "Рабочие · 4" and menu._role_labels[AntAgent.Role.CARRIER].text == "Носильщики · 1", "the residents tab counts roles assigned to this small nest")
+	expect(menu.controls[&"buy_worker"].disabled and menu._population.text.contains("5 / 5"), "a full small nest disables recruitment")
+	await capture("02f-small-nest-residents")
+	await key(KEY_ESCAPE)
+	expect(not Router.has_overlay() and not get_tree().paused, "closing the nest window resumes the match")
+	var main: House = screen.world.logistics.main_nest
+	await click_at(cell_point(main.cell))
+	menu = Router.top_overlay() as NestMenu
+	expect(menu != null and menu.house == main and not menu._dispatch.visible, "the main nest shows unlimited storage")
+	await click(menu.controls[&"residents"])
+	var food: ResourceType = screen.world.inventory.type_by_id(&"food")
+	screen.world.inventory.add(food, 100)
+	var before: int = screen.world.inventory.quantity(food)
+	await click(menu.controls[&"buy_worker"])
+	await click(menu.controls[&"buy_carrier"])
+	expect(main.residents.size() == 7 and screen.world.inventory.quantity(food) == before - 13 and menu._population.text.contains("7 / 20"), "recruiting both roles charges the configured prices and updates the population")
+	await capture("02g-main-nest-recruitment")
+	var prior_scale: float = AppSettings.ui_scale
+	for scale in [AppSettings.MIN_UI_SCALE, AppSettings.MAX_UI_SCALE]:
+		AppSettings.ui_scale = scale
+		AppSettings.apply()
+		await frames(3)
+		expect(get_viewport().get_visible_rect().encloses(menu.controls[&"close"].get_global_rect()) and get_viewport().get_visible_rect().encloses(menu.controls[&"buy_carrier"].get_global_rect()), "the nest window fits the supported UI scale")
+	AppSettings.ui_scale = prior_scale
+	AppSettings.apply()
+	await key(KEY_ESCAPE)
 
 func _check_full_map_overlay() -> void:
 	var header: Control = screen.hud.controls[&"settings"].get_parent().get_parent()

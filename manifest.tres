@@ -13,6 +13,8 @@
 
 [ext_resource type="PackedScene" path="res://screens/level_editor.tscn" id="level_editor"]
 
+[ext_resource type="PackedScene" path="res://overlays/nest_menu.tscn" id="nest"]
+
 [resource]
 resource_name = "Manifest"
 script = ExtResource("4_oj60a")
@@ -25,6 +27,7 @@ screens = Dictionary[StringName, PackedScene]({
 })
 overlays = Dictionary[StringName, PackedScene]({
 &"construction": ExtResource("construction"),
+&"nest": ExtResource("nest"),
 &"match_result": ExtResource("match_result"),
 &"pause": ExtResource("1_oj60a"),
 &"settings": ExtResource("settings")

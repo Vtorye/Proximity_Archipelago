@@ -3,9 +3,6 @@ extends PanelContainer
 ## Compact key and live enterprise breakdown, separate from the world labels.
 var overlay: NavigationOverlay
 var inspected_building: Building
-var _dispatch: CheckButton
-var _threshold: HSlider
-var _threshold_label: Label
 var _legend: VBoxContainer
 var _heading: Label
 var _source: Label
@@ -37,22 +34,6 @@ func _ready() -> void:
 	_detail = _line(content, "Наведите курсор на предприятие")
 	_detail.custom_minimum_size.x = 172
 	_detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_dispatch = CheckButton.new()
-	_dispatch.text = "ui.storage.auto"
-	_dispatch.toggled.connect(func(enabled: bool):
-		if inspected_building is House:
-			inspected_building.auto_dispatch = enabled)
-	content.add_child(_dispatch)
-	_threshold_label = _line(content, "")
-	_threshold = HSlider.new()
-	_threshold.min_value = 1
-	_threshold.max_value = 100
-	_threshold.step = 1
-	_threshold.value_changed.connect(func(value: float):
-		if inspected_building is House:
-			inspected_building.dispatch_threshold = int(value)
-			_threshold_label.text = tr("ui.storage.threshold") % int(value))
-	content.add_child(_threshold)
 	refresh()
 func _line(parent: Node, text: String, color: Color = ColonyStyle.TEXT) -> Label:
 	var label: Label = ColonyStyle.label(text, 4, color)
@@ -88,15 +69,6 @@ func refresh() -> void:
 	var cell: Vector2i = inspected_building.cell if inspected_building != null else overlay.hovered
 	var value: Dictionary = overlay.sample(cell) if show_routes or terrain != null else {}
 	var building: Building = inspected_building if inspected_building != null else value.get("building")
-	var settings_visible: bool = inspected_building is House and inspected_building != overlay.world.logistics.main_nest
-	_dispatch.visible = settings_visible
-	_threshold.visible = settings_visible
-	_threshold_label.visible = settings_visible
-	if settings_visible:
-		var house: House = inspected_building as House
-		_dispatch.set_pressed_no_signal(house.auto_dispatch)
-		_threshold.set_value_no_signal(house.dispatch_threshold)
-		_threshold_label.text = tr("ui.storage.threshold") % house.dispatch_threshold
 	if building is Workplace:
 		var workload: String = tr("ui.hud.workload") % [building.working_count(), building.incoming_count(), building.work_slots]
 		_detail.text = "%s\n%s" % [tr(building.display_title()), workload]

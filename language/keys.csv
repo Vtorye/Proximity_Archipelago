@@ -131,3 +131,14 @@ ui.storage.protected,The main nest and nonempty depots cannot be demolished,Гл
 ui.terrain.entry,Entry %d ms,Вход %d мс
 ui.terrain.impassable,Impassable,Непроходимо
 ui.terrain.coast,Coast,Побережье
+ui.nest.inventory,Inventory,Запасы
+ui.nest.residents,Ants,Муравьи
+ui.nest.buy,Recruit,Нанять
+ui.nest.unlimited,Storage · unlimited,Склад · без ограничений
+ui.nest.population,Residents %d / %d,Жители %d / %d
+ui.nest.worker,Workers,Рабочие
+ui.nest.carrier,Carriers,Носильщики
+ui.nest.assigned,Assigned residents include ants currently away,Учтены все жители этого муравейника
+ui.nest.full,No free resident slots,Нет свободных мест
+ui.nest.unaffordable,Insufficient resources in the main nest,В главном муравейнике не хватает ресурсов
+ui.nest.from_main,Paid from the main nest inventory,Оплата из главного муравейника
