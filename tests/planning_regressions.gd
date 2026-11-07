@@ -13,6 +13,7 @@ func run(test: Node) -> void:
 	await _coalesced_updates(test)
 	await _active_work(test)
 	await _hungry_retarget(test)
+	await _replanning_progress(test)
 
 func _nearby_resources(test: Node) -> void:
 	var world: World = test.make_world()
@@ -232,5 +233,20 @@ func _workload_ui(test: Node) -> void:
 	waiting_ant._decide()
 	test.expect(waiting_ant.waiting_reason == WorkPlan.WaitReason.SLOTS_FULL and hud._waiting.text == (TranslationServer.translate("ui.hud.waiting") % 1) and hud._waiting.visible, "home waiting has a visible full-workplace explanation")
 	hud.free()
+	world.free()
+	await test.get_tree().process_frame
+
+func _replanning_progress(test: Node) -> void:
+	var world: World = test.make_world()
+	var motion := AntMotion.new()
+	motion.navigation = world.route_service
+	var cell := Vector2i(25, 25)
+	var point: Vector2 = world.route_service.cell_to_world(cell) + Vector2(5, 0)
+	motion.follow(world.route_service.make_route([cell, cell + Vector2i.RIGHT]), point)
+	test.expect(motion.route.current_index == 1, "replanning keeps forward progress after passing a cell centre")
+	motion.follow(motion.route, point)
+	test.expect(motion.route.current_index == 1, "reusing a route already at its final waypoint never indexes past it")
+	motion.follow(world.route_service.make_route([cell, cell + Vector2i.DOWN]), point)
+	test.expect(motion.route.current_index == 0, "replanning visits the centre before a perpendicular turn and cannot cut a wall corner")
 	world.free()
 	await test.get_tree().process_frame

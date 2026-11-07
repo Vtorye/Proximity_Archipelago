@@ -363,7 +363,7 @@ func _go_home() -> void:
 
 func _walk(route: Route, destination: StringName) -> void:
 	_destination = destination
-	motion.follow(route)
+	motion.follow(route, global_position)
 	_set_status(Status.WALKING)
 
 func _arrive() -> void:
