@@ -30,6 +30,8 @@ func _ready() -> void:
 	margin.add_child(row)
 	var icon_view := TextureRect.new()
 	icon_view.texture = option.icon if option.icon != null else default_icon(option, art)
+	if option.id == &"house":
+		icon_view.modulate = House.BARRACKS_TINT
 	icon_view.custom_minimum_size = Vector2.ONE * (16 if compact else 24)
 	icon_view.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	icon_view.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
@@ -66,6 +68,6 @@ static func default_icon(definition: BuildOption, catalog: ArtCatalog) -> Textur
 	match definition.id:
 		&"road": return catalog.road
 		&"ground": return catalog.soil
-		&"house": return catalog.nest
+		&"house", &"base_nest": return catalog.nest
 		&"apple_tree": return catalog.berries
 	return catalog.stone

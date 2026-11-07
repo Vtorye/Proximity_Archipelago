@@ -108,6 +108,11 @@ func _run() -> void:
 	var depot: House = world.registry.at(depot_cell) as House
 	if depot != null:
 		depot.storage_capacity = 8
+		world.inventory.add(world.inventory.type_by_id(&"royal"), 1)
+		var base_option: BuildOption = load("res://game/building/options/base_nest.tres")
+		var base_cell := Vector2i(29, 27)
+		expect(world.build_controller.try_build(base_option, base_cell), "the shipment scenario builds a nearer base nest")
+		var base := world.registry.at(base_cell) as House
 		var wood: ResourceType = world.inventory.type_by_id(&"wood")
 		var stock := ResourceAmount.new()
 		stock.type = wood
@@ -118,8 +123,14 @@ func _run() -> void:
 			if courier._shipment: break
 			await frames(1)
 		expect(courier._shipment and WorldInventory.cargo_size(courier.cargo) == 6, "the main carrier loads six units from the small depot")
+		expect(courier._delivery_nest == base, "the carrier takes its shipment toward the nearest base nest")
 		await key(KEY_N)
 		await capture("07-carrier-with-load")
+		for frame in range(150):
+			if courier.cargo.is_empty(): break
+			await frames(1)
+		expect(courier.cargo.is_empty() and world.inventory.depot_quantity(base, wood) == 6, "the shipment physically reaches the new base inventory")
+		await capture("08-delivered-to-nearest-base")
 	Router.goto(&"main_menu")
 	await frames(45)
 	_finish()

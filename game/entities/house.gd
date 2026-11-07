@@ -2,19 +2,32 @@ class_name House
 extends Building
 
 const MAIN_RESIDENT_LIMIT := 20
+const BARRACKS_TINT := Color("91b7df")
 @export var capacity: int = 5
-var is_main_nest := false
+@export var is_main_nest := false
 @export var human_scene: PackedScene
 @export_range(1.0, 4.0, 0.05) var carrier_speed_multiplier := 1.5
 @export_range(1, 100) var carrier_capacity := 6
 @export_range(1, 10000) var storage_capacity := 100
 @export var auto_dispatch := true
+var development_tint := Color.WHITE
 
 var _residents: Array[Node2D] = []
 var residents: Array[Node2D]:
 	get:
 		_prune()
 		return _residents.duplicate()
+
+func _ready() -> void:
+	refresh_appearance()
+
+func refresh_appearance() -> void:
+	var sprite := get_node_or_null("Sprite") as Sprite2D
+	if sprite != null:
+		sprite.modulate = development_tint * (Color.WHITE if is_main_nest else BARRACKS_TINT)
+
+func display_title() -> String:
+	return "ui.storage.main" if is_main_nest else "ui.storage.local"
 
 
 func resident_limit() -> int:

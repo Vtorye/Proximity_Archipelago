@@ -117,5 +117,5 @@ func _apply_upgrade() -> void:
 
 func _skin(building: Building) -> void:
 	if not building is House: return
-	var sprite: Sprite2D = building.get_node_or_null("Sprite") as Sprite2D
-	if sprite != null: sprite.modulate = [Color.WHITE, Color("efd38e"), Color("a8d4e9"), Color("d2b3ed")][mini(level - 1, 3)]
+	building.development_tint = [Color.WHITE, Color("efd38e"), Color("a8d4e9"), Color("d2b3ed")][mini(level - 1, 3)]
+	building.refresh_appearance()

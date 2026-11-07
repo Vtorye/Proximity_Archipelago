@@ -23,5 +23,5 @@ scene = ExtResource("scene")
 blocks_movement = false
 spawn_count = 5
 id = &"house"
-display_name = "ui.building.nest"
+display_name = "ui.storage.local"
 costs = Array[ExtResource("amount")]([SubResource("cost"), SubResource("stone_cost")])

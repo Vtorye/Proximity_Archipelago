@@ -92,6 +92,15 @@ func _ready() -> void:
 	# A base snapshot already exists; registry commits then apply blocking footprints.
 	var initial: Array[Building] = []
 	_collect_buildings(self, initial)
+	# Authored bases must register before barracks, regardless of scene tree order.
+	var bases: Array[Building] = []
+	var others: Array[Building] = []
+	for building in initial:
+		if building is House and building.is_main_nest:
+			bases.append(building)
+		else:
+			others.append(building)
+	initial = bases + others
 	for building in initial:
 		var origin: Vector2i = map.local_to_map(map.to_local(building.global_position))
 		if building.setup(origin, building.option):

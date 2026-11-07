@@ -10,7 +10,7 @@
 [ext_resource type="Resource" path="res://game/building/catalog.tres" id="catalog"]
 [ext_resource type="Resource" path="res://game/resources/dot_treses/food.tres" id="food"]
 [ext_resource type="PackedScene" path="res://game/entities/house.tscn" id="nest"]
-[ext_resource type="Resource" path="res://game/building/options/house.tres" id="nest_option"]
+[ext_resource type="Resource" path="res://game/building/options/base_nest.tres" id="nest_option"]
 [ext_resource type="Script" path="res://game/resources/resource_type.gd" id="resource_type"]
 [ext_resource type="Resource" path="res://game/resources/dot_treses/royal.tres" id="royal"]
 [ext_resource type="Script" path="res://game/match/match_controller.gd" id="rules"]
@@ -117,6 +117,7 @@ tile_set = SubResource("TileSet_bm7sp")
 
 [node name="Home" type="Node2D" parent="." unique_id=21046194 instance=ExtResource("nest")]
 position = Vector2(392, 408)
+is_main_nest = true
 script = ExtResource("12_owm7j")
 human_scene = ExtResource("13_v5mj5")
 option = ExtResource("nest_option")

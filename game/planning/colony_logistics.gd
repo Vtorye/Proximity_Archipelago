@@ -25,6 +25,7 @@ func _add_building(building: Building) -> void:
 	else:
 		_depots.append(house)
 		inventory.register_depot(house)
+	house.refresh_appearance()
 
 func _remove_building(building: Building) -> void:
 	if not building is House:
@@ -34,8 +35,15 @@ func _remove_building(building: Building) -> void:
 	if house == main_nest:
 		main_nest = null
 		if not _depots.is_empty():
-			main_nest = _depots.pop_front()
+			for candidate in _depots:
+				if candidate.is_main_nest:
+					main_nest = candidate
+					break
+			if main_nest == null:
+				main_nest = _depots.front()
+			_depots.erase(main_nest)
 			main_nest.is_main_nest = true
+			main_nest.refresh_appearance()
 			inventory.unregister_depot(main_nest)
 	else:
 		_depots.erase(house)
@@ -63,15 +71,29 @@ func closest_depot(cell: Vector2i, count: int) -> House:
 			best = house
 	return best
 
+func closest_base(cell: Vector2i, count: int) -> House:
+	var best: House
+	var lowest := INF
+	for house in [main_nest] + _depots:
+		if not owns(house) or not house.is_main_nest:
+			continue
+		if house != main_nest and not inventory.can_deposit(house, count):
+			continue
+		var cost: float = _field(house).cost(cell)
+		if cost < lowest:
+			lowest = cost
+			best = house
+	return best
+
 func route_to(house: House, cell: Vector2i) -> Route:
 	return navigation.make_route(_field(house).path(cell)) if is_instance_valid(house) and (house == main_nest or _depots.has(house)) else Route.invalid()
 
 func deposit(house: House, cargo: Array[ResourceAmount]) -> bool:
-	return is_instance_valid(house) and inventory.deposit(null if house == main_nest else house, cargo)
+	return owns(house) and inventory.deposit(null if house == main_nest else house, cargo)
 
 func ready_to_dispatch(house: House) -> bool:
 	return (
-		_depots.has(house) and house.auto_dispatch
+		_depots.has(house) and not house.is_main_nest and house.auto_dispatch
 		and inventory.has_dispatchable_stock(house)
 	)
 

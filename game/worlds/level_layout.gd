@@ -14,6 +14,26 @@ static func prototypes(world: World) -> Dictionary[String, Building]:
 		result[str(world.get_path_to(building))] = building
 	return result
 
+## Catalog brushes are owned by the editor template and saved by stable build IDs.
+static func editor_prototypes(world: World) -> Dictionary[String, Building]:
+	var result: Dictionary[String, Building] = prototypes(world)
+	for building in result.values():
+		if building is House:
+			building.is_main_nest = false
+			building.option = load("res://game/building/options/house.tres")
+	for option in world.build_catalog.options:
+		if not option is SceneBuildOption or option.scene == null:
+			continue
+		var instance: Node = option.scene.instantiate()
+		if not instance is Building:
+			instance.free()
+			continue
+		var building := instance as Building
+		building.option = option
+		world.add_child(building, true)
+		result["build/" + str(option.id)] = building
+	return result
+
 static func capture(map: TileMapLayer, buildings: Array[Node]) -> Dictionary:
 	var tiles: Array = []
 	for cell in map.get_used_cells():
@@ -23,7 +43,10 @@ static func capture(map: TileMapLayer, buildings: Array[Node]) -> Dictionary:
 	for node in buildings:
 		var building: Building = node as Building
 		var cell: Vector2i = map.local_to_map(map.to_local(building.global_position))
-		objects.append([cell.x, cell.y, building.get_meta(&"layout_kind")])
+		var kind: String = building.get_meta(&"layout_kind")
+		if building is House and building.is_main_nest:
+			kind = "build/base_nest"
+		objects.append([cell.x, cell.y, kind])
 	return {"version": VERSION, "tiles": tiles, "objects": objects}
 
 static func create_world(layout: Dictionary) -> World:
@@ -60,14 +83,33 @@ static func _restore_tiles(map: TileMapLayer, tiles: Array) -> bool:
 
 static func _restore_objects(world: World, map: TileMapLayer, objects: Array) -> bool:
 	var originals: Dictionary[String, Building] = prototypes(world)
+	var catalog: Dictionary[String, SceneBuildOption] = {}
+	for option in world.build_catalog.options:
+		if option is SceneBuildOption:
+			catalog["build/" + str(option.id)] = option
 	var occupied: Dictionary[Vector2i, bool] = {}
 	for row in objects:
-		if not row is Array or row.size() != 3 or not _integers(row, 2) or not row[2] is String or not originals.has(row[2]):
+		if not row is Array or row.size() != 3 or not _integers(row, 2) or not row[2] is String or (not originals.has(row[2]) and not catalog.has(row[2])):
 			return false
 		var cell := Vector2i(int(row[0]), int(row[1]))
 		if not supports_cell(cell):
 			return false
-		var building: Building = originals[row[2]].duplicate()
+		var building: Building
+		if catalog.has(row[2]):
+			if catalog[row[2]].scene == null:
+				return false
+			var instance: Node = catalog[row[2]].scene.instantiate()
+			if not instance is Building:
+				instance.free()
+				return false
+			building = instance as Building
+			building.option = catalog[row[2]]
+		else:
+			building = originals[row[2]].duplicate()
+			# Legacy Home rows mean a starter nest followed by small local nests.
+			if building is House:
+				building.is_main_nest = false
+				building.option = load("res://game/building/options/house.tres")
 		building.cell = cell
 		for tile in building.footprint():
 			if not supports_cell(tile) or occupied.has(tile):

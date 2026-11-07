@@ -18,6 +18,7 @@ func _run() -> void:
 	await key(KEY_SPACE)
 	var menu: ConstructionMenu = Router.top_overlay() as ConstructionMenu
 	expect(menu.controls[&"house"].cost_label.text == "10 Древесина + 20 Камень", "menu shows the configured composite nest price")
+	expect(menu.controls.has(&"base_nest") and menu.controls[&"base_nest"].cost_label.text == "1 Знак колонии", "the palette offers a separate base nest priced in crowns")
 	await capture("03-configured-house-price", 30)
 	var path := "res://game/building/options/house.tres"
 	var original := FileAccess.get_file_as_string(path)
@@ -150,6 +151,49 @@ func _check_storage_and_hover() -> void:
 	AppSettings.ui_scale = prior_scale
 	AppSettings.apply()
 	await key(KEY_ESCAPE)
+	await _check_new_base(depot)
+
+func _check_new_base(barracks: House) -> void:
+	var world: World = screen.world
+	world.units.process_mode = Node.PROCESS_MODE_DISABLED
+	world.inventory.add(world.inventory.type_by_id(&"royal"), 1)
+	var option: BuildOption = load("res://game/building/options/base_nest.tres")
+	var cell := Vector2i(29, 27)
+	for candidate in [Vector2i(29, 27), Vector2i(28, 27), Vector2i(28, 28)]:
+		if world.build_controller.check(option, candidate).allowed():
+			cell = candidate
+			break
+	await key(KEY_SPACE)
+	var construction := Router.top_overlay() as ConstructionMenu
+	await click(construction.controls[&"base_nest"])
+	await click_at(cell_point(cell))
+	expect(construction.draft.size() == 1, "a player can plan a base nest from its own palette button")
+	await capture("02h-base-nest-construction")
+	await key(KEY_SPACE)
+	var base := world.registry.at(cell) as House
+	expect(base != null and base.is_main_nest and base.resident_limit() == 20, "applying the plan creates a base nest with twenty resident slots")
+	if base == null:
+		world.units.process_mode = Node.PROCESS_MODE_INHERIT
+		return
+	var wood: ResourceType = world.inventory.type_by_id(&"wood")
+	world.logistics.deposit(base, [_entry(wood, 7)])
+	await click_at(cell_point(cell))
+	var menu := Router.top_overlay() as NestMenu
+	expect(menu != null and menu.house == base and not menu._dispatch.visible and menu._stock_labels[wood.id].text == "Древесина · 7", "the new base window shows its own inventory and hides barracks dispatch controls")
+	await capture("02i-built-base-inventory")
+	await click(menu.controls[&"residents"])
+	expect(menu._population.text.contains("5 / 20") and not menu.controls[&"buy_worker"].disabled, "a built base can recruit beyond the barracks limit")
+	await capture("02j-built-base-residents")
+	await key(KEY_ESCAPE)
+	expect((barracks.get_node("Sprite") as Sprite2D).modulate != (base.get_node("Sprite") as Sprite2D).modulate, "the world distinguishes barracks and base sprites")
+	await capture("02k-base-and-barracks")
+	world.units.process_mode = Node.PROCESS_MODE_INHERIT
+
+func _entry(type: ResourceType, count: int) -> ResourceAmount:
+	var amount := ResourceAmount.new()
+	amount.type = type
+	amount.amount = count
+	return amount
 
 func _check_full_map_overlay() -> void:
 	var header: Control = screen.hud.controls[&"settings"].get_parent().get_parent()
@@ -259,6 +303,13 @@ func _check_saved_map() -> void:
 	editor._brush.select(coast)
 	await click_at(_editor_point(editor, coast_cell))
 	expect(editor._map.get_cell_source_id(coast_cell) == 4, "the coast brush paints authored terrain")
+	var base_brush: int = editor._brushes.find("build/base_nest")
+	var barracks_brush: int = editor._brushes.find("Home")
+	expect(base_brush >= 0 and barracks_brush >= 0 and editor._brush.get_item_text(barracks_brush) == "Казарма", "the editor offers separate base and barracks brushes")
+	var extra_base_cell := Vector2i(28, 28)
+	editor._brush.select(base_brush)
+	await click_at(_editor_point(editor, extra_base_cell))
+	expect(editor._object_at(extra_base_cell) is House and editor._object_at(extra_base_cell).is_main_nest, "the base brush paints a typed base nest")
 	await capture("05-level-editor")
 	var title: String = "Map check %d %d" % [OS.get_process_id(), Time.get_ticks_usec()]
 	editor._title.text = title
@@ -286,6 +337,7 @@ func _check_saved_map() -> void:
 		return
 	screen = Router._current
 	expect(screen.world.registry.canteens().is_empty(), "the saved match keeps the canteen removed")
+	expect((screen.world.registry.at(extra_base_cell) as House).is_main_nest, "the authored additional base survives save and launch")
 	expect(is_equal_approx(screen.world.route_service.entry_cost(coast_cell), 1.2), "the authored coast keeps its distinct movement cost after saving and loading")
 	expect(screen.world.registry.at(destination) is Workplace and screen.world.route_service.entry_cost(destination) < 1.0, "match uses the saved placement and terrain for navigation")
 	await capture("06-saved-map-in-play")

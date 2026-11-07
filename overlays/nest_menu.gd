@@ -117,7 +117,7 @@ func refresh() -> void:
 	var main: bool = house.is_main_nest
 	_capacity.text = tr("ui.nest.unlimited") if main else tr("ui.storage.fill") % [world.inventory.depot_fill(house), house.storage_capacity]
 	for type in world.inventory.registered_types():
-		var amount: int = world.inventory.main_quantity(type) if main else world.inventory.depot_quantity(house, type)
+		var amount: int = world.inventory.nest_quantity(house, world.logistics.main_nest, type)
 		_stock_labels[type.id].text = "%s · %d" % [tr(type.display_name), amount]
 	_dispatch.visible = not main
 	_dispatch_hint.visible = not main

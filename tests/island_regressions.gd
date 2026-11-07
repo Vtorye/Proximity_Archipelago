@@ -282,6 +282,76 @@ func test_physical_logistics(test: Node) -> void:
 	test.expect(courier.status == AntAgent.Status.DEAD and not main.residents.has(courier), "an idle carrier without accessible food still starves")
 	world.free()
 
+func test_multiple_bases(test: Node) -> void:
+	var tiles: Array = []
+	for x in range(16):
+		for y in range(3):
+			tiles.append([x, y, 3, 0, 0, 0])
+	var world: World = LevelLayout.create_world({"version": LevelLayout.VERSION, "tiles": tiles,
+		"objects": [[0, 1, "Home"], [6, 1, "Home"], [1, 1, "Food"]]})
+	world.auto_start = false
+	test.add_child(world)
+	var stock: WorldInventory = world.inventory
+	var main: House = world.logistics.main_nest
+	var barracks := world.registry.at(Vector2i(6, 1)) as House
+	var wood: ResourceType = stock.type_by_id(&"wood")
+	var royal: ResourceType = stock.type_by_id(&"royal")
+	var base_option: BuildOption = load("res://game/building/options/base_nest.tres")
+	test.expect(world.build_controller.options.has(base_option) and base_option.cost_amount(royal) == 1, "the catalog offers a base nest for one configurable crown")
+	test.expect(not world.build_controller.try_build(base_option, Vector2i(9, 1)), "a base nest cannot be built without crowns")
+	stock.add(royal, 1)
+	test.expect(world.build_controller.try_build(base_option, Vector2i(9, 1)) and stock.quantity(royal) == 0, "building another base spends its crown once")
+	var base := world.registry.at(Vector2i(9, 1)) as House
+	test.expect(base.is_main_nest and base.resident_limit() == 20 and base.residents.size() == 5, "a built base has twenty resident slots and the starter population")
+	test.expect(not barracks.is_main_nest and barracks.resident_limit() == 5 and barracks.display_title() == "ui.storage.local", "a barracks keeps five resident slots and its own title")
+	var base_tint: Color = (base.get_node("Sprite") as Sprite2D).modulate
+	var barracks_tint: Color = (barracks.get_node("Sprite") as Sprite2D).modulate
+	test.expect(base_tint.is_equal_approx(Color.WHITE) and barracks_tint.is_equal_approx(House.BARRACKS_TINT), "barracks have a different tint from base nests: %s / %s" % [base_tint, barracks_tint])
+	test.expect(stock.can_deposit(base, 10001) and not stock.can_deposit(barracks, 101), "base storage remains unlimited while barracks share a limited store")
+	var initial: int = stock.quantity(wood)
+	stock.deposit(barracks, [test.entry(wood, 8)])
+	var courier := main.residents.back() as AntAgent
+	courier._decide()
+	_step_until(courier, func() -> bool: return courier._shipment)
+	test.expect(courier._delivery_nest == base and WorldInventory.cargo_size(courier.cargo) == 6, "the carrier chooses the closest base from the pickup cell instead of its own home")
+	test.expect(stock.quantity(wood) == initial + 8 and stock.nest_quantity(base, main, wood) == 0, "cargo remains in colony totals without appearing in the destination before arrival")
+	test.expect(not stock.close_shipment(courier.cargo, true, barracks) and stock.depot_quantity(barracks, wood) == 2 and stock.quantity(wood) == initial + 8, "a shipment rejects a barracks destination without changing stock or transit")
+	_step_until(courier, func() -> bool: return courier.cargo.is_empty())
+	test.expect(stock.nest_quantity(base, main, wood) == 6 and stock.nest_quantity(main, main, wood) == initial and stock.main_quantity(wood) == initial + 6, "base windows show separate stock while construction sees their combined stock")
+	test.expect(not world.logistics.ready_to_dispatch(base), "base nests never dispatch stock back to other bases")
+	test.expect(stock.try_spend_all([test.entry(wood, initial + 6)], true) and stock.depot_quantity(barracks, wood) == 2 and stock.nest_quantity(base, main, wood) == 0, "construction spends from base nests without taking barracks stock")
+	stock.add(royal, 1)
+	test.expect(world.build_controller.try_build(base_option, Vector2i(4, 1)), "a third base can be built")
+	var nearer := world.registry.at(Vector2i(4, 1)) as House
+	courier._decide()
+	_step_until(courier, func() -> bool: return courier._shipment)
+	test.expect(courier._delivery_nest == nearer, "newly built nearer bases immediately become shipment destinations")
+	test.expect(world.build_controller.demolish_at(nearer.cell), "an empty additional base can be demolished")
+	courier._deliver()
+	test.expect(courier._delivery_nest == base, "a carrier redirects cargo when its destination base is removed")
+	_step_until(courier, func() -> bool: return courier.cargo.is_empty())
+	test.expect(stock.quantity(wood) == 2 and stock.nest_quantity(base, main, wood) == 2 and stock.depot_fill(barracks) == 0, "redirected cargo arrives without loss or duplication")
+	world.free()
+	# Explicit base types survive editor save/load and register before legacy barracks.
+	var layout := {"version": LevelLayout.VERSION, "tiles": tiles,
+		"objects": [[6, 1, "Home"], [9, 1, "build/base_nest"], [0, 1, "build/base_nest"]]}
+	world = LevelLayout.create_world(layout)
+	world.auto_start = false
+	test.add_child(world)
+	test.expect(world.logistics.main_nest.cell == Vector2i(9, 1) and not (world.registry.at(Vector2i(6, 1)) as House).is_main_nest, "an explicit base registers before barracks even if listed later in a map")
+	var buildings: Array[Node] = []
+	for building in world.registry.all():
+		buildings.append(building)
+	var captured: Dictionary = LevelLayout.capture(world.get_node("Map"), buildings)
+	world.free()
+	world = LevelLayout.create_world(captured)
+	test.expect(world != null and LevelValidator.validate_world(world, "base round trip").is_empty(), "saved maps restore base and barracks definitions without validation errors")
+	if world != null:
+		var restored: Array[Building] = []
+		world._collect_buildings(world, restored)
+		test.expect(restored.filter(func(building: Building) -> bool: return building is House and building.is_main_nest).size() == 2, "both base nests retain their type through map save/load")
+		world.free()
+
 func _step_until(ant: AntAgent, condition: Callable) -> void:
 	for step in range(1800):
 		if condition.call() or ant.status == AntAgent.Status.DEAD:

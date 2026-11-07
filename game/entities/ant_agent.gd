@@ -207,7 +207,8 @@ func _decide_pickup(foodless: bool) -> void:
 		_wander()
 
 func _can_collect_shipment(pickup: Route) -> bool:
-	return _can_start_pickup(pickup, logistics.route_to(logistics.main_nest, pickup.cells.back()))
+	var cell: Vector2i = pickup.cells.back()
+	return _can_start_pickup(pickup, logistics.route_to(logistics.closest_base(cell, carry_capacity), cell))
 
 func _can_start_pickup(pickup: Route, delivery: Route) -> bool:
 	if not delivery.is_valid():
@@ -226,7 +227,7 @@ func _load_pickup() -> void:
 	if is_instance_valid(source) and source.is_inside_tree():
 		if source is House and logistics.ready_to_dispatch(source):
 			var cell: Vector2i = route_service.world_to_cell(global_position)
-			var delivery: Route = logistics.route_to(logistics.main_nest, cell)
+			var delivery: Route = logistics.route_to(logistics.closest_base(cell, carry_capacity), cell)
 			if delivery.is_valid() and _can_deliver(delivery, cell):
 				cargo = planner.inventory.dispatch(source, carry_capacity)
 				_shipment = not cargo.is_empty()
@@ -240,7 +241,8 @@ func _load_pickup() -> void:
 func _deliver() -> void:
 	_carrying = true
 	var cell: Vector2i = route_service.world_to_cell(global_position)
-	_delivery_nest = logistics.main_nest if _main_delivery else logistics.closest_depot(cell, WorldInventory.cargo_size(cargo))
+	var count: int = WorldInventory.cargo_size(cargo)
+	_delivery_nest = logistics.closest_base(cell, count) if _main_delivery else logistics.closest_depot(cell, count)
 	var route: Route = logistics.route_to(_delivery_nest, cell)
 	if route.is_valid() and _can_deliver(route, cell):
 		_walk(route, &"delivery")
@@ -267,8 +269,8 @@ func _delivery_energy(route: Route, from_cell: Vector2i) -> float:
 	return energy
 
 func _unload() -> void:
-	if _shipment and is_instance_valid(_delivery_nest) and _delivery_nest == logistics.main_nest:
-		planner.inventory.close_shipment(cargo, true)
+	if _shipment and logistics.owns(_delivery_nest) and _delivery_nest.is_main_nest:
+		planner.inventory.close_shipment(cargo, true, null if _delivery_nest == logistics.main_nest else _delivery_nest)
 	elif _shipment or not logistics.deposit(_delivery_nest, cargo):
 		_main_delivery = true
 		_deliver()

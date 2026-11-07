@@ -21,7 +21,7 @@ var _active := false
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_template = LevelLayout.DEFAULT_WORLD.instantiate()
-	_prototypes = LevelLayout.prototypes(_template)
+	_prototypes = LevelLayout.editor_prototypes(_template)
 	_objects = Node2D.new()
 	add_child(_objects)
 	_objects.z_index = 1

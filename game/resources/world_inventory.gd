@@ -82,7 +82,7 @@ func try_spend_all(costs: Array[ResourceAmount], main_only: bool = false) -> boo
 	if not can_afford_all(costs, main_only):
 		return false
 	for cost in costs:
-		_withdraw(cost.type.id, cost.amount)
+		_withdraw(cost.type.id, cost.amount, main_only)
 	if not costs.is_empty():
 		_notify()
 	return true
@@ -131,7 +131,17 @@ func consume(ticket: StockReservation) -> bool:
 	return true
 
 func main_quantity(type: ResourceType) -> int:
-	return _main_stock.get(type.id, 0) if type != null else 0
+	if type == null:
+		return 0
+	var amount: int = _main_stock.get(type.id, 0)
+	for house in _depots:
+		if house.is_main_nest:
+			amount += depot_quantity(house, type)
+	return amount
+
+## The first base owns starting stock; other nests have separate physical inventories.
+func nest_quantity(house: House, primary: House, type: ResourceType) -> int:
+	return _main_stock.get(type.id, 0) if house == primary and type != null else depot_quantity(house, type)
 
 func register_depot(house: House) -> void:
 	_depots[house] = {}
@@ -154,7 +164,7 @@ func depot_fill(house: House) -> int:
 	return count
 
 func can_deposit(house: House, count: int) -> bool:
-	return count >= 0 and (house == null or (_depots.has(house) and count <= house.storage_capacity - depot_fill(house)))
+	return count >= 0 and (house == null or (_depots.has(house) and (house.is_main_nest or count <= house.storage_capacity - depot_fill(house))))
 
 func deposit(house: House, cargo: Array[ResourceAmount]) -> bool:
 	for item in cargo:
@@ -200,16 +210,20 @@ func dispatch(house: House, limit: int) -> Array[ResourceAmount]:
 		_notify()
 	return cargo
 
-func close_shipment(cargo: Array[ResourceAmount], delivered: bool) -> void:
+func close_shipment(cargo: Array[ResourceAmount], delivered: bool, destination: House = null) -> bool:
+	if delivered and destination != null and (not _depots.has(destination) or not destination.is_main_nest or not can_deposit(destination, cargo_size(cargo))):
+		return false
+	var stock: Dictionary = _main_stock if destination == null else _depots.get(destination, {})
 	for item in cargo:
 		var id: StringName = item.type.id
 		_transit[id] -= item.amount
 		if delivered:
-			_main_stock[id] += item.amount
+			stock[id] = int(stock.get(id, 0)) + item.amount
 		else:
 			_amounts[id] -= item.amount
 	if not cargo.is_empty():
 		_notify()
+	return true
 
 static func cargo_size(cargo: Array[ResourceAmount]) -> int:
 	var count := 0
@@ -217,14 +231,17 @@ static func cargo_size(cargo: Array[ResourceAmount]) -> int:
 		count += item.amount
 	return count
 
-func _withdraw(id: StringName, count: int) -> void:
+func _withdraw(id: StringName, count: int, main_only: bool = false) -> void:
 	_amounts[id] -= count
 	var from_main: int = mini(_main_stock[id], count)
 	_main_stock[id] -= from_main
 	var remaining: int = count - from_main
 	if remaining == 0:
 		return
-	for stock in _depots.values():
+	for house in _depots:
+		if main_only and not house.is_main_nest:
+			continue
+		var stock: Dictionary = _depots[house]
 		var taken: int = mini(stock.get(id, 0), remaining)
 		if taken > 0:
 			stock[id] -= taken

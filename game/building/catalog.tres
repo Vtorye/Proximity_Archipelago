@@ -6,6 +6,7 @@
 [ext_resource type="Resource" path="res://game/building/options/house.tres" id="house"]
 [ext_resource type="Resource" path="res://game/building/options/apple_tree.tres" id="berry"]
 [ext_resource type="Resource" path="res://game/building/options/canteen.tres" id="canteen"]
+[ext_resource type="Resource" path="res://game/building/options/base_nest.tres" id="base"]
 [resource]
 script = ExtResource("catalog")
-options = Array[ExtResource("option")]([ExtResource("road"), ExtResource("ground"), ExtResource("house"), ExtResource("berry"), ExtResource("canteen")])
+options = Array[ExtResource("option")]([ExtResource("road"), ExtResource("ground"), ExtResource("house"), ExtResource("berry"), ExtResource("canteen"), ExtResource("base")])
