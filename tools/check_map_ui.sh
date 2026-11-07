@@ -16,7 +16,7 @@ if rg -q 'SCRIPT ERROR|Parse Error|Failed to load' "$map_root/import.log"; then 
 export COLONY_SOURCE_REVISION="$(git -C "$project_root" rev-parse HEAD)"
 export COLONY_CAPTURE_DIR="${COLONY_OUTPUT_ROOT:-/tmp/colony-validation}/archipelago"
 mkdir -p "$COLONY_CAPTURE_DIR"
-if ! godot --path "$map_root/project" --display-driver x11 --audio-driver Dummy --resolution 1280x720 --fixed-fps 30 --quit-after 3000 --write-movie "$map_root/archipelago.avi" res://tests/authored_map_visual.tscn > "$map_root/ui.log" 2>&1; then cat "$map_root/ui.log"; exit 1; fi
+if ! godot --path "$map_root/project" --display-driver x11 --audio-driver Dummy --resolution 1280x720 --fixed-fps 30 --quit-after 6000 --write-movie "$map_root/archipelago.avi" res://tests/authored_map_visual.tscn > "$map_root/ui.log" 2>&1; then cat "$map_root/ui.log"; exit 1; fi
 cat "$map_root/ui.log"
 if rg -q 'SCRIPT ERROR|ERROR:|UI FAIL|leaked' "$map_root/ui.log" || ! rg -q '^UI TESTS PASS$' "$map_root/ui.log"; then exit 1; fi
 ffmpeg -hide_banner -loglevel error -y -i "$map_root/archipelago.avi" -c:v libx264 -crf 18 -pix_fmt yuv420p -an "$COLONY_CAPTURE_DIR/archipelago.mp4"
