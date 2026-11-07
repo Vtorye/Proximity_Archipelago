@@ -19,6 +19,8 @@ static func validate(path: String) -> Array[String]:
 
 static func validate_world(world: World, path: String) -> Array[String]:
 	var errors: Array[String] = []
+	if world.wave_rules != null:
+		for error in world.wave_rules.validate(): errors.append(world.wave_rules.resource_path + ": " + error)
 	var map: TileMapLayer = world.get_node_or_null("Map") as TileMapLayer
 	if map == null or map.tile_set == null or map.get_used_cells().is_empty():
 		errors.append(path + ": missing painted TileMap/TileSet")
@@ -67,11 +69,12 @@ static func validate_world(world: World, path: String) -> Array[String]:
 		if world.recruitment == null:
 			errors.append(path + ": missing recruitment catalog")
 		else:
-			for costs in [world.recruitment.worker_costs, world.recruitment.carrier_costs]:
+			for costs in [world.recruitment.worker_costs, world.recruitment.carrier_costs] + ([world.recruitment.warrior_costs, world.wave_rules.trap_removal_costs] if world.wave_rules != null else []):
 				for cost in costs:
 					if cost == null or cost.type == null or cost.amount < 0 or not types.has(cost.type.id):
 						errors.append(path + ": invalid recruitment price")
-		var options: Array[BuildOption] = world.build_catalog.options if world.build_catalog != null else world.build_options
+		var options: Array[BuildOption] = (world.build_catalog.options if world.build_catalog != null else world.build_options).duplicate()
+		if world.wave_rules != null and world.wave_rules.defenses != null: options.append_array(world.wave_rules.defenses.options)
 		var ids: Dictionary[StringName, bool] = {}
 		var prices := PriceService.new()
 		for option in options:

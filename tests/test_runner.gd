@@ -55,6 +55,7 @@ func _run() -> void:
 	await preload("res://tests/designer_regressions.gd").new().run(self)
 	await preload("res://tests/task_regressions.gd").new().run(self)
 	await preload("res://tests/construction_regressions.gd").new().run(self)
+	await preload("res://tests/combat_regressions.gd").new().run(self)
 	await _test_simulation()
 	print("TEST REPORT ", JSON.stringify({"assertions": assertions, "failures": failures, "metrics": metrics}))
 	print("TESTS PASS" if failures.is_empty() else "TESTS FAIL")

@@ -12,6 +12,8 @@ class_name World
 var map_size: Vector2i:
 	get: return ($Map as TileMapLayer).get_used_rect().size
 @export var diagnostics_enabled := false
+@export var wave_rules: WaveRules
+var combat: CombatDirector
 @export var task_deck: TaskDeck
 var tasks: TaskDirector
 var events: WorldEvents
@@ -30,7 +32,11 @@ var ready_for_play := false
 var _navigation_update_queued := false
 
 func _ready() -> void:
+	if wave_rules != null and not wave_rules.validate().is_empty():
+		for error in wave_rules.validate(): push_error(error)
+		return
 	if build_catalog != null: build_options = build_catalog.options.duplicate()
+	if wave_rules != null and wave_rules.defenses != null: build_options.append_array(wave_rules.defenses.options)
 	prices = PriceService.new()
 	events = prices.events
 	prices.definitions = build_options
@@ -137,6 +143,12 @@ func _ready() -> void:
 			summary.development_level = tasks.level
 			summary.tasks_completed = tasks.completed_count
 			summary.tasks_skipped = tasks.skipped_count)
+	if wave_rules != null:
+		combat = CombatDirector.new()
+		combat.name = "Combat"
+		combat.z_index = 3
+		add_child(combat)
+		combat.configure(self, wave_rules)
 	ready_for_play = true
 	if diagnostics_enabled:
 		var observer := DebugProbe.new()

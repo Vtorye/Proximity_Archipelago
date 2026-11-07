@@ -1,0 +1,8 @@
+[gd_resource type="Resource" script_class="BuildCatalog" format=3]
+[ext_resource type="Script" path="res://game/building/build_catalog.gd" id="catalog"]
+[ext_resource type="Script" path="res://game/building/build_option.gd" id="option"]
+[ext_resource type="Resource" path="res://game/combat/wall.tres" id="wall"]
+[ext_resource type="Resource" path="res://game/combat/tower.tres" id="tower"]
+[resource]
+script = ExtResource("catalog")
+options = Array[ExtResource("option")]([ExtResource("wall"), ExtResource("tower")])

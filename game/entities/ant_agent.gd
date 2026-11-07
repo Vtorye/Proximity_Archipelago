@@ -3,8 +3,8 @@ extends Node2D
 ## Executes plans; needs, route execution, and assignment policy are separate objects.
 
 enum Role { WORKER, CARRIER, WARRIOR }
-enum DeathCause { STARVATION, DEMOLISHED, OTHER, PLAYER }
-enum Status { HOME, WALKING, WORKING, EATING, WAITING_FOR_FOOD, DEAD, WANDERING, CONSTRUCTING }
+enum DeathCause { STARVATION, DEMOLISHED, OTHER, PLAYER, ENEMY, TRAP }
+enum Status { HOME, WALKING, WORKING, EATING, WAITING_FOR_FOOD, DEAD, WANDERING, CONSTRUCTING, GUARDING, FIGHTING }
 signal work_completed(human: Node2D, workplace: Node2D)
 signal died(human: Node2D, cause: DeathCause)
 signal status_changed(status: Status)
@@ -14,6 +14,10 @@ signal waiting_changed
 @export var speed := 24.0
 @export var work_time := 3.0
 @export_range(1, 100) var carry_capacity := 2
+var combat: AntCombat
+var max_health := 1
+var health := 1
+var attack_damage := 1
 var construction: AntConstruction
 var role: Role = Role.WORKER
 var home: House
@@ -74,6 +78,7 @@ func _is_foodless() -> bool:
 	return not planner.food_within_range(route_service.world_to_cell(global_position), speed)
 
 func _exit_tree() -> void:
+	if combat != null: combat.leave_tower()
 	if construction != null: construction.release()
 	_release_work()
 	if planner != null and is_instance_valid(planner.inventory):
@@ -97,6 +102,9 @@ func _physics_process(delta: float) -> void:
 	if needs.satiety <= 0.0:
 		die(DeathCause.STARVATION)
 		return
+	if combat != null and combat.physics(delta):
+		queue_redraw()
+		return
 	match status:
 		Status.HOME:
 			_timer -= delta
@@ -109,6 +117,7 @@ func _physics_process(delta: float) -> void:
 			var next_cell: Vector2i = route_service.world_to_cell(global_position)
 			if old_cell != next_cell:
 				cell_changed.emit(old_cell, next_cell)
+				if status == Status.DEAD: return
 			if before.distance_squared_to(global_position) > 0.0001:
 				_last_direction = (global_position - before).normalized()
 			if motion.finished:
@@ -140,7 +149,10 @@ func _physics_process(delta: float) -> void:
 				if planner.inventory.consume(_meal):
 					needs.eat()
 				_meal = null
-				if cargo.is_empty() and not (construction != null and construction.has_cargo()):
+				if role == Role.WARRIOR:
+					_set_status(Status.HOME)
+					_timer = 0.3
+				elif cargo.is_empty() and not (construction != null and construction.has_cargo()):
 					_carrying = false
 					_go_home()
 				else:
@@ -159,6 +171,9 @@ func _physics_process(delta: float) -> void:
 	queue_redraw()
 
 func _decide() -> void:
+	if combat != null and role == Role.WARRIOR:
+		combat.decide()
+		return
 	if construction != null and construction.has_cargo():
 		_deliver()
 		return
@@ -331,6 +346,9 @@ func _can_recover() -> bool:
 	return _meal != null and _meal.active
 
 func _seek_food() -> void:
+	if combat != null and role == Role.WARRIOR:
+		combat.seek_meal()
+		return
 	if cargo.is_empty() and not (construction != null and construction.has_cargo()) and _is_foodless() and is_instance_valid(home):
 		_decide()
 		return
@@ -367,6 +385,13 @@ func _walk(route: Route, destination: StringName) -> void:
 	_set_status(Status.WALKING)
 
 func _arrive() -> void:
+	if _destination == &"flee":
+		_set_status(Status.WANDERING)
+		_timer = 0.2
+		return
+	if _destination in [&"combat_chase", &"combat_tower", &"combat_meal"]:
+		combat.arrive(_destination)
+		return
 	if _destination in [&"site_pickup", &"site_delivery", &"site_assembly"]:
 		construction.arrive(_destination)
 		return
@@ -423,6 +448,9 @@ func _reconsider_route() -> void:
 	if status == Status.DEAD:
 		return
 	var cell: Vector2i = route_service.world_to_cell(global_position)
+	if combat != null and role == Role.WARRIOR:
+		combat.navigation_changed()
+		return
 	if construction != null and construction.job != null:
 		if geometry_changed and status != Status.EATING:
 			if not construction.resume():
@@ -472,11 +500,18 @@ func _set_status(value: Status) -> void:
 		status = value
 		status_changed.emit(status)
 
+func take_damage(amount: int, cause: DeathCause = DeathCause.ENEMY) -> void:
+	if status == Status.DEAD or amount <= 0: return
+	health = maxi(0, health - amount)
+	queue_redraw()
+	if health == 0: die(cause)
+
 ## Removes the unit from the game. No further consequences.
 func die(cause: DeathCause = DeathCause.OTHER) -> void:
 	if status == Status.DEAD:
 		return
 	_set_status(Status.DEAD)
+	if combat != null: combat.leave_tower()
 	if construction != null: construction.release()
 	_release_work()
 	_discard_cargo()
@@ -501,7 +536,7 @@ func _draw() -> void:
 		for sign_value in [-1.0, 1.0]:
 			var foot: Vector2 = origin + side * sign_value * 3.5 + forward * leg_phase * sign_value
 			draw_line(origin, foot.round(), Color("222521"), 1.0)
-	var abdomen := Color("50677b") if role == Role.CARRIER else Color("38271e")
+	var abdomen := Color("a87054") if role == Role.WARRIOR else (Color("50677b") if role == Role.CARRIER else Color("38271e"))
 	draw_circle(-forward * 3.0, 2.0, abdomen)
 	draw_circle(Vector2.ZERO, 1.5, Color("241e19"))
 	draw_circle(forward * 3.0, 1.7, Color("33251d"))
@@ -509,6 +544,9 @@ func _draw() -> void:
 		draw_line(forward * 4.0, (forward * 6.0 + side * sign_value * 2.0).round(), Color("241e19"), 1.0)
 	if _carrying:
 		draw_rect(Rect2(Vector2(-1, -6), Vector2(3, 3)), Color("d7bc73"))
+	if health < max_health:
+		draw_rect(Rect2(-4, -10, 8, 1), Color("38271e"))
+		draw_rect(Rect2(-4, -10, 8.0 * health / max_health, 1), Color("e58b76"))
 	if needs.satiety < 30.0:
 		draw_rect(Rect2(-4, -8, 8, 1), Color("38271e"))
 		draw_rect(Rect2(-4, -8, 8 * needs.satiety / AntNeeds.CAPACITY, 1), Color("edb86c"))

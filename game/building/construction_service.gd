@@ -13,6 +13,9 @@ func _ready() -> void:
 func _source_removed(building: Building) -> void:
 	if building is House:
 		for site in sites: site.crates.erase(building)
+	elif building is Workplace:
+		for site in sites.duplicate():
+			if site.option is WorkplaceUpgradeOption and site.cell == building.cell: controller._remove_site(site)
 
 static func needs_builders(option: BuildOption, quote: Array[ResourceAmount]) -> bool:
 	# Any crown-funded purchase is commissioned instantly, including mixed prices.

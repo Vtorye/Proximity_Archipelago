@@ -7,7 +7,7 @@ extends Node
 ## Only one result is ever produced per match.
 
 enum Result { WIN, LOSS }
-enum Reason { TARGET_REACHED, TIME_UP }
+enum Reason { TARGET_REACHED, TIME_UP, COLONY_DESTROYED }
 
 ## Emitted once per whole second left (and once at start).
 signal time_changed(seconds_left: int)
@@ -111,13 +111,16 @@ func _finish(result: Result, reason: Reason) -> void:
 	_finished = true
 	_started = false
 	set_process(false)
-	var cause: StringName = &"target_reached" if reason == Reason.TARGET_REACHED else &"time_up"
+	var cause: StringName = &"colony_destroyed" if reason == Reason.COLONY_DESTROYED else (&"target_reached" if reason == Reason.TARGET_REACHED else &"time_up")
 	var summary: MatchSummary = MatchSummary.capture(result == Result.WIN, cause, time_remaining, _inventory)
 	if result == Result.WIN:
 		match_won.emit(reason)
 	else:
 		match_lost.emit(reason)
 	completed.emit(summary)
+
+func lose_colony() -> void:
+	if _started and not _finished: _finish(Result.LOSS, Reason.COLONY_DESTROYED)
 
 func add_time(seconds: float) -> void:
 	if _finished or not _started or seconds < 0 or not is_finite(seconds): return
