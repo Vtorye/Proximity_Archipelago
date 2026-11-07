@@ -122,31 +122,6 @@ func plan_work(agent: Node2D, home: Building, needs: AntNeeds, speed: float, wor
 		current.release_worker(agent)
 	return best
 
-func nearest_pickup(from_cell: Vector2i, can_collect: Callable) -> Dictionary:
-	var node_id: int = navigation.snapshot().index(from_cell)
-	if node_id < 0:
-		return {}
-	var nearest: Workplace
-	var pickup: Route
-	var lowest := INF
-	for workplace: Workplace in _reachable_workplaces(node_id):
-		if workplace.pending_output_amount() == 0:
-			continue
-		for entry in workplace.entry_cells():
-			var field: NavigationField = _work_fields.get(entry)
-			if field == null:
-				continue
-			var cost: float = field.cost_at_node(node_id)
-			if cost < lowest:
-				var route: Route = navigation.make_route(field.path(from_cell))
-				if can_collect.call(workplace, route):
-					lowest = cost
-					nearest = workplace
-					pickup = route
-	if nearest == null:
-		return {}
-	return {"workplace": nearest, "route": pickup}
-
 func _on_workplace_membership_changed(building: Building) -> void:
 	if not building is Workplace: return
 	_workplaces_dirty = true

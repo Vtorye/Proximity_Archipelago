@@ -196,11 +196,6 @@ func _decide_pickup(foodless: bool) -> void:
 		_pickup_source = dispatch.source
 		_walk(dispatch.route, &"pickup")
 		return
-	var collection: Dictionary = planner.nearest_pickup(cell, _can_collect_output)
-	if not collection.is_empty():
-		_pickup_source = collection.workplace
-		_walk(collection.route, &"pickup")
-		return
 	_pickup_source = null
 	if foodless:
 		_wander()
@@ -214,11 +209,6 @@ func _decide_pickup(foodless: bool) -> void:
 
 func _can_collect_shipment(pickup: Route) -> bool:
 	return _can_start_pickup(pickup, logistics.route_to(logistics.main_nest, pickup.cells.back()))
-
-func _can_collect_output(workplace: Workplace, pickup: Route) -> bool:
-	var count: int = mini(workplace.pending_output_amount(), carry_capacity)
-	var cell: Vector2i = pickup.cells.back()
-	return _can_start_pickup(pickup, logistics.route_to(logistics.closest_depot(cell, count), cell))
 
 func _can_start_pickup(pickup: Route, delivery: Route) -> bool:
 	if not delivery.is_valid():
@@ -242,8 +232,6 @@ func _load_pickup() -> void:
 				cargo = planner.inventory.dispatch(source, carry_capacity)
 				_shipment = not cargo.is_empty()
 				_main_delivery = _shipment
-		elif source is Workplace:
-			cargo = source.take_output(carry_capacity)
 	if cargo.is_empty():
 		# Stock may have changed while this carrier was en route.
 		_decide()

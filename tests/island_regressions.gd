@@ -238,11 +238,22 @@ func test_physical_logistics(test: Node) -> void:
 	test.expect(stock.quantity(wood) == total and stock.main_quantity(wood) == main_before + 2, "shipment arrival moves stock without counting it twice")
 	test.expect(not world.logistics.ready_to_dispatch(depot), "an empty depot has nothing to dispatch")
 	courier._decide()
-	test.expect(courier._pickup_source == job, "a carrier can collect production already waiting at a workplace")
-	_step_until(courier, func() -> bool: return not courier.cargo.is_empty())
-	test.expect(WorldInventory.cargo_size(courier.cargo) == 1 and job.pending_output_amount() == 0 and job.worker_count() == 0 and stock.quantity(wood) == total, "collecting surplus neither produces new goods nor occupies a work slot")
-	_step_until(courier, func() -> bool: return courier.cargo.is_empty())
-	test.expect(stock.quantity(wood) == total + 1 and stock.depot_quantity(depot, wood) == 1, "the carrier physically delivers workshop surplus to the nearest depot")
+	var visited_workplace := false
+	for step in range(600):
+		courier._physics_process(1.0 / 60.0)
+		visited_workplace = visited_workplace or courier._pickup_source is Workplace or courier._destination == &"work" or courier.status == AntAgent.Status.WORKING
+	test.expect(not visited_workplace and courier.cargo.is_empty() and job.pending_output_amount() == 1 and job.worker_count() == 0, "an idle carrier ignores workplace surplus and never attempts production")
+	# Even a stale pickup target must not let a carrier collect from a workplace.
+	courier._pickup_source = job
+	courier._load_pickup()
+	test.expect(courier.cargo.is_empty() and job.pending_output_amount() == 1, "a carrier cannot load goods directly from a workplace")
+	ant.global_position = world.route_service.cell_to_world(job.cell)
+	ant.needs.eat()
+	ant._decide()
+	_step_until(ant, func() -> bool: return not ant.cargo.is_empty())
+	test.expect(WorldInventory.cargo_size(ant.cargo) == 1 and job.pending_output_amount() == 0 and job.worker_count() == 0 and stock.quantity(wood) == total, "a worker collects remaining output before producing another batch")
+	_step_until(ant, func() -> bool: return ant.cargo.is_empty())
+	test.expect(stock.quantity(wood) == total + 1 and stock.depot_quantity(depot, wood) == 1, "the worker delivers workshop surplus to the nearest depot")
 	courier._decide()
 	test.expect(courier._pickup_source == depot, "carrier picks up a single unit from a depot below the old filling threshold")
 	_step_until(courier, func() -> bool: return courier._shipment)
