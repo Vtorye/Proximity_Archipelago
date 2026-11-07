@@ -79,7 +79,7 @@ func _prune_workers() -> void:
 
 
 func reserve_worker(human: Node2D) -> bool:
-	if human is AntAgent and human.role == AntAgent.Role.CARRIER:
+	if human is AntAgent and human.role != AntAgent.Role.WORKER:
 		return false
 	if not is_instance_valid(human) or _workers.has(human) or not has_free_slot():
 		return false

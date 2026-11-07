@@ -2,7 +2,7 @@ class_name AntAgent
 extends Node2D
 ## Executes plans; needs, route execution, and assignment policy are separate objects.
 
-enum Role { WORKER, CARRIER }
+enum Role { WORKER, CARRIER, WARRIOR }
 enum DeathCause { STARVATION, DEMOLISHED, OTHER, PLAYER }
 enum Status { HOME, WALKING, WORKING, EATING, WAITING_FOR_FOOD, DEAD, WANDERING, CONSTRUCTING }
 signal work_completed(human: Node2D, workplace: Node2D)

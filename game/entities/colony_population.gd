@@ -11,6 +11,7 @@ var planner: TripPlanner
 var logistics: ColonyLogistics
 var construction: ConstructionService
 var recruitment: RecruitmentCatalog
+var allow_warriors := false
 var _recruiting := false
 var _removing := false
 
@@ -40,10 +41,13 @@ func _on_building_added(building: Building) -> void:
 		_add_resident(house, ant)
 	changed.emit()
 
+func roles() -> Array[int]:
+	return [AntAgent.Role.WORKER, AntAgent.Role.CARRIER, AntAgent.Role.WARRIOR] if allow_warriors else [AntAgent.Role.WORKER, AntAgent.Role.CARRIER]
+
 func can_recruit(house: House, role: AntAgent.Role) -> bool:
 	return (
 		not _recruiting and not _removing and recruitment != null and logistics.owns(house)
-		and role in [AntAgent.Role.WORKER, AntAgent.Role.CARRIER]
+		and role in roles()
 		and house.has_space() and navigation.walkable(planner.accessible_entry(house))
 		and planner.inventory.can_afford_all(recruitment.price(role), true)
 	)

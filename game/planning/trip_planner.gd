@@ -50,7 +50,7 @@ func travel_energy(cost: float, speed: float) -> float:
 	return travel_seconds(cost, speed) * AntNeeds.WALK_RATE
 
 func plan_work(agent: Node2D, home: Building, needs: AntNeeds, speed: float, work_time: float, ticket: StockReservation, current: Workplace = null) -> WorkPlan:
-	if not is_instance_valid(home) or (agent is AntAgent and agent.role == AntAgent.Role.CARRIER):
+	if not is_instance_valid(home) or (agent is AntAgent and agent.role != AntAgent.Role.WORKER):
 		return null
 	var home_cell: Vector2i = accessible_entry(home)
 	if not navigation.walkable(home_cell):

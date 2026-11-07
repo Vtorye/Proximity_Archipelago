@@ -1,8 +1,10 @@
 [gd_resource type="Resource" script_class="RecruitmentCatalog" format=3]
-
 [ext_resource type="Script" path="res://game/resources/recruitment_catalog.gd" id="catalog"]
 [ext_resource type="Script" path="res://game/resources/resource_amount.gd" id="amount"]
 [ext_resource type="Resource" path="res://game/resources/dot_treses/food.tres" id="food"]
+[ext_resource type="Resource" path="res://game/resources/dot_treses/wood.tres" id="wood"]
+[ext_resource type="Resource" path="res://game/resources/dot_treses/stone.tres" id="stone"]
+
 
 [sub_resource type="Resource" id="worker"]
 script = ExtResource("amount")
@@ -14,7 +16,22 @@ script = ExtResource("amount")
 type = ExtResource("food")
 amount = 8
 
+
+[sub_resource type="Resource" id="warrior_food"]
+script = ExtResource("amount")
+type = ExtResource("food")
+amount = 20
+[sub_resource type="Resource" id="warrior_wood"]
+script = ExtResource("amount")
+type = ExtResource("wood")
+amount = 10
+[sub_resource type="Resource" id="warrior_stone"]
+script = ExtResource("amount")
+type = ExtResource("stone")
+amount = 5
+
 [resource]
 script = ExtResource("catalog")
 worker_costs = Array[ExtResource("amount")]([SubResource("worker")])
 carrier_costs = Array[ExtResource("amount")]([SubResource("carrier")])
+warrior_costs = Array[ExtResource("amount")]([SubResource("warrior_food"), SubResource("warrior_wood"), SubResource("warrior_stone")])
