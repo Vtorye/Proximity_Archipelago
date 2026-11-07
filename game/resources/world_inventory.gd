@@ -171,6 +171,20 @@ func main_quantity(type: ResourceType) -> int:
 func nest_quantity(house: House, primary: House, type: ResourceType) -> int:
 	return _main_stock.get(type.id, 0) if house == primary and type != null else depot_quantity(house, type)
 
+## Enemy destruction loses physical stock; it cannot be promoted or refunded to another base.
+func destroy_nest(house: House, primary: House) -> void:
+	begin_update()
+	var stock: Dictionary = _main_stock if house == primary else _depots.get(house, {})
+	for id: StringName in stock:
+		_amounts[id] -= stock[id]
+		if house == primary: stock[id] = 0
+	if house != primary: stock.clear()
+	# Meals reserved against destroyed supplies must become unavailable, never negative stock.
+	for ticket: StockReservation in _tickets.values().duplicate():
+		if available(ticket.type) < 0: release(ticket)
+	_notify()
+	end_update()
+
 func register_depot(house: House) -> void:
 	_depots[house] = {}
 
