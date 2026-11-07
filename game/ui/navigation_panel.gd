@@ -69,7 +69,9 @@ func refresh() -> void:
 	var cell: Vector2i = inspected_building.cell if inspected_building != null else overlay.hovered
 	var value: Dictionary = overlay.sample(cell) if show_routes or terrain != null else {}
 	var building: Building = inspected_building if inspected_building != null else value.get("building")
-	if building is Workplace:
+	if building is ConstructionSite:
+		_detail.text = building.details()
+	elif building is Workplace:
 		var workload: String = tr("ui.hud.workload") % [building.working_count(), building.incoming_count(), building.work_slots]
 		_detail.text = "%s\n%s" % [tr(building.display_title()), workload]
 		if building.recipe == null and building.output != null:

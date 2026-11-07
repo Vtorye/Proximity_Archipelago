@@ -10,6 +10,7 @@ func _run() -> void:
 	await click(Router._current.controls[&"play"])
 	await frames(45)
 	screen = Router._current
+	use_immediate_construction_fixture(screen.world)
 	for id in screen.hud.stock_chips:
 		var icon: TextureRect = screen.hud.stock_chips[id].get_child(0)
 		print("RESOURCE ICON ", id, " ", icon.get_global_rect(), " MIN ", icon.custom_minimum_size, " SCALE ", icon.scale)
@@ -30,6 +31,7 @@ func _run() -> void:
 	await click(Router.top_overlay().controls[&"restart"])
 	await frames(45)
 	screen = Router._current
+	use_immediate_construction_fixture(screen.world)
 	expect(not is_instance_valid(retired) and not get_tree().paused and not Router.has_overlay(), "pause restart removes the previous world and every pause reason")
 	expect(screen.world.population.count() == 5 and screen.world.match_controller.time_remaining > 178.0, "pause restart begins a fresh three-minute colony")
 	var world: World = screen.world
@@ -160,6 +162,7 @@ func _check_ui_scales() -> void:
 	await click(Router.top_overlay().controls[&"restart"])
 	await frames(45)
 	screen = Router._current
+	use_immediate_construction_fixture(screen.world)
 	expect(AppSettings.ui_scale == 0.5 and screen.hud.controls[&"settings"].custom_minimum_size == Vector2(16, 16), "match restart preserves the selected interface scale")
 
 func _entry(type: ResourceType, amount: int) -> ResourceAmount:

@@ -88,6 +88,13 @@ func cell_point(cell: Vector2i) -> Vector2:
 	var map: TileMapLayer = screen.world.get_node("Map") as TileMapLayer
 	return map.get_global_transform_with_canvas() * map.map_to_local(cell)
 
+## Legacy palette/assignment scenarios isolate immediate transaction feedback.
+## build_delivery_visual exercises the shipping delivery/assembly pipeline through actual input.
+func use_immediate_construction_fixture(world: World) -> void:
+	world.build_controller.construction = null
+	world.population.construction = null
+	for ant in world.population.agents(): ant.construction = null
+
 func _run() -> void:
 	seed(20261025)
 	AppSettings.reset_defaults()

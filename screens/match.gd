@@ -145,7 +145,7 @@ func _cell_at(point: Vector2) -> Vector2i:
 	return map.local_to_map(map.get_global_transform_with_canvas().affine_inverse() * point)
 
 func _inspect_building(cell: Vector2i) -> void:
-	var building: Building = world.registry.at(cell)
+	var building: Building = world.build_controller.demolition_target(cell)
 	if building is House:
 		hud.navigation_panel.inspect(null)
 		selection.clear()

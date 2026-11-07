@@ -55,7 +55,16 @@ func _run() -> void:
 	expect(menu.draft.budget_check().allowed(), "the real starter budget pays for both camps and connecting paths")
 	await capture("04-camps-and-roads-plan", 30)
 	await key(KEY_SPACE)
-	expect(world.population.count() == 15, "committing both camps expands the colony to fifteen ants")
+	expect(world.build_controller.construction.sites.size() > 0 and world.population.count() == 5, "committing both camps queues physical construction")
+	for second in range(120):
+		if world.population.count() >= 15: break
+		await frames(30)
+		# Keep the real task loop active while normal-speed ants build the camps.
+		for index in range(world.tasks.slots.size()):
+			if world.tasks.can_pay(index):
+				world.tasks.submit(index)
+				break
+	expect(world.population.count() == 15, "delivered and assembled camps expand the colony to fifteen ants")
 	var claimed := false
 	for second in range(45):
 		for button in screen.hud.task_panel.find_children("*", "Button", true, false):
@@ -65,7 +74,7 @@ func _run() -> void:
 				break
 		if claimed: break
 		await frames(30)
-	expect(claimed and world.tasks.completed_count == 1, "working camps fund a task reward during normal-speed play")
+	expect(claimed and world.tasks.completed_count >= 1, "working camps fund a task reward during normal-speed play")
 	await capture("05-earned-expansion-crown", 30)
 	await key(KEY_SPACE)
 	menu = Router.top_overlay() as ConstructionMenu

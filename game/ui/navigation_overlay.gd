@@ -39,9 +39,13 @@ func _refresh_points() -> void:
 	_points.clear()
 	for building in world.registry.all():
 		for cell in building.footprint(): _points[cell] = building
+	if world.build_controller.construction != null:
+		for site in world.build_controller.construction.sites:
+			for cell in site.footprint(): _points[cell] = site
 
 func _ready() -> void:
 	world.registry.changed.connect(_refresh_points)
+	if world.build_controller.construction != null: world.build_controller.construction.changed.connect(_refresh_points)
 
 func _process(delta: float) -> void:
 	if mode == 0: return

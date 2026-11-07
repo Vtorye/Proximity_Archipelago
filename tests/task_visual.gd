@@ -7,6 +7,7 @@ func _run() -> void:
 	await click(Router._current.controls[&"play"])
 	await frames(40)
 	screen = Router._current
+	use_immediate_construction_fixture(screen.world)
 	var tasks: TaskDirector = screen.world.tasks
 	expect(tasks != null and tasks.slots.size() == 3, "three task cards replace the fixed objective")
 	for button in screen.hud.task_panel.find_children("*", "Button", true, false):

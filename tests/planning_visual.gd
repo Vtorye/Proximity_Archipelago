@@ -9,6 +9,7 @@ func _run() -> void:
 	await click(Router._current.controls[&"play"])
 	await frames(45)
 	screen = Router._current
+	use_immediate_construction_fixture(screen.world)
 	var world: World = screen.world
 	world.process_mode = Node.PROCESS_MODE_DISABLED
 	var ants: Array[AntAgent] = world.population.agents()

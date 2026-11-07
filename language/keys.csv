@@ -154,3 +154,6 @@ ui.building.quarry,Quarry,Каменоломня
 ui.building.farm,Farm,Ферма
 ui.placement.resource_site,Requires a matching unupgraded resource source with remaining supply,Нужен подходящий источник с запасом и без улучшения
 ui.task.unlocks,Unlocks: %s,Откроет: %s
+ui.site.title,Construction: %s,Стройка: %s
+ui.site.assembly,Assembly: %d%%,Сборка: %d%%
+ui.site.delivery,Waiting for material delivery,Ожидает доставку материалов
