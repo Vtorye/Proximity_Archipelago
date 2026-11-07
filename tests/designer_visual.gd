@@ -109,6 +109,9 @@ func _check_storage_and_hover() -> void:
 	var cell := Vector2i(27, 27)
 	var nest: BuildOption = load("res://game/building/options/house.tres")
 	expect(screen.world.build_controller.try_build(nest, cell), "fixture builds a small warehouse")
+	for second in range(60):
+		if screen.world.registry.at(cell) is House: break
+		await frames(30)
 	var depot: House = screen.world.registry.at(cell) as House
 	await click_at(cell_point(cell))
 	var menu := Router.top_overlay() as NestMenu
