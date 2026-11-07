@@ -53,6 +53,7 @@ func submit(index: int, cancel := false) -> bool:
 	if not can_pay(index, cancel): return false
 	_busy = true
 	var task: TaskSpec = slots[index]
+	var unlocked_names := PackedStringArray()
 	world.inventory.begin_update()
 	if not world.inventory.try_spend_all(price(index, cancel)):
 		world.inventory.end_update()
@@ -63,10 +64,19 @@ func submit(index: int, cancel := false) -> bool:
 	if not cancel:
 		world.match_controller.add_time(task.reward_seconds)
 		for entry in task.rewards: world.inventory.add(entry.type, entry.amount)
+		for option in task.unlocks:
+			if not world.build_controller.options.has(option):
+				world.build_controller.options.append(option)
+				unlocked_names.append(TranslationServer.translate(option.display_name))
+		if not unlocked_names.is_empty():
+			world.prices.definitions = world.build_controller.options.duplicate()
+			world.prices.changed.emit()
 		world.events.publish(GameEvents.Kind.TASK_COMPLETED, task.id)
 	closed += 1
 	slots[index] = _pool.pop_back() if not _pool.is_empty() else null
 	message = "Отказ: без времени и награды" if cancel else "+%d секунд" % task.reward_seconds
+	if not unlocked_names.is_empty():
+		message += " · " + ", ".join(unlocked_names)
 	if closed == stage().tasks.size():
 		_apply_upgrade()
 		if level == deck.stages.size() and not deck.loop_last_stage:

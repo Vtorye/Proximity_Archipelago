@@ -9,6 +9,8 @@ func _run() -> void:
 	screen = Router._current
 	var tasks: TaskDirector = screen.world.tasks
 	expect(tasks != null and tasks.slots.size() == 3, "three task cards replace the fixed objective")
+	for button in screen.hud.task_panel.find_children("*", "Button", true, false):
+		expect(screen.hud.task_panel.get_global_rect().encloses(button.get_global_rect()), "all three initial task actions fit without scrolling")
 	await capture("01-three-requests", 30)
 	var stable_button: Button = screen.hud.task_panel.find_children("*", "Button", true, false)[0]
 	screen.world.inventory.add(screen.world.inventory.type_by_id(&"wood"), 1)
@@ -48,6 +50,7 @@ func _run() -> void:
 	for index in range(5): await action(false)
 	expect(tasks.level == 4 and screen.world.population.agents()[0].speed > 24.0, "later stages speed up ants and repeat with harder prices")
 	await capture("07-speed-upgrade-and-repeat", 30)
+	await _check_resource_facilities()
 	await click(screen.hud.controls[&"settings"])
 	await click(Router.top_overlay().controls[&"settings"])
 	await click(Router.top_overlay().controls[&"ui_scale_plus"])
@@ -82,3 +85,48 @@ func action(cancel: bool) -> void:
 			await click(button)
 			return
 	expect(false, "an affordable task action is available")
+
+func _check_resource_facilities() -> void:
+	var world: World = screen.world
+	world.units.process_mode = Node.PROCESS_MODE_DISABLED
+	var timber := world.get_node("Workplace") as Workplace
+	var stone := world.get_node("Workplace2") as Workplace
+	var berries := world.get_node("AppleTree") as Workplace
+	var targets := {&"sawmill": timber, &"quarry": stone, &"farm": berries}
+	var slots: int = stone.work_slots
+	await key(KEY_SPACE)
+	var menu := Router.top_overlay() as ConstructionMenu
+	for id in targets:
+		expect(menu.controls.has(id), "completed tasks unlock the resource facility in construction")
+		await click(menu.controls[id])
+		await click_at(cell_point(targets[id].cell))
+	expect(menu.draft.size() == 3, "all three facilities can be planned on existing resource cells")
+	await capture("07a-resource-facilities-plan", 30)
+	await key(KEY_SPACE)
+	expect(stone.improvement != null and stone.work_slots == slots + 2 and timber.improvement != null and berries.improvement != null, "applying the plan installs all facilities and increases their worker slots")
+	await click_at(cell_point(stone.cell))
+	await capture("07b-quarry-workplace-info", 30)
+	stone.finite_supply = true
+	stone.remaining_supply = 2
+	var worker: AntAgent = world.population.agents()[0]
+	worker._release_work()
+	worker._clear_cargo()
+	stone.take_output(1000000)
+	worker.global_position = world.route_service.cell_to_world(stone.cell)
+	worker.needs.eat()
+	worker._decide()
+	for frame in range(240):
+		if stone.remaining_supply == 0: break
+		worker._physics_process(1.0 / 30.0)
+		await frames(1)
+	screen.hud.navigation_panel.refresh()
+	expect(stone.remaining_supply == 0 and screen.hud.navigation_panel._detail.text.contains("Запас: 0"), "finite resource exhaustion appears in the workplace inspector")
+	await capture("07c-exhausted-quarry", 30)
+	await key(KEY_SPACE)
+	menu = Router.top_overlay() as ConstructionMenu
+	await click(menu.controls[&"demolish"])
+	await click_at(cell_point(stone.cell))
+	await key(KEY_SPACE)
+	expect(world.registry.at(stone.cell) == stone and stone.improvement == null and stone.remaining_supply == 0, "demolishing the quarry preserves its exhausted source")
+	await capture("07d-facility-demolished-source-kept", 30)
+	world.units.process_mode = Node.PROCESS_MODE_INHERIT

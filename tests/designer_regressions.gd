@@ -1,6 +1,7 @@
 extends RefCounted
 func run(test: Node) -> void:
 	test_finite_sources(test)
+	test_resource_facilities(test)
 	var world: World = test.make_world()
 	var wood: ResourceType = world.inventory.type_by_id(&"wood")
 	var stone: ResourceType = world.inventory.type_by_id(&"stone")
@@ -89,6 +90,61 @@ func test_finite_sources(test: Node) -> void:
 	test.expect(LevelLayout.create_world(layout) == null, "map import rejects negative resource deposits")
 	layout.objects[0][3].remaining_supply = 1.5
 	test.expect(LevelLayout.create_world(layout) == null, "map import rejects fractional resource deposits")
+
+func test_resource_facilities(test: Node) -> void:
+	var world: World = load("res://game/worlds/world_1.tscn").instantiate()
+	world.auto_start = false
+	test.add_child(world)
+	world.match_controller.start(world.inventory)
+	var sawmill: WorkplaceUpgradeOption = load("res://game/building/options/sawmill.tres")
+	var quarry: WorkplaceUpgradeOption = load("res://game/building/options/quarry.tres")
+	var farm: WorkplaceUpgradeOption = load("res://game/building/options/farm.tres")
+	var workplace := world.get_node("Workplace") as Workplace
+	var stone := world.get_node("Workplace2") as Workplace
+	var berries := world.get_node("AppleTree") as Workplace
+	var wood: ResourceType = world.inventory.type_by_id(&"wood")
+	var slots_before: int = workplace.work_slots
+	test.expect(not world.build_controller.can_build(sawmill, workplace.cell), "resource facilities start locked")
+	var task := TaskSpec.new()
+	task.id = &"facility_unlock_fixture"
+	task.unlocks = [sawmill, quarry, farm]
+	world.tasks.slots[0] = task
+	test.expect(world.tasks.submit(0, true) and not world.build_controller.options.has(sawmill), "cancelling an unlocking task grants no facility")
+	world.tasks.slots[0] = task
+	test.expect(world.tasks.submit(0) and world.build_controller.options.has(sawmill) and world.prices.definitions.has(quarry), "completing a task unlocks its configured construction options and prices")
+	test.expect(not world.build_controller.can_build(sawmill, stone.cell) and not world.build_controller.can_build(quarry, berries.cell) and not world.build_controller.can_build(farm, workplace.cell), "each facility requires the matching raw resource")
+	test.expect(not world.build_controller.can_build(sawmill, Vector2i(26, 25)), "resource facilities cannot be built on empty ground")
+	workplace.finite_supply = true
+	workplace.remaining_supply = 5
+	workplace._produce(wood, 2, true)
+	var worker: AntAgent = world.population.agents()[0]
+	workplace.reserve_worker(worker)
+	var before: int = world.inventory.quantity(wood)
+	var draft := BuildDraft.new()
+	draft.controller = world.build_controller
+	test.expect(draft.paint(sawmill, workplace.cell) and draft.commit(), "a facility can be planned and built on an occupied resource cell")
+	test.expect(world.registry.at(workplace.cell) == workplace and workplace.work_slots == slots_before + 2 and workplace.has_worker(worker), "installing a facility adds two slots without replacing the source or evicting its worker")
+	test.expect(workplace.remaining_supply == 3 and workplace.pending_output_amount() == 2 and world.inventory.quantity(wood) == before - 10, "installing a facility preserves supply and pending cargo and charges its price once")
+	test.expect(not world.build_controller.try_build(sawmill, workplace.cell) and world.inventory.quantity(wood) == before - 10, "a second facility cannot stack on the same resource cell")
+	test.expect((workplace.get_node("Sprite") as Sprite2D).texture == sawmill.icon and sawmill.icon.get_size() == Vector2(16, 16), "a sawmill uses its own sixteen-pixel sprite")
+	sawmill.added_slots = 3
+	test.expect(world.build_controller.demolish_at(workplace.cell) and world.registry.at(workplace.cell) == workplace and workplace.improvement == null and workplace.work_slots == slots_before, "demolition removes the facility while preserving the source")
+	sawmill.added_slots = 2
+	test.expect(workplace.remaining_supply == 3 and workplace.pending_output_amount() == 2, "demolishing a facility cannot replenish the deposit or destroy waiting goods")
+	test.expect(world.build_controller.try_build(sawmill, workplace.cell) and draft.demolish(workplace.cell) and draft.commit() and workplace.improvement == null, "planned demolition also removes only the facility layer")
+	workplace.remaining_supply = 0
+	test.expect(not world.build_controller.try_build(sawmill, workplace.cell), "an exhausted source cannot receive a new facility")
+	test.expect(world.build_controller.try_build(quarry, stone.cell) and world.build_controller.try_build(farm, berries.cell), "quarries and farms build on stone and food sources")
+	world.free()
+	var layout := {"version": LevelLayout.VERSION, "tiles": [[0, 0, 3, 0, 0, 0]], "objects": [[0, 0, "Workplace", {"finite_supply": true, "remaining_supply": 0, "improvement": "sawmill"}]]}
+	world = LevelLayout.create_world(layout)
+	test.expect(world != null, "saved maps accept an existing facility on an exhausted deposit")
+	if world != null:
+		world.auto_start = false
+		test.add_child(world)
+		var restored := world.registry.at(Vector2i.ZERO) as Workplace
+		test.expect(restored.improvement == sawmill and restored.remaining_supply == 0 and not restored.can_run_recipe(), "loading a facility preserves exhaustion without regenerating resources")
+		world.free()
 	test.expect(LevelValidator.validate("res://game/worlds/world_1.tscn").is_empty(), "authored production level passes offline validation")
 	var invalid: World = load("res://game/worlds/world_1.tscn").instantiate()
 	invalid.get_node("Workplace").work_slots = 0

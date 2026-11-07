@@ -148,3 +148,8 @@ ui.source.remaining,Supply: %d,Запас: %d
 ui.source.infinite,Supply: unlimited,Запас: бесконечный
 ui.source.finite,Finite source,Конечный источник
 ui.source.amount,Supply,Запас
+ui.building.sawmill,Sawmill,Лесопилка
+ui.building.quarry,Quarry,Каменоломня
+ui.building.farm,Farm,Ферма
+ui.placement.resource_site,Requires a matching unupgraded resource source with remaining supply,Нужен подходящий источник с запасом и без улучшения
+ui.task.unlocks,Unlocks: %s,Откроет: %s

@@ -17,6 +17,9 @@ signal worker_left(worker: Node2D)
 ## Finite sources count output units, not work cycles. Recipes use their input inventory.
 @export var finite_supply := false
 @export_range(0, 1000000) var remaining_supply := 100
+@export var improvement: WorkplaceUpgradeOption
+var _source_texture: Texture2D
+var _improvement_slots := 0
 var _pending_output: Array[ResourceAmount] = []
 var _workers: Array[Node2D] = []
 var _working: Array[Node2D] = []
@@ -91,6 +94,51 @@ func release_worker(human: Node2D) -> void:
 func work_complete(_human: Node2D) -> void:
 	pass
 
+func accepts_improvement(definition: WorkplaceUpgradeOption) -> bool:
+	return matches_improvement(definition) and improvement == null and (not finite_supply or remaining_supply > 0)
+
+func matches_improvement(definition: WorkplaceUpgradeOption) -> bool:
+	return definition != null and definition.valid() and recipe == null and output != null and output.id == definition.source_type.id
+
+func install_improvement(definition: WorkplaceUpgradeOption) -> bool:
+	if not accepts_improvement(definition):
+		return false
+	improvement = definition
+	_improvement_slots = definition.added_slots
+	work_slots += _improvement_slots
+	refresh_appearance()
+	load_changed.emit()
+	return true
+
+func remove_improvement() -> void:
+	if improvement == null:
+		return
+	work_slots -= _improvement_slots
+	_improvement_slots = 0
+	improvement = null
+	refresh_appearance()
+	load_changed.emit()
+
+func refresh_appearance(source: Texture2D = null) -> void:
+	var sprite := get_node_or_null("Sprite") as Sprite2D
+	if sprite == null:
+		return
+	if source != null:
+		_source_texture = source
+	elif _source_texture == null:
+		_source_texture = sprite.texture
+	sprite.texture = improvement.icon if improvement != null else _source_texture
+
+func display_title() -> String:
+	return improvement.display_name if improvement != null else super.display_title()
+
+func _on_setup() -> bool:
+	if improvement != null:
+		_improvement_slots = improvement.added_slots
+		work_slots += _improvement_slots
+		refresh_appearance()
+	return true
+
 
 ## Called by the worker when a work cycle finishes. Runs work_complete() and emits produced() if output is set.
 func complete_cycle(human: Node2D, keep_output: bool = false) -> bool:
@@ -154,6 +202,8 @@ func validate_definition() -> Array[String]:
 		errors.append("Workplace needs positive slots and output")
 	if remaining_supply < 0 or finite_supply and recipe != null:
 		errors.append("Finite supply needs a nonnegative amount and a raw resource source")
+	if improvement != null and (not improvement.valid() or recipe != null or output == null or output.id != improvement.source_type.id):
+		errors.append("Workplace improvement must match its raw resource source")
 	return errors
 
 func can_run_recipe() -> bool:

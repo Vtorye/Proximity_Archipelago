@@ -31,7 +31,8 @@ func run(test: Node) -> void:
 		while tasks.slots[index] == null: index += 1
 		tasks.submit(index)
 	test.expect(tasks.level == 2 and tasks.closed == 0 and world.build_controller.options.has(tasks.deck.unlocked_road), "closing the five-item pool unlocks the next level and improved road")
-	test.expect(not world.build_controller.options.has(ordinary) and world.build_controller.options.size() == option_count and world.build_controller.options[road_position] == tasks.deck.unlocked_road, "improved road replaces the ordinary palette slot instead of adding a competing choice")
+	var facilities: int = world.build_controller.options.filter(func(option: BuildOption) -> bool: return option is WorkplaceUpgradeOption).size()
+	test.expect(not world.build_controller.options.has(ordinary) and world.build_controller.options.size() == option_count + facilities and world.build_controller.options[road_position] == tasks.deck.unlocked_road, "improved road keeps its palette slot while earned facilities occupy their own slots")
 	test.expect(not world.prices.definitions.has(ordinary) and world.prices.definitions.has(tasks.deck.unlocked_road), "pricing reload tracks the active road definition")
 	test.expect(BuildController.price_amount(world.build_controller.price(tasks.deck.unlocked_road), world.inventory.type_by_id(&"wood")) == ordinary_price, "replacement road preserves the one-wood base price")
 	test.expect(not world.build_controller.try_build(ordinary, road_cell), "retired road option cannot be built after unlocking the replacement")

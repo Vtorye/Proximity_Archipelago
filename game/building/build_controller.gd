@@ -47,6 +47,11 @@ func placement_check(option: BuildOption, cell: Vector2i, removed: Array[Buildin
 		return PlacementCheck.result(PlacementCheck.Code.BUSY)
 	if option == null or not options.has(option):
 		return PlacementCheck.result(PlacementCheck.Code.INVALID_OPTION)
+	if option is WorkplaceUpgradeOption:
+		var workplace := registry.at(cell) as Workplace
+		if workplace == null or removed.has(workplace) or not workplace.accepts_improvement(option):
+			return PlacementCheck.result(PlacementCheck.Code.RESOURCE_SITE)
+		return PlacementCheck.new()
 	if option is TileBuildOption:
 		var tile: TileBuildOption = option as TileBuildOption
 		var source: TileSetAtlasSource = map.tile_set.get_source(tile.source_id) as TileSetAtlasSource if map.tile_set.has_source(tile.source_id) else null
@@ -97,6 +102,7 @@ func try_build_plan(commands: Array[BuildCommand]) -> bool:
 	if commands.is_empty():
 		return true
 	var removed: Array[Building] = []
+	var removed_improvements: Array[Workplace] = []
 	var placements: Array[BuildCommand] = []
 	for command in commands:
 		if command == null:
@@ -104,13 +110,16 @@ func try_build_plan(commands: Array[BuildCommand]) -> bool:
 			return false
 		if command.is_removal():
 			var building: Building = command.removed_building
-			if not is_instance_valid(building) or registry.at(command.cell) != building or removed.has(building):
+			if not is_instance_valid(building) or registry.at(command.cell) != building or removed.has(building) or (building is Workplace and removed_improvements.has(building)):
 				last_result = PlacementCheck.result(PlacementCheck.Code.NO_BUILDING)
 				return false
 			if building is House and logistics != null and not logistics.can_remove(building):
 				last_result = PlacementCheck.result(PlacementCheck.Code.STOCK_DEPOT)
 				return false
-			removed.append(building)
+			if building is Workplace and building.improvement != null:
+				removed_improvements.append(building)
+			else:
+				removed.append(building)
 		else:
 			placements.append(command)
 	var costs: Array[ResourceAmount] = []
@@ -168,6 +177,15 @@ func try_build_plan(commands: Array[BuildCommand]) -> bool:
 		var option: BuildOption = command.option
 		if option is TileBuildOption:
 			map.set_cell(cell, option.source_id, option.atlas_coords, option.alternative_tile)
+	for workplace in removed_improvements:
+		var definition: WorkplaceUpgradeOption = workplace.improvement
+		workplace.remove_improvement()
+		_refund_for_demolish(definition)
+		if prices != null: prices.record(GameEvents.Kind.BUILDING_DEMOLISHED, definition.id)
+	for command in placements:
+		if command.option is WorkplaceUpgradeOption:
+			var workplace := registry.at(command.cell) as Workplace
+			workplace.install_improvement(command.option)
 	for building in removed:
 		_refund_for_demolish(building.option)
 		building.demolish()
@@ -186,8 +204,10 @@ func try_build_plan(commands: Array[BuildCommand]) -> bool:
 	_committing = false
 	inventory.end_update()
 	for command in placements:
-		if prices != null: prices.record(GameEvents.Kind.BUILDING_BUILT if command.option is SceneBuildOption else GameEvents.Kind.TERRAIN_CHANGED, command.option.id)
+		if prices != null: prices.record(GameEvents.Kind.TERRAIN_CHANGED if command.option is TileBuildOption else GameEvents.Kind.BUILDING_BUILT, command.option.id)
 		built.emit(command.option, command.cell)
+	if not removed_improvements.is_empty() or placements.any(func(command: BuildCommand) -> bool: return command.option is WorkplaceUpgradeOption):
+		population.planner._queue_workplace_refresh()
 	changed.emit()
 	return true
 
@@ -213,6 +233,16 @@ func demolish_at(cell: Vector2i) -> bool:
 	var building: Building = registry.at(cell)
 	_committing = true
 	inventory.begin_update()
+	if building is Workplace and building.improvement != null:
+		var definition: WorkplaceUpgradeOption = building.improvement
+		building.remove_improvement()
+		_refund_for_demolish(definition)
+		if prices != null: prices.record(GameEvents.Kind.BUILDING_DEMOLISHED, definition.id)
+		_committing = false
+		inventory.end_update()
+		population.planner._queue_workplace_refresh()
+		changed.emit()
+		return true
 	_refund_for_demolish(building.option)
 	var changed_cells: Array[Vector2i] = building.footprint()
 	building.demolish()

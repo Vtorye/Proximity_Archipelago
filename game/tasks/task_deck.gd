@@ -9,6 +9,7 @@ extends Resource
 
 func validate(stock: WorldInventory) -> Array[String]:
 	var errors: Array[String] = []
+	var prices := PriceService.new()
 	if stages.is_empty(): errors.append(resource_path + ": empty stages")
 	if cancellation_fraction < 0 or cancellation_fraction > 1 or repeat_cost_multiplier < 1 or not is_finite(repeat_cost_multiplier): errors.append(resource_path + ": invalid cancellation or difficulty factor")
 	var ids: Dictionary[StringName, bool] = {}
@@ -33,4 +34,13 @@ func validate(stock: WorldInventory) -> Array[String]:
 			if task.reward_seconds < 0 or not is_finite(task.reward_seconds): errors.append(resource_path + ": invalid time reward")
 			for entry in task.costs + task.rewards + task.cancellation_costs:
 				if entry == null or entry.amount < 0 or entry.type == null or not stock.is_registered(entry.type): errors.append(resource_path + ": invalid task resource")
+			for option in task.unlocks:
+				if option == null or option.id == &"" or not prices.valid(option):
+					errors.append(resource_path + ": invalid building unlock")
+					continue
+				if option is WorkplaceUpgradeOption and (not option.valid() or not stock.is_registered(option.source_type)):
+					errors.append(resource_path + ": invalid resource facility")
+				for cost in option.costs:
+					if cost == null or not stock.is_registered(cost.type): errors.append(resource_path + ": unknown unlock cost resource")
+	prices.free()
 	return errors

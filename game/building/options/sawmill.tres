@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="WorkplaceUpgradeOption" format=3]
+
+[ext_resource type="Script" path="res://game/building/workplace_upgrade_option.gd" id="option"]
+[ext_resource type="Script" path="res://game/resources/resource_amount.gd" id="amount"]
+[ext_resource type="Texture2D" path="res://game/assets/sprites/sawmill.svg" id="icon"]
+[ext_resource type="Resource" path="res://game/resources/dot_treses/stone.tres" id="stone"]
+[ext_resource type="Resource" path="res://game/resources/dot_treses/wood.tres" id="wood"]
+
+[sub_resource type="Resource" id="cost_wood"]
+script = ExtResource("amount")
+type = ExtResource("wood")
+amount = 10
+
+[sub_resource type="Resource" id="cost_stone"]
+script = ExtResource("amount")
+type = ExtResource("stone")
+amount = 5
+
+[resource]
+script = ExtResource("option")
+id = &"sawmill"
+display_name = "ui.building.sawmill"
+icon = ExtResource("icon")
+source_type = ExtResource("wood")
+added_slots = 2
+costs = Array[ExtResource("amount")]([SubResource("cost_wood"), SubResource("cost_stone")])

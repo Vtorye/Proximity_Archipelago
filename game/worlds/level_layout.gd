@@ -49,6 +49,8 @@ static func capture(map: TileMapLayer, buildings: Array[Node]) -> Dictionary:
 		var row: Array = [cell.x, cell.y, kind]
 		if building is Workplace:
 			row.append({"finite_supply": building.finite_supply, "remaining_supply": building.remaining_supply})
+			if building.improvement != null:
+				row[3]["improvement"] = str(building.improvement.id)
 		objects.append(row)
 	return {"version": VERSION, "tiles": tiles, "objects": objects}
 
@@ -87,6 +89,15 @@ static func _restore_tiles(map: TileMapLayer, tiles: Array) -> bool:
 static func _restore_objects(world: World, map: TileMapLayer, objects: Array) -> bool:
 	var originals: Dictionary[String, Building] = prototypes(world)
 	var catalog: Dictionary[String, SceneBuildOption] = {}
+	var improvements: Dictionary[String, WorkplaceUpgradeOption] = {}
+	if world.task_deck != null:
+		for stage in world.task_deck.stages:
+			if stage == null: continue
+			for task in stage.tasks:
+				if task == null: continue
+				for option in task.unlocks:
+					if option is WorkplaceUpgradeOption:
+						improvements[str(option.id)] = option
 	for option in world.build_catalog.options:
 		if option is SceneBuildOption:
 			catalog["build/" + str(option.id)] = option
@@ -117,6 +128,12 @@ static func _restore_objects(world: World, map: TileMapLayer, objects: Array) ->
 			if not building is Workplace or not _restore_supply(building, row[3]):
 				building.free()
 				return false
+			if row[3].has("improvement"):
+				var id: Variant = row[3].improvement
+				if not id is String or not improvements.has(id) or not building.matches_improvement(improvements[id]):
+					building.free()
+					return false
+				building.improvement = improvements[id]
 		building.cell = cell
 		for tile in building.footprint():
 			if not supports_cell(tile) or occupied.has(tile):
@@ -131,7 +148,9 @@ static func _restore_objects(world: World, map: TileMapLayer, objects: Array) ->
 	return true
 
 static func _restore_supply(workplace: Workplace, data: Variant) -> bool:
-	if not data is Dictionary or data.size() != 2 or not data.get("finite_supply") is bool:
+	if not data is Dictionary or data.size() not in [2, 3] or not data.get("finite_supply") is bool:
+		return false
+	if data.size() == 3 and not data.has("improvement"):
 		return false
 	var amount: Variant = data.get("remaining_supply")
 	if not (amount is int or amount is float) or not is_finite(float(amount)) or amount != floorf(float(amount)) or amount < 0 or amount > 1000000:

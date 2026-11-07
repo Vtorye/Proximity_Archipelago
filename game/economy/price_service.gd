@@ -54,7 +54,7 @@ func quote_plan(commands: Array[BuildCommand]) -> Array[ResourceAmount]:
 		if not command.is_removal(): continue
 		var building: Building = command.removed_building
 		if not is_instance_valid(building): return [null]
-		var subject: StringName = building.option.id if building.option != null else &"initial"
+		var subject: StringName = building.improvement.id if building is Workplace and building.improvement != null else (building.option.id if building.option != null else &"initial")
 		for filter in [subject, &""]:
 			var id: String = key(GameEvents.Kind.BUILDING_DEMOLISHED, filter)
 			pending[id] = pending.get(id, 0) + 1
@@ -64,7 +64,7 @@ func quote_plan(commands: Array[BuildCommand]) -> Array[ResourceAmount]:
 		if command.option == null: return [null]
 		result.append_array(quote(command.option, pending))
 		for subject in [command.option.id, &""]:
-			var event: GameEvents.Kind = GameEvents.Kind.BUILDING_BUILT if command.option is SceneBuildOption else GameEvents.Kind.TERRAIN_CHANGED
+			var event: GameEvents.Kind = GameEvents.Kind.TERRAIN_CHANGED if command.option is TileBuildOption else GameEvents.Kind.BUILDING_BUILT
 			var id: String = key(event, subject)
 			pending[id] = pending.get(id, 0) + 1
 	return result

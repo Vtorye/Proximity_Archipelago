@@ -176,6 +176,8 @@ func _configure_building(building: Building) -> void:
 				var resource_id: StringName = product.id if product != null else &""
 				sprite.texture = art.berries if resource_id == &"food" else (art.timber if resource_id == &"wood" else art.stone)
 		if sprite.texture != null:
+			if building is Workplace:
+				building.refresh_appearance(sprite.texture)
 			sprite.scale = Vector2.ONE * route_service.cell_size() / sprite.texture.get_width()
 
 func _on_workplace_produced(type: ResourceType, amount: int) -> void:

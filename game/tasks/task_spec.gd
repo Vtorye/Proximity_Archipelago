@@ -6,3 +6,4 @@ extends Resource
 @export var cancellation_costs: Array[ResourceAmount] = []
 @export var reward_seconds := 20.0
 @export var rewards: Array[ResourceAmount] = []
+@export var unlocks: Array[BuildOption] = []

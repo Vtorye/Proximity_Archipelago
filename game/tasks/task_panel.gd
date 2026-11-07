@@ -40,6 +40,14 @@ func _refresh() -> void:
 		cost.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		cost.custom_minimum_size.x = 160 * AppSettings.ui_scale
 		_content.add_child(cost)
+		if not task.unlocks.is_empty():
+			var names := PackedStringArray()
+			for option in task.unlocks:
+				if not director.world.build_controller.options.has(option): names.append(tr(option.display_name))
+			if not names.is_empty():
+				title.text += " · " + ", ".join(names)
+				title.tooltip_text = tr("ui.task.unlocks") % ", ".join(names)
+				title.add_theme_color_override("font_color", ColonyStyle.ACCENT)
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", 3)
 		for cancel in [false, true]:
