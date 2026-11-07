@@ -54,6 +54,10 @@ func test_finite_sources(test: Node) -> void:
 	var wood: ResourceType = world.inventory.type_by_id(&"wood")
 	var workplace := Workplace.new()
 	workplace.output = wood
+	var sprite := Sprite2D.new()
+	sprite.name = "Sprite"
+	sprite.texture = world.art.timber
+	workplace.add_child(sprite)
 	workplace.output_amount = 2
 	workplace.work_slots = 2
 	workplace.finite_supply = true
@@ -70,9 +74,11 @@ func test_finite_sources(test: Node) -> void:
 	test.expect(workplace.complete_cycle(other, true) and workplace.remaining_supply == 1 and produced == [2], "collecting an existing partial batch cannot consume the deposit twice")
 	workplace.take_output(1)
 	test.expect(workplace.complete_cycle(other, true) and workplace.remaining_supply == 0 and produced == [2, 1], "the final cycle produces only the remaining resource amount")
+	test.expect(not sprite.visible and workplace.pending_output_amount() == 1, "the resource sprite disappears immediately without discarding the final load")
 	workplace.take_output(10)
 	test.expect(not workplace.can_run_recipe() and not workplace.complete_cycle(worker, true) and workplace.remaining_supply == 0, "an exhausted source stops producing without a negative balance")
 	workplace.finite_supply = false
+	test.expect(sprite.visible and sprite.texture == world.art.timber, "switching a source to infinite restores its resource sprite")
 	test.expect(workplace.complete_cycle(worker, true) and workplace.remaining_supply == 0 and workplace.pending_output_amount() == 2, "an infinite source keeps producing without decrementing a supply counter")
 	worker.free()
 	other.free()
@@ -144,7 +150,19 @@ func test_resource_facilities(test: Node) -> void:
 		test.add_child(world)
 		var restored := world.registry.at(Vector2i.ZERO) as Workplace
 		test.expect(restored.improvement == sawmill and restored.remaining_supply == 0 and not restored.can_run_recipe(), "loading a facility preserves exhaustion without regenerating resources")
+		test.expect((restored.get_node("Sprite") as Sprite2D).visible, "an existing facility stays visible after its resource is exhausted")
+		restored.remove_improvement()
+		test.expect(not (restored.get_node("Sprite") as Sprite2D).visible, "demolishing an exhausted facility does not resurrect the raw resource sprite")
 		world.free()
+	var depleted := {"version": LevelLayout.VERSION, "tiles": [[0, 0, 3, 0, 0, 0]], "objects": [[0, 0, "Workplace", {"finite_supply": true, "remaining_supply": 0}]]}
+	world = LevelLayout.create_world(depleted)
+	world.auto_start = false
+	test.add_child(world)
+	var source := world.registry.at(Vector2i.ZERO) as Workplace
+	test.expect(not (source.get_node("Sprite") as Sprite2D).visible, "loading an exhausted source keeps its resource sprite hidden")
+	source.remaining_supply = 1
+	test.expect((source.get_node("Sprite") as Sprite2D).visible, "replenishing a finite source restores its sprite")
+	world.free()
 	test.expect(LevelValidator.validate("res://game/worlds/world_1.tscn").is_empty(), "authored production level passes offline validation")
 	var invalid: World = load("res://game/worlds/world_1.tscn").instantiate()
 	invalid.get_node("Workplace").work_slots = 0

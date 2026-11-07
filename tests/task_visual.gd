@@ -128,5 +128,23 @@ func _check_resource_facilities() -> void:
 	await click_at(cell_point(stone.cell))
 	await key(KEY_SPACE)
 	expect(world.registry.at(stone.cell) == stone and stone.improvement == null and stone.remaining_supply == 0, "demolishing the quarry preserves its exhausted source")
+	expect(not (stone.get_node("Sprite") as Sprite2D).visible, "removing the facility leaves no raw resource image on an exhausted tile")
 	await capture("07d-facility-demolished-source-kept", 30)
+	stone.remaining_supply = 1
+	expect((stone.get_node("Sprite") as Sprite2D).visible, "a replenished resource is visible before its last harvest")
+	screen.hud.navigation_panel.refresh()
+	await capture("07e-last-visible-resource", 30)
+	worker._release_work()
+	worker._clear_cargo()
+	stone.take_output(1000000)
+	worker.global_position = world.route_service.cell_to_world(stone.cell)
+	worker.needs.eat()
+	worker._decide()
+	for frame in range(150):
+		if stone.remaining_supply == 0: break
+		worker._physics_process(1.0 / 30.0)
+		await frames(1)
+	expect(stone.remaining_supply == 0 and not (stone.get_node("Sprite") as Sprite2D).visible and WorldInventory.cargo_size(worker.cargo) == 1, "the last harvest removes the resource image and leaves its cargo with the worker")
+	screen.hud.navigation_panel.refresh()
+	await capture("07f-depleted-resource-disappeared", 30)
 	world.units.process_mode = Node.PROCESS_MODE_INHERIT

@@ -15,8 +15,14 @@ signal worker_left(worker: Node2D)
 @export var output: ResourceType
 @export var output_amount: int = 1
 ## Finite sources count output units, not work cycles. Recipes use their input inventory.
-@export var finite_supply := false
-@export_range(0, 1000000) var remaining_supply := 100
+@export var finite_supply := false:
+	set(value):
+		finite_supply = value
+		refresh_appearance()
+@export_range(0, 1000000) var remaining_supply := 100:
+	set(value):
+		remaining_supply = value
+		refresh_appearance()
 @export var improvement: WorkplaceUpgradeOption
 var _source_texture: Texture2D
 var _improvement_slots := 0
@@ -128,6 +134,7 @@ func refresh_appearance(source: Texture2D = null) -> void:
 	elif _source_texture == null:
 		_source_texture = sprite.texture
 	sprite.texture = improvement.icon if improvement != null else _source_texture
+	sprite.visible = improvement != null or not finite_supply or remaining_supply > 0
 
 func display_title() -> String:
 	return improvement.display_name if improvement != null else super.display_title()
@@ -136,7 +143,7 @@ func _on_setup() -> bool:
 	if improvement != null:
 		_improvement_slots = improvement.added_slots
 		work_slots += _improvement_slots
-		refresh_appearance()
+	refresh_appearance()
 	return true
 
 
