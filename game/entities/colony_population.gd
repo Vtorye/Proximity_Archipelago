@@ -11,6 +11,7 @@ var planner: TripPlanner
 var logistics: ColonyLogistics
 var recruitment: RecruitmentCatalog
 var _recruiting := false
+var _removing := false
 
 func configure(root: Node2D, routes: RouteService, policy: TripPlanner, registry: BuildingRegistry, storage: ColonyLogistics) -> void:
 	units = root
@@ -40,7 +41,7 @@ func _on_building_added(building: Building) -> void:
 
 func can_recruit(house: House, role: AntAgent.Role) -> bool:
 	return (
-		not _recruiting and recruitment != null and logistics.owns(house)
+		not _recruiting and not _removing and recruitment != null and logistics.owns(house)
 		and role in [AntAgent.Role.WORKER, AntAgent.Role.CARRIER]
 		and house.has_space() and navigation.walkable(planner.accessible_entry(house))
 		and planner.inventory.can_afford_all(recruitment.price(role), true)
@@ -64,6 +65,18 @@ func recruit(house: House, role: AntAgent.Role) -> bool:
 	planner.inventory.end_update()
 	changed.emit()
 	return true
+
+func kill_resident(house: House, role: AntAgent.Role) -> bool:
+	if _recruiting or _removing or not logistics.owns(house):
+		return false
+	for ant: AntAgent in house.residents:
+		if ant.home == house and ant.role == role and ant.status != AntAgent.Status.DEAD and ant.get_parent() == units:
+			_removing = true
+			ant.die(AntAgent.DeathCause.PLAYER)
+			_removing = false
+			changed.emit()
+			return true
+	return false
 
 func _create_resident(house: House, role: AntAgent.Role) -> AntAgent:
 	if house.human_scene == null:

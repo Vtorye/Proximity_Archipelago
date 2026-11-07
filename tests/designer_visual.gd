@@ -134,13 +134,20 @@ func _check_storage_and_hover() -> void:
 	await click(menu.controls[&"buy_worker"])
 	await click(menu.controls[&"buy_carrier"])
 	expect(main.residents.size() == 7 and screen.world.inventory.quantity(food) == before - 13 and menu._population.text.contains("7 / 20"), "recruiting both roles charges the configured prices and updates the population")
+	await click(menu.controls[&"kill_worker"])
+	await click(menu.controls[&"kill_carrier"])
+	expect(main.residents.size() == 5 and menu._role_labels[AntAgent.Role.WORKER].text == "Рабочие · 4" and menu._role_labels[AntAgent.Role.CARRIER].text == "Носильщики · 1", "kill buttons remove one selected role and refresh its count")
 	await capture("02g-main-nest-recruitment")
+	await click(menu.controls[&"kill_carrier"])
+	expect(menu.controls[&"kill_carrier"].disabled, "the kill button is disabled when this nest has no carriers")
+	await click(menu.controls[&"buy_carrier"])
+	expect(main.residents.size() == 5 and not menu.controls[&"kill_carrier"].disabled, "recruiting reuses the freed resident slot")
 	var prior_scale: float = AppSettings.ui_scale
 	for scale in [AppSettings.MIN_UI_SCALE, AppSettings.MAX_UI_SCALE]:
 		AppSettings.ui_scale = scale
 		AppSettings.apply()
 		await frames(3)
-		expect(get_viewport().get_visible_rect().encloses(menu.controls[&"close"].get_global_rect()) and get_viewport().get_visible_rect().encloses(menu.controls[&"buy_carrier"].get_global_rect()), "the nest window fits the supported UI scale")
+		expect(get_viewport().get_visible_rect().encloses(menu.controls[&"close"].get_global_rect()) and get_viewport().get_visible_rect().encloses(menu.controls[&"kill_carrier"].get_global_rect()), "the nest window fits the supported UI scale")
 	AppSettings.ui_scale = prior_scale
 	AppSettings.apply()
 	await key(KEY_ESCAPE)

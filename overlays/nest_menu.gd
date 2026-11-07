@@ -93,6 +93,12 @@ func _ready() -> void:
 		buy.pressed.connect(_recruit.bind(role))
 		line.add_child(buy)
 		controls[&"buy_worker" if role == AntAgent.Role.WORKER else &"buy_carrier"] = buy
+		var kill: Button = ColonyStyle.button("ui.nest.kill")
+		kill.add_theme_color_override("font_color", ColonyStyle.DANGER)
+		kill.tooltip_text = "ui.nest.kill_hint"
+		kill.pressed.connect(_kill.bind(role))
+		line.add_child(kill)
+		controls[&"kill_worker" if role == AntAgent.Role.WORKER else &"kill_carrier"] = kill
 	_residents_tab.add_child(ColonyStyle.label("ui.nest.assigned", 4, ColonyStyle.MUTED))
 	world.inventory.changed.connect(refresh)
 	world.population.changed.connect(refresh)
@@ -108,6 +114,10 @@ func _show_tab(key: StringName) -> void:
 
 func _recruit(role: AntAgent.Role) -> void:
 	world.population.recruit(house, role)
+	refresh()
+
+func _kill(role: AntAgent.Role) -> void:
+	world.population.kill_resident(house, role)
 	refresh()
 
 func refresh() -> void:
@@ -131,6 +141,7 @@ func refresh() -> void:
 	for role in counts:
 		var title: String = tr("ui.nest.worker" if role == AntAgent.Role.WORKER else "ui.nest.carrier")
 		_role_labels[role].text = "%s · %d" % [title, counts[role]]
+		controls[&"kill_worker" if role == AntAgent.Role.WORKER else &"kill_carrier"].disabled = counts[role] == 0
 		var buy: Button = controls[&"buy_worker" if role == AntAgent.Role.WORKER else &"buy_carrier"]
 		buy.disabled = not world.population.can_recruit(house, role)
 		_purchase_labels[role].text = BuildCostText.format(world.recruitment.price(role)) if world.recruitment != null else "—"

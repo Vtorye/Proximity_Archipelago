@@ -275,12 +275,33 @@ func test_recruitment(test: Node) -> void:
 	before = stock.quantity(food)
 	test.expect(not population.recruit(main, AntAgent.Role.WORKER) and stock.quantity(food) == before, "a full main nest rejects a purchase without spending")
 	var dead := main.residents[0] as AntAgent
-	dead.die(AntAgent.DeathCause.STARVATION)
-	test.expect(population.recruit(main, AntAgent.Role.CARRIER) and main.residents.size() == 20, "a resident death frees one slot for recruitment")
+	dead._decide()
+	var job: Workplace = dead.current_workplace
+	var ticket: StockReservation = dead._meal
+	var death_causes: Array[int] = []
+	dead.died.connect(func(_ant: Node2D, cause: int): death_causes.append(cause))
+	before = stock.quantity(food)
+	test.expect(population.kill_resident(main, AntAgent.Role.WORKER) and death_causes == [AntAgent.DeathCause.PLAYER], "player can kill one assigned worker")
+	test.expect(main.residents.size() == 19 and not ticket.active and job != null and not job.has_worker(dead) and stock.quantity(food) == before, "killing releases the resident slot, work slot, and food reservation without a refund")
+	test.expect(population.recruit(main, AntAgent.Role.CARRIER) and main.residents.size() == 20, "a killed resident frees one slot for recruitment")
 	var recruited := main.residents.back() as AntAgent
 	test.expect(recruited.home == main and recruited.role == AntAgent.Role.CARRIER and recruited.speed == 36.0 and recruited.carry_capacity == 6, "recruited carriers belong to the selected nest and retain their role parameters")
 	var nest: BuildOption = load("res://game/building/options/house.tres")
 	test.expect(world.build_controller.try_build(nest, Vector2i(30, 29)), "recruitment fixture creates a small nest")
 	var local := world.registry.at(Vector2i(30, 29)) as House
 	test.expect(local.resident_limit() == 5 and not population.recruit(local, AntAgent.Role.WORKER), "small nests preserve their five-resident capacity")
+	var wood: ResourceType = stock.type_by_id(&"wood")
+	stock.deposit(local, [test.entry(wood, 6)])
+	local.dispatch_threshold = 1
+	var carrier: AntAgent
+	for resident: AntAgent in main.residents:
+		if resident.role == AntAgent.Role.CARRIER:
+			carrier = resident
+			break
+	carrier._decide()
+	_step_until(carrier, func() -> bool: return carrier._shipment)
+	var total: int = stock.quantity(wood)
+	test.expect(carrier._shipment and population.kill_resident(main, AntAgent.Role.CARRIER), "a carrier can be killed while hauling a shipment")
+	test.expect(stock.quantity(wood) == total - 6 and not main.residents.has(carrier), "killing a carrier removes its cargo from totals exactly once")
+	test.expect(population.kill_resident(local, AntAgent.Role.CARRIER) and not population.kill_resident(local, AntAgent.Role.CARRIER), "empty role removal fails without affecting another nest")
 	world.free()

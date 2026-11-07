@@ -142,3 +142,5 @@ ui.nest.assigned,Assigned residents include ants currently away,Учтены в�
 ui.nest.full,No free resident slots,Нет свободных мест
 ui.nest.unaffordable,Insufficient resources in the main nest,В главном муравейнике не хватает ресурсов
 ui.nest.from_main,Paid from the main nest inventory,Оплата из главного муравейника
+ui.nest.kill,Kill,Убить
+ui.nest.kill_hint,Kill one assigned ant of this type. Its cargo is lost.,Убить одного жителя этого типа. Его груз будет потерян.

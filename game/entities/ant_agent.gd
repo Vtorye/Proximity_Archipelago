@@ -3,7 +3,7 @@ extends Node2D
 ## Executes plans; needs, route execution, and assignment policy are separate objects.
 
 enum Role { WORKER, CARRIER }
-enum DeathCause { STARVATION, DEMOLISHED, OTHER }
+enum DeathCause { STARVATION, DEMOLISHED, OTHER, PLAYER }
 enum Status { HOME, WALKING, WORKING, EATING, WAITING_FOR_FOOD, DEAD, WANDERING }
 signal work_completed(human: Node2D, workplace: Node2D)
 signal died(human: Node2D, cause: DeathCause)
