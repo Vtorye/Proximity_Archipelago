@@ -3,6 +3,7 @@ extends Building
 
 signal produced(type: ResourceType, amount: int)
 signal load_changed
+signal supply_changed
 
 @export var recipe: WorkRecipe
 var inventory: WorldInventory
@@ -13,6 +14,9 @@ signal worker_left(worker: Node2D)
 ## Resource produced at the end of each work cycle. Leave empty for no output.
 @export var output: ResourceType
 @export var output_amount: int = 1
+## Finite sources count output units, not work cycles. Recipes use their input inventory.
+@export var finite_supply := false
+@export_range(0, 1000000) var remaining_supply := 100
 var _pending_output: Array[ResourceAmount] = []
 var _workers: Array[Node2D] = []
 var _working: Array[Node2D] = []
@@ -111,12 +115,19 @@ func complete_cycle(human: Node2D, keep_output: bool = false) -> bool:
 	return true
 
 func _produce(type: ResourceType, amount: int, keep_output: bool) -> void:
+	if finite_supply:
+		amount = mini(amount, remaining_supply)
+		remaining_supply -= amount
+		if amount == 0:
+			return
 	if keep_output and inventory != null and inventory.is_registered(type):
 		var item := ResourceAmount.new()
 		item.type = type
 		item.amount = amount
 		_pending_output.append(item)
 	produced.emit(type, amount)
+	if finite_supply:
+		supply_changed.emit()
 
 func pending_output_amount() -> int:
 	return WorldInventory.cargo_size(_pending_output)
@@ -141,10 +152,13 @@ func validate_definition() -> Array[String]:
 	if recipe != null and not recipe.valid(): errors.append("Workplace has an invalid recipe")
 	if work_slots < 1 or output_amount < 1:
 		errors.append("Workplace needs positive slots and output")
+	if remaining_supply < 0 or finite_supply and recipe != null:
+		errors.append("Finite supply needs a nonnegative amount and a raw resource source")
 	return errors
 
 func can_run_recipe() -> bool:
 	if not _pending_output.is_empty(): return true
+	if finite_supply and remaining_supply <= 0: return false
 	if recipe == null: return true
 	if inventory == null or not recipe.valid(): return false
 	for entry in recipe.outputs:

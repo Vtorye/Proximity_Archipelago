@@ -144,3 +144,7 @@ ui.nest.from_main,Paid from base nest inventories,Оплата из базовы
 ui.nest.kill,Kill,Убить
 ui.nest.kill_hint,Kill one assigned ant of this type. Its cargo is lost.,Убить одного жителя этого типа. Его груз будет потерян.
 ui.nest.dispatch_hint,Carriers collect available resources at any fill level.,Носильщики забирают доступные ресурсы при любом заполнении.
+ui.source.remaining,Supply: %d,Запас: %d
+ui.source.infinite,Supply: unlimited,Запас: бесконечный
+ui.source.finite,Finite source,Конечный источник
+ui.source.amount,Supply,Запас

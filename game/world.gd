@@ -154,6 +154,7 @@ func stop() -> void:
 func _subscribe_workplace(node: Node) -> void:
 	if node is Workplace and not node.produced.is_connected(_on_workplace_produced):
 		node.produced.connect(_on_workplace_produced)
+		node.supply_changed.connect(planner._queue_workplace_refresh)
 
 func _configure_building(building: Building) -> void:
 	if building is Workplace: building.inventory = inventory

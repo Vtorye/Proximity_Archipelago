@@ -16,6 +16,10 @@ var _dirty := false
 var _discard_action := ""
 var _drag_button := MOUSE_BUTTON_NONE
 var _pending_move: Building
+var _selected_source: Workplace
+var _source_controls: HBoxContainer
+var _finite: CheckButton
+var _supply: SpinBox
 var _active := false
 
 func _ready() -> void:
@@ -87,6 +91,28 @@ func _make_ui() -> void:
 	_status = ColonyStyle.label("", 8)
 	_status.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	rows.add_child(_status)
+	_source_controls = HBoxContainer.new()
+	rows.add_child(_source_controls)
+	_finite = CheckButton.new()
+	_finite.text = "ui.source.finite"
+	_source_controls.add_child(_finite)
+	_source_controls.add_child(ColonyStyle.label("ui.source.amount", 8))
+	_supply = SpinBox.new()
+	_supply.min_value = 0
+	_supply.max_value = 1000000
+	_supply.step = 1
+	_supply.custom_minimum_size.x = 100
+	_source_controls.add_child(_supply)
+	_finite.toggled.connect(func(enabled: bool):
+		if is_instance_valid(_selected_source):
+			_selected_source.finite_supply = enabled
+			_supply.editable = enabled
+			_mark_dirty())
+	_supply.value_changed.connect(func(value: float):
+		if is_instance_valid(_selected_source):
+			_selected_source.remaining_supply = int(value)
+			_mark_dirty())
+	_source_controls.hide()
 
 	var bottom := PanelContainer.new()
 	bottom.add_theme_stylebox_override("panel", ColonyStyle.dialog_box())
@@ -135,6 +161,7 @@ func _add_brush(label: String, brush: Variant) -> void:
 	_brushes.append(brush)
 
 func _show_world(world: World) -> void:
+	_select_source(null)
 	if is_instance_valid(_map):
 		_map.free()
 	for child in _objects.get_children():
@@ -258,7 +285,7 @@ func _play() -> void:
 	Router.goto(&"match", layout)
 
 func _process(delta: float) -> void:
-	if not _active or get_viewport().gui_get_focus_owner() == _title or _saved.get_popup().visible or _brush.get_popup().visible:
+	if not _active or get_viewport().gui_get_focus_owner() is LineEdit or _saved.get_popup().visible or _brush.get_popup().visible:
 		return
 	var direction: Vector2 = WorldCamera.keyboard_direction()
 	if not direction.is_zero_approx():
@@ -316,6 +343,7 @@ func _paint(cell: Vector2i) -> void:
 				_pending_move = null
 		else:
 			_pending_move = _object_at(cell)
+			_select_source(_pending_move as Workplace)
 			if _pending_move != null:
 				_status.text = "ui.map.move_target"
 	else:
@@ -343,6 +371,8 @@ func _place(building: Building, cell: Vector2i) -> bool:
 func _erase(cell: Vector2i) -> void:
 	var building: Building = _object_at(cell)
 	if building != null:
+		if building == _selected_source:
+			_select_source(null)
 		if _pending_move == building:
 			_pending_move = null
 		building.free()
@@ -351,6 +381,15 @@ func _erase(cell: Vector2i) -> void:
 	else:
 		return
 	_mark_dirty()
+
+func _select_source(workplace: Workplace) -> void:
+	_selected_source = workplace
+	_source_controls.visible = workplace != null and workplace.recipe == null and workplace.output != null
+	if not _source_controls.visible:
+		return
+	_finite.set_pressed_no_signal(workplace.finite_supply)
+	_supply.set_value_no_signal(workplace.remaining_supply)
+	_supply.editable = workplace.finite_supply
 
 func _object_at(cell: Vector2i, ignored: Building = null) -> Building:
 	for node in _objects.get_children():

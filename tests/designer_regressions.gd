@@ -1,5 +1,6 @@
 extends RefCounted
 func run(test: Node) -> void:
+	test_finite_sources(test)
 	var world: World = test.make_world()
 	var wood: ResourceType = world.inventory.type_by_id(&"wood")
 	var stone: ResourceType = world.inventory.type_by_id(&"stone")
@@ -46,6 +47,48 @@ func run(test: Node) -> void:
 	workplace.free()
 	service.free()
 	world.free()
+
+func test_finite_sources(test: Node) -> void:
+	var world: World = test.make_world()
+	var wood: ResourceType = world.inventory.type_by_id(&"wood")
+	var workplace := Workplace.new()
+	workplace.output = wood
+	workplace.output_amount = 2
+	workplace.work_slots = 2
+	workplace.finite_supply = true
+	workplace.remaining_supply = 3
+	workplace.inventory = world.inventory
+	var worker := Node2D.new()
+	var other := Node2D.new()
+	workplace.reserve_worker(worker)
+	workplace.reserve_worker(other)
+	var produced: Array[int] = []
+	workplace.produced.connect(func(_type: ResourceType, count: int): produced.append(count))
+	test.expect(workplace.complete_cycle(worker, true) and workplace.remaining_supply == 1 and workplace.pending_output_amount() == 2, "finite harvesting consumes actual output units and keeps physical cargo pending")
+	workplace.take_output(1)
+	test.expect(workplace.complete_cycle(other, true) and workplace.remaining_supply == 1 and produced == [2], "collecting an existing partial batch cannot consume the deposit twice")
+	workplace.take_output(1)
+	test.expect(workplace.complete_cycle(other, true) and workplace.remaining_supply == 0 and produced == [2, 1], "the final cycle produces only the remaining resource amount")
+	workplace.take_output(10)
+	test.expect(not workplace.can_run_recipe() and not workplace.complete_cycle(worker, true) and workplace.remaining_supply == 0, "an exhausted source stops producing without a negative balance")
+	workplace.finite_supply = false
+	test.expect(workplace.complete_cycle(worker, true) and workplace.remaining_supply == 0 and workplace.pending_output_amount() == 2, "an infinite source keeps producing without decrementing a supply counter")
+	worker.free()
+	other.free()
+	workplace.free()
+	world.free()
+	var layout := {"version": LevelLayout.VERSION, "tiles": [[0, 0, 3, 0, 0, 0]], "objects": [[0, 0, "Workplace", {"finite_supply": true, "remaining_supply": 7}]]}
+	world = LevelLayout.create_world(layout)
+	test.expect(world != null, "map files can restore a finite resource source")
+	if world != null:
+		var buildings: Array[Building] = []
+		world._collect_buildings(world, buildings)
+		test.expect((buildings[0] as Workplace).finite_supply and (buildings[0] as Workplace).remaining_supply == 7, "a source retains its configured finite amount")
+		world.free()
+	layout.objects[0][3].remaining_supply = -1
+	test.expect(LevelLayout.create_world(layout) == null, "map import rejects negative resource deposits")
+	layout.objects[0][3].remaining_supply = 1.5
+	test.expect(LevelLayout.create_world(layout) == null, "map import rejects fractional resource deposits")
 	test.expect(LevelValidator.validate("res://game/worlds/world_1.tscn").is_empty(), "authored production level passes offline validation")
 	var invalid: World = load("res://game/worlds/world_1.tscn").instantiate()
 	invalid.get_node("Workplace").work_slots = 0

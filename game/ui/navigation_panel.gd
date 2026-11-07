@@ -72,6 +72,8 @@ func refresh() -> void:
 	if building is Workplace:
 		var workload: String = tr("ui.hud.workload") % [building.working_count(), building.incoming_count(), building.work_slots]
 		_detail.text = "%s\n%s" % [tr(building.display_title()), workload]
+		if building.recipe == null and building.output != null:
+			_detail.text += "\n" + (tr("ui.source.remaining") % building.remaining_supply if building.finite_supply else tr("ui.source.infinite"))
 		if show_routes:
 			_detail.text += "\n" + overlay.explanation(building)
 	elif building is House:

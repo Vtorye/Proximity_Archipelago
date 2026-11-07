@@ -46,7 +46,10 @@ static func capture(map: TileMapLayer, buildings: Array[Node]) -> Dictionary:
 		var kind: String = building.get_meta(&"layout_kind")
 		if building is House and building.is_main_nest:
 			kind = "build/base_nest"
-		objects.append([cell.x, cell.y, kind])
+		var row: Array = [cell.x, cell.y, kind]
+		if building is Workplace:
+			row.append({"finite_supply": building.finite_supply, "remaining_supply": building.remaining_supply})
+		objects.append(row)
 	return {"version": VERSION, "tiles": tiles, "objects": objects}
 
 static func create_world(layout: Dictionary) -> World:
@@ -89,7 +92,7 @@ static func _restore_objects(world: World, map: TileMapLayer, objects: Array) ->
 			catalog["build/" + str(option.id)] = option
 	var occupied: Dictionary[Vector2i, bool] = {}
 	for row in objects:
-		if not row is Array or row.size() != 3 or not _integers(row, 2) or not row[2] is String or (not originals.has(row[2]) and not catalog.has(row[2])):
+		if not row is Array or row.size() not in [3, 4] or not _integers(row, 2) or not row[2] is String or (not originals.has(row[2]) and not catalog.has(row[2])):
 			return false
 		var cell := Vector2i(int(row[0]), int(row[1]))
 		if not supports_cell(cell):
@@ -110,6 +113,10 @@ static func _restore_objects(world: World, map: TileMapLayer, objects: Array) ->
 			if building is House:
 				building.is_main_nest = false
 				building.option = load("res://game/building/options/house.tres")
+		if row.size() == 4:
+			if not building is Workplace or not _restore_supply(building, row[3]):
+				building.free()
+				return false
 		building.cell = cell
 		for tile in building.footprint():
 			if not supports_cell(tile) or occupied.has(tile):
@@ -121,6 +128,16 @@ static func _restore_objects(world: World, map: TileMapLayer, objects: Array) ->
 		world.add_child(building, true)
 	for building in originals.values():
 		building.free()
+	return true
+
+static func _restore_supply(workplace: Workplace, data: Variant) -> bool:
+	if not data is Dictionary or data.size() != 2 or not data.get("finite_supply") is bool:
+		return false
+	var amount: Variant = data.get("remaining_supply")
+	if not (amount is int or amount is float) or not is_finite(float(amount)) or amount != floorf(float(amount)) or amount < 0 or amount > 1000000:
+		return false
+	workplace.finite_supply = data.finite_supply
+	workplace.remaining_supply = int(amount)
 	return true
 
 static func _integers(row: Array, count: int) -> bool:
