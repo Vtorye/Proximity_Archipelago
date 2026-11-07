@@ -8,6 +8,7 @@ var definitions: Array[BuildOption] = []
 var _stamps: Dictionary[String, String] = {}
 var _elapsed := 0.0
 var errors: Array[String] = []
+var _orders: Dictionary[String, int] = {}
 
 func _ready() -> void:
 	_process(1.0)
@@ -32,7 +33,7 @@ func quote(option: BuildOption, pending: Dictionary[String, int] = {}) -> Array[
 	for rule in option.price_rules:
 		if rule == null or rule.value < 0 or not is_finite(rule.value): return [null]
 		var id: String = key(rule.event, rule.subject)
-		var count: int = events.count(rule.event, rule.subject) + pending.get(id, 0)
+		var count: int = events.count(rule.event, rule.subject) + _orders.get(id, 0) + pending.get(id, 0)
 		for type in totals:
 			if rule.resource == null or rule.resource.id == type:
 				totals[type] = totals[type] * pow(rule.value, count) if rule.operation == 0 else totals[type] + rule.value * count
@@ -47,27 +48,45 @@ func quote(option: BuildOption, pending: Dictionary[String, int] = {}) -> Array[
 
 func quote_plan(commands: Array[BuildCommand]) -> Array[ResourceAmount]:
 	var result: Array[ResourceAmount] = []
+	for entries: Array in quote_commands(commands).values(): result.append_array(entries)
+	return result
+
+## A single sequential quote funds each individual site as well as the complete plan.
+func quote_commands(commands: Array[BuildCommand]) -> Dictionary:
+	var result: Dictionary = {}
 	var pending: Dictionary[String, int] = {}
 	# Demolition commits before construction, regardless of brush insertion order.
 	for command in commands:
-		if command == null: return [null]
+		if command == null: return {null: [null]}
 		if not command.is_removal(): continue
 		var building: Building = command.removed_building
-		if not is_instance_valid(building): return [null]
+		if not is_instance_valid(building): return {null: [null]}
+		if building is ConstructionSite:
+			var reserved_event: GameEvents.Kind = GameEvents.Kind.TERRAIN_CHANGED if building.option is TileBuildOption else GameEvents.Kind.BUILDING_BUILT
+			for filter in [building.option.id, &""]:
+				var reserved_key: String = key(reserved_event, filter)
+				pending[reserved_key] = pending.get(reserved_key, 0) - 1
+			continue
 		var subject: StringName = building.improvement.id if building is Workplace and building.improvement != null else (building.option.id if building.option != null else &"initial")
 		for filter in [subject, &""]:
 			var id: String = key(GameEvents.Kind.BUILDING_DEMOLISHED, filter)
 			pending[id] = pending.get(id, 0) + 1
 	for command in commands:
-		if command == null: return [null]
+		if command == null: return {null: [null]}
 		if command.is_removal(): continue
-		if command.option == null: return [null]
-		result.append_array(quote(command.option, pending))
+		if command.option == null: return {null: [null]}
+		result[command] = quote(command.option, pending)
 		for subject in [command.option.id, &""]:
 			var event: GameEvents.Kind = GameEvents.Kind.TERRAIN_CHANGED if command.option is TileBuildOption else GameEvents.Kind.BUILDING_BUILT
 			var id: String = key(event, subject)
 			pending[id] = pending.get(id, 0) + 1
 	return result
+
+func queue_order(option: BuildOption, delta: int) -> void:
+	var event: GameEvents.Kind = GameEvents.Kind.TERRAIN_CHANGED if option is TileBuildOption else GameEvents.Kind.BUILDING_BUILT
+	for subject in [option.id, &""]:
+		var id: String = key(event, subject)
+		_orders[id] = maxi(0, _orders.get(id, 0) + delta)
 
 func _process(delta: float) -> void:
 	_elapsed += delta

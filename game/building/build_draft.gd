@@ -136,7 +136,7 @@ func footprint(command: BuildCommand) -> Array[Vector2i]:
 	return command.removed_building.footprint() if command.is_removal() else controller.footprint_at(command.option, command.cell)
 
 func demolition_check(cell: Vector2i) -> PlacementCheck:
-	var building: Building = controller.registry.at(cell)
+	var building: Building = controller.demolition_target(cell)
 	if building != null:
 		if removals().has(building): return PlacementCheck.result(PlacementCheck.Code.ALREADY_PLACED)
 		return controller.demolition_check(cell)
@@ -146,7 +146,7 @@ func demolition_check(cell: Vector2i) -> PlacementCheck:
 
 func demolish(cell: Vector2i) -> bool:
 	# Repeated brush visits must not peel layers or toggle demolition marks.
-	var building: Building = controller.registry.at(cell)
+	var building: Building = controller.demolition_target(cell)
 	if building != null and removals().has(building): return true
 	last_result = demolition_check(cell)
 	if not last_result.allowed(): return false

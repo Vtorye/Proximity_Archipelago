@@ -4,7 +4,7 @@ extends Node2D
 
 enum Role { WORKER, CARRIER }
 enum DeathCause { STARVATION, DEMOLISHED, OTHER, PLAYER }
-enum Status { HOME, WALKING, WORKING, EATING, WAITING_FOR_FOOD, DEAD, WANDERING }
+enum Status { HOME, WALKING, WORKING, EATING, WAITING_FOR_FOOD, DEAD, WANDERING, CONSTRUCTING }
 signal work_completed(human: Node2D, workplace: Node2D)
 signal died(human: Node2D, cause: DeathCause)
 signal status_changed(status: Status)
@@ -14,6 +14,7 @@ signal waiting_changed
 @export var speed := 24.0
 @export var work_time := 3.0
 @export_range(1, 100) var carry_capacity := 2
+var construction: AntConstruction
 var role: Role = Role.WORKER
 var home: House
 var planner: TripPlanner
@@ -73,6 +74,7 @@ func _is_foodless() -> bool:
 	return not planner.food_within_range(route_service.world_to_cell(global_position), speed)
 
 func _exit_tree() -> void:
+	if construction != null: construction.release()
 	_release_work()
 	if planner != null and is_instance_valid(planner.inventory):
 		_discard_cargo()
@@ -86,7 +88,7 @@ func _physics_process(delta: float) -> void:
 	var rate: float = AntNeeds.REST_RATE
 	if status == Status.WALKING:
 		rate = AntNeeds.WALK_RATE
-	elif status == Status.WORKING:
+	elif status in [Status.WORKING, Status.CONSTRUCTING]:
 		rate = AntNeeds.WORK_RATE
 	elif status == Status.EATING:
 		rate = AntNeeds.EAT_RATE
@@ -130,13 +132,15 @@ func _physics_process(delta: float) -> void:
 				else:
 					_release_work()
 					_go_home()
+		Status.CONSTRUCTING:
+			construction.tick(delta)
 		Status.EATING:
 			_timer -= delta
 			if _timer <= 0.0:
 				if planner.inventory.consume(_meal):
 					needs.eat()
 				_meal = null
-				if cargo.is_empty():
+				if cargo.is_empty() and not (construction != null and construction.has_cargo()):
 					_carrying = false
 					_go_home()
 				else:
@@ -155,11 +159,15 @@ func _physics_process(delta: float) -> void:
 	queue_redraw()
 
 func _decide() -> void:
+	if construction != null and construction.has_cargo():
+		_deliver()
+		return
 	if not cargo.is_empty():
 		_deliver()
 		return
 	var foodless: bool = _is_foodless()
 	refresh_meal_reservation()
+	if construction != null and construction.decide(): return
 	if role == Role.CARRIER:
 		_decide_pickup(foodless)
 		return
@@ -239,6 +247,11 @@ func _load_pickup() -> void:
 		_deliver()
 
 func _deliver() -> void:
+	if construction != null and construction.has_cargo():
+		if not construction.resume():
+			_set_status(Status.WAITING_FOR_FOOD)
+			_timer = 1.0
+		return
 	_carrying = true
 	var cell: Vector2i = route_service.world_to_cell(global_position)
 	var count: int = WorldInventory.cargo_size(cargo)
@@ -318,7 +331,7 @@ func _can_recover() -> bool:
 	return _meal != null and _meal.active
 
 func _seek_food() -> void:
-	if cargo.is_empty() and _is_foodless() and is_instance_valid(home):
+	if cargo.is_empty() and not (construction != null and construction.has_cargo()) and _is_foodless() and is_instance_valid(home):
 		_decide()
 		return
 	_waiting_for_work = false
@@ -354,6 +367,9 @@ func _walk(route: Route, destination: StringName) -> void:
 	_set_status(Status.WALKING)
 
 func _arrive() -> void:
+	if _destination in [&"site_pickup", &"site_delivery", &"site_assembly"]:
+		construction.arrive(_destination)
+		return
 	match _destination:
 		&"work":
 			var cell: Vector2i = route_service.world_to_cell(global_position)
@@ -407,6 +423,12 @@ func _reconsider_route() -> void:
 	if status == Status.DEAD:
 		return
 	var cell: Vector2i = route_service.world_to_cell(global_position)
+	if construction != null and construction.job != null:
+		if geometry_changed and status != Status.EATING:
+			if not construction.resume():
+				construction.release()
+				_decide()
+		return
 	if status == Status.WORKING:
 		if geometry_changed and _plan != null:
 			if _plan.foodless:
@@ -455,6 +477,7 @@ func die(cause: DeathCause = DeathCause.OTHER) -> void:
 	if status == Status.DEAD:
 		return
 	_set_status(Status.DEAD)
+	if construction != null: construction.release()
 	_release_work()
 	_discard_cargo()
 	planner.inventory.release(_meal)

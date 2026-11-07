@@ -1,0 +1,65 @@
+class_name ConstructionSite
+extends Building
+## A non-operational reservation. Materials and assembly progress belong to this site.
+var service: ConstructionService
+var candidate: Building
+var crates: Dictionary = {}
+var delivered: Dictionary[StringName, int] = {}
+var transit: Dictionary[StringName, int] = {}
+var required: Array[ResourceAmount] = []
+var progress := 0.0
+var builder: AntAgent
+var active := true
+var _field: NavigationField
+var _revision := -1
+
+func entry_cells() -> Array[Vector2i]:
+	if option is SceneBuildOption and option.blocks_movement:
+		return super.entry_cells()
+	return [cell]
+
+func material_count() -> int:
+	var count := 0
+	for amount: int in delivered.values(): count += amount
+	return count
+
+func supplied() -> bool:
+	for item in required:
+		if delivered.get(item.type.id, 0) < item.amount: return false
+	return true
+
+func route(from_cell: Vector2i) -> Route:
+	var navigation: RouteService = service.controller.route_service
+	if _revision != navigation.revision:
+		_field = navigation.reverse_field(entry_cells())
+		_revision = navigation.revision
+	return navigation.make_route(_field.path(from_cell))
+
+func display_title() -> String:
+	return TranslationServer.translate("ui.site.title") % TranslationServer.translate(option.display_name)
+
+func details() -> String:
+	var lines := PackedStringArray([display_title()])
+	for item in required:
+		lines.append("%s: %d / %d" % [TranslationServer.translate(item.type.display_name), delivered.get(item.type.id, 0), item.amount])
+	lines.append(TranslationServer.translate("ui.site.assembly") % roundi(progress / option.construction_seconds * 100) if supplied() else TranslationServer.translate("ui.site.delivery"))
+	return "\n".join(lines)
+
+func _on_demolish() -> void:
+	if active: service.cancel(self)
+
+func _exit_tree() -> void:
+	if is_instance_valid(candidate): candidate.free()
+
+func _draw() -> void:
+	if service == null: return
+	var size: float = service.controller.route_service.cell_size()
+	var rect := Rect2(Vector2.ONE * -size * 0.5, Vector2.ONE * size)
+	var icon: Texture2D = option.icon if option.icon != null else BuildChoiceButton.default_icon(option, service.art)
+	if icon != null: draw_texture_rect(icon, rect, false, Color(1, 1, 1, 0.38))
+	draw_rect(rect.grow(-1), Color("d7bc73"), false, 1)
+	for side in [-1, 1]:
+		draw_rect(Rect2(side * (size * 0.5 - 3) - 1, -size * 0.5, 2, size), Color("9a734a"))
+	var fraction: float = progress / option.construction_seconds if supplied() else float(material_count()) / maxi(1, WorldInventory.cargo_size(required)) * 0.5
+	draw_rect(Rect2(-size * 0.5, size * 0.5 - 2, size, 2), Color("292a27"))
+	draw_rect(Rect2(-size * 0.5, size * 0.5 - 2, size * fraction, 2), Color("d7bc73"))

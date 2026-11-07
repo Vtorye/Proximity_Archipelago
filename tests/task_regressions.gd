@@ -2,6 +2,7 @@ extends RefCounted
 func run(test: Node) -> void:
 	var world: World = load("res://game/worlds/world_1.tscn").instantiate()
 	world.auto_start = false
+	world.ant_construction = false
 	test.add_child(world)
 	world.match_controller.start(world.inventory)
 	var tasks: TaskDirector = world.tasks

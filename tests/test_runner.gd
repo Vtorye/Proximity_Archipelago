@@ -54,6 +54,7 @@ func _run() -> void:
 	await _test_art_resolution()
 	await preload("res://tests/designer_regressions.gd").new().run(self)
 	await preload("res://tests/task_regressions.gd").new().run(self)
+	await preload("res://tests/construction_regressions.gd").new().run(self)
 	await _test_simulation()
 	print("TEST REPORT ", JSON.stringify({"assertions": assertions, "failures": failures, "metrics": metrics}))
 	print("TESTS PASS" if failures.is_empty() else "TESTS FAIL")
@@ -207,6 +208,7 @@ func make_world() -> World:
 	var world: World = WORLD.instantiate() as World
 	world.task_deck = null
 	world.auto_start = false
+	world.ant_construction = false
 	add_child(world)
 	return world
 
@@ -291,6 +293,7 @@ func _test_worlds() -> void:
 	await get_tree().process_frame
 	var nested: World = WORLD.instantiate() as World
 	nested.auto_start = false
+	nested.ant_construction = false
 	var nest_node: Node = nested.get_node("Home")
 	nest_node.owner = null
 	nested.remove_child(nest_node)
@@ -391,6 +394,7 @@ func _test_art_resolution() -> void:
 	replacement.grass = ImageTexture.create_from_image(image)
 	var world: World = WORLD.instantiate() as World
 	world.auto_start = false
+	world.ant_construction = false
 	world.art = replacement
 	add_child(world)
 	expect(world.ready_for_play and world.art.tile_resolution() == 32 and (world.get_node("Map") as TileMapLayer).tile_set.tile_size == Vector2i(16, 16), "sprite catalog replacement preserves the authored map tile geometry")

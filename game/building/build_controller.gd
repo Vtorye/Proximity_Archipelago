@@ -4,6 +4,7 @@ extends Node
 
 signal built(option: BuildOption, cell: Vector2i)
 signal changed
+var construction: ConstructionService
 var prices: PriceService
 var registry: BuildingRegistry
 var population: ColonyPopulation
@@ -47,6 +48,8 @@ func placement_check(option: BuildOption, cell: Vector2i, removed: Array[Buildin
 		return PlacementCheck.result(PlacementCheck.Code.BUSY)
 	if option == null or not options.has(option):
 		return PlacementCheck.result(PlacementCheck.Code.INVALID_OPTION)
+	if construction != null and construction.at(cell, option is TileBuildOption) != null and not removed.has(construction.at(cell, option is TileBuildOption)):
+		return PlacementCheck.result(PlacementCheck.Code.OCCUPIED)
 	if option is WorkplaceUpgradeOption:
 		var workplace := registry.at(cell) as Workplace
 		if workplace == null or removed.has(workplace) or not workplace.accepts_improvement(option):
@@ -110,7 +113,7 @@ func try_build_plan(commands: Array[BuildCommand]) -> bool:
 			return false
 		if command.is_removal():
 			var building: Building = command.removed_building
-			if not is_instance_valid(building) or registry.at(command.cell) != building or removed.has(building) or (building is Workplace and removed_improvements.has(building)):
+			if not is_instance_valid(building) or demolition_target(command.cell) != building or removed.has(building) or (building is Workplace and removed_improvements.has(building)):
 				last_result = PlacementCheck.result(PlacementCheck.Code.NO_BUILDING)
 				return false
 			if building is House and logistics != null and not logistics.can_remove(building):
@@ -123,6 +126,7 @@ func try_build_plan(commands: Array[BuildCommand]) -> bool:
 		else:
 			placements.append(command)
 	var costs: Array[ResourceAmount] = []
+	var quotes: Dictionary = {}
 	var cells: Array[Vector2i] = []
 	for building in removed: cells.append_array(building.footprint())
 	var occupied: Dictionary[Vector2i, bool] = {}
@@ -155,7 +159,11 @@ func try_build_plan(commands: Array[BuildCommand]) -> bool:
 			if not building.setup(cell, option):
 				last_result = PlacementCheck.result(PlacementCheck.Code.INVALID_BUILDING)
 				break
-	if last_result.allowed(): costs = prices.quote_plan(commands) if prices != null else _base_plan_price(placements)
+	if last_result.allowed():
+		quotes = prices.quote_commands(commands) if prices != null else {}
+		for command in placements:
+			if not quotes.has(command): quotes[command] = command.option.costs
+			costs.append_array(quotes[command])
 	if last_result.allowed() and not inventory.can_afford_all(costs, true):
 		last_result = PlacementCheck.result(PlacementCheck.Code.RESOURCES)
 	if last_result.allowed() and not _safety().preserves_escape(placements, candidates, removed):
@@ -166,16 +174,23 @@ func try_build_plan(commands: Array[BuildCommand]) -> bool:
 	# No awaits or notifications until the world and inventory agree.
 	_committing = true
 	inventory.begin_update()
-	if not inventory.try_spend_all(costs, true):
+	if construction == null and not inventory.try_spend_all(costs, true):
 		for candidate in candidates: candidate.free()
 		last_result = PlacementCheck.result(PlacementCheck.Code.RESOURCES)
 		_committing = false
 		inventory.end_update()
 		return false
+	var delayed: Array[BuildCommand] = []
+	var queued_candidates: Array[Building] = []
+	for command in placements:
+		if construction != null and ConstructionService.needs_builders(command.option, quotes[command]):
+			delayed.append(command)
+		else:
+			if construction != null: inventory.try_spend_all(quotes[command], true)
 	for command in placements:
 		var cell: Vector2i = command.cell
 		var option: BuildOption = command.option
-		if option is TileBuildOption:
+		if option is TileBuildOption and not delayed.has(command):
 			map.set_cell(cell, option.source_id, option.atlas_coords, option.alternative_tile)
 	for workplace in removed_improvements:
 		var definition: WorkplaceUpgradeOption = workplace.improvement
@@ -183,14 +198,30 @@ func try_build_plan(commands: Array[BuildCommand]) -> bool:
 		_refund_for_demolish(definition)
 		if prices != null: prices.record(GameEvents.Kind.BUILDING_DEMOLISHED, definition.id)
 	for command in placements:
-		if command.option is WorkplaceUpgradeOption:
+		if command.option is WorkplaceUpgradeOption and not delayed.has(command):
 			var workplace := registry.at(command.cell) as Workplace
 			workplace.install_improvement(command.option)
 	for building in removed:
+		if building is ConstructionSite:
+			_remove_site(building)
+			continue
+		if construction != null:
+			var pending: ConstructionSite = construction.at(building.cell)
+			if pending != null: _remove_site(pending)
 		_refund_for_demolish(building.option)
 		building.demolish()
 		if prices != null: prices.record(GameEvents.Kind.BUILDING_DEMOLISHED, building.option.id if building.option != null else &"initial")
 		building.free()
+	var candidate_index := 0
+	for command in placements:
+		var candidate: Building
+		if command.option is SceneBuildOption:
+			candidate = candidates[candidate_index]
+			candidate_index += 1
+		if delayed.has(command):
+			construction.enqueue(command, candidate, quotes[command])
+			if candidate != null: queued_candidates.append(candidate)
+	for candidate in queued_candidates: candidates.erase(candidate)
 	var blocked: Array[Vector2i] = registry.blocked_cells()
 	for candidate in candidates:
 		if candidate.option.blocks_movement:
@@ -204,6 +235,7 @@ func try_build_plan(commands: Array[BuildCommand]) -> bool:
 	_committing = false
 	inventory.end_update()
 	for command in placements:
+		if delayed.has(command): continue
 		if prices != null: prices.record(GameEvents.Kind.TERRAIN_CHANGED if command.option is TileBuildOption else GameEvents.Kind.BUILDING_BUILT, command.option.id)
 		built.emit(command.option, command.cell)
 	if not removed_improvements.is_empty() or placements.any(func(command: BuildCommand) -> bool: return command.option is WorkplaceUpgradeOption):
@@ -211,13 +243,29 @@ func try_build_plan(commands: Array[BuildCommand]) -> bool:
 	changed.emit()
 	return true
 
+func finish_construction(site: ConstructionSite) -> bool:
+	return construction.complete(site)
+
+func _remove_site(site: ConstructionSite) -> void:
+	construction.cancel(site)
+	site.demolish()
+	site.queue_free()
+
 ## Share of the build cost returned on demolition. 0 = no refund; raise to enable refunds.
 const DEMOLISH_REFUND_RATIO := 0.0
+
+func demolition_target(cell: Vector2i) -> Building:
+	if construction != null:
+		var site: ConstructionSite = construction.at(cell)
+		if site == null: site = construction.at(cell, true)
+		if site != null: return site
+	return registry.at(cell)
 
 func demolition_check(cell: Vector2i) -> PlacementCheck:
 	if _committing:
 		return PlacementCheck.result(PlacementCheck.Code.BUSY)
-	var building: Building = registry.at(cell)
+	var building: Building = demolition_target(cell)
+	if construction != null and (construction.at(cell) != null or construction.at(cell, true) != null): return PlacementCheck.new()
 	if building is House and logistics != null and not logistics.can_remove(building):
 		return PlacementCheck.result(PlacementCheck.Code.STOCK_DEPOT)
 	if not _safety().can_remove_food(building):
@@ -231,6 +279,13 @@ func demolish_at(cell: Vector2i) -> bool:
 	if not last_result.allowed():
 		return false
 	var building: Building = registry.at(cell)
+	if construction != null:
+		var site: ConstructionSite = construction.at(cell)
+		if site == null: site = construction.at(cell, true)
+		if site != null:
+			_remove_site(site)
+			changed.emit()
+			return true
 	_committing = true
 	inventory.begin_update()
 	if building is Workplace and building.improvement != null:

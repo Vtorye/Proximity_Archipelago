@@ -7,6 +7,7 @@ class_name World
 @export var build_options: Array[BuildOption] = []
 @export var art: ArtCatalog = preload("res://game/art/colony_art.tres")
 @export var auto_start := true
+@export var ant_construction := true
 @export var recruitment: RecruitmentCatalog = preload("res://game/resources/recruitment.tres")
 var map_size: Vector2i:
 	get: return ($Map as TileMapLayer).get_used_rect().size
@@ -86,6 +87,15 @@ func _ready() -> void:
 	build_controller.registry = registry
 	build_controller.population = population
 	build_controller.logistics = logistics
+	if ant_construction:
+		var construction := ConstructionService.new()
+		construction.name = "Construction"
+		construction.controller = build_controller
+		construction.art = art
+		build_controller.construction = construction
+		add_child(construction)
+		construction.changed.connect(planner._queue_workplace_refresh)
+		population.construction = construction
 	build_controller.changed.connect(func(): _navigation_update_queued = false)
 	# All setup() calls must finish before navigation is generated,
 	# otherwise units spawned by houses would appear before the grid exists.

@@ -9,6 +9,7 @@ var units: Node2D
 var navigation: RouteService
 var planner: TripPlanner
 var logistics: ColonyLogistics
+var construction: ConstructionService
 var recruitment: RecruitmentCatalog
 var _recruiting := false
 var _removing := false
@@ -93,6 +94,10 @@ func _create_resident(house: House, role: AntAgent.Role) -> AntAgent:
 		ant.speed *= house.carrier_speed_multiplier
 		ant.carry_capacity = house.carrier_capacity
 	ant.configure(house, planner, navigation, logistics)
+	if construction != null:
+		ant.construction = AntConstruction.new()
+		ant.construction.ant = ant
+		ant.construction.service = construction
 	return ant
 
 func _add_resident(house: House, ant: AntAgent) -> void:
