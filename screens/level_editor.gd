@@ -18,7 +18,7 @@ var _drag_button := MOUSE_BUTTON_NONE
 var _pending_move: Building
 var _selected_source: Workplace
 var _source_controls: HBoxContainer
-var _finite: CheckButton
+var _finite: Button
 var _supply: SpinBox
 var _active := false
 
@@ -93,8 +93,8 @@ func _make_ui() -> void:
 	rows.add_child(_status)
 	_source_controls = HBoxContainer.new()
 	rows.add_child(_source_controls)
-	_finite = CheckButton.new()
-	_finite.text = "ui.source.finite"
+	_finite = ColonyStyle.button("ui.source.infinite")
+	_finite.toggle_mode = true
 	_source_controls.add_child(_finite)
 	_source_controls.add_child(ColonyStyle.label("ui.source.amount", 8))
 	_supply = SpinBox.new()
@@ -106,6 +106,7 @@ func _make_ui() -> void:
 	_finite.toggled.connect(func(enabled: bool):
 		if is_instance_valid(_selected_source):
 			_selected_source.finite_supply = enabled
+			_finite.text = "ui.source.finite" if enabled else "ui.source.infinite"
 			_supply.editable = enabled
 			_mark_dirty())
 	_supply.value_changed.connect(func(value: float):
@@ -388,6 +389,7 @@ func _select_source(workplace: Workplace) -> void:
 	if not _source_controls.visible:
 		return
 	_finite.set_pressed_no_signal(workplace.finite_supply)
+	_finite.text = "ui.source.finite" if workplace.finite_supply else "ui.source.infinite"
 	_supply.set_value_no_signal(workplace.remaining_supply)
 	_supply.editable = workplace.finite_supply
 
