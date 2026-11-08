@@ -1,6 +1,9 @@
 class_name BuildOption
 extends Resource
 
+enum PlacementKind { ANY, ROAD, BERRY, NEST }
+@export var placement_kind: PlacementKind = PlacementKind.ANY
+
 @export var id: StringName
 @export var display_name: String
 @export var icon: Texture2D

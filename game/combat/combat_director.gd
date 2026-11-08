@@ -173,7 +173,7 @@ func ruin_road(cell: Vector2i) -> bool:
 	if world.route_service.entry_cost(cell) <= 0 or world.route_service.entry_cost(cell) >= 0.5 or rules.ruined_road == null: return false
 	var ground: TileBuildOption = rules.ruined_road
 	var map: TileMapLayer = world.get_node("Map")
-	map.set_cell(cell, ground.source_id, ground.atlas_coords, ground.alternative_tile)
+	world.build_controller.apply_surface(ground, cell)
 	world.route_service.update_cells([cell], world.registry.blocked_cells())
 	world.events.publish(GameEvents.Kind.TERRAIN_CHANGED, ground.id)
 	return true

@@ -18,6 +18,7 @@ var combat: CombatDirector
 var tasks: TaskDirector
 var events: WorldEvents
 var prices: PriceService
+var terrain: TerrainRules
 var inventory: WorldInventory
 var logistics: ColonyLogistics
 var build_controller: BuildController
@@ -64,6 +65,12 @@ func _ready() -> void:
 	add_child(registry)
 	registry.added.connect(_configure_building)
 	registry.changed.connect(_queue_navigation_update)
+	if map is TerrainMap:
+		terrain = TerrainRules.new()
+		terrain.name = "TerrainRules"
+		add_child(terrain)
+		terrain.configure(map, registry)
+		prices.terrain_multiplier = terrain.price_multiplier
 	logistics = ColonyLogistics.new()
 	logistics.name = "Logistics"
 	add_child(logistics)
@@ -93,6 +100,8 @@ func _ready() -> void:
 	build_controller.registry = registry
 	build_controller.population = population
 	build_controller.logistics = logistics
+	build_controller.terrain = terrain
+	if terrain != null: terrain.changed.connect(func(): population.changed.emit())
 	if ant_construction:
 		var construction := ConstructionService.new()
 		construction.name = "Construction"

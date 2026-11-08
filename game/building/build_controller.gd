@@ -5,6 +5,7 @@ extends Node
 signal built(option: BuildOption, cell: Vector2i)
 signal changed
 var construction: ConstructionService
+var terrain: TerrainRules
 var prices: PriceService
 var registry: BuildingRegistry
 var population: ColonyPopulation
@@ -38,7 +39,7 @@ func check(option: BuildOption, cell: Vector2i) -> PlacementCheck:
 	var placement: PlacementCheck = placement_check(option, cell)
 	if not placement.allowed():
 		return placement
-	if not inventory.can_afford_all(price(option), true):
+	if not inventory.can_afford_all(price(option, cell), true):
 		return PlacementCheck.result(PlacementCheck.Code.RESOURCES)
 	return PlacementCheck.new()
 
@@ -50,6 +51,8 @@ func placement_check(option: BuildOption, cell: Vector2i, removed: Array[Buildin
 		return PlacementCheck.result(PlacementCheck.Code.INVALID_OPTION)
 	if construction != null and construction.at(cell, option is TileBuildOption) != null and not removed.has(construction.at(cell, option is TileBuildOption)):
 		return PlacementCheck.result(PlacementCheck.Code.OCCUPIED)
+	if terrain != null and terrain.restricts(option, cell):
+		return PlacementCheck.result(PlacementCheck.Code.SOIL_RESTRICTED)
 	if option is WorkplaceUpgradeOption:
 		var workplace := registry.at(cell) as Workplace
 		if workplace == null or removed.has(workplace) or not workplace.accepts_improvement(option):
@@ -60,7 +63,9 @@ func placement_check(option: BuildOption, cell: Vector2i, removed: Array[Buildin
 		var source: TileSetAtlasSource = map.tile_set.get_source(tile.source_id) as TileSetAtlasSource if map.tile_set.has_source(tile.source_id) else null
 		if source == null or not source.has_tile(tile.atlas_coords) or not source.has_alternative_tile(tile.atlas_coords, tile.alternative_tile):
 			return PlacementCheck.result(PlacementCheck.Code.INVALID_TILE)
-		if map.get_cell_source_id(cell) == tile.source_id and map.get_cell_atlas_coords(cell) == tile.atlas_coords and map.get_cell_alternative_tile(cell) == tile.alternative_tile:
+		var key := Vector4i(tile.source_id, tile.atlas_coords.x, tile.atlas_coords.y, tile.alternative_tile)
+		var result: Vector4i = map.result_key(cell, key) if map is TerrainMap else key
+		if map.get_cell_source_id(cell) == result.x and map.get_cell_atlas_coords(cell) == Vector2i(result.y, result.z) and map.get_cell_alternative_tile(cell) == result.w:
 			return PlacementCheck.result(PlacementCheck.Code.ALREADY_PLACED)
 	elif option is SceneBuildOption:
 		if option.scene == null or option.occupied_cells.is_empty() or not option.occupied_cells.has(Vector2i.ZERO) or option.spawn_count < 0 or option.spawn_speed <= 0.0:
@@ -72,8 +77,10 @@ func placement_check(option: BuildOption, cell: Vector2i, removed: Array[Buildin
 	for target in _footprint(option, cell):
 		if map.get_cell_source_id(target) == -1:
 			return PlacementCheck.result(PlacementCheck.Code.OUTSIDE_MAP)
-		var terrain: TileData = map.get_cell_tile_data(target)
-		if map.tile_set.get_custom_data_layer_by_name("buildable") >= 0 and not terrain.get_custom_data("buildable"):
+		if terrain != null and terrain.restricts(option, target):
+			return PlacementCheck.result(PlacementCheck.Code.SOIL_RESTRICTED)
+		var tile_data: TileData = map.get_cell_tile_data(target)
+		if map.tile_set.get_custom_data_layer_by_name("buildable") >= 0 and not tile_data.get_custom_data("buildable"):
 			return PlacementCheck.result(PlacementCheck.Code.UNBUILDABLE)
 		if not route_service.walkable(target) and not removed.has(registry.at(target)):
 			return PlacementCheck.result(PlacementCheck.Code.IMPASSABLE)
@@ -191,7 +198,7 @@ func try_build_plan(commands: Array[BuildCommand]) -> bool:
 		var cell: Vector2i = command.cell
 		var option: BuildOption = command.option
 		if option is TileBuildOption and not delayed.has(command):
-			map.set_cell(cell, option.source_id, option.atlas_coords, option.alternative_tile)
+			apply_surface(option, cell)
 	for workplace in removed_improvements:
 		var definition: WorkplaceUpgradeOption = workplace.improvement
 		workplace.remove_improvement()
@@ -331,8 +338,14 @@ func _footprint(option: BuildOption, origin: Vector2i) -> Array[Vector2i]:
 func _safety() -> ConstructionSafety:
 	return ConstructionSafety.new(map, registry, population, route_service)
 
-func price(option: BuildOption) -> Array[ResourceAmount]:
-	return prices.quote(option) if prices != null else option.costs
+func price(option: BuildOption, cell := Vector2i(2147483647, 2147483647)) -> Array[ResourceAmount]:
+	var factor: float = terrain.price_multiplier(option, cell) if terrain != null else 1.0
+	return prices.quote(option, {}, factor) if prices != null else option.costs
+
+func apply_surface(option: TileBuildOption, cell: Vector2i) -> void:
+	if map is TerrainMap:
+		map.paint_tile(cell, Vector4i(option.source_id, option.atlas_coords.x, option.atlas_coords.y, option.alternative_tile))
+	else: map.set_cell(cell, option.source_id, option.atlas_coords, option.alternative_tile)
 
 static func price_amount(costs: Array[ResourceAmount], type: ResourceType) -> int:
 	var result := 0
@@ -343,5 +356,5 @@ static func price_amount(costs: Array[ResourceAmount], type: ResourceType) -> in
 func _base_plan_price(commands: Array[BuildCommand]) -> Array[ResourceAmount]:
 	var result: Array[ResourceAmount] = []
 	for command in commands:
-		if not command.is_removal(): result.append_array(command.option.costs)
+		if not command.is_removal(): result.append_array(price(command.option, command.cell))
 	return result

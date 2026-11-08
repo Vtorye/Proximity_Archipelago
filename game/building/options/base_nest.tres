@@ -12,6 +12,7 @@ amount = 1
 
 [resource]
 script = ExtResource("option")
+placement_kind = 3
 scene = ExtResource("scene")
 blocks_movement = false
 spawn_count = 5

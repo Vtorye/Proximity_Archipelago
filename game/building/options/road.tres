@@ -10,6 +10,7 @@ type = ExtResource("wood")
 
 [resource]
 script = ExtResource("option")
+placement_kind = 1
 source_id = 3
 atlas_coords = Vector2i(2, 0)
 id = &"road"

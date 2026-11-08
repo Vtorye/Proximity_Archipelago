@@ -6,6 +6,8 @@ signal load_changed
 signal supply_changed
 
 @export var recipe: WorkRecipe
+var terrain_yield_multiplier := 1.0
+var _yield_remainder := 0.0
 var inventory: WorldInventory
 signal worker_arrived(worker: Node2D)
 signal worker_left(worker: Node2D)
@@ -166,7 +168,11 @@ func complete_cycle(human: Node2D, keep_output: bool = false) -> bool:
 		return true
 	work_complete(human)
 	if output != null:
-		_produce(output, output_amount, keep_output)
+		var exact: float = output_amount * terrain_yield_multiplier + _yield_remainder
+		# Carry fractional debt into the next cycle; the first harvest still yields a whole berry.
+		var harvest: int = ceili(exact - 0.000001)
+		_yield_remainder = exact - harvest
+		if harvest > 0: _produce(output, harvest, keep_output)
 	return true
 
 func _produce(type: ResourceType, amount: int, keep_output: bool) -> void:

@@ -12,6 +12,7 @@ amount = 5
 
 [resource]
 script = ExtResource("option")
+placement_kind = 2
 scene = ExtResource("scene")
 blocks_movement = false
 id = &"apple_tree"

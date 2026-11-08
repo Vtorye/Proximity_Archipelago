@@ -13,6 +13,7 @@ amount = 1
 
 [resource]
 script = ExtResource("option")
+placement_kind = 1
 source_id = 3
 atlas_coords = Vector2i(2, 0)
 icon = ExtResource("icon")

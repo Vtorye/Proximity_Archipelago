@@ -4,6 +4,7 @@ extends Node
 signal changed
 var events := WorldEvents.new()
 var global_multiplier := 1.0
+var terrain_multiplier: Callable
 var definitions: Array[BuildOption] = []
 var _stamps: Dictionary[String, String] = {}
 var _elapsed := 0.0
@@ -22,7 +23,7 @@ func record(event: GameEvents.Kind, subject: StringName, amount: int = 1) -> voi
 static func key(event: int, subject: StringName) -> String:
 	return GameEvents.key(event, subject)
 
-func quote(option: BuildOption, pending: Dictionary[String, int] = {}) -> Array[ResourceAmount]:
+func quote(option: BuildOption, pending: Dictionary[String, int] = {}, local_multiplier: float = 1.0) -> Array[ResourceAmount]:
 	if option == null or not valid(option): return [null]
 	var totals: Dictionary[StringName, float] = {}
 	var types: Dictionary[StringName, ResourceType] = {}
@@ -42,7 +43,7 @@ func quote(option: BuildOption, pending: Dictionary[String, int] = {}) -> Array[
 		if totals[type] < 0 or not is_finite(totals[type]) or totals[type] > 2147483647: return [null]
 		var entry := ResourceAmount.new()
 		entry.type = types[type]
-		entry.amount = ceili(totals[type] * global_multiplier - 0.000001)
+		entry.amount = ceili(totals[type] * global_multiplier * local_multiplier - 0.000001)
 		result.append(entry)
 	return result
 
@@ -75,7 +76,7 @@ func quote_commands(commands: Array[BuildCommand]) -> Dictionary:
 		if command == null: return {null: [null]}
 		if command.is_removal(): continue
 		if command.option == null: return {null: [null]}
-		result[command] = quote(command.option, pending)
+		result[command] = quote(command.option, pending, terrain_multiplier.call(command.option, command.cell) if terrain_multiplier.is_valid() else 1.0)
 		for subject in [command.option.id, &""]:
 			var event: GameEvents.Kind = GameEvents.Kind.TERRAIN_CHANGED if command.option is TileBuildOption else GameEvents.Kind.BUILDING_BUILT
 			var id: String = key(event, subject)

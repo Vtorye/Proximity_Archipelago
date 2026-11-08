@@ -11,6 +11,7 @@ const BARRACKS_TINT := Color("91b7df")
 @export_range(1, 10000) var storage_capacity := 100
 @export var auto_dispatch := true
 var development_tint := Color.WHITE
+var terrain_capacity_multiplier := 1.0
 
 var _residents: Array[Node2D] = []
 var residents: Array[Node2D]:
@@ -31,7 +32,7 @@ func display_title() -> String:
 
 
 func resident_limit() -> int:
-	return MAIN_RESIDENT_LIMIT if is_main_nest else capacity
+	return floori((MAIN_RESIDENT_LIMIT if is_main_nest else capacity) * terrain_capacity_multiplier + 0.000001)
 
 func has_space() -> bool:
 	_prune()

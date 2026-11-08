@@ -25,6 +25,14 @@ static func validate_world(world: World, path: String) -> Array[String]:
 	if map == null or map.tile_set == null or map.get_used_cells().is_empty():
 		errors.append(path + ": missing painted TileMap/TileSet")
 	else:
+		if map is TerrainMap:
+			map.prepare_terrain()
+			errors.append_array(map.catalog.validate())
+			for cell in map.underlays:
+				var surface: TerrainType = map.surface_at(cell)
+				var ground: TerrainType = map.catalog.for_tile(map.underlays[cell])
+				if surface == null or surface.kind != TerrainType.Kind.ROAD or ground == null or ground.kind != TerrainType.Kind.LAND or not ground.roads_allowed:
+					errors.append(path + ":Map: invalid hidden terrain at " + str(cell))
 		for cell in map.get_used_cells():
 			var data: TileData = map.get_cell_tile_data(cell)
 			if data == null:
@@ -41,6 +49,11 @@ static func validate_world(world: World, path: String) -> Array[String]:
 		world._collect_buildings(world, buildings)
 		for building in buildings:
 			building.cell = map.local_to_map(map.to_local(building.global_position))
+			if map is TerrainMap:
+				var soil: TerrainType = map.ground_at(building.cell)
+				var kind: int = TerrainRules.building_kind(building)
+				if soil != null and ((kind == BuildOption.PlacementKind.NEST and not soil.nests_allowed) or (kind == BuildOption.PlacementKind.BERRY and not soil.berries_allowed)):
+					errors.append(path + ":" + str(world.get_path_to(building)) + ": terrain forbids this building")
 			for error in building.validate_definition(): errors.append(path + ":" + str(world.get_path_to(building)) + ": " + error)
 			if building.option is SceneBuildOption and building.option.blocks_movement:
 				var changes: Dictionary[Vector2i, float] = {}

@@ -24,7 +24,9 @@ func preserves_escape(commands: Array[BuildCommand], candidates: Array[Building]
 		var option: BuildOption = command.option
 		if option is TileBuildOption:
 			var source: TileSetAtlasSource = map.tile_set.get_source(option.source_id) as TileSetAtlasSource
-			var value: float = float(source.get_tile_data(option.atlas_coords, option.alternative_tile).get_custom_data("move_cost"))
+			var key := Vector4i(option.source_id, option.atlas_coords.x, option.atlas_coords.y, option.alternative_tile)
+			var next_type: TerrainType = map.catalog.for_tile(map.result_key(cell, key)) if map is TerrainMap else null
+			var value: float = next_type.move_cost if next_type != null else float(source.get_tile_data(option.atlas_coords, option.alternative_tile).get_custom_data("move_cost"))
 			values[cell] = value
 			needs_check = needs_check or value <= 0.0 or value > route_service.entry_cost(cell)
 	for candidate in candidates:

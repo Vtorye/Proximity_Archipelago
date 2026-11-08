@@ -137,12 +137,15 @@ func complete(site: ConstructionSite) -> bool:
 		if source == null or not source.accepts_improvement(site.option):
 			controller._remove_site(site)
 			return true
+	if controller.terrain != null and not controller.terrain.allows(site.option, site.cell):
+		controller._remove_site(site)
+		return true
 	if not controller._safety().preserves_escape([command], candidates): return false
 	controller._committing = true
 	var option: BuildOption = site.option
 	var cell: Vector2i = site.cell
 	if option is TileBuildOption:
-		controller.map.set_cell(cell, option.source_id, option.atlas_coords, option.alternative_tile)
+		controller.apply_surface(option, cell)
 	elif option is WorkplaceUpgradeOption:
 		(controller.registry.at(cell) as Workplace).install_improvement(option)
 	var candidate: Building = site.candidate
