@@ -1,6 +1,6 @@
 class_name ConstructionService
 extends Node
-## Orders reserve space immediately; carriers deliver crates and workers assemble buildings.
+## Orders reserve space immediately; carriers deliver crates and workers or carriers assemble buildings.
 signal changed
 var controller: BuildController
 var art: ArtCatalog
@@ -55,7 +55,7 @@ func claim(ant: AntAgent) -> ConstructionJob:
 		var delivery: Route = site.route(cell)
 		if not delivery.is_valid(): continue
 		if site.supplied():
-			if ant.role != AntAgent.Role.WORKER or is_instance_valid(site.builder): continue
+			if ant.role == AntAgent.Role.WARRIOR or is_instance_valid(site.builder): continue
 			var energy: float = ant.planner.travel_energy(delivery.cost, ant.speed) + (site.option.construction_seconds - site.progress) * AntNeeds.WORK_RATE
 			if not ant._is_foodless(): energy += ant.planner.escape_energy(delivery.cells.back(), ant.speed)
 			if not ant.needs.can_afford(energy) or delivery.cost >= lowest: continue
