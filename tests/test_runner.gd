@@ -30,6 +30,7 @@ func _ready() -> void:
 
 func _run() -> void:
 	seed(20261025)
+	await preload("res://tests/voyage_regressions.gd").new().run(self)
 	await _test_translations()
 	await _test_language_toggle()
 	TranslationServer.set_locale("ru")
