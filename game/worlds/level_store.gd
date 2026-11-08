@@ -5,6 +5,7 @@ const DIRECTORY := "user://maps"
 const MAX_BYTES := 32 * 1024 * 1024
 const BUILT_IN_LEVELS := {
 	"builtin/tidal_shards": preload("res://game/worlds/maps/tidal_shards.tres"),
+	"builtin/five_soils": preload("res://game/worlds/maps/five_soils.tres"),
 }
 
 static func save_level(title: String, layout: Dictionary) -> Error:
