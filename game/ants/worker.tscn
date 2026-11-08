@@ -1,0 +1,6 @@
+[gd_scene load_steps=3 format=3]
+[ext_resource type="Script" path="res://game/entities/ant_agent.gd" id="agent"]
+[ext_resource type="Resource" path="res://game/ants/worker.tres" id="profile"]
+[node name="Worker" type="Node2D"]
+script = ExtResource("agent")
+profile = ExtResource("profile")

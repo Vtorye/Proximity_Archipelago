@@ -40,8 +40,8 @@ func reserve_meal() -> StockReservation:
 func escape_energy(cell: Vector2i, speed: float) -> float:
 	return travel_energy(navigation.food_field().cost(cell), speed) + AntNeeds.MEAL_SECONDS * AntNeeds.EAT_RATE
 
-func food_within_range(cell: Vector2i, speed: float) -> bool:
-	return escape_energy(cell, speed) + AntNeeds.SAFETY_MARGIN <= AntNeeds.CAPACITY
+func food_within_range(cell: Vector2i, speed: float, capacity: float = AntNeeds.CAPACITY) -> bool:
+	return escape_energy(cell, speed) + AntNeeds.SAFETY_MARGIN <= capacity
 
 func travel_seconds(cost: float, speed: float) -> float:
 	return cost * navigation.cell_size() / maxf(speed, 0.01)
@@ -59,7 +59,7 @@ func plan_work(agent: Node2D, home: Building, needs: AntNeeds, speed: float, wor
 	var from_node: int = navigation.snapshot().index(from_cell)
 	if from_node < 0:
 		return null
-	var foodless: bool = not food_within_range(from_cell, speed)
+	var foodless: bool = not food_within_range(from_cell, speed, needs.capacity)
 	var workplaces: Array = _reachable_workplaces(from_node)
 	if foodless and workplaces.is_empty():
 		return null
@@ -92,7 +92,7 @@ func plan_work(agent: Node2D, home: Building, needs: AntNeeds, speed: float, wor
 			else:
 				var back_home: float = travel_energy(home_field.cost(entry), speed * CARRY_SPEED_RATIO)
 				energy += work_time * AntNeeds.WORK_RATE + back_home + food_after_home + 2.0
-				possible_after_meal = possible_after_meal or energy + AntNeeds.SAFETY_MARGIN <= AntNeeds.CAPACITY
+				possible_after_meal = possible_after_meal or energy + AntNeeds.SAFETY_MARGIN <= needs.capacity
 				if not needs.can_afford(energy):
 					continue
 			if not workplace.has_worker(agent) and not workplace.has_free_slot():

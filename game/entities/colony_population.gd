@@ -11,6 +11,9 @@ var planner: TripPlanner
 var logistics: ColonyLogistics
 var construction: ConstructionService
 var recruitment: RecruitmentCatalog
+@export var worker_scene: PackedScene = preload("res://game/ants/worker.tscn")
+@export var carrier_scene: PackedScene = preload("res://game/ants/carrier.tscn")
+@export var warrior_scene: PackedScene = preload("res://game/ants/warrior.tscn")
 var allow_warriors := false
 var _recruiting := false
 var _removing := false
@@ -86,15 +89,17 @@ func kill_resident(house: House, role: AntAgent.Role) -> bool:
 func _create_resident(house: House, role: AntAgent.Role) -> AntAgent:
 	if house.human_scene == null:
 		return null
-	var instance: Node = house.human_scene.instantiate()
+	var scene: PackedScene = [worker_scene, carrier_scene, warrior_scene][role]
+	var instance: Node = (scene if scene != null else house.human_scene).instantiate()
 	if not instance is AntAgent:
 		instance.free()
 		return null
 	var ant: AntAgent = instance as AntAgent
 	ant.role = role
-	if house.option is SceneBuildOption and house.option.spawn_count > 0:
+	ant.apply_profile()
+	if ant.profile == null and house.option is SceneBuildOption and house.option.spawn_count > 0:
 		ant.speed = house.option.spawn_speed
-	if role == AntAgent.Role.CARRIER:
+	if ant.profile == null and role == AntAgent.Role.CARRIER:
 		ant.speed *= house.carrier_speed_multiplier
 		ant.carry_capacity = house.carrier_capacity
 	ant.configure(house, planner, navigation, logistics)

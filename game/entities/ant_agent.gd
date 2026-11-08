@@ -11,6 +11,7 @@ signal status_changed(status: Status)
 signal cell_changed(old: Vector2i, next: Vector2i)
 signal waiting_changed
 
+@export var profile: AntProfile
 @export var speed := 24.0
 @export var work_time := 3.0
 @export_range(1, 100) var carry_capacity := 2
@@ -49,6 +50,16 @@ var waiting_reason: WorkPlan.WaitReason:
 var _reconsider_queued := false
 var _navigation_pending := false
 
+func apply_profile() -> void:
+	if profile == null: return
+	needs.configure(profile.satiety_capacity)
+	speed = profile.speed
+	work_time = profile.work_seconds
+	carry_capacity = profile.carry_capacity
+	max_health = profile.health
+	health = max_health
+	attack_damage = profile.damage
+
 func configure(nest: House, policy: TripPlanner, navigation: RouteService, storage: ColonyLogistics) -> void:
 	home = nest
 	planner = policy
@@ -75,7 +86,7 @@ func refresh_meal_reservation() -> void:
 		_meal = planner.reserve_meal()
 
 func _is_foodless() -> bool:
-	return not planner.food_within_range(route_service.world_to_cell(global_position), speed)
+	return not planner.food_within_range(route_service.world_to_cell(global_position), speed, needs.capacity)
 
 func _exit_tree() -> void:
 	if combat != null: combat.leave_tower()
@@ -276,7 +287,7 @@ func _deliver() -> void:
 		_walk(route, &"delivery")
 		return
 	var meal_energy: float = planner.escape_energy(cell, speed * TripPlanner.CARRY_SPEED_RATIO)
-	var meal_would_enable_delivery: bool = route.is_valid() and _delivery_energy(route, cell) + AntNeeds.SAFETY_MARGIN <= AntNeeds.CAPACITY
+	var meal_would_enable_delivery: bool = route.is_valid() and _delivery_energy(route, cell) + AntNeeds.SAFETY_MARGIN <= needs.capacity
 	var meal_due: bool = meal_would_enable_delivery or needs.satiety <= meal_energy + AntNeeds.SAFETY_MARGIN + 2.0
 	if meal_due and needs.satiety > meal_energy and not _is_foodless():
 		_seek_food()
@@ -389,7 +400,7 @@ func _arrive() -> void:
 		_set_status(Status.WANDERING)
 		_timer = 0.2
 		return
-	if _destination in [&"combat_chase", &"combat_tower", &"combat_meal"]:
+	if _destination in [&"combat_chase", &"combat_tower", &"combat_meal", &"combat_patrol"]:
 		combat.arrive(_destination)
 		return
 	if _destination in [&"site_pickup", &"site_delivery", &"site_assembly"]:
@@ -547,6 +558,6 @@ func _draw() -> void:
 	if health < max_health:
 		draw_rect(Rect2(-4, -10, 8, 1), Color("38271e"))
 		draw_rect(Rect2(-4, -10, 8.0 * health / max_health, 1), Color("e58b76"))
-	if needs.satiety < 30.0:
+	if needs.fraction() < 0.25:
 		draw_rect(Rect2(-4, -8, 8, 1), Color("38271e"))
-		draw_rect(Rect2(-4, -8, 8 * needs.satiety / AntNeeds.CAPACITY, 1), Color("edb86c"))
+		draw_rect(Rect2(-4, -8, 8 * needs.fraction(), 1), Color("edb86c"))
