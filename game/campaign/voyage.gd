@@ -11,6 +11,7 @@ const SHIP = preload("res://game/campaign/ship.tres")
 
 func configure(colony: World) -> void:
 	world = colony
+	seed_value = randi_range(1, 1000000000)
 	world.tasks.changed.connect(refresh)
 	world.registry.added.connect(_built)
 	refresh()
