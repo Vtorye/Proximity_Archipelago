@@ -21,6 +21,14 @@ static func validate_world(world: World, path: String) -> Array[String]:
 	var errors: Array[String] = []
 	if world.wave_rules != null:
 		for error in world.wave_rules.validate(): errors.append(world.wave_rules.resource_path + ": " + error)
+	for scene: PackedScene in [world.worker_scene, world.carrier_scene, world.warrior_scene]:
+		if scene == null:
+			errors.append(path + ": missing ant scene")
+			continue
+		var ant: Node = scene.instantiate()
+		if not ant is AntAgent or ant.profile == null: errors.append(scene.resource_path + ": ant scene requires AntAgent and AntProfile")
+		else: errors.append_array(ant.profile.validate())
+		ant.free()
 	var map: TileMapLayer = world.get_node_or_null("Map") as TileMapLayer
 	if map == null or map.tile_set == null or map.get_used_cells().is_empty():
 		errors.append(path + ": missing painted TileMap/TileSet")
