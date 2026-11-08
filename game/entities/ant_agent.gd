@@ -69,9 +69,6 @@ func configure(nest: House, policy: TripPlanner, navigation: RouteService, stora
 
 func _ready() -> void:
 	assert(home != null and planner != null and route_service != null, "Ant dependencies must be configured before entering the tree")
-	var sprite: Node = get_node_or_null("Sprite")
-	if sprite != null:
-		sprite.queue_free()
 	route_service.navigation_changed.connect(_on_navigation_changed)
 	route_service.food_sources_changed.connect(_on_food_sources_changed)
 	planner.opportunities_changed.connect(_on_work_opportunities_changed)
@@ -537,22 +534,27 @@ func debug_snapshot() -> Dictionary:
 
 func _draw() -> void:
 	# Pixel-native ant art remains crisp at every integer camera zoom.
+	var sprite := get_node_or_null("Sprite") as Node2D
+	if sprite != null:
+		sprite.visible = status not in [Status.HOME, Status.DEAD]
+		sprite.rotation = _last_direction.angle() + PI * 0.5
 	if status == Status.HOME or status == Status.DEAD:
 		return
 	var forward: Vector2 = _last_direction
 	var side := Vector2(-forward.y, forward.x)
-	var leg_phase: float = sin(_animation_time * 22.0) if status == Status.WALKING else 0.0
-	for pair in range(3):
-		var origin: Vector2 = forward * (pair - 1) * 2.0
+	if sprite == null:
+		var leg_phase: float = sin(_animation_time * 22.0) if status == Status.WALKING else 0.0
+		for pair in range(3):
+			var origin: Vector2 = forward * (pair - 1) * 2.0
+			for sign_value in [-1.0, 1.0]:
+				var foot: Vector2 = origin + side * sign_value * 3.5 + forward * leg_phase * sign_value
+				draw_line(origin, foot.round(), Color("222521"), 1.0)
+		var abdomen := Color("a87054") if role == Role.WARRIOR else (Color("50677b") if role == Role.CARRIER else Color("38271e"))
+		draw_circle(-forward * 3.0, 2.0, abdomen)
+		draw_circle(Vector2.ZERO, 1.5, Color("241e19"))
+		draw_circle(forward * 3.0, 1.7, Color("33251d"))
 		for sign_value in [-1.0, 1.0]:
-			var foot: Vector2 = origin + side * sign_value * 3.5 + forward * leg_phase * sign_value
-			draw_line(origin, foot.round(), Color("222521"), 1.0)
-	var abdomen := Color("a87054") if role == Role.WARRIOR else (Color("50677b") if role == Role.CARRIER else Color("38271e"))
-	draw_circle(-forward * 3.0, 2.0, abdomen)
-	draw_circle(Vector2.ZERO, 1.5, Color("241e19"))
-	draw_circle(forward * 3.0, 1.7, Color("33251d"))
-	for sign_value in [-1.0, 1.0]:
-		draw_line(forward * 4.0, (forward * 6.0 + side * sign_value * 2.0).round(), Color("241e19"), 1.0)
+			draw_line(forward * 4.0, (forward * 6.0 + side * sign_value * 2.0).round(), Color("241e19"), 1.0)
 	if _carrying:
 		draw_rect(Rect2(Vector2(-1, -6), Vector2(3, 3)), Color("d7bc73"))
 	if health < max_health:
