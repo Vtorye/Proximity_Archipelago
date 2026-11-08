@@ -13,6 +13,10 @@ var map_size: Vector2i:
 	get: return ($Map as TileMapLayer).get_used_rect().size
 @export var diagnostics_enabled := false
 @export var wave_rules: WaveRules
+@export var worker_scene: PackedScene = preload("res://game/ants/worker.tscn")
+@export var carrier_scene: PackedScene = preload("res://game/ants/carrier.tscn")
+@export var warrior_scene: PackedScene = preload("res://game/ants/warrior.tscn")
+var voyage: Voyage
 var combat: CombatDirector
 @export var task_deck: TaskDeck
 var tasks: TaskDirector
@@ -91,6 +95,9 @@ func _ready() -> void:
 	add_child(population)
 	population.configure(units, route_service, planner, registry, logistics)
 	population.recruitment = recruitment
+	population.worker_scene = worker_scene
+	population.carrier_scene = carrier_scene
+	population.warrior_scene = warrior_scene
 	build_controller = BuildController.new()
 	build_controller.name = "BuildController"
 	build_controller.prices = prices
@@ -127,6 +134,7 @@ func _ready() -> void:
 			others.append(building)
 	initial = bases + others
 	for building in initial:
+		if not building.has_meta(&"layout_kind"): building.set_meta(&"layout_kind", str(get_path_to(building)))
 		var origin: Vector2i = map.local_to_map(map.to_local(building.global_position))
 		if building.setup(origin, building.option):
 			registry.register(building)
@@ -158,6 +166,9 @@ func _ready() -> void:
 		combat.z_index = 3
 		add_child(combat)
 		combat.configure(self, wave_rules)
+	if tasks != null:
+		voyage = Voyage.new()
+		voyage.configure(self)
 	ready_for_play = true
 	if diagnostics_enabled:
 		var observer := DebugProbe.new()
