@@ -1,0 +1,98 @@
+extends "res://tests/ui_runner.gd"
+## Gameplay runs at recorded speed. Progression setup supplies stock and tasks only.
+func _run() -> void:
+	seed(8123)
+	AppSettings.reset_defaults()
+	get_viewport().add_child(load("res://boot.tscn").instantiate())
+	await frames(35)
+	await click(Router._current.controls[&"maps"])
+	await frames(10)
+	var editor: Control = Router._current
+	editor._generator_seed.value = 8123
+	editor._generator_size.select(0)
+	await frames(6)
+	await click(_button(editor, "ui.voyage.generate"))
+	expect(editor._map.get_used_cells().size() == 2500 and editor._dirty, "generator controls produce an editable 50 by 50 seeded archipelago")
+	await capture("01-generator-and-islands", 35)
+	editor._camera.set_level(WorldCamera.MIN_LEVEL)
+	editor._camera.position.y -= 80
+	await capture("01b-whole-generated-archipelago", 35)
+	var layout: Dictionary = LevelLayout.capture(editor._map, editor._objects.get_children())
+	layout["wave_mode"] = true
+	Router.goto(&"match", layout)
+	await frames(30)
+	screen = Router._current
+	var world: World = screen.world
+	world.combat.spawner.remaining = 500
+	world.match_controller.add_time(600)
+	for type in world.inventory.registered_types(): world.inventory.add(type, 10000)
+	var home: House = world.logistics.main_nest
+	screen.camera.position = home.global_position + Vector2(20, 0)
+	screen.camera.set_level(3)
+	expect(world.population.recruit(home, AntAgent.Role.WARRIOR), "player can recruit a configured warrior")
+	var warrior: AntAgent = world.population.agents().filter(func(ant: AntAgent): return ant.role == AntAgent.Role.WARRIOR)[0]
+	warrior.needs.configure(60)
+	await frames(100)
+	expect(warrior.status == AntAgent.Status.WALKING and warrior._destination == &"combat_patrol", "full warrior with capacity sixty patrols actual points of interest")
+	await capture("02-warrior-patrol", 60)
+	# Adjacent road sites demonstrate the corrected independent site markers.
+	for offset in [Vector2i(-1, 1), Vector2i(-2, 1), Vector2i(-3, 1)]:
+		world.build_controller.try_build(load("res://game/building/options/road.tres"), home.cell + offset)
+	await capture("03-construction-markers", 35)
+	for step in range(5):
+		var index := 0
+		while world.tasks.slots[index] == null: index += 1
+		world.tasks.submit(index)
+	await frames(5)
+	expect(get_tree().paused and screen.campaign_panel.visible, "three reward choices pause the simulation")
+	await capture("04-choose-one-reward", 50)
+	await click(screen.campaign_panel.controls[2])
+	expect(not world.tasks.pending_reward and world.tasks.level == 2, "choosing one reward resumes the game at the next stage")
+	for stage in range(3):
+		for step in range(5):
+			var index := 0
+			while world.tasks.slots[index] == null: index += 1
+			world.tasks.submit(index)
+		await frames(4)
+		await click(screen.campaign_panel.controls[stage % 3])
+	expect(world.tasks.level == 5 and world.build_controller.options.has(Voyage.SHIP), "ship appears after reaching development level five")
+	# A real ship order: ants transport paid materials and perform its assembly.
+	var ship_cell: Vector2i = home.cell + Vector2i(3, -1)
+	expect(world.build_controller.try_build(Voyage.SHIP, ship_cell), "ship order accepts a valid funded tile")
+	await capture("05-ship-material-delivery", 50)
+	await key(KEY_ESCAPE)
+	await click(Router.top_overlay().controls[&"save"])
+	expect(Router.top_overlay().controls[&"save"].text == "ui.voyage.saved", "pause menu confirms a saved game")
+	await capture("06-save-game", 30)
+	await click(Router.top_overlay().controls[&"main"])
+	await frames(25)
+	expect(Router._current.controls.has(&"continue"), "saved game exposes Continue in the main menu")
+	await capture("07-continue-menu", 25)
+	await click(Router._current.controls[&"continue"])
+	await frames(30)
+	screen = Router._current
+	world = screen.world
+	expect(world.tasks.level == 5 and world.build_controller.construction.at(ship_cell) != null, "Continue restores the ship site and development stage")
+	screen.camera.position = world.logistics.main_nest.global_position + Vector2(20, 0)
+	screen.camera.set_level(3)
+	for second in range(160):
+		if world.voyage.departed: break
+		await frames(30)
+	expect(world.voyage.departed and screen.campaign_panel.visible, "workers physically complete the ship and show scored victory")
+	await capture("08-victory-and-three-islands", 60)
+	var previous_stock: Dictionary = world.voyage.wealth()
+	await click(screen.campaign_panel.controls[1])
+	await frames(35)
+	screen = Router._current
+	world = screen.world
+	expect(world.voyage.island == 2 and world.tasks.buffs.size() == 4, "destination choice begins a harder second island with four retained upgrades")
+	expect(world.inventory.quantity(world.inventory.type_by_id(&"wood")) >= int(previous_stock.wood), "new island keeps the colony stock")
+	await capture("09-next-island-kept-upgrades", 60)
+	Router.goto(&"main_menu")
+	await frames(35)
+	_finish()
+
+func _button(root: Node, text: String) -> Button:
+	for child in root.find_children("*", "Button", true, false):
+		if child.text == text: return child
+	return null
