@@ -20,6 +20,8 @@ var _selected_source: Workplace
 var _source_controls: HBoxContainer
 var _finite: Button
 var _supply: SpinBox
+var _generator_seed: SpinBox
+var _generator_size: OptionButton
 var _active := false
 
 func _ready() -> void:
@@ -91,6 +93,20 @@ func _make_ui() -> void:
 	files.add_child(_saved)
 	_button(files, "ui.map.load", _load_map)
 	_button(files, "ui.terrain.generate", _generate_soils)
+	var generation := HBoxContainer.new()
+	rows.add_child(generation)
+	generation.add_child(ColonyStyle.label("ui.voyage.seed", 8))
+	_generator_seed = SpinBox.new()
+	_generator_seed.min_value = 0
+	_generator_seed.max_value = 2147483647
+	_generator_seed.value = randi_range(1, 1000000)
+	_generator_seed.custom_minimum_size.x = 110
+	generation.add_child(_generator_seed)
+	_generator_size = OptionButton.new()
+	for extent in [50, 80, 120, 160]: _generator_size.add_item("%d × %d" % [extent, extent], extent)
+	_generator_size.select(1)
+	generation.add_child(_generator_size)
+	_button(generation, "ui.voyage.generate", _generate_map)
 	_status = ColonyStyle.label("", 8)
 	_status.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	rows.add_child(_status)
@@ -387,6 +403,22 @@ func _place(building: Building, cell: Vector2i) -> bool:
 	building.global_position = _map.to_global(_map.map_to_local(cell))
 	_mark_dirty()
 	return true
+
+func _generate_map() -> void:
+	if _dirty and _discard_action != "generate":
+		_discard_action = "generate"
+		_status.text = "ui.voyage.generate_confirm"
+		return
+	var layout: Dictionary = IslandGenerator.generate(int(_generator_seed.value), 0, 0, _generator_size.get_selected_id())
+	var generated: World = LevelLayout.create_world(layout)
+	if generated == null:
+		_status.text = "ui.map.load_failed"
+		return
+	_show_world(generated)
+	_title.text = layout.title
+	_mark_dirty()
+	_discard_action = ""
+	_status.text = "ui.voyage.generated"
 
 func _generate_soils() -> void:
 	var count: int = TerrainPainter.populate(_map, _objects.get_children())
