@@ -112,6 +112,7 @@ static func capture(world: World) -> Dictionary:
 		if building is Workplace:
 			state = _properties(building, ["_yield_remainder"])
 			state["output"] = amounts(building._pending_output)
+		if building is DefenseBuilding: state["shot_timer"] = building.shot_timer
 		if world.combat != null: state["health"] = world.combat.health(building)
 		data.buildings.append(state)
 	var sites: Array[ConstructionSite] = world.build_controller.construction.sites if world.build_controller.construction != null else [] as Array[ConstructionSite]
@@ -137,7 +138,9 @@ static func capture(world: World) -> Dictionary:
 		if ant.construction != null and ant.construction.job != null:
 			var job: ConstructionJob = ant.construction.job
 			state["job"] = {"site": sites.find(job.site), "source": buildings.find(job.source), "materials": amounts(job.materials), "picked_up": job.picked_up, "assembly": job.assembly}
-		if ant.combat != null: state["tower"] = buildings.find(ant.combat.tower)
+		if ant.combat != null:
+			state["tower"] = buildings.find(ant.combat.tower)
+			state["combat_attack"] = ant.combat._attack
 		data.ants.append(state)
 	if world.tasks != null:
 		data["tasks"] = _properties(world.tasks, ["level", "closed", "completed_count", "skipped_count", "pending_reward", "buffs", "_speed", "difficulty_multiplier", "message"])
@@ -239,10 +242,11 @@ static func apply(world: World, data: Dictionary) -> void:
 			job.assembly = state.job.assembly
 			ant.construction.job = job
 			if job.assembly and job.live(): job.site.builder = ant
+		if ant.combat != null: ant.combat._attack = state.get("combat_attack", 0.0)
 		if state.get("tower", -1) >= 0:
 			ant.combat.tower = buildings[state.tower]
 			ant.combat.tower.gunner = ant
-		for key in ["home", "satiety", "capacity", "cargo", "meal", "workplace", "pickup", "delivery", "foodless", "route", "route_index", "finished", "job", "tower"]: state.erase(key)
+		for key in ["home", "satiety", "capacity", "cargo", "meal", "workplace", "pickup", "delivery", "foodless", "route", "route_index", "finished", "job", "tower", "combat_attack"]: state.erase(key)
 		_set_properties(ant, state)
 	if data.has("tasks"):
 		var tasks: Dictionary = {}

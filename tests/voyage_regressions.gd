@@ -68,6 +68,8 @@ func run(test: Node) -> void:
 	world.combat.spawn_spider(home.cell + Vector2i(5, 2)).take_damage(1)
 	world.combat.spawner.number = 3
 	world.combat.spawner.remaining = 17.5
+	warrior.combat._attack = 0.6
+	(world.registry.at(tower_cell) as DefenseBuilding).shot_timer = 0.4
 	var snapshot: Dictionary = SessionSave.capture(world)
 	var path := "user://voyage-regression.save"
 	test.expect(SessionSave.write(world, path) == OK and not SessionSave.read(path).is_empty(), "save file writes and reads an object-free snapshot")
@@ -84,6 +86,8 @@ func run(test: Node) -> void:
 	test.expect(restored_carrier.construction.has_cargo() and restored_carrier.construction.job.materials[0].amount == carrier.construction.job.materials[0].amount, "construction cargo in transit is restored exactly once")
 	test.expect(restored.combat.spiders.size() == 1 and restored.combat.spiders[0].health == 5 and restored.combat.spawner.number == 3 and restored.combat.spawner.remaining == 17.5, "save restores enemy health and wave schedule")
 	var restored_warrior: AntAgent = restored.population.agents().filter(func(ant: AntAgent): return ant.role == AntAgent.Role.WARRIOR)[0]
+	test.expect(is_equal_approx(restored_warrior.combat._attack, 0.6) and is_equal_approx((restored.registry.at(tower_cell) as DefenseBuilding).shot_timer, 0.4), "loading does not reset warrior or tower attack cooldowns")
+	test.expect(restored.voyage.seed_value == world.voyage.seed_value, "saving retains the campaign destination seed")
 	test.expect(restored_warrior.needs.capacity == warrior.needs.capacity and restored_warrior.needs.satiety == warrior.needs.satiety, "save preserves personal hunger values")
 	test.expect(SessionSave.write(world, path) == OK, "second save creates the previous-save backup")
 	var corrupt := FileAccess.open(path, FileAccess.WRITE)
