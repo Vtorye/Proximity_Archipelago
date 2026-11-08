@@ -25,6 +25,7 @@ var _active := false
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_template = LevelLayout.DEFAULT_WORLD.instantiate()
+	(_template.get_node("Map") as TerrainMap).prepare_terrain()
 	_prototypes = LevelLayout.editor_prototypes(_template)
 	_objects = Node2D.new()
 	add_child(_objects)
@@ -89,6 +90,7 @@ func _make_ui() -> void:
 	_saved.fit_to_longest_item = false
 	files.add_child(_saved)
 	_button(files, "ui.map.load", _load_map)
+	_button(files, "ui.terrain.generate", _generate_soils)
 	_status = ColonyStyle.label("", 8)
 	_status.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	rows.add_child(_status)
@@ -344,7 +346,14 @@ func _paint(cell: Vector2i) -> void:
 	if brush is Vector4i:
 		if _map.get_cell_source_id(cell) < 0 and _map.get_used_cells().size() >= LevelLayout.TILE_LIMIT:
 			return
-		_map.set_cell(cell, brush.x, Vector2i(brush.y, brush.z), brush.w)
+		var next_type: TerrainType = (_map as TerrainMap).catalog.for_tile(brush)
+		var underlying: TerrainType = (_map as TerrainMap).ground_at(cell)
+		var object: Building = _object_at(cell)
+		if next_type != null and ((next_type.kind == TerrainType.Kind.ROAD and underlying != null and not underlying.roads_allowed) or (object != null and not TerrainRules.supports(next_type, TerrainRules.building_kind(object)))):
+			_status.text = "ui.placement.soil_restricted"
+			return
+		(_map as TerrainMap).paint_tile(cell, brush, true)
+		TerrainPainter.grow_wet_shore(_map, cell, _objects.get_children())
 		var size := Vector2(_map.tile_set.tile_size)
 		_camera.bounds = _camera.bounds.merge(Rect2(_map.to_global(_map.map_to_local(cell)) - size / 2, size).grow(160.0))
 		_mark_dirty()
@@ -369,7 +378,7 @@ func _place(building: Building, cell: Vector2i) -> bool:
 	for tile in building.footprint():
 		var data: TileData = _map.get_cell_tile_data(tile)
 		var occupied: Building = _object_at(tile, building)
-		if data == null or not data.get_custom_data("walkable") or occupied != null:
+		if data == null or not data.get_custom_data("walkable") or occupied != null or not _allows_object(building, tile):
 			building.cell = previous
 			_status.text = "ui.map.invalid_object_cell"
 			return false
@@ -378,6 +387,14 @@ func _place(building: Building, cell: Vector2i) -> bool:
 	building.global_position = _map.to_global(_map.map_to_local(cell))
 	_mark_dirty()
 	return true
+
+func _generate_soils() -> void:
+	var count: int = TerrainPainter.populate(_map, _objects.get_children())
+	_mark_dirty()
+	_status.text = tr("ui.terrain.generated") % count
+
+func _allows_object(building: Building, cell: Vector2i) -> bool:
+	return TerrainRules.supports((_map as TerrainMap).ground_at(cell), TerrainRules.building_kind(building))
 
 func _erase(cell: Vector2i) -> void:
 	var building: Building = _object_at(cell)
@@ -388,7 +405,7 @@ func _erase(cell: Vector2i) -> void:
 			_pending_move = null
 		building.free()
 	elif _map.get_cell_source_id(cell) != -1:
-		_map.erase_cell(cell)
+		(_map as TerrainMap).erase_terrain(cell)
 	else:
 		return
 	_mark_dirty()

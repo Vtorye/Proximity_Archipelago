@@ -125,6 +125,7 @@ func refresh() -> void:
 	_dispatch_hint.visible = not main
 	_dispatch.set_pressed_no_signal(house.auto_dispatch)
 	_population.text = tr("ui.nest.population") % [house.residents.size(), house.resident_limit()]
+	_population.tooltip_text = tr("ui.terrain.capacity_bonus") % roundi((house.terrain_capacity_multiplier - 1) * 100) if house.terrain_capacity_multiplier > 1 else ""
 	var counts := {}
 	for role in world.population.roles(): counts[role] = 0
 	for ant: AntAgent in house.residents:

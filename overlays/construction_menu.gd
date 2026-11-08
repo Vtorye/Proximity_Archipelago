@@ -21,8 +21,11 @@ var _panning := false
 var _last_cell := Vector2i.ZERO
 var _has_last := false
 var _refresh_queued := false
+var _pointer := Vector2.ZERO
+var _pricing_cell := Vector2i(2147483647, 2147483647)
 
 func _ready() -> void:
+	_pointer = get_viewport().get_mouse_position()
 	dismissable = false
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	ColonyStyle.apply(self)
@@ -162,6 +165,9 @@ func _cancel_confirmation() -> void:
 func _refresh() -> void:
 	_refresh_queued = false
 	_hint.text = "ui.construction.build_hint" if _tool == &"build" else ("ui.construction.move_hint" if _tool == &"move" else "ui.construction.demolish_hint")
+	if context.controller.terrain != null:
+		var soil: TerrainType = context.controller.terrain.map.ground_at(_pricing_cell)
+		if soil != null: _hint.text = tr(soil.display_name)
 	var budget: PlacementCheck = draft.budget_check()
 	_cost.text = tr("ui.construction.cost") % [draft.size(), BuildCostText.format(draft.costs())]
 	_cost.add_theme_color_override("font_color", ColonyStyle.TEXT if budget.allowed() else ColonyStyle.DANGER)
@@ -202,6 +208,7 @@ func _commit() -> void:
 
 func _input(event: InputEvent) -> void:
 	if not visible: return
+	if event is InputEventMouseMotion or event is InputEventMouseButton: _pointer = event.position
 	if event is InputEventKey and event.physical_keycode in [KEY_LEFT, KEY_RIGHT, KEY_UP, KEY_DOWN]:
 		get_viewport().set_input_as_handled()
 		return
@@ -313,6 +320,11 @@ func _update_hover(point: Vector2) -> void:
 	if _preview.hovering != hovering or _preview.hover != cell:
 		_preview.hovering = hovering
 		_preview.hover = cell
+		if hovering:
+			_pricing_cell = cell
+			for control in controls.values():
+				if control is BuildChoiceButton: control.set_pricing_cell(cell)
+		_queue_refresh()
 		_preview.queue_redraw()
 
 func _process(delta: float) -> void:
@@ -325,7 +337,7 @@ func _process(delta: float) -> void:
 		var direction: Vector2 = WorldCamera.keyboard_direction()
 		if not direction.is_zero_approx():
 			context.camera.pan(-direction.normalized() * delta * 100.0)
-	_update_hover(get_viewport().get_mouse_position())
+	_update_hover(_pointer)
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_APPLICATION_FOCUS_OUT:

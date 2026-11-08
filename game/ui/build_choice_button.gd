@@ -7,6 +7,7 @@ var art: ArtCatalog
 var cost_label: Label
 var card_width := 176
 var compact := false
+var pricing_cell := Vector2i(2147483647, 2147483647)
 var _body: MarginContainer
 var _minimum_height := 44.0
 
@@ -45,7 +46,7 @@ func _ready() -> void:
 	var caption: Label = ColonyStyle.label(option.display_name, 6 if compact else 8)
 	caption.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	lines.add_child(caption)
-	cost_label = ColonyStyle.label(BuildCostText.format(controller.price(option) if controller != null else option.costs), 4 if compact else 6, ColonyStyle.MUTED)
+	cost_label = ColonyStyle.label(BuildCostText.format(controller.price(option, pricing_cell) if controller != null else option.costs), 4 if compact else 6, ColonyStyle.MUTED)
 	cost_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	lines.add_child(cost_label)
 	minimum_size_changed.connect(_fit_content)
@@ -54,7 +55,13 @@ func _ready() -> void:
 	_fit_content()
 
 func _refresh_price() -> void:
-	cost_label.text = BuildCostText.format(controller.price(option))
+	cost_label.text = BuildCostText.format(controller.price(option, pricing_cell))
+
+func set_pricing_cell(cell: Vector2i) -> void:
+	if pricing_cell == cell: return
+	pricing_cell = cell
+	if cost_label != null: _refresh_price()
+	tooltip_text = "%s: %s" % [tr(option.display_name), BuildCostText.format(controller.price(option, pricing_cell))]
 
 func _process(_delta: float) -> void:
 	_body.modulate.a = 0.35 if disabled else 1.0

@@ -106,8 +106,20 @@ func refresh() -> void:
 	elif terrain != null:
 		var time: float = overlay.world.planner.travel_seconds(overlay.world.route_service.entry_cost(cell), overlay.reference_speed)
 		_detail.text = "%s\n%s" % [tr(terrain.get_custom_data("terrain_name")), (tr("ui.terrain.entry") % roundi(time * 1000)) if is_finite(time) else tr("ui.terrain.impassable")]
+		if overlay.world.terrain != null:
+			var soil: TerrainType = overlay.world.terrain.map.ground_at(cell)
+			if soil != null:
+				var surface: TerrainType = overlay.world.terrain.map.surface_at(cell)
+				_detail.text = TerrainRules.describe(soil) + "\n" + ((tr("ui.terrain.entry") % roundi(time * 1000)) if is_finite(time) else tr("ui.terrain.impassable"))
+				if surface != null and surface.kind == TerrainType.Kind.ROAD: _detail.text = tr(surface.display_name) + "\n" + _detail.text
 	else:
 		_detail.text = "Клик — нагрузка предприятия\nПКМ — выбрать начало\nЛКМ / стрелки — камера\nГолод проверяется отдельно"
+	if building != null and not building is ConstructionSite and overlay.world.terrain != null:
+		var soil: TerrainType = overlay.world.terrain.map.ground_at(cell)
+		if soil != null:
+			_detail.text += "\n" + tr("ui.terrain.base") % tr(soil.display_name)
+			if building is Workplace and not is_equal_approx(building.terrain_yield_multiplier, 1): _detail.text += "\n" + tr("ui.terrain.harvest") % roundi(building.terrain_yield_multiplier * 100)
+			if building is House and building.terrain_capacity_multiplier > 1: _detail.text += "\n" + tr("ui.terrain.capacity_bonus") % roundi((building.terrain_capacity_multiplier - 1) * 100)
 	if combat != null and building != null and combat.health(building) > 0:
 		_detail.text += "\n" + tr("ui.combat.health") % [combat.health(building), combat.maximum_health(building)]
 	_detail.add_theme_color_override("font_color", value.get("color", ColonyStyle.TEXT))
