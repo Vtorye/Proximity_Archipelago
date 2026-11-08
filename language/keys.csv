@@ -198,3 +198,30 @@ Radius: %d; does not stack","Вместимость рядом: +%d%%
 Радиус: %d; не суммируется"
 ui.terrain.base,Ground: %s,Почва: %s
 ui.terrain.capacity_bonus,Wet-soil capacity bonus: +%d%%,Влажная почва: +%d%% к вместимости
+ui.voyage.continue,Continue,Продолжить
+ui.voyage.save,Save game,Сохранить игру
+ui.voyage.saved,Game saved,Игра сохранена
+ui.voyage.save_failed,Save failed,Не удалось сохранить
+ui.voyage.ship,Ship,Корабль
+ui.voyage.ship_unlocked,Ship unlocked: build it to set sail,Доступен корабль: постройте его для отплытия
+ui.voyage.level_complete,Level %d complete,Уровень %d завершён
+ui.voyage.choose_reward,Choose one upgrade. Keep it on future islands.,Выберите одно улучшение. Оно останется на следующих островах.
+ui.voyage.road,Fast trail,Быстрая тропинка
+ui.voyage.road_detail,"Replaces the ordinary trail. Faster movement, same price.","Заменяет обычную тропинку. Движение быстрее, цена прежняя."
+ui.voyage.discount,Efficient construction,Бережливое строительство
+ui.voyage.discount_detail,All new buildings cost 10% less.,Все новые постройки на 10% дешевле.
+ui.voyage.speed,Quick feet,Быстрые лапки
+ui.voyage.speed_detail,All ants move 15% faster.,Все муравьи двигаются на 15% быстрее.
+ui.voyage.satiety,Deep reserves,Большой запас сил
+ui.voyage.satiety_detail,All ants gain 20% satiety capacity.,Запас сытости всех муравьёв увеличен на 20%.
+ui.voyage.departure,Ship ready. Victory!,Корабль готов. Победа!
+ui.voyage.score,Score: %d,Счёт: %d
+ui.voyage.next_island,Island %d: choose a shore for your next colony.,Остров %d: выберите берег для новой колонии.
+ui.voyage.fertile_island,Green shore · more fertile ground,Зелёный берег · больше плодородной земли
+ui.voyage.dry_island,Dry plateau · cheaper nests,Сухое плато · дешёвые муравейники
+ui.voyage.rocky_island,Stone islands · harder road building,Каменные острова · труднее строить дороги
+ui.voyage.carry_over,"Keep resources and upgrades. Less time, more costly requests.","Запасы и улучшения сохранятся. Времени станет меньше, задания — дороже."
+ui.voyage.seed,Seed,Зерно
+ui.voyage.generate,Generate islands,Создать острова
+ui.voyage.generate_confirm,Unsaved changes. Save them or press Generate islands again.,Есть несохранённые изменения. Сохраните их или нажмите «Создать острова» ещё раз.
+ui.voyage.generated,"Islands generated. Edit, save and play.","Острова созданы. Можно редактировать, сохранить и играть."
