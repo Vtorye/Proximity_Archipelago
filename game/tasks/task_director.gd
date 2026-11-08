@@ -4,6 +4,9 @@ extends RefCounted
 signal changed
 var world: World
 var deck: TaskDeck
+var pending_reward := false
+var buffs: Array[int] = []
+var difficulty_multiplier := 1.0
 var level := 0
 var closed := 0
 var completed_count := 0
@@ -20,7 +23,7 @@ func configure(colony: World, definitions: TaskDeck, random_seed: int = 0) -> vo
 	world = colony
 	deck = definitions
 	_rng.seed = random_seed
-	world.population.spawned.connect(func(ant: AntAgent): ant.speed *= _speed)
+	world.population.spawned.connect(func(ant: AntAgent): apply_ant_buffs(ant))
 	world.registry.added.connect(func(building: Building): _skin(building))
 	_next_level()
 
@@ -31,7 +34,7 @@ func price(index: int, cancel := false) -> Array[ResourceAmount]:
 	var result: Array[ResourceAmount] = []
 	if index < 0 or index >= slots.size() or slots[index] == null: return result
 	if cancel and not slots[index].cancellation_costs.is_empty(): return slots[index].cancellation_costs.duplicate()
-	var scale: float = pow(deck.repeat_cost_multiplier, maxi(0, level - deck.stages.size()))
+	var scale: float = difficulty_multiplier * pow(deck.repeat_cost_multiplier, maxi(0, level - deck.stages.size()))
 	var totals: Dictionary[StringName, float] = {}
 	var types: Dictionary[StringName, ResourceType] = {}
 	for source in slots[index].costs:
@@ -47,7 +50,7 @@ func price(index: int, cancel := false) -> Array[ResourceAmount]:
 	return result
 
 func can_pay(index: int, cancel := false) -> bool:
-	return not _busy and world.match_controller.is_active() and index >= 0 and index < slots.size() and slots[index] != null and world.inventory.can_afford_all(price(index, cancel))
+	return not _busy and not pending_reward and world.match_controller.is_active() and index >= 0 and index < slots.size() and slots[index] != null and world.inventory.can_afford_all(price(index, cancel))
 
 func submit(index: int, cancel := false) -> bool:
 	if not can_pay(index, cancel): return false
@@ -78,14 +81,62 @@ func submit(index: int, cancel := false) -> bool:
 	if not unlocked_names.is_empty():
 		message += " · " + ", ".join(unlocked_names)
 	if closed == stage().tasks.size():
-		_apply_upgrade()
-		if level == deck.stages.size() and not deck.loop_last_stage:
-			world.match_controller.complete_objective()
-		else: _next_level()
+		if deck.choose_upgrades:
+			pending_reward = true
+		else:
+			_apply_upgrade()
+			advance()
 	_busy = false
 	world.inventory.end_update()
 	changed.emit()
 	return true
+
+func advance() -> void:
+	if level == deck.stages.size() and not deck.loop_last_stage:
+		world.match_controller.complete_objective()
+	else: _next_level()
+
+func reward_choices() -> Array[int]:
+	return [3 if buffs.has(0) else 0, 1, 2]
+
+func choose_reward(index: int) -> bool:
+	if not pending_reward or index < 0 or index >= 3 or not world.match_controller.is_active(): return false
+	grant_buff(reward_choices()[index])
+	pending_reward = false
+	advance()
+	changed.emit()
+	return true
+
+func apply_ant_buffs(ant: AntAgent) -> void:
+	ant.speed *= _speed
+	for buff in buffs:
+		if buff == 3:
+			ant.needs.capacity *= 1.2
+			ant.needs.satiety *= 1.2
+
+func grant_buff(kind: int) -> void:
+	buffs.append(kind)
+	match kind:
+		0: _unlock_road()
+		1:
+			world.prices.global_multiplier *= 0.9
+			world.prices.changed.emit()
+		2:
+			_speed *= 1.15
+			for ant in world.population.agents(): ant.speed *= 1.15
+			world.planner.opportunities_changed.emit()
+		3:
+			for ant in world.population.agents():
+				ant.needs.capacity *= 1.2
+				ant.needs.satiety *= 1.2
+
+func _unlock_road() -> void:
+	if deck.unlocked_road == null or world.build_controller.options.has(deck.unlocked_road): return
+	var position: int = world.build_controller.options.find(deck.replaced_road)
+	if position >= 0: world.build_controller.options[position] = deck.unlocked_road
+	else: world.build_controller.options.append(deck.unlocked_road)
+	world.prices.definitions = world.build_controller.options.duplicate()
+	world.prices.changed.emit()
 
 func _next_level() -> void:
 	if level > 0: message = _upgrade_message

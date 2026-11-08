@@ -2,6 +2,7 @@ class_name TaskDeck
 extends Resource
 @export var stages: Array[TaskStage] = []
 @export_range(0.0, 1.0) var cancellation_fraction := 0.3333333333
+@export var choose_upgrades := false
 @export var loop_last_stage := true
 @export var repeat_cost_multiplier := 1.25
 @export var unlocked_road: TileBuildOption
