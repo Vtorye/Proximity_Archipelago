@@ -31,6 +31,7 @@ func run(test: Node) -> void:
 		var index := 0
 		while tasks.slots[index] == null: index += 1
 		tasks.submit(index)
+	test.expect(tasks.pending_reward and tasks.choose_reward(0), "stage completion waits for one explicit reward")
 	test.expect(tasks.level == 2 and tasks.closed == 0 and world.build_controller.options.has(tasks.deck.unlocked_road), "closing the five-item pool unlocks the next level and improved road")
 	var facilities: int = world.build_controller.options.filter(func(option: BuildOption) -> bool: return option is WorkplaceUpgradeOption).size()
 	test.expect(not world.build_controller.options.has(ordinary) and world.build_controller.options.size() == option_count + facilities and world.build_controller.options[road_position] == tasks.deck.unlocked_road, "improved road keeps its palette slot while earned facilities occupy their own slots")
@@ -41,12 +42,14 @@ func run(test: Node) -> void:
 		var index := 0
 		while tasks.slots[index] == null: index += 1
 		tasks.submit(index, true)
+	tasks.choose_reward(1)
 	test.expect(tasks.level == 3 and is_equal_approx(world.prices.global_multiplier, 0.9), "skips advance the level and apply its configured upgrade")
 	var speed: float = world.population.agents()[0].speed
 	for step in range(5):
 		var index := 0
 		while tasks.slots[index] == null: index += 1
 		tasks.submit(index)
+	tasks.choose_reward(2)
 	test.expect(tasks.level == 4 and world.population.agents()[0].speed > speed, "repeated final-stage progression improves worker speed")
 	var tile: TileBuildOption = tasks.deck.unlocked_road
 	test.expect(world.build_controller.try_build(tile, Vector2i(26, 25)) and world.route_service.entry_cost(Vector2i(26, 25)) < 0.35, "replacement brush upgrades an existing road to its faster tile alternative")

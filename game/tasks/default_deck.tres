@@ -390,6 +390,7 @@ upgrade = 2
 upgrade_factor = 1.15
 [resource]
 script = ExtResource("deck")
+choose_upgrades = true
 stages = Array[ExtResource("stage")]([SubResource("stage_1"), SubResource("stage_2"), SubResource("stage_3")])
 unlocked_road = ExtResource("road")
 replaced_road = ExtResource("old_road")

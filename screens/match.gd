@@ -7,6 +7,7 @@ var world: World
 var camera: WorldCamera
 var navigation_overlay: NavigationOverlay
 var selection: TileSelection
+var campaign_panel: CampaignPanel
 var hud: MatchHud
 var _active := false
 var _pointer := Vector2(-1, -1)
@@ -46,6 +47,12 @@ func _ready() -> void:
 	hud.world = world
 	hud.navigation = navigation_overlay
 	layer.add_child(hud)
+	if world.voyage != null:
+		if payload is Dictionary and payload.has("journey"): world.voyage.apply(payload.journey)
+	if payload is Dictionary and payload.has("snapshot"): SessionSave.apply(world, payload.snapshot)
+	campaign_panel = CampaignPanel.new()
+	campaign_panel.world = world
+	layer.add_child(campaign_panel)
 	hud.settings_requested.connect(_open_settings)
 	hud.navigation_requested.connect(_toggle_navigation)
 	hud.construction_requested.connect(_open_construction)
@@ -56,6 +63,7 @@ func _ready() -> void:
 func on_focus() -> void:
 	_active = true
 	world.start()
+	if payload is Dictionary and payload.has("journey"): SessionSave.write(world)
 	if debug_show_result:
 		_on_completed(MatchSummary.capture(true, &"target_reached", 83.0, world.inventory))
 
@@ -68,6 +76,7 @@ func _on_completed(summary: MatchSummary) -> void:
 	if not _active or Router.is_navigating():
 		return
 	selection.clear()
+	if world.voyage != null and world.voyage.departed: return
 	if Router.push_overlay(&"match_result", summary) != null:
 		PauseController.acquire(&"result")
 
