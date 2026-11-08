@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="TerrainType" format=3]
+[ext_resource type="Script" path="res://game/terrain/terrain_type.gd" id="type"]
+[ext_resource type="Texture2D" path="res://game/assets/tiles/wet.svg" id="texture"]
+
+[resource]
+script = ExtResource("type")
+id = &"wet"
+display_name = "ui.terrain.wet"
+tile = Vector4i(8, 0, 0, 0)
+move_cost = 1.6
+texture = ExtResource("texture")
+nests_allowed = false
+adjacent_capacity_multiplier = 1.25
+preserve_ground = true

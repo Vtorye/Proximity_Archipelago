@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="TerrainType" format=3]
+[ext_resource type="Script" path="res://game/terrain/terrain_type.gd" id="type"]
+[ext_resource type="Texture2D" path="res://game/assets/tiles/fertile.svg" id="texture"]
+
+[resource]
+script = ExtResource("type")
+id = &"fertile"
+display_name = "ui.terrain.fertile"
+tile = Vector4i(5, 0, 0, 0)
+move_cost = 1.6
+texture = ExtResource("texture")
+berry_multiplier = 1.5
+preserve_ground = true

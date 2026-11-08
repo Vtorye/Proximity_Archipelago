@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="TerrainType" format=3]
+[ext_resource type="Script" path="res://game/terrain/terrain_type.gd" id="type"]
+[ext_resource type="Texture2D" path="res://game/assets/tiles/rocky.svg" id="texture"]
+
+[resource]
+script = ExtResource("type")
+id = &"rocky"
+display_name = "ui.terrain.rocky"
+tile = Vector4i(6, 0, 0, 0)
+move_cost = 1.6
+texture = ExtResource("texture")
+roads_allowed = false
+nests_allowed = false
+preserve_ground = true

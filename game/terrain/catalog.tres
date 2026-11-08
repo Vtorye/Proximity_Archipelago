@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="TerrainCatalog" format=3]
+[ext_resource type="Script" path="res://game/terrain/terrain_catalog.gd" id="catalog"]
+[ext_resource type="Script" path="res://game/terrain/terrain_type.gd" id="type"]
+[ext_resource type="Resource" path="res://game/terrain/types/grass.tres" id="grass"]
+[ext_resource type="Resource" path="res://game/terrain/types/soil.tres" id="soil"]
+[ext_resource type="Resource" path="res://game/terrain/types/road.tres" id="road"]
+[ext_resource type="Resource" path="res://game/terrain/types/road_plus.tres" id="road_plus"]
+[ext_resource type="Resource" path="res://game/terrain/types/water.tres" id="water"]
+[ext_resource type="Resource" path="res://game/terrain/types/coast.tres" id="coast"]
+[ext_resource type="Resource" path="res://game/terrain/types/fertile.tres" id="fertile"]
+[ext_resource type="Resource" path="res://game/terrain/types/rocky.tres" id="rocky"]
+[ext_resource type="Resource" path="res://game/terrain/types/dry.tres" id="dry"]
+[ext_resource type="Resource" path="res://game/terrain/types/wet.tres" id="wet"]
+[ext_resource type="Resource" path="res://game/terrain/types/sand.tres" id="sand"]
+
+[resource]
+script = ExtResource("catalog")
+default_ground = ExtResource("soil")
+types = Array[ExtResource("type")]([ExtResource("grass"), ExtResource("soil"), ExtResource("road"), ExtResource("road_plus"), ExtResource("water"), ExtResource("coast"), ExtResource("fertile"), ExtResource("rocky"), ExtResource("dry"), ExtResource("wet"), ExtResource("sand")])

@@ -172,3 +172,29 @@ ui.waves.next,Wave %d in %d:%02d,Волна %d через %d:%02d
 ui.waves.enemies,Spiders: %d,Пауков: %d
 ui.waves.hint,Recruit warriors in a nest. Build staffed towers and walls before the next wave.,Покупайте бойцов в муравейнике. До волны стройте стены и вышки с бойцами.
 ui.result.colony_destroyed,All nests were destroyed,Все муравейники уничтожены
+ui.terrain.grass,Grass,Трава
+ui.terrain.soil,Soil,Почва
+ui.terrain.road,Road,Дорога
+ui.terrain.road_plus,Improved road,Быстрая тропинка
+ui.terrain.water,Water,Вода
+ui.terrain.fertile,Fertile soil,Плодородная почва
+ui.terrain.rocky,Rocky soil,Каменистая почва
+ui.terrain.dry,Dry soil,Сухая почва
+ui.terrain.wet,Wet soil,Влажная почва
+ui.terrain.sand,Sand,Песок
+ui.placement.soil_restricted,This soil forbids this construction,На этой почве нельзя это строить
+ui.terrain.generate,Soils,Почвы
+ui.terrain.generated,Soils distributed over %d cells. Save the map.,Почвы распределены по %d клеткам. Сохраните карту.
+ui.terrain.allowed,yes,да
+ui.terrain.forbidden,no,нет
+ui.terrain.permissions,"Roads: %s · berries: %s
+Nests: %s","Дороги: %s · кусты: %s
+Муравейники: %s"
+ui.terrain.harvest,Berry yield: %d%%,Урожай ягод: %d%%
+ui.terrain.nest_price,Nest price: %d%%,Цена муравейника: %d%%
+ui.terrain.road_price,Road price: %d%%,Цена дороги: %d%%
+ui.terrain.adjacency,"Adjacent nest capacity: +%d%%
+Radius: %d; does not stack","Вместимость рядом: +%d%%
+Радиус: %d; не суммируется"
+ui.terrain.base,Ground: %s,Почва: %s
+ui.terrain.capacity_bonus,Wet-soil capacity bonus: +%d%%,Влажная почва: +%d%% к вместимости
