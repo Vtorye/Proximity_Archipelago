@@ -7,6 +7,9 @@ var tower: DefenseBuilding
 var _enemy: SpiderAgent
 var _attack := 0.0
 var _rethink := 0.0
+var _patrol: Building
+var _visited: Dictionary[Building, int] = {}
+var _visit := 0
 
 func physics(delta: float) -> bool:
 	if not director.running(): return false
@@ -43,6 +46,11 @@ func physics(delta: float) -> bool:
 		var enemy: SpiderAgent = _reachable_enemy()
 		_rethink = 0.5
 		if enemy != null: _chase(enemy)
+		elif ant._destination == &"combat_patrol":
+			for building in director.world.registry.all():
+				if building is DefenseBuilding and building.kind == DefenseBuilding.Kind.TOWER and not is_instance_valid(building.gunner):
+					decide()
+					break
 	return false
 
 func _civilian() -> bool:
@@ -104,13 +112,13 @@ func decide() -> void:
 	var enemy: SpiderAgent = _reachable_enemy()
 	if enemy != null and _chase(enemy): return
 	_enemy = null
-	ant._wander()
+	if not _patrol_next(): ant._wander()
 
 func _chase(enemy: SpiderAgent) -> bool:
 	var route: Route = director.approach(enemy, _cell())
 	if not route.is_valid(): return false
 	var energy: float = ant.planner.travel_energy(route.cost, ant.speed) + _home_energy(route.cells.back())
-	if energy + 4.0 + AntNeeds.SAFETY_MARGIN > AntNeeds.CAPACITY: return false
+	if energy + 4.0 + AntNeeds.SAFETY_MARGIN > ant.needs.capacity: return false
 	if not ant.needs.can_afford(energy + 4.0):
 		seek_meal()
 		return true
@@ -131,7 +139,31 @@ func _reachable_enemy() -> SpiderAgent:
 	return best
 
 func _meal_due() -> bool:
-	return ant.needs.satiety <= maxf(60.0, _home_energy(_cell()) + AntNeeds.SAFETY_MARGIN + 4.0)
+	return ant.needs.satiety <= maxf(ant.needs.capacity * (ant.profile.meal_fraction if ant.profile != null else 0.5), _home_energy(_cell()) + AntNeeds.SAFETY_MARGIN + 4.0)
+
+func _patrol_next() -> bool:
+	var best: Building
+	var route: Route
+	var oldest := 2147483647
+	var cost := INF
+	for building in director.world.registry.all():
+		if not (building is Workplace or building is House or building is Canteen) or building == _patrol: continue
+		var path: Route = director.approach(building, _cell())
+		if not path.is_valid() or path.cost < 0.01: continue
+		var energy: float = ant.planner.travel_energy(path.cost, ant.speed) + _home_energy(path.cells.back()) + 4.0
+		if not ant.needs.can_afford(energy): continue
+		var visited: int = _visited.get(building, 0)
+		if visited < oldest or (visited == oldest and path.cost < cost):
+			best = building
+			route = path
+			oldest = visited
+			cost = path.cost
+	if best == null: return false
+	_patrol = best
+	_visit += 1
+	_visited[best] = _visit
+	ant._walk(route, &"combat_patrol")
+	return true
 
 func _home_energy(cell: Vector2i) -> float:
 	var route: Route = ant.logistics.route_to(ant.home, cell)

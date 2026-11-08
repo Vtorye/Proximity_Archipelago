@@ -32,9 +32,10 @@ func _configure_ant(ant: AntAgent) -> void:
 	ant.combat = AntCombat.new()
 	ant.combat.ant = ant
 	ant.combat.director = self
-	ant.max_health = rules.warrior_health if ant.role == AntAgent.Role.WARRIOR else 1
-	ant.health = ant.max_health
-	ant.attack_damage = rules.attack_damage
+	if ant.profile == null:
+		ant.max_health = rules.warrior_health if ant.role == AntAgent.Role.WARRIOR else 1
+		ant.health = ant.max_health
+		ant.attack_damage = rules.attack_damage
 	ant.cell_changed.connect(func(_old: Vector2i, next: Vector2i):
 		if traps.has(next): traps[next].trigger(ant))
 
