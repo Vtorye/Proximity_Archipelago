@@ -68,5 +68,6 @@ func _draw() -> void:
 	draw_rect(Rect2(-2, 3, 4, 3), Color("31252a"))
 	draw_rect(Rect2(-2, 5, 1, 1), Color("f49a80"))
 	draw_rect(Rect2(1, 5, 1, 1), Color("f49a80"))
+	if health >= director.rules.spider_health: return
 	draw_rect(Rect2(-5, -8, 10, 1), Color("292a27"))
 	draw_rect(Rect2(-5, -8, 10.0 * health / maxi(1, director.rules.spider_health), 1), Color("e58b76"))
