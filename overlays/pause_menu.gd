@@ -9,6 +9,14 @@ func _ready() -> void:
 	resume.pressed.connect(PauseController.resume)
 	content.add_child(resume)
 	controls[&"resume"] = resume
+	var save: Button = ColonyStyle.button("ui.voyage.save")
+	save.pressed.connect(func():
+		var current: Node = Router._current
+		if current != null and current.get("world") is World:
+			var error: Error = SessionSave.write(current.world)
+			save.text = "ui.voyage.saved" if error == OK else "ui.voyage.save_failed")
+	content.add_child(save)
+	controls[&"save"] = save
 	var restart: Button = ColonyStyle.button("ui.pause.restart")
 	restart.pressed.connect(_restart)
 	content.add_child(restart)

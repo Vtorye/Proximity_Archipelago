@@ -18,6 +18,8 @@ func _ready() -> void:
 	var content := VBoxContainer.new()
 	content.add_theme_constant_override("separation", 14)
 	center.add_child(content)
+	if not SessionSave.read().is_empty():
+		_add_action(content, &"continue", "ui.voyage.continue", _continue)
 	_add_action(content, &"play", "ui.menu.play", func(): Router.goto(&"match"))
 	_add_action(content, &"waves", "ui.menu.waves", func(): Router.goto(&"match", {"wave_mode": true}))
 	_add_action(content, &"maps", "ui.menu.maps", func(): Router.goto(&"level_editor"))
@@ -25,6 +27,13 @@ func _ready() -> void:
 	_add_action(content, &"settings", "ui.menu.settings", func(): Router.push_overlay(&"settings"))
 	_add_action(content, &"language", "ui.menu.language", _toggle_language)
 	_add_action(content, &"quit", "ui.menu.quit", AppSettings.quit_game)
+
+func _continue() -> void:
+	var saved: Dictionary = SessionSave.read()
+	if not saved.is_empty():
+		var layout: Dictionary = saved.layout.duplicate()
+		layout["snapshot"] = saved
+		Router.goto(&"match", layout)
 
 func _add_action(parent: VBoxContainer, key: StringName, text: String, action: Callable) -> void:
 	var button: Button = ColonyStyle.button(text, false, key != &"quit")
