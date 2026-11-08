@@ -138,3 +138,7 @@ await get_tree().create_timer(0.3, false).timeout
 
 7. `process_mode` is set in the Inspector, not the script, for the shell layers. If you set it in code, make sure it runs before anything can pause - `_enter_tree()` is safe, `_ready()` is too late for the very first frame in edge cases
 
+
+## Путешествие между островами
+
+Генератор по зерну, профили муравьёв, выбор наград, корабль на пятом уровне и сохранение партии: [инструкция для дизайнера](docs/ISLAND_VOYAGE.md).
