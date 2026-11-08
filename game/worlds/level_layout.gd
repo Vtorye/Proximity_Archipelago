@@ -52,7 +52,14 @@ static func capture(map: TileMapLayer, buildings: Array[Node]) -> Dictionary:
 			if building.improvement != null:
 				row[3]["improvement"] = str(building.improvement.id)
 		objects.append(row)
-	return {"version": VERSION, "tiles": tiles, "objects": objects}
+	var layout := {"version": VERSION, "tiles": tiles, "objects": objects}
+	if map is TerrainMap and not map.underlays.is_empty():
+		var underlays: Array = []
+		for cell in map.underlays:
+			var key: Vector4i = map.underlays[cell]
+			underlays.append([cell.x, cell.y, key.x, key.y, key.z, key.w])
+		layout["underlays"] = underlays
+	return layout
 
 static func create_world(layout: Dictionary) -> World:
 	if layout.get("version") != VERSION or not layout.get("tiles") is Array or not layout.get("objects") is Array:
@@ -61,8 +68,11 @@ static func create_world(layout: Dictionary) -> World:
 		return null
 	var world: World = DEFAULT_WORLD.instantiate()
 	var map: TileMapLayer = world.get_node("Map")
+	if map is TerrainMap:
+		map.prepare_terrain()
+		map.underlays.clear()
 	map.clear()
-	if not _restore_tiles(map, layout.tiles) or not _restore_objects(world, map, layout.objects):
+	if not _restore_tiles(map, layout.tiles) or not _restore_underlays(map, layout.get("underlays", [])) or not _restore_objects(world, map, layout.objects):
 		world.free()
 		return null
 	return world
@@ -84,6 +94,20 @@ static func _restore_tiles(map: TileMapLayer, tiles: Array) -> bool:
 		if source == null or not source.has_tile(atlas) or not source.has_alternative_tile(atlas, alternative):
 			return false
 		map.set_cell(cell, source_id, atlas, alternative)
+	return true
+
+static func _restore_underlays(map: TileMapLayer, rows: Variant) -> bool:
+	if not rows is Array or rows.size() > map.get_used_cells().size(): return false
+	if rows.is_empty(): return true
+	if not map is TerrainMap: return false
+	for row in rows:
+		if not row is Array or row.size() != 6 or not _integers(row, 6): return false
+		var cell := Vector2i(int(row[0]), int(row[1]))
+		var key := Vector4i(int(row[2]), int(row[3]), int(row[4]), int(row[5]))
+		var type: TerrainType = map.catalog.for_tile(key)
+		var surface: TerrainType = map.surface_at(cell)
+		if map.underlays.has(cell) or surface == null or surface.kind != TerrainType.Kind.ROAD or type == null or type.kind != TerrainType.Kind.LAND or not type.roads_allowed: return false
+		map.underlays[cell] = key
 	return true
 
 static func _restore_objects(world: World, map: TileMapLayer, objects: Array) -> bool:
