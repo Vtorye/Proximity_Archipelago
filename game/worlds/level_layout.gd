@@ -122,7 +122,10 @@ static func _restore_objects(world: World, map: TileMapLayer, objects: Array) ->
 				for option in task.unlocks:
 					if option is WorkplaceUpgradeOption:
 						improvements[str(option.id)] = option
-	for option in world.build_catalog.options:
+	var definitions: Array[BuildOption] = world.build_catalog.options.duplicate()
+	definitions.append_array((load("res://game/combat/defense_catalog.tres") as BuildCatalog).options)
+	definitions.append(load("res://game/campaign/ship.tres"))
+	for option in definitions:
 		if option is SceneBuildOption:
 			catalog["build/" + str(option.id)] = option
 	var occupied: Dictionary[Vector2i, bool] = {}
