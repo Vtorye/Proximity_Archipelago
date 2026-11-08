@@ -57,9 +57,10 @@ func _draw() -> void:
 	var rect := Rect2(Vector2.ONE * -size * 0.5, Vector2.ONE * size)
 	var icon: Texture2D = option.icon if option.icon != null else BuildChoiceButton.default_icon(option, service.art)
 	if icon != null: draw_texture_rect(icon, rect, false, Color(1, 1, 1, 0.38))
-	draw_rect(rect.grow(-1), Color("d7bc73"), false, 1)
-	for side in [-1, 1]:
-		draw_rect(Rect2(side * (size * 0.5 - 3) - 1, -size * 0.5, 2, size), Color("9a734a"))
+	for corner in [Vector2(-1, -1), Vector2(1, -1), Vector2(-1, 1), Vector2(1, 1)]:
+		var point: Vector2 = corner * (size * 0.5 - 2)
+		draw_line(point, point - Vector2(corner.x * 3, 0), Color("d7bc73"), 1)
+		draw_line(point, point - Vector2(0, corner.y * 3), Color("d7bc73"), 1)
 	var fraction: float = progress / option.construction_seconds if supplied() else float(material_count()) / maxi(1, WorldInventory.cargo_size(required)) * 0.5
-	draw_rect(Rect2(-size * 0.5, size * 0.5 - 2, size, 2), Color("292a27"))
-	draw_rect(Rect2(-size * 0.5, size * 0.5 - 2, size * fraction, 2), Color("d7bc73"))
+	for index in range(3):
+		draw_rect(Rect2(-4 + index * 3, size * 0.5 - 4, 2, 2), Color("d7bc73") if fraction >= float(index + 1) / 3.0 else Color("423d32"))
