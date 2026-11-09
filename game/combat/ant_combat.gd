@@ -47,11 +47,7 @@ func physics(delta: float) -> bool:
 		if _claim_tower(): return false
 		var enemy: SpiderAgent = _reachable_enemy()
 		if enemy != null: _chase(enemy)
-		elif ant._destination == &"combat_patrol":
-			for building in director.world.registry.all():
-				if building is DefenseBuilding and building.kind == DefenseBuilding.Kind.TOWER and not is_instance_valid(building.gunner):
-					decide()
-					break
+
 	return false
 
 func _civilian() -> bool:
