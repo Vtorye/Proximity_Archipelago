@@ -2,33 +2,24 @@ extends Node2D
 class_name World
 ## Composition root. Owns services and lifecycle, never shell navigation or input.
 
-@export var starting_resources: Array[ResourceAmount] = []
-@export var build_catalog: BuildCatalog
-@export var build_options: Array[BuildOption] = []
 @export var art: ArtCatalog = preload("res://game/art/colony_art.tres")
 @export var auto_start := true
-@export var ant_construction := true
-@export var recruitment: RecruitmentCatalog = preload("res://game/resources/recruitment.tres")
 var map_size: Vector2i:
 	get: return ($Map as TileMapLayer).get_used_rect().size
 @export var diagnostics_enabled := false
-@export var wave_rules: WaveRules
-@export var worker_scene: PackedScene = preload("res://game/ants/worker.tscn")
-@export var carrier_scene: PackedScene = preload("res://game/ants/carrier.tscn")
-@export var warrior_scene: PackedScene = preload("res://game/ants/warrior.tscn")
 var voyage: Voyage
+@export var waves: CombatDirector
 var combat: CombatDirector
-@export var task_deck: TaskDeck
 var tasks: TaskDirector
 var events: WorldEvents
-var prices: PriceService
+@export var prices: PriceService
 var terrain: TerrainRules
 var inventory: WorldInventory
 var logistics: ColonyLogistics
-var build_controller: BuildController
+@export var build_controller: BuildController
 var route_service: RouteService
 var registry: BuildingRegistry
-var population: ColonyPopulation
+@export var population: ColonyPopulation
 var planner: TripPlanner
 var match_controller: MatchController
 var units: Node2D
@@ -37,16 +28,20 @@ var ready_for_play := false
 var _navigation_update_queued := false
 
 func _ready() -> void:
-	if wave_rules != null and not wave_rules.validate().is_empty():
-		for error in wave_rules.validate(): push_error(error)
-		return
-	if build_catalog != null: build_options = build_catalog.options.duplicate()
-	if wave_rules != null and wave_rules.defenses != null: build_options.append_array(wave_rules.defenses.options)
-	prices = PriceService.new()
+	if waves.enabled:
+		var errors: Array[String] = waves.validate()
+		if not errors.is_empty():
+			for error in errors:
+				push_error(error)
+			return
+	else:
+		waves.process_mode = Node.PROCESS_MODE_DISABLED
+	var build_options: Array[BuildOption] = build_controller.initial_options()
+	if waves.enabled:
+		build_options.append_array(waves.rules.defenses.options)
 	events = prices.events
 	prices.definitions = build_options
 	prices.process_mode = Node.PROCESS_MODE_ALWAYS
-	add_child(prices)
 	var map: TileMapLayer = $Map
 	if not art.validate().is_empty():
 		push_error("Invalid world art catalog")
@@ -57,7 +52,7 @@ func _ready() -> void:
 	inventory = WorldInventory.new()
 	inventory.name = "Inventory"
 	add_child(inventory)
-	if not inventory.configure(starting_resources):
+	if not inventory.configure(prices.starting_resources):
 		return
 	route_service = RouteService.new()
 	route_service.name = "RouteService"
@@ -90,26 +85,16 @@ func _ready() -> void:
 	buildings = Node2D.new()
 	buildings.name = "Buildings"
 	add_child(buildings)
-	population = ColonyPopulation.new()
-	population.name = "Population"
-	add_child(population)
 	population.configure(units, route_service, planner, registry, logistics)
-	population.recruitment = recruitment
-	population.worker_scene = worker_scene
-	population.carrier_scene = carrier_scene
-	population.warrior_scene = warrior_scene
-	build_controller = BuildController.new()
-	build_controller.name = "BuildController"
 	build_controller.prices = prices
 	build_controller.route_service = route_service
-	add_child(build_controller)
 	build_controller.configure(map, buildings, inventory, build_options)
 	build_controller.registry = registry
 	build_controller.population = population
 	build_controller.logistics = logistics
 	build_controller.terrain = terrain
 	if terrain != null: terrain.changed.connect(func(): population.changed.emit())
-	if ant_construction:
+	if build_controller.physical_construction:
 		var construction := ConstructionService.new()
 		construction.name = "Construction"
 		construction.controller = build_controller
@@ -148,24 +133,21 @@ func _ready() -> void:
 	for ant in population.agents():
 		ant.refresh_meal_reservation()
 	match_controller = get_node_or_null("MatchController") as MatchController
-	if task_deck != null:
-		var errors: Array[String] = task_deck.validate(inventory)
+	if prices.task_deck != null:
+		var errors: Array[String] = prices.task_deck.validate(inventory)
 		if not errors.is_empty():
 			for error in errors: push_error(error)
 			return
 		match_controller.task_mode = true
 		tasks = TaskDirector.new()
-		tasks.configure(self, task_deck, randi())
+		tasks.configure(self, prices.task_deck, randi())
 		match_controller.completed.connect(func(summary: MatchSummary):
 			summary.development_level = tasks.level
 			summary.tasks_completed = tasks.completed_count
 			summary.tasks_skipped = tasks.skipped_count)
-	if wave_rules != null:
-		combat = CombatDirector.new()
-		combat.name = "Combat"
-		combat.z_index = 3
-		add_child(combat)
-		combat.configure(self, wave_rules)
+	if waves.enabled:
+		combat = waves
+		combat.configure(self, waves.rules)
 	if tasks != null:
 		voyage = Voyage.new()
 		voyage.configure(self)

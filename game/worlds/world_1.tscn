@@ -21,6 +21,15 @@
 [ext_resource type="Resource" path="res://game/resources/dot_treses/wood.tres" id="wood"]
 [ext_resource type="Script" path="res://game/entities/workplace.gd" id="workplace"]
 [ext_resource type="Script" path="res://game/world.gd" id="world"]
+[ext_resource type="Script" path="res://game/building/build_controller.gd" id="construction"]
+[ext_resource type="Script" path="res://game/combat/combat_director.gd" id="waves"]
+[ext_resource type="Resource" path="res://game/combat/default_waves.tres" id="wave_rules"]
+[ext_resource type="PackedScene" path="res://game/combat/spider.tscn" id="spider"]
+[ext_resource type="Script" path="res://game/entities/colony_population.gd" id="ants"]
+[ext_resource type="PackedScene" path="res://game/ants/worker.tscn" id="worker"]
+[ext_resource type="PackedScene" path="res://game/ants/carrier.tscn" id="carrier"]
+[ext_resource type="PackedScene" path="res://game/ants/warrior.tscn" id="warrior"]
+[ext_resource type="Script" path="res://game/economy/price_service.gd" id="economy"]
 [ext_resource type="Script" path="res://game/terrain/terrain_map.gd" id="terrain_map"]
 
 [ext_resource type="Texture2D" path="res://game/assets/sprites/coast.svg" id="coast"]
@@ -104,12 +113,34 @@ custom_data_layer_3/type = 4
 sources/3 = SubResource("TileSetAtlasSource_qinhx")
 sources/4 = SubResource("TileSetAtlasSource_coast")
 
-[node name="World" type="Node2D" unique_id=1653711899]
+[node name="World" type="Node2D" node_paths=PackedStringArray("prices", "build_controller", "population", "waves") unique_id=1653711899]
 process_mode = 4
 script = ExtResource("world")
-starting_resources = Array[ExtResource("amount")]([SubResource("wood_stock"), SubResource("stone_stock"), SubResource("food_stock"), SubResource("royal_stock")])
-build_catalog = ExtResource("catalog")
+prices = NodePath("Economy")
+build_controller = NodePath("Construction")
+population = NodePath("Ants")
+waves = NodePath("Waves")
 auto_start = false
+
+[node name="Waves" type="Node2D" parent="."]
+z_index = 3
+script = ExtResource("waves")
+rules = ExtResource("wave_rules")
+enemy_scenes = Array[PackedScene]([ExtResource("spider")])
+
+[node name="Construction" type="Node" parent="."]
+script = ExtResource("construction")
+catalog = ExtResource("catalog")
+
+[node name="Ants" type="Node" parent="."]
+script = ExtResource("ants")
+worker_scene = ExtResource("worker")
+carrier_scene = ExtResource("carrier")
+warrior_scene = ExtResource("warrior")
+
+[node name="Economy" type="Node" parent="."]
+script = ExtResource("economy")
+starting_resources = Array[ExtResource("amount")]([SubResource("wood_stock"), SubResource("stone_stock"), SubResource("food_stock"), SubResource("royal_stock")])
 task_deck = ExtResource("tasks")
 
 [node name="Map" type="TileMapLayer" parent="." unique_id=1925920453]

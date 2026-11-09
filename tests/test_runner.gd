@@ -209,9 +209,9 @@ func _test_resident_pruning() -> void:
 
 func make_world() -> World:
 	var world: World = WORLD.instantiate() as World
-	world.task_deck = null
+	world.prices.task_deck = null
 	world.auto_start = false
-	world.ant_construction = false
+	world.build_controller.physical_construction = false
 	add_child(world)
 	return world
 
@@ -296,7 +296,7 @@ func _test_worlds() -> void:
 	await get_tree().process_frame
 	var nested: World = WORLD.instantiate() as World
 	nested.auto_start = false
-	nested.ant_construction = false
+	nested.build_controller.physical_construction = false
 	var nest_node: Node = nested.get_node("Home")
 	nest_node.owner = null
 	nested.remove_child(nest_node)
@@ -397,7 +397,7 @@ func _test_art_resolution() -> void:
 	replacement.grass = ImageTexture.create_from_image(image)
 	var world: World = WORLD.instantiate() as World
 	world.auto_start = false
-	world.ant_construction = false
+	world.build_controller.physical_construction = false
 	world.art = replacement
 	add_child(world)
 	expect(world.ready_for_play and world.art.tile_resolution() == 32 and (world.get_node("Map") as TileMapLayer).tile_set.tile_size == Vector2i(16, 16), "sprite catalog replacement preserves the authored map tile geometry")

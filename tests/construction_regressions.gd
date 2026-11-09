@@ -6,7 +6,7 @@ func _world(test: Node) -> World:
 		for y in range(5): tiles.append([x, y, 3, 0, 0, 0])
 	var world: World = LevelLayout.create_world({"version": 1, "tiles": tiles, "objects": [[0, 2, "build/base_nest"], [0, 3, "Food"]]})
 	world.auto_start = false
-	world.task_deck = null
+	world.prices.task_deck = null
 	test.add_child(world)
 	return world
 

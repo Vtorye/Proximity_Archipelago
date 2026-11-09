@@ -6,10 +6,11 @@ func _world(test: Node) -> World:
 		for y in range(7): tiles.append([x, y, 3, 2 if y == 3 else 0, 0, 0])
 	var world: World = LevelLayout.create_world({"version": 1, "tiles": tiles, "objects": [[0, 3, "build/base_nest"], [0, 4, "Food"], [6, 2, "Workplace"], [8, 4, "AppleTree"]]})
 	world.auto_start = false
-	world.ant_construction = false
-	world.task_deck = null
-	world.wave_rules = load("res://game/combat/default_waves.tres").duplicate(true)
-	world.wave_rules.first_wave_seconds = 1000
+	world.build_controller.physical_construction = false
+	world.prices.task_deck = null
+	world.waves.enabled = true
+	world.waves.rules = load("res://game/combat/default_waves.tres").duplicate(true)
+	world.waves.rules.first_wave_seconds = 1000
 	test.add_child(world)
 	world.match_controller.task_mode = true
 	world.match_controller.start(world.inventory)
@@ -201,7 +202,7 @@ func _base_promotion(test: Node) -> void:
 	var wood: ResourceType = world.inventory.type_by_id(&"wood")
 	world.inventory.deposit(secondary, [test.entry(wood, 7)])
 	var primary: House = world.logistics.main_nest
-	world.combat.damage(primary, world.wave_rules.nest_health)
+	world.combat.damage(primary, world.waves.rules.nest_health)
 	test.expect(world.logistics.main_nest == secondary and not world.match_controller.is_finished() and world.inventory.quantity(wood) == 7, "a surviving base becomes primary without inheriting destroyed stock")
 	test.expect(world.inventory.add(wood, 1) and world.inventory.quantity(wood) == 8 and world.inventory.main_quantity(wood) == 8, "the promoted base retains a valid ledger for new resources")
 	world.free()
@@ -216,7 +217,7 @@ func _slow_terrain_replanning(test: Node) -> void:
 	var start: Vector2i = world.route_service.world_to_cell(spider.global_position)
 	await _advance(test, world, 3.0)
 	test.expect((world.route_service.world_to_cell(spider.global_position) - start).abs().x + (world.route_service.world_to_cell(spider.global_position) - start).abs().y >= 2, "a spider keeps moving across slow soil while retargeting each second")
-	var invalid: WaveRules = world.wave_rules.duplicate(true)
+	var invalid: WaveRules = world.waves.rules.duplicate(true)
 	invalid.attack_seconds = 0
 	test.expect(not invalid.validate().is_empty(), "combat configs reject zero attack intervals before gameplay")
 	world.free()

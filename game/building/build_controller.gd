@@ -4,6 +4,9 @@ extends Node
 
 signal built(option: BuildOption, cell: Vector2i)
 signal changed
+
+@export var catalog: BuildCatalog
+@export var physical_construction := true
 var construction: ConstructionService
 var terrain: TerrainRules
 var prices: PriceService
@@ -24,10 +27,10 @@ func configure(tile_map: TileMapLayer, building_root: Node2D, stock: WorldInvent
 	inventory = stock
 	options = catalog.duplicate()
 
-## Existing homes and workplaces reserve their cells, but remain accessible.
-func reserve_existing(node: Node2D) -> void:
-	if node is Building:
-		registry.register(node)
+func initial_options() -> Array[BuildOption]:
+	if catalog == null:
+		return []
+	return catalog.options.duplicate()
 
 func blocked_cells() -> Array[Vector2i]:
 	return registry.blocked_cells()

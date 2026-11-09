@@ -21,7 +21,7 @@ static func editor_prototypes(world: World) -> Dictionary[String, Building]:
 		if building is House:
 			building.is_main_nest = false
 			building.option = load("res://game/building/options/house.tres")
-	for option in world.build_catalog.options:
+	for option in world.build_controller.initial_options():
 		if not option is SceneBuildOption or option.scene == null:
 			continue
 		var instance: Node = option.scene.instantiate()
@@ -114,16 +114,17 @@ static func _restore_objects(world: World, map: TileMapLayer, objects: Array) ->
 	var originals: Dictionary[String, Building] = prototypes(world)
 	var catalog: Dictionary[String, SceneBuildOption] = {}
 	var improvements: Dictionary[String, WorkplaceUpgradeOption] = {}
-	if world.task_deck != null:
-		for stage in world.task_deck.stages:
+	if world.prices.task_deck != null:
+		for stage in world.prices.task_deck.stages:
 			if stage == null: continue
 			for task in stage.tasks:
 				if task == null: continue
 				for option in task.unlocks:
 					if option is WorkplaceUpgradeOption:
 						improvements[str(option.id)] = option
-	var definitions: Array[BuildOption] = world.build_catalog.options.duplicate()
-	definitions.append_array((load("res://game/combat/defense_catalog.tres") as BuildCatalog).options)
+	var definitions: Array[BuildOption] = world.build_controller.initial_options()
+	if world.waves.rules != null and world.waves.rules.defenses != null:
+		definitions.append_array(world.waves.rules.defenses.options)
 	definitions.append(load("res://game/campaign/ship.tres"))
 	for option in definitions:
 		if option is SceneBuildOption:

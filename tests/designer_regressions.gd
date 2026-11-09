@@ -100,7 +100,7 @@ func test_finite_sources(test: Node) -> void:
 func test_resource_facilities(test: Node) -> void:
 	var world: World = load("res://game/worlds/world_1.tscn").instantiate()
 	world.auto_start = false
-	world.ant_construction = false
+	world.build_controller.physical_construction = false
 	test.add_child(world)
 	world.match_controller.start(world.inventory)
 	var sawmill: WorkplaceUpgradeOption = load("res://game/building/options/sawmill.tres")
@@ -148,7 +148,7 @@ func test_resource_facilities(test: Node) -> void:
 	test.expect(world != null, "saved maps accept an existing facility on an exhausted deposit")
 	if world != null:
 		world.auto_start = false
-		world.ant_construction = false
+		world.build_controller.physical_construction = false
 		test.add_child(world)
 		var restored := world.registry.at(Vector2i.ZERO) as Workplace
 		test.expect(restored.improvement == sawmill and restored.remaining_supply == 0 and not restored.can_run_recipe(), "loading a facility preserves exhaustion without regenerating resources")
@@ -159,7 +159,7 @@ func test_resource_facilities(test: Node) -> void:
 	var depleted := {"version": LevelLayout.VERSION, "tiles": [[0, 0, 3, 0, 0, 0]], "objects": [[0, 0, "Workplace", {"finite_supply": true, "remaining_supply": 0}]]}
 	world = LevelLayout.create_world(depleted)
 	world.auto_start = false
-	world.ant_construction = false
+	world.build_controller.physical_construction = false
 	test.add_child(world)
 	var source := world.registry.at(Vector2i.ZERO) as Workplace
 	test.expect(not (source.get_node("Sprite") as Sprite2D).visible, "loading an exhausted source keeps its resource sprite hidden")

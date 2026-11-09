@@ -23,9 +23,12 @@ func _enter_tree() -> void:
 	_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_content.add_child(_status)
 	_button(&"map", "1. Открыть карту и рисовать", _open_map)
-	_button(&"catalog", "2. Постройки и цены", func(): _edit_property(&"build_catalog"))
-	_button(&"resources", "3. Начальные ресурсы", _select_world)
-	_button(&"tasks", "4. Наборы заданий", func(): _edit_property(&"task_deck"))
+	_button(&"waves", "Волны и враги", func(): _select_system("Waves"))
+	_button(&"construction", "Настройки строительства", func(): _select_system("Construction"))
+	_button(&"catalog", "Каталог построек и цен", func(): _edit_property("Construction", &"catalog"))
+	_button(&"ants", "Муравьи и найм", func(): _select_system("Ants"))
+	_button(&"resources", "Экономика и начальные запасы", func(): _select_system("Economy"))
+	_button(&"tasks", "Наборы заданий", func(): _edit_property("Economy", &"task_deck"))
 	_button(&"tiles", "Свойства и текстуры тайлов", _edit_tiles)
 	_button(&"validate", "Проверить сохранённый уровень", _validate)
 	var help := Label.new()
@@ -70,21 +73,27 @@ func _open_map() -> void:
 	EditorInterface.edit_node(world.get_node("Map"))
 	EditorInterface.get_selection().clear()
 	EditorInterface.get_selection().add_node(world.get_node("Map"))
-func _select_world() -> void:
+func _system(name: String) -> Node:
 	var world: Node = _world()
-	if world == null:
-		_output.text = "Сначала откройте карту кнопкой 1."
+	var system: Node = world.get_node_or_null(name) if world != null else null
+	if system == null:
+		_output.text = "Откройте сцену уровня с узлом %s." % name
+	return system
+func _select_system(name: String) -> void:
+	var system: Node = _system(name)
+	if system == null:
 		return
-	EditorInterface.edit_node(world)
-func _edit_property(property: StringName) -> void:
-	var world: Node = _world()
-	if world == null:
-		_output.text = "Сначала откройте карту кнопкой 1."
+	EditorInterface.get_selection().clear()
+	EditorInterface.get_selection().add_node(system)
+	EditorInterface.edit_node(system)
+func _edit_property(name: String, property: StringName) -> void:
+	var system: Node = _system(name)
+	if system == null:
 		return
-	var resource: Resource = world.get(property)
+	var resource: Resource = system.get(property)
 	if resource == null:
-		_output.text = "Уровень не задаёт %s. Выберите корень уровня и назначьте ресурс в Inspector." % property
-		_select_world()
+		_select_system(name)
+		_output.text = "Назначьте %s в инспекторе узла %s." % [property, name]
 		return
 	EditorInterface.edit_resource(resource)
 func _edit_tiles() -> void:

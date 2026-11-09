@@ -2,6 +2,9 @@ class_name PriceService
 extends Node
 ## Prices derive from immutable base definitions and event history, never from prior quotes.
 signal changed
+
+@export var starting_resources: Array[ResourceAmount] = []
+@export var task_deck: TaskDeck
 var events := WorldEvents.new()
 var global_multiplier := 1.0
 var terrain_multiplier: Callable
@@ -10,9 +13,6 @@ var _stamps: Dictionary[String, String] = {}
 var _elapsed := 0.0
 var errors: Array[String] = []
 var _orders: Dictionary[String, int] = {}
-
-func _ready() -> void:
-	_process(1.0)
 
 func _init() -> void:
 	events.occurred.connect(func(_event: int, _subject: StringName, _amount: int): changed.emit())

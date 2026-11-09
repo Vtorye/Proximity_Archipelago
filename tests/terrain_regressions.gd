@@ -9,8 +9,8 @@ func _world(test: Node, physical := false) -> World:
 		tiles[cell.x * 8 + cell.y] = [cell.x, cell.y, 5 + index, 0, 0, 0]
 	var world: World = LevelLayout.create_world({"version": 1, "tiles": tiles, "objects": [[0, 0, "build/base_nest"], [0, 1, "Food"]]})
 	world.auto_start = false
-	world.ant_construction = physical
-	world.task_deck = null
+	world.build_controller.physical_construction = physical
+	world.prices.task_deck = null
 	test.add_child(world)
 	return world
 

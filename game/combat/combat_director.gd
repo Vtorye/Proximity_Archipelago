@@ -3,7 +3,9 @@ extends Node2D
 ## World-local combat owns threats, damage, defenses and traps; it never changes production policy.
 signal changed
 var world: World
-var rules: WaveRules
+@export var enabled := false
+@export var rules: WaveRules
+@export var enemy_scenes: Array[PackedScene] = []
 var spawner := WaveSpawner.new()
 var spiders: Array[SpiderAgent] = []
 var traps: Dictionary[Vector2i, SpiderTrap] = {}
@@ -12,6 +14,22 @@ var _fields: Dictionary[Building, NavigationField] = {}
 var _revision := -1
 var _time := 0.0
 var _bolts: Array[Dictionary] = []
+
+func validate() -> Array[String]:
+	var errors: Array[String] = []
+	if rules == null:
+		errors.append("missing wave rules")
+	else:
+		errors.append_array(rules.validate())
+	if enemy_scenes.is_empty():
+		errors.append("missing enemy scenes")
+	for scene in enemy_scenes:
+		var enemy: Node = scene.instantiate() if scene != null else null
+		if not enemy is SpiderAgent:
+			errors.append("enemy scene must have a SpiderAgent root")
+		if enemy != null:
+			enemy.free()
+	return errors
 
 func configure(colony: World, definition: WaveRules) -> void:
 	world = colony
@@ -26,7 +44,7 @@ func configure(colony: World, definition: WaveRules) -> void:
 	for ant in world.population.agents(): _configure_ant(ant)
 
 func running() -> bool:
-	return not get_tree().paused and world.ready_for_play and world.match_controller != null and world.match_controller.is_active()
+	return world != null and not get_tree().paused and world.ready_for_play and world.match_controller != null and world.match_controller.is_active()
 
 func _configure_ant(ant: AntAgent) -> void:
 	ant.combat = AntCombat.new()
@@ -53,9 +71,14 @@ func maximum_health(building: Building) -> int:
 func health(building: Building) -> int:
 	return _health.get(building, 0)
 
-func spawn_spider(cell: Vector2i) -> SpiderAgent:
+func spawn_spider(cell: Vector2i, scene_path := "") -> SpiderAgent:
 	if not world.route_service.walkable(cell): return null
-	var spider := SpiderAgent.new()
+	var scene: PackedScene = enemy_scenes.pick_random()
+	for candidate in enemy_scenes:
+		if candidate.resource_path == scene_path:
+			scene = candidate
+			break
+	var spider := scene.instantiate() as SpiderAgent
 	spider.director = self
 	spider.position = to_local(world.route_service.cell_to_world(cell))
 	spiders.append(spider)

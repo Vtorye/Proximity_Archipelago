@@ -133,11 +133,11 @@ func refresh() -> void:
 	for role in counts:
 		var title: String = tr("ui.nest." + AntAgent.Role.keys()[role].to_lower())
 		_role_labels[role].text = "%s · %d" % [title, counts[role]]
-		if role == AntAgent.Role.WARRIOR: _role_labels[role].tooltip_text = tr("ui.warrior.hint") % [world.wave_rules.warrior_health, world.wave_rules.attack_damage]
+		if role == AntAgent.Role.WARRIOR: _role_labels[role].tooltip_text = tr("ui.warrior.hint") % [world.waves.rules.warrior_health, world.waves.rules.attack_damage]
 		controls[_control_key("kill", role)].disabled = counts[role] == 0
 		var buy: Button = controls[_control_key("buy", role)]
 		buy.disabled = not world.population.can_recruit(house, role)
-		_purchase_labels[role].text = BuildCostText.format(world.recruitment.price(role)) if world.recruitment != null else "—"
+		_purchase_labels[role].text = BuildCostText.format(world.population.recruitment.price(role)) if world.population.recruitment != null else "—"
 		buy.tooltip_text = "ui.nest.full" if not house.has_space() else ("ui.nest.unaffordable" if buy.disabled else "ui.nest.from_main")
 
 func _control_key(action: String, role: int) -> StringName:

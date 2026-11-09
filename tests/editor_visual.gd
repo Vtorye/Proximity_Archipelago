@@ -38,7 +38,12 @@ func run(plugin: EditorPlugin) -> void:
 	await capture(plugin, "02-construction-catalog")
 	plugin.controls[&"resources"].pressed.emit()
 	await frames(plugin)
-	expect(EditorInterface.get_inspector().get_edited_object() == root, "resources button selects the world inspector")
+	expect(EditorInterface.get_inspector().get_edited_object() == root.get_node("Economy"), "resources button selects the economy inspector")
+	for item in [[&"waves", "Waves"], [&"ants", "Ants"], [&"construction", "Construction"]]:
+		plugin.controls[item[0]].pressed.emit()
+		await frames(plugin)
+		expect(EditorInterface.get_inspector().get_edited_object() == root.get_node(item[1]), "system shortcut selects " + item[1])
+		await capture(plugin, "settings-" + item[1].to_lower())
 	plugin.controls[&"tasks"].pressed.emit()
 	await frames(plugin)
 	expect(EditorInterface.get_inspector().get_edited_object().get("stages").size() == 3, "tasks button opens the prepared deck")

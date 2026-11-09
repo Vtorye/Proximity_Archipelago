@@ -22,8 +22,8 @@ extends Resource
 @export_range(0.1, 10.0) var tower_shot_seconds := 0.8
 @export_range(1.0, 120.0) var sabotage_seconds := 10.0
 @export var trap_removal_costs: Array[ResourceAmount] = []
-@export var ruined_road: TileBuildOption = preload("res://game/building/options/ground.tres")
-@export var defenses: BuildCatalog = preload("res://game/combat/defense_catalog.tres")
+@export var ruined_road: TileBuildOption
+@export var defenses: BuildCatalog
 
 func validate() -> Array[String]:
 	var errors: Array[String] = []

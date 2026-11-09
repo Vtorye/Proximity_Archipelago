@@ -84,13 +84,13 @@ func test_foodless_colonies(test: Node) -> void:
 	test.expect(world != null, "restore a map with no canteens")
 	if world == null:
 		return
-	for index in range(world.starting_resources.size()):
-		var entry: ResourceAmount = world.starting_resources[index]
+	for index in range(world.prices.starting_resources.size()):
+		var entry: ResourceAmount = world.prices.starting_resources[index]
 		if entry.type.id == &"food":
-			world.starting_resources[index] = test.entry(entry.type, 0)
+			world.prices.starting_resources[index] = test.entry(entry.type, 0)
 	test.expect(LevelValidator.validate_world(world, title).is_empty(), "validator accepts nests and workplaces without canteens or starting food")
 	world.auto_start = false
-	world.ant_construction = false
+	world.build_controller.physical_construction = false
 	test.add_child(world)
 	var stock: WorldInventory = world.inventory
 	var wood: ResourceType = stock.type_by_id(&"wood")
@@ -184,7 +184,7 @@ func test_physical_logistics(test: Node) -> void:
 	var world: World = LevelLayout.create_world({"version": LevelLayout.VERSION, "tiles": tiles,
 		"objects": [[0, 1, "Home"], [6, 1, "Home"], [9, 1, "Home"], [7, 1, "Workplace"], [1, 1, "Food"]]})
 	world.auto_start = false
-	world.ant_construction = false
+	world.build_controller.physical_construction = false
 	test.add_child(world)
 	var stock: WorldInventory = world.inventory
 	var main := world.registry.at(Vector2i(0, 1)) as House
@@ -292,7 +292,7 @@ func test_multiple_bases(test: Node) -> void:
 	var world: World = LevelLayout.create_world({"version": LevelLayout.VERSION, "tiles": tiles,
 		"objects": [[0, 1, "Home"], [6, 1, "Home"], [1, 1, "Food"]]})
 	world.auto_start = false
-	world.ant_construction = false
+	world.build_controller.physical_construction = false
 	test.add_child(world)
 	var stock: WorldInventory = world.inventory
 	var main: House = world.logistics.main_nest
@@ -340,7 +340,7 @@ func test_multiple_bases(test: Node) -> void:
 		"objects": [[6, 1, "Home"], [9, 1, "build/base_nest"], [0, 1, "build/base_nest"]]}
 	world = LevelLayout.create_world(layout)
 	world.auto_start = false
-	world.ant_construction = false
+	world.build_controller.physical_construction = false
 	test.add_child(world)
 	test.expect(world.logistics.main_nest.cell == Vector2i(9, 1) and not (world.registry.at(Vector2i(6, 1)) as House).is_main_nest, "an explicit base registers before barracks even if listed later in a map")
 	var buildings: Array[Node] = []
@@ -368,7 +368,7 @@ func test_authored_map(test: Node) -> void:
 	if world == null:
 		return
 	world.auto_start = false
-	world.ant_construction = false
+	world.build_controller.physical_construction = false
 	test.add_child(world)
 	var grid: TileGrid = world.route_service.snapshot()
 	test.expect(world.map_size == Vector2i(136, 84) and grid.component_count() >= 6 and grid.node_count() < 3000, "the large map has separate island graphs and stores only its land nodes")
@@ -390,7 +390,7 @@ func _play_authored_map(test: Node, develop: bool) -> Dictionary:
 	seed(20261107)
 	var world: World = LevelLayout.create_world(LevelStore.load_level("builtin/tidal_shards"))
 	world.auto_start = false
-	world.ant_construction = false
+	world.build_controller.physical_construction = false
 	test.add_child(world)
 	var road: BuildOption = load("res://game/building/options/road.tres")
 	if develop:
@@ -452,7 +452,7 @@ func test_recruitment(test: Node) -> void:
 	for index in range(15):
 		var role: AntAgent.Role = AntAgent.Role.WORKER if index % 2 == 0 else AntAgent.Role.CARRIER
 		before = stock.quantity(food)
-		var price: int = BuildController.price_amount(world.recruitment.price(role), food)
+		var price: int = BuildController.price_amount(world.population.recruitment.price(role), food)
 		test.expect(population.recruit(main, role) and stock.quantity(food) == before - price, "each recruit is spawned after exactly one price payment")
 	test.expect(main.residents.size() == 20 and nested_recruits.size() == 15 and not nested_recruits.has(true), "reentrant requests cannot exceed the twenty-resident limit")
 	before = stock.quantity(food)

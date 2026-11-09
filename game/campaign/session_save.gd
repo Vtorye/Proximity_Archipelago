@@ -150,7 +150,10 @@ static func capture(world: World) -> Dictionary:
 	if world.voyage != null: data["voyage"] = _properties(world.voyage, ["island", "seed_value", "score", "departed", "offers"])
 	if world.combat != null:
 		data["combat"] = {"number": world.combat.spawner.number, "remaining": world.combat.spawner.remaining, "interval": world.combat.rules.wave_interval_seconds, "spiders": [], "traps": world.combat.traps.keys()}
-		for spider in world.combat.spiders: data.combat.spiders.append(_properties(spider, ["position", "health", "_attack", "_sabotage"]))
+		for spider in world.combat.spiders:
+			var state := _properties(spider, ["position", "health", "_attack", "_sabotage"])
+			state["scene"] = spider.scene_file_path
+			data.combat.spiders.append(state)
 	return data
 
 static func apply(world: World, data: Dictionary) -> void:
@@ -268,8 +271,11 @@ static func apply(world: World, data: Dictionary) -> void:
 		world.combat.rules = world.combat.rules.duplicate()
 		world.combat.rules.wave_interval_seconds = data.combat.interval
 		for state in data.combat.spiders:
-			var spider: SpiderAgent = world.combat.spawn_spider(world.route_service.world_to_cell(world.combat.to_global(state.position)))
-			_set_properties(spider, state)
+			var spider: SpiderAgent = world.combat.spawn_spider(world.route_service.world_to_cell(world.combat.to_global(state.position)), state.get("scene", ""))
+			if spider != null:
+				var properties: Dictionary = state.duplicate()
+				properties.erase("scene")
+				_set_properties(spider, properties)
 		for cell in data.combat.traps: world.combat.place_trap(cell)
 	world.match_controller.start(world.inventory)
 	world.match_controller.time_remaining = data.time

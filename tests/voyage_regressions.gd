@@ -16,7 +16,8 @@ func run(test: Node) -> void:
 	var world: World = LevelLayout.create_world(first)
 	test.expect(LevelValidator.validate_world(world, "generated").is_empty(), "generated starter colony has valid terrain, entrances and resources")
 	world.auto_start = false
-	world.wave_rules = load("res://game/combat/default_waves.tres")
+	world.waves.enabled = true
+	world.waves.rules = load("res://game/combat/default_waves.tres")
 	test.add_child(world)
 	world.match_controller.start(world.inventory)
 	for type in world.inventory.registered_types(): world.inventory.add(type, 10000)
@@ -75,7 +76,8 @@ func run(test: Node) -> void:
 	test.expect(SessionSave.write(world, path) == OK and not SessionSave.read(path).is_empty(), "save file writes and reads an object-free snapshot")
 	var restored: World = LevelLayout.create_world(snapshot.layout)
 	restored.auto_start = false
-	restored.wave_rules = load("res://game/combat/default_waves.tres")
+	restored.waves.enabled = true
+	restored.waves.rules = load("res://game/combat/default_waves.tres")
 	test.add_child(restored)
 	SessionSave.apply(restored, snapshot)
 	test.expect(restored.population.count() == world.population.count() and restored.tasks.level == 5 and restored.tasks.buffs == world.tasks.buffs, "save restores residents, progression and chosen rewards")

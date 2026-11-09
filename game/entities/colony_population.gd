@@ -10,10 +10,10 @@ var navigation: RouteService
 var planner: TripPlanner
 var logistics: ColonyLogistics
 var construction: ConstructionService
-var recruitment: RecruitmentCatalog
-@export var worker_scene: PackedScene = preload("res://game/ants/worker.tscn")
-@export var carrier_scene: PackedScene = preload("res://game/ants/carrier.tscn")
-@export var warrior_scene: PackedScene = preload("res://game/ants/warrior.tscn")
+@export var recruitment: RecruitmentCatalog = preload("res://game/resources/recruitment.tres")
+@export var worker_scene: PackedScene
+@export var carrier_scene: PackedScene
+@export var warrior_scene: PackedScene
 var allow_warriors := false
 var _recruiting := false
 var _removing := false
