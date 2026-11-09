@@ -11,6 +11,7 @@ var _neighbors := PackedInt32Array()
 var _components := PackedInt32Array()
 var _starts := PackedInt32Array()
 var _sizes := PackedInt32Array()
+## Lower bound on any walkable cell's entry cost. Weight increases may leave it conservative.
 var minimum_cost := INF
 
 ## Replace the snapshot completely. Cells without a tile, with a non-positive
@@ -36,10 +37,13 @@ func configure(region: Rect2i, costs: PackedFloat32Array) -> void:
 
 func configure_sparse(region: Rect2i, values: Dictionary[Vector2i, float]) -> void:
 	_rect = region
-	_ids.clear()
-	_cells.clear()
-	_starts.clear()
-	_sizes.clear()
+	_ids = {}
+	_cells = []
+	_costs = PackedFloat32Array()
+	_neighbors = PackedInt32Array()
+	_components = PackedInt32Array()
+	_starts = PackedInt32Array()
+	_sizes = PackedInt32Array()
 	# Group adjacent land into contiguous ranges. Fields share this immutable index.
 	for seed in values:
 		if _ids.has(seed) or not _valid(values[seed]) or not region.has_point(seed): continue
@@ -106,7 +110,7 @@ func neighbors(cell: Vector2i) -> Array[Vector2i]:
 			if next >= 0: result.append(_cells[next])
 	return result
 func packed_costs() -> PackedFloat32Array:
-	# Packed arrays use copy-on-write; a caller cannot mutate this snapshot through the returned value.
+	# Search borrows the packed data. Mutations must use with_costs() to preserve the snapshot.
 	return _costs
 func packed_neighbors() -> PackedInt32Array:
 	return _neighbors
@@ -139,6 +143,33 @@ func with_cost(cell: Vector2i, value: float) -> TileGrid:
 	return with_costs({cell: value})
 ## A construction plan copies the grid once, regardless of the number of painted cells.
 func with_costs(values: Dictionary[Vector2i, float]) -> TileGrid:
+	var weights: Dictionary[int, float] = {}
+	for cell in values:
+		if not in_bounds(cell): continue
+		var id: int = index(cell)
+		var value: float = values[cell]
+		if (id >= 0) != _valid(value): return _with_topology_changes(values)
+		if id >= 0 and not is_equal_approx(_costs[id], value): weights[id] = value
+	if weights.is_empty(): return self
+	var result := TileGrid.new()
+	result._rect = _rect
+	result._ids = _ids
+	result._cells = _cells
+	result._costs = _costs.duplicate()
+	result._neighbors = _neighbors
+	result._components = _components
+	result._starts = _starts
+	result._sizes = _sizes
+	result.minimum_cost = minimum_cost
+	for id in weights:
+		result._costs[id] = weights[id]
+		result.minimum_cost = minf(result.minimum_cost, result._costs[id])
+	return result
+
+func shares_topology(other: TileGrid) -> bool:
+	return is_same(_ids, other._ids)
+
+func _with_topology_changes(values: Dictionary[Vector2i, float]) -> TileGrid:
 	var changed: Dictionary[Vector2i, float] = {}
 	for id in range(_cells.size()): changed[_cells[id]] = _costs[id]
 	for cell in values:

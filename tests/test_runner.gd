@@ -149,6 +149,10 @@ func _test_navigation() -> void:
 	var updates := TileGrid.new()
 	updates.configure(Rect2i(0, 0, 3, 2), PackedFloat32Array([1, 1, 1, 1, 1, 1]))
 	var changed_cells: Array[Vector2i] = [Vector2i(1, 0)]
+	var cheaper: TileGrid = updates.with_cost(changed_cells[0], 0.25)
+	var blocked: TileGrid = cheaper.with_cost(changed_cells[0], 0.0)
+	expect(updates.shares_topology(cheaper) and updates.cost(changed_cells[0]) == 1.0 and cheaper.cost(changed_cells[0]) == 0.25, "weight-only changes reuse the graph without mutating the previous snapshot")
+	expect(not cheaper.shares_topology(blocked) and not blocked.walkable(changed_cells[0]), "blocking a cell replaces the graph topology")
 	for algorithm in [ASTAR.new(), DIJKSTRA.new()]:
 		algorithm.build(updates)
 		for value in [0.25, 2.0, 0.0, 1.0]:

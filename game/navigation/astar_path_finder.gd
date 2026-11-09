@@ -6,16 +6,29 @@ func build(grid: TileGrid) -> void:
 	_grid = grid
 	_astar.clear()
 	if grid.node_count() == 0: return
-	var minimum := INF
-	for cost in grid.packed_costs(): minimum = minf(minimum, cost)
 	for id in range(grid.node_count()):
 		# Scale so the built-in distance heuristic stays admissible
 		# even when the cheapest tile costs less than 1.
-		_astar.add_point(id, Vector2(grid.cell_at(id)), grid.node_cost(id) / minimum)
+		_astar.add_point(id, Vector2(grid.cell_at(id)), grid.node_cost(id) / grid.minimum_cost)
 	for id in range(grid.node_count()):
 		for direction in [1, 3]:
 			var next: int = grid.neighbor_id(id, direction)
 			if next >= 0: _astar.connect_points(id, next)
+
+func update_grid(grid: TileGrid, changed_cells: Array[Vector2i]) -> void:
+	if _grid == null or not _grid.shares_topology(grid):
+		build(grid)
+		return
+	if grid.minimum_cost < _grid.minimum_cost:
+		# A cheaper tile lowers the common scale. Edges and point IDs stay unchanged.
+		for id in range(grid.node_count()):
+			_astar.set_point_weight_scale(id, grid.node_cost(id) / grid.minimum_cost)
+	else:
+		for cell in changed_cells:
+			var id: int = grid.index(cell)
+			if id >= 0: _astar.set_point_weight_scale(id, grid.node_cost(id) / grid.minimum_cost)
+	_grid = grid
+
 func find_path(from_cell: Vector2i, to_cell: Vector2i) -> Array[Vector2i]:
 	var result: Array[Vector2i] = []
 	if not _grid.connected(from_cell, to_cell): return result
