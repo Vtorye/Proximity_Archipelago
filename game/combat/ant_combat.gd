@@ -43,8 +43,9 @@ func physics(delta: float) -> bool:
 		elif _rethink <= 0:
 			_chase(_enemy)
 	elif tower == null and _rethink <= 0 and ant.status != AntAgent.Status.WAITING_FOR_FOOD:
-		var enemy: SpiderAgent = _reachable_enemy()
 		_rethink = 0.5
+		if _claim_tower(): return false
+		var enemy: SpiderAgent = _reachable_enemy()
 		if enemy != null: _chase(enemy)
 		elif ant._destination == &"combat_patrol":
 			for building in director.world.registry.all():
@@ -93,7 +94,14 @@ func decide() -> void:
 			ant._walk(route, &"combat_tower")
 			return
 		leave_tower()
-	# An unstaffed tower reserves this warrior before the next warrior chooses its duty.
+	if _claim_tower(): return
+	var enemy: SpiderAgent = _reachable_enemy()
+	if enemy != null and _chase(enemy): return
+	_enemy = null
+	if not _patrol_next(): ant._wander()
+
+# An unstaffed tower reserves this warrior before any chase, even while spiders are on the map.
+func _claim_tower() -> bool:
 	var best: DefenseBuilding
 	var approach: Route
 	var lowest := INF
@@ -104,15 +112,11 @@ func decide() -> void:
 			best = building
 			approach = route
 			lowest = route.cost
-	if best != null:
-		tower = best
-		best.gunner = ant
-		ant._walk(approach, &"combat_tower")
-		return
-	var enemy: SpiderAgent = _reachable_enemy()
-	if enemy != null and _chase(enemy): return
-	_enemy = null
-	if not _patrol_next(): ant._wander()
+	if best == null: return false
+	tower = best
+	best.gunner = ant
+	ant._walk(approach, &"combat_tower")
+	return true
 
 func _chase(enemy: SpiderAgent) -> bool:
 	var route: Route = director.approach(enemy, _cell())

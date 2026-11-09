@@ -53,7 +53,7 @@ func run(test: Node) -> void:
 	site = service.at(cell)
 	var carrier: AntAgent = world.population.agents().back()
 	var job: ConstructionJob = service.claim(carrier)
-	test.expect(job != null and not job.assembly and WorldInventory.cargo_size(job.materials) == 6, "a carrier claims only its capacity and cannot assemble")
+	test.expect(job != null and not job.assembly and WorldInventory.cargo_size(job.materials) == 6, "an unsupplied site gives a carrier only a pickup claim up to its capacity")
 	service.release(job)
 	test.expect(site.transit.values().all(func(count: int) -> bool: return count == 0), "abandoned pickup returns its exclusive claim to the base crate")
 	test.expect(controller.demolish_at(cell) and service.sites.is_empty() and world.inventory.quantity(wood) == before, "cancelling untouched construction refunds materials still at the base")
@@ -73,6 +73,20 @@ func run(test: Node) -> void:
 	test.expect(carrier.construction.resume() and carrier.cargo.size() == 2, "a courier carrying cancelled materials physically returns them to storage")
 	await _advance(test, world, 20)
 	test.expect(carrier.cargo.is_empty(), "cancelled carried materials finish normal warehouse delivery")
+	world.free()
+	await test.get_tree().process_frame
+
+	world = _world(test)
+	controller = world.build_controller
+	service = controller.construction
+	controller.options.append(option)
+	controller.try_build(option, cell)
+	site = service.at(cell)
+	for item in site.required: site.delivered[item.type.id] = item.amount
+	carrier = world.population.agents().back()
+	job = service.claim(carrier)
+	test.expect(job != null and job.assembly and site.builder == carrier, "a carrier assembles a fully supplied site")
+	service.release(job)
 	world.free()
 	await test.get_tree().process_frame
 

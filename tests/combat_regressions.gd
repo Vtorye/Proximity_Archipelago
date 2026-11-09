@@ -26,6 +26,7 @@ func _advance(test: Node, world: World, seconds: float) -> void:
 func run(test: Node) -> void:
 	await _roles_and_fleeing(test)
 	await _towers_and_meals(test)
+	await _tower_before_chase(test)
 	await _traps_and_destruction(test)
 	await _waves_and_walls(test)
 	await _autonomous_battle(test)
@@ -97,6 +98,20 @@ func _towers_and_meals(test: Node) -> void:
 	warrior._arrive()
 	warrior.die(AntAgent.DeathCause.ENEMY)
 	test.expect(not tower.staffed() and tower.gunner == null, "a killed gunner disables the tower immediately")
+	world.free()
+	await test.get_tree().process_frame
+
+func _tower_before_chase(test: Node) -> void:
+	var world: World = _world(test)
+	world.inventory.add(world.inventory.type_by_id(&"food"), 100)
+	world.population.recruit(world.logistics.main_nest, AntAgent.Role.WARRIOR)
+	var warrior: AntAgent = world.population.agents().back()
+	var tower_option: SceneBuildOption = load("res://game/combat/tower.tres")
+	world.build_controller.try_build(tower_option, Vector2i(3, 3))
+	var tower := world.registry.at(Vector2i(3, 3)) as DefenseBuilding
+	world.combat.spawn_spider(Vector2i(5, 3))
+	warrior.combat.physics(0.05)
+	test.expect(tower.gunner == warrior and warrior._destination == &"combat_tower", "an idle warrior claims a free tower before chasing a spider that is already on the map")
 	world.free()
 	await test.get_tree().process_frame
 
