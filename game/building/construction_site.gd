@@ -55,7 +55,7 @@ func _draw() -> void:
 	if service == null: return
 	var size: float = service.controller.route_service.cell_size()
 	var rect := Rect2(Vector2.ONE * -size * 0.5, Vector2.ONE * size)
-	var icon: Texture2D = option.icon if option.icon != null else BuildChoiceButton.default_icon(option, service.art)
+	var icon: Texture2D = service.art.build_icon(option)
 	if icon != null: draw_texture_rect(icon, rect, false, Color(1, 1, 1, 0.38))
 	for corner in [Vector2(-1, -1), Vector2(1, -1), Vector2(-1, 1), Vector2(1, 1)]:
 		var point: Vector2 = corner * (size * 0.5 - 2)

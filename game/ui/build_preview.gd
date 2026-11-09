@@ -33,7 +33,7 @@ func _draw_option(cell: Vector2i, definition: BuildOption, tint: Color, border: 
 	var size: Vector2 = Vector2.ONE * navigation.cell_size()
 	var center: Vector2 = to_local(navigation.cell_to_world(cell))
 	var rect := Rect2(center - size / 2.0, size)
-	var texture: Texture2D = definition.icon if definition.icon != null else BuildChoiceButton.default_icon(definition, art)
+	var texture: Texture2D = art.build_icon(definition)
 	if definition.id == &"house":
 		tint *= House.BARRACKS_TINT
 	if texture != null:

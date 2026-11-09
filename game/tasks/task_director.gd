@@ -132,7 +132,8 @@ func grant_buff(kind: int) -> void:
 
 func _unlock_road() -> void:
 	if deck.unlocked_road == null or world.build_controller.options.has(deck.unlocked_road): return
-	var position: int = world.build_controller.options.find(deck.replaced_road)
+	var position: int = world.build_controller.options.find_custom(func(option: BuildOption) -> bool:
+		return deck.replaced_road != null and option.id == deck.replaced_road.id)
 	if position >= 0: world.build_controller.options[position] = deck.unlocked_road
 	else: world.build_controller.options.append(deck.unlocked_road)
 	world.prices.definitions = world.build_controller.options.duplicate()
@@ -158,16 +159,7 @@ func _apply_upgrade() -> void:
 	_upgrade_message = ["Тропинка заменена на быструю", "Строительство дешевле", "Муравьи быстрее"][stage().upgrade]
 	match stage().upgrade:
 		0:
-			if deck.unlocked_road != null and not world.build_controller.options.has(deck.unlocked_road):
-				var position := -1
-				for index in range(world.build_controller.options.size()):
-					if world.build_controller.options[index].id == deck.replaced_road.id:
-						position = index
-						break
-				if position >= 0: world.build_controller.options[position] = deck.unlocked_road
-				else: world.build_controller.options.append(deck.unlocked_road)
-				world.prices.definitions = world.build_controller.options.duplicate()
-				world.prices.changed.emit()
+			_unlock_road()
 		1:
 			world.prices.global_multiplier *= stage().upgrade_factor
 			world.prices.changed.emit()

@@ -30,7 +30,7 @@ func _ready() -> void:
 	row.add_theme_constant_override("separation", 4)
 	margin.add_child(row)
 	var icon_view := TextureRect.new()
-	icon_view.texture = option.icon if option.icon != null else default_icon(option, art)
+	icon_view.texture = art.build_icon(option)
 	if option.id == &"house":
 		icon_view.modulate = House.BARRACKS_TINT
 	icon_view.custom_minimum_size = Vector2.ONE * (16 if compact else 24)
@@ -70,11 +70,3 @@ func _fit_content() -> void:
 	if get_child_count() > 0:
 		var factor: float = AppSettings.ui_scale if has_meta(&"ui_scale_bound") else 1.0
 		custom_minimum_size.y = maxf(roundf(_minimum_height * factor), get_child(0).get_combined_minimum_size().y)
-
-static func default_icon(definition: BuildOption, catalog: ArtCatalog) -> Texture2D:
-	match definition.id:
-		&"road": return catalog.road
-		&"ground": return catalog.soil
-		&"house", &"base_nest": return catalog.nest
-		&"apple_tree": return catalog.berries
-	return catalog.stone

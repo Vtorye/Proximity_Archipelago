@@ -124,19 +124,8 @@ func make_route(cells: Array[Vector2i]) -> Route:
 		route.cost += _grid.cost(cells[index])
 	return route
 
-func route_affected(route: Route) -> bool:
-	if route == null:
-		return false
-	for index in range(route.current_index, route.cells.size()):
-		if route.cells[index] in last_changed:
-			return true
-	return false
-
 func snapshot() -> TileGrid:
 	return _grid
-
-func is_food_cell(cell: Vector2i) -> bool:
-	return _food_cells.has(cell)
 
 ## Construction supplies its footprint, avoiding a full TileMap scan for each command.
 func update_cells(cells: Array[Vector2i], blocked: Array[Vector2i]) -> void:
