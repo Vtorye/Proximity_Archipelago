@@ -11,6 +11,7 @@ var _neighbors := PackedInt32Array()
 var _components := PackedInt32Array()
 var _starts := PackedInt32Array()
 var _sizes := PackedInt32Array()
+var minimum_cost := INF
 
 ## Replace the snapshot completely. Cells without a tile, with a non-positive
 ## `move_cost`, or listed in `blocked_cells` are not walkable.
@@ -57,6 +58,7 @@ func configure_sparse(region: Rect2i, values: Dictionary[Vector2i, float]) -> vo
 		_starts.append(start)
 		_sizes.append(_cells.size() - start)
 	_costs.resize(_cells.size())
+	minimum_cost = INF
 	_components.resize(_cells.size())
 	_neighbors.resize(_cells.size() * 4)
 	_neighbors.fill(-1)
@@ -64,6 +66,7 @@ func configure_sparse(region: Rect2i, values: Dictionary[Vector2i, float]) -> vo
 		for id in range(_starts[component], _starts[component] + _sizes[component]):
 			_components[id] = component
 			_costs[id] = values[_cells[id]]
+			minimum_cost = minf(minimum_cost, _costs[id])
 			for direction in range(4): _neighbors[id * 4 + direction] = index(_cells[id] + OFFSETS[direction])
 
 static func _valid(value: float) -> bool:
@@ -122,6 +125,12 @@ func component_size(id: int) -> int:
 	return _sizes[id]
 func connected(a: Vector2i, b: Vector2i) -> bool:
 	return walkable(a) and walkable(b) and component(a) == component(b)
+## Every step pays at least the cheapest entry cost, and the last pays the goal's cost.
+func path_lower_bound(from_cell: Vector2i, to_cell: Vector2i) -> float:
+	if not connected(from_cell, to_cell): return INF
+	if from_cell == to_cell: return 0.0
+	var offset: Vector2i = to_cell - from_cell
+	return (absi(offset.x) + absi(offset.y) - 1) * minimum_cost + cost(to_cell)
 func neighbor_id(id: int, direction: int) -> int:
 	return _neighbors[id * 4 + direction]
 func node_cost(id: int) -> float:

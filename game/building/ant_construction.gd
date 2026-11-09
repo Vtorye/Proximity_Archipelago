@@ -43,8 +43,7 @@ func resume() -> bool:
 		route = job.site.route(cell)
 		destination = &"site_delivery"
 	else:
-		if not is_instance_valid(job.source) or not service.controller.logistics.owns(job.source): return false
-		route = service.controller.logistics.route_to(job.source, cell)
+		route = service.pickup_route(job.source, cell)
 		destination = &"site_pickup"
 	if not route.is_valid(): return false
 	var energy: float = ant.planner.travel_energy(route.cost, ant.speed * (TripPlanner.CARRY_SPEED_RATIO if has_cargo() else 1.0))

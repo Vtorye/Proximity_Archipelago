@@ -46,38 +46,7 @@ func enqueue(command: BuildCommand, candidate: Building, quote: Array[ResourceAm
 func claim(ant: AntAgent) -> ConstructionJob:
 	if _servicing: return null
 	_servicing = true
-	var best: ConstructionJob
-	var lowest := INF
-	var cell: Vector2i = controller.route_service.world_to_cell(ant.global_position)
-	for site in sites:
-		if not site.active: continue
-		_replenish(site)
-		var delivery: Route = site.route(cell)
-		if not delivery.is_valid(): continue
-		if site.supplied():
-			if ant.role == AntAgent.Role.WARRIOR or is_instance_valid(site.builder): continue
-			var energy: float = ant.planner.travel_energy(delivery.cost, ant.speed) + (site.option.construction_seconds - site.progress) * AntNeeds.WORK_RATE
-			if not ant._is_foodless(): energy += ant.planner.escape_energy(delivery.cells.back(), ant.speed)
-			if not ant.needs.can_afford(energy) or delivery.cost >= lowest: continue
-			best = ConstructionJob.new()
-			best.site = site
-			best.assembly = true
-			lowest = delivery.cost
-		else:
-			for source: House in site.crates:
-				if not is_instance_valid(source) or not source.is_inside_tree() or site.crates[source].is_empty(): continue
-				var pickup: Route = controller.logistics.route_to(source, cell)
-				if not pickup.is_valid():
-					continue
-				var outward: Route = site.route(pickup.cells.back())
-				if not ant._can_start_pickup(pickup, outward):
-					continue
-				var cost: float = pickup.cost + outward.cost
-				if cost >= lowest: continue
-				best = ConstructionJob.new()
-				best.site = site
-				best.source = source
-				lowest = cost
+	var best: ConstructionJob = _find_job(ant) if not sites.is_empty() else null
 	if best != null:
 		if best.assembly:
 			best.site.builder = ant
@@ -93,6 +62,59 @@ func claim(ant: AntAgent) -> ConstructionJob:
 				limit -= count
 			best.site.crates[best.source] = crate.filter(func(item: ResourceAmount) -> bool: return item.amount > 0)
 	_servicing = false
+	return best
+
+func pickup_route(source: House, from_cell: Vector2i) -> Route:
+	if not controller.logistics.owns(source) or not source.is_inside_tree(): return Route.invalid()
+	return controller.route_service.route_to_any(from_cell, source.entry_cells())
+
+func _find_job(ant: AntAgent) -> ConstructionJob:
+	var navigation: RouteService = controller.route_service
+	var grid: TileGrid = navigation.snapshot()
+	var cell: Vector2i = navigation.world_to_cell(ant.global_position)
+	var pickups: Dictionary[House, Route] = {}
+	var candidates: Array[Dictionary] = []
+	for site in sites:
+		if not site.active: continue
+		_replenish(site)
+		if site.supplied():
+			if ant.role == AntAgent.Role.WARRIOR or is_instance_valid(site.builder): continue
+			var bound: float = site.route_lower_bound(grid, cell)
+			if is_finite(bound): candidates.append({"site": site, "start": cell, "bound": bound})
+			continue
+		for source: House in site.crates:
+			if site.crates[source].is_empty(): continue
+			if not pickups.has(source): pickups[source] = pickup_route(source, cell)
+			var pickup: Route = pickups[source]
+			if not pickup.is_valid(): continue
+			var start: Vector2i = pickup.cells.back()
+			var bound: float = pickup.cost + site.route_lower_bound(grid, start)
+			if is_finite(bound): candidates.append({"site": site, "start": start, "bound": bound, "source": source})
+	# Cheap bounds exclude distant sites without storing a direction field for each one.
+	candidates.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return a.bound < b.bound)
+	var best: ConstructionJob
+	var lowest := INF
+	for candidate in candidates:
+		if candidate.bound >= lowest: break
+		var site: ConstructionSite = candidate.site
+		var route: Route = site.route(candidate.start)
+		if not route.is_valid(): continue
+		var source: House = candidate.get("source")
+		var cost: float = route.cost
+		if source == null:
+			var energy: float = ant.planner.travel_energy(cost, ant.speed) + (site.option.construction_seconds - site.progress) * AntNeeds.WORK_RATE
+			if not ant._is_foodless(): energy += ant.planner.escape_energy(route.cells.back(), ant.speed)
+			if not ant.needs.can_afford(energy): continue
+		else:
+			var pickup: Route = pickups[source]
+			if not ant._can_start_pickup(pickup, route): continue
+			cost += pickup.cost
+		if cost >= lowest: continue
+		best = ConstructionJob.new()
+		best.site = site
+		best.source = source
+		best.assembly = source == null
+		lowest = cost
 	return best
 
 func deliver(job: ConstructionJob) -> bool:

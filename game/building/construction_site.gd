@@ -10,8 +10,6 @@ var required: Array[ResourceAmount] = []
 var progress := 0.0
 var builder: AntAgent
 var active := true
-var _field: NavigationField
-var _revision := -1
 
 func material_count() -> int:
 	var count := 0
@@ -24,11 +22,12 @@ func supplied() -> bool:
 	return true
 
 func route(from_cell: Vector2i) -> Route:
-	var navigation: RouteService = service.controller.route_service
-	if _revision != navigation.revision:
-		_field = navigation.reverse_field(entry_cells())
-		_revision = navigation.revision
-	return navigation.make_route(_field.path(from_cell))
+	return service.controller.route_service.route_to_any(from_cell, entry_cells())
+
+func route_lower_bound(grid: TileGrid, from_cell: Vector2i) -> float:
+	var lowest := INF
+	for entry in entry_cells(): lowest = minf(lowest, grid.path_lower_bound(from_cell, entry))
+	return lowest
 
 func display_title() -> String:
 	return TranslationServer.translate("ui.site.title") % TranslationServer.translate(option.display_name)

@@ -116,6 +116,17 @@ func request_route(from_cell: Vector2i, to_cell: Vector2i) -> Route:
 		cells = _algorithm.find_path(from_cell, to_cell)
 	return make_route(cells)
 
+func route_to_any(from_cell: Vector2i, entries: Array[Vector2i]) -> Route:
+	var best: Route = Route.invalid()
+	var lowest := INF
+	for entry in entries:
+		if _grid.path_lower_bound(from_cell, entry) >= lowest: continue
+		var route: Route = request_route(from_cell, entry)
+		if route.is_valid() and route.cost < lowest:
+			best = route
+			lowest = route.cost
+	return best
+
 func make_route(cells: Array[Vector2i]) -> Route:
 	var route := Route.new()
 	route.cells = cells

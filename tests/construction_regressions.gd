@@ -163,3 +163,27 @@ func run(test: Node) -> void:
 	test.expect(stock.quantity(food) == 0 and missed == 1, "unfunded meals fail cleanly without taking physical berry stock below zero")
 	world.free()
 	await test.get_tree().process_frame
+	_test_bulk_road_claims(test, road)
+
+func _test_bulk_road_claims(test: Node, road: TileBuildOption) -> void:
+	var tiles: Array = []
+	for y in range(100):
+		for x in range(100): tiles.append([x, y, 3, 0, 0, 0])
+	var world := LevelLayout.create_world({"version": 1, "tiles": tiles, "objects": [[0, 50, "build/base_nest"], [0, 51, "Food"]]})
+	world.auto_start = false
+	world.prices.task_deck = null
+	test.add_child(world)
+	var controller: BuildController = world.build_controller
+	var plan: Dictionary[Vector2i, BuildOption] = {}
+	# Paint from far to near to check that brush order cannot force a route to each site.
+	for x in range(26, 1, -1): plan[Vector2i(x, 51)] = road
+	test.expect(controller.try_build_batch(plan), "a 25-tile road reserves all sites in one plan")
+	var searches_before: int = world.route_service.search_count
+	var first: ConstructionJob = controller.construction.claim(world.population.agents()[0])
+	var second: ConstructionJob = controller.construction.claim(world.population.agents()[1])
+	test.expect(first != null and first.site.cell == Vector2i(2, 51), "mass construction still selects the shortest eligible delivery")
+	test.expect(second != null and second.site.cell == Vector2i(3, 51), "a second ant skips a site whose materials are already claimed")
+	test.expect(world.route_service.search_count - searches_before <= 4, "two construction claims on a 100x100 map need no search per road tile")
+	controller.construction.release(first)
+	controller.construction.release(second)
+	world.free()
