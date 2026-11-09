@@ -127,11 +127,20 @@ func run(test: Node) -> void:
 	before = world.inventory.nest_quantity(primary, primary, wood)
 	world.inventory.deposit(depot, [test.entry(wood, 3)])
 	test.expect(controller.try_build(road, remote) and world.inventory.nest_quantity(primary, primary, wood) == before, "connected base supplies an order without debiting the isolated treasury")
+	# Emulate a saved order that originally paid from the wrong island.
+	site = controller.construction.at(remote, true)
+	var legacy_crate: Array[ResourceAmount] = []
+	legacy_crate.assign(site.crates[depot])
+	site.crates.erase(depot)
+	site.crates[primary] = legacy_crate
+	world.inventory.deposit(depot, legacy_crate)
+	world.inventory.try_spend_all(legacy_crate, true)
 	var waiting: AntAgent = depot.residents[0]
 	waiting._set_status(AntAgent.Status.WAITING_FOR_FOOD)
 	waiting._timer = 0.0
 	waiting._physics_process(1.0 / 30.0)
 	test.expect(waiting._destination == &"site_pickup", "a worker waiting for food rechecks funded construction")
+	test.expect(world.inventory.nest_quantity(primary, primary, wood) == before and world.inventory.nest_quantity(depot, primary, wood) == 2, "a stuck saved order refunds unreachable crates and funds them from the connected base")
 	await _advance(test, world, 15)
 	test.expect(controller.construction.at(remote, true) == null, "the second island finishes its own construction")
 	world.free()

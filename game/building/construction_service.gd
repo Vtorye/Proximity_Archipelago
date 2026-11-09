@@ -190,6 +190,14 @@ func finished(site: ConstructionSite) -> void:
 
 func _replenish(site: ConstructionSite) -> void:
 	# A killed courier loses its load. Replacement materials must be paid for again.
+	var sources: Array[House] = controller.logistics.construction_sources(site.entry_cells())
+	# Old saves can contain crates paid for by a base on a different island.
+	for source: House in site.crates.keys():
+		if sources.has(source):
+			continue
+		var materials: Array = site.crates[source]
+		site.crates.erase(source)
+		_refund(source, materials)
 	var missing: Array[ResourceAmount] = []
 	for required in site.required:
 		var accounted: int = site.delivered.get(required.type.id, 0) + site.transit.get(required.type.id, 0)
@@ -200,7 +208,6 @@ func _replenish(site: ConstructionSite) -> void:
 		if accounted < required.amount: missing.append(_item(required.type, required.amount - accounted))
 	if missing.is_empty() or not controller.inventory.can_afford_all(missing, true, true):
 		return
-	var sources: Array[House] = controller.logistics.construction_sources(site.entry_cells())
 	var primary: House = controller.logistics.main_nest
 	var replacements: Variant = controller.inventory.allocate_build_materials(missing, primary, sources, {})
 	if replacements == null:
