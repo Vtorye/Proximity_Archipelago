@@ -172,10 +172,7 @@ func _physics_process(delta: float) -> void:
 		Status.WAITING_FOR_FOOD:
 			_timer -= delta
 			if _timer <= 0.0:
-				if cargo.is_empty():
-					_seek_food()
-				else:
-					_deliver()
+				_decide()
 	queue_redraw()
 
 func _decide() -> void:

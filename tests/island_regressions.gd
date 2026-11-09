@@ -323,8 +323,10 @@ func test_multiple_bases(test: Node) -> void:
 	test.expect(stock.nest_quantity(base, main, wood) == 6 and stock.nest_quantity(main, main, wood) == initial and stock.main_quantity(wood) == initial + 6, "base windows show separate stock while construction sees their combined stock")
 	test.expect(not world.logistics.ready_to_dispatch(base), "base nests never dispatch stock back to other bases")
 	test.expect(stock.try_spend_all([test.entry(wood, initial + 6)], true) and stock.depot_quantity(barracks, wood) == 2 and stock.nest_quantity(base, main, wood) == 0, "construction spends from base nests without taking barracks stock")
-	stock.add(royal, 1)
+	test.expect(BuildController.price_amount(world.build_controller.price(base_option, Vector2i(4, 1)), royal) == 6, "the second purchased base costs six crowns")
+	stock.add(royal, 6)
 	test.expect(world.build_controller.try_build(base_option, Vector2i(4, 1)), "a third base can be built")
+	test.expect(BuildController.price_amount(world.build_controller.price(base_option, Vector2i(4, 1)), royal) == 36, "the next base price grows sixfold again")
 	var nearer := world.registry.at(Vector2i(4, 1)) as House
 	courier._decide()
 	_step_until(courier, func() -> bool: return courier._shipment)

@@ -42,9 +42,8 @@ func check(option: BuildOption, cell: Vector2i) -> PlacementCheck:
 	var placement: PlacementCheck = placement_check(option, cell)
 	if not placement.allowed():
 		return placement
-	if not inventory.can_afford_all(price(option, cell), true):
-		return PlacementCheck.result(PlacementCheck.Code.RESOURCES)
-	return PlacementCheck.new()
+	var command := BuildCommand.create(cell, option)
+	return PlacementCheck.result(_funding({command: price(option, cell)}, []).code)
 
 ## Geometry-only check for a draft. The final command validates its entire budget and grid.
 func placement_check(option: BuildOption, cell: Vector2i, removed: Array[Building] = []) -> PlacementCheck:
@@ -73,30 +72,72 @@ func placement_check(option: BuildOption, cell: Vector2i, removed: Array[Buildin
 	elif option is SceneBuildOption:
 		if option.scene == null or option.occupied_cells.is_empty() or not option.occupied_cells.has(Vector2i.ZERO) or option.spawn_count < 0 or option.spawn_speed <= 0.0:
 			return PlacementCheck.result(PlacementCheck.Code.INVALID_BUILDING)
-		if option.blocks_movement and option.entry_offsets.is_empty():
+		if (option.blocks_movement or option.requires_water) and option.entry_offsets.is_empty():
 			return PlacementCheck.result(PlacementCheck.Code.INVALID_BUILDING)
 	else:
 		return PlacementCheck.result(PlacementCheck.Code.INVALID_OPTION)
+	var water_site: bool = option is SceneBuildOption and option.requires_water
 	for target in _footprint(option, cell):
 		if map.get_cell_source_id(target) == -1:
 			return PlacementCheck.result(PlacementCheck.Code.OUTSIDE_MAP)
 		if terrain != null and terrain.restricts(option, target):
 			return PlacementCheck.result(PlacementCheck.Code.SOIL_RESTRICTED)
 		var tile_data: TileData = map.get_cell_tile_data(target)
-		if map.tile_set.get_custom_data_layer_by_name("buildable") >= 0 and not tile_data.get_custom_data("buildable"):
-			return PlacementCheck.result(PlacementCheck.Code.UNBUILDABLE)
-		if not route_service.walkable(target) and not removed.has(registry.at(target)):
-			return PlacementCheck.result(PlacementCheck.Code.IMPASSABLE)
+		if water_site:
+			var surface: TerrainType = map.surface_at(target) if map is TerrainMap else null
+			if surface == null or surface.kind != TerrainType.Kind.WATER:
+				return PlacementCheck.result(PlacementCheck.Code.WATER_REQUIRED)
+		else:
+			if map.tile_set.get_custom_data_layer_by_name("buildable") >= 0 and not tile_data.get_custom_data("buildable"):
+				return PlacementCheck.result(PlacementCheck.Code.UNBUILDABLE)
+			if not route_service.walkable(target) and not removed.has(registry.at(target)):
+				return PlacementCheck.result(PlacementCheck.Code.IMPASSABLE)
 		if registry.at(target) != null and not removed.has(registry.at(target)) and (option is SceneBuildOption or not option.allow_when_occupied):
 			return PlacementCheck.result(PlacementCheck.Code.OCCUPIED)
 		if not option.allow_when_occupied and population != null:
 			for ant in population.agents():
 				if route_service.world_to_cell(ant.global_position) == target:
 					return PlacementCheck.result(PlacementCheck.Code.ANT_PRESENT)
+	if water_site and not option.entries_at(cell).any(route_service.walkable):
+		return PlacementCheck.result(PlacementCheck.Code.SHORE_REQUIRED)
 	return PlacementCheck.new()
 
 func can_build(option: BuildOption, cell: Vector2i) -> bool:
 	return check(option, cell).allowed()
+
+func funding_check(commands: Array[BuildCommand], removed: Array[Building]) -> PlacementCheck:
+	return PlacementCheck.result(_funding(_quote_orders(commands), removed).code)
+
+func _quote_orders(commands: Array[BuildCommand]) -> Dictionary:
+	if prices != null:
+		return prices.quote_commands(commands)
+	var quotes := {}
+	for command in commands:
+		if not command.is_removal():
+			quotes[command] = command.option.costs
+	return quotes
+
+func _funding(quotes: Dictionary, removed: Array[Building]) -> Dictionary:
+	var costs: Array[ResourceAmount] = []
+	for quote: Array in quotes.values():
+		costs.append_array(quote)
+	if not inventory.can_afford_all(costs, true, true):
+		return {"code": PlacementCheck.Code.RESOURCES}
+	var allocations := {}
+	if construction != null:
+		var planned := {}
+		for command: BuildCommand in quotes:
+			if not ConstructionService.needs_builders(command.option, quotes[command]):
+				continue
+			var entries: Array[Vector2i] = [command.cell]
+			if command.option is SceneBuildOption:
+				entries = command.option.entries_at(command.cell)
+			var sources: Array[House] = logistics.construction_sources(entries, removed)
+			var crates: Variant = inventory.allocate_build_materials(quotes[command], logistics.main_nest, sources, planned)
+			if crates == null:
+				return {"code": PlacementCheck.Code.NO_BUILD_SUPPLY}
+			allocations[command] = crates
+	return {"code": PlacementCheck.Code.OK, "crates": allocations, "costs": costs}
 
 func try_build(option: BuildOption, cell: Vector2i) -> bool:
 	return try_build_batch({cell: option})
@@ -135,8 +176,8 @@ func try_build_plan(commands: Array[BuildCommand]) -> bool:
 				removed.append(building)
 		else:
 			placements.append(command)
-	var costs: Array[ResourceAmount] = []
 	var quotes: Dictionary = {}
+	var funding: Dictionary = {}
 	var cells: Array[Vector2i] = []
 	for building in removed: cells.append_array(building.footprint())
 	var occupied: Dictionary[Vector2i, bool] = {}
@@ -157,7 +198,6 @@ func try_build_plan(commands: Array[BuildCommand]) -> bool:
 			layer[target] = true
 		if not last_result.allowed():
 			break
-		pass # The complete sequential quote is computed once below.
 		if option is SceneBuildOption:
 			var candidate: Node = option.scene.instantiate()
 			if not candidate is Building:
@@ -170,12 +210,9 @@ func try_build_plan(commands: Array[BuildCommand]) -> bool:
 				last_result = PlacementCheck.result(PlacementCheck.Code.INVALID_BUILDING)
 				break
 	if last_result.allowed():
-		quotes = prices.quote_commands(commands) if prices != null else {}
-		for command in placements:
-			if not quotes.has(command): quotes[command] = command.option.costs
-			costs.append_array(quotes[command])
-	if last_result.allowed() and not inventory.can_afford_all(costs, true):
-		last_result = PlacementCheck.result(PlacementCheck.Code.RESOURCES)
+		quotes = _quote_orders(commands)
+		funding = _funding(quotes, removed)
+		last_result = PlacementCheck.result(funding.code)
 	if last_result.allowed() and not _safety().preserves_escape(placements, candidates, removed):
 		last_result = PlacementCheck.result(PlacementCheck.Code.NO_ESCAPE)
 	if not last_result.allowed():
@@ -184,23 +221,20 @@ func try_build_plan(commands: Array[BuildCommand]) -> bool:
 	# No awaits or notifications until the world and inventory agree.
 	_committing = true
 	inventory.begin_update()
-	if construction == null and not inventory.try_spend_all(costs, true):
-		for candidate in candidates: candidate.free()
-		last_result = PlacementCheck.result(PlacementCheck.Code.RESOURCES)
-		_committing = false
-		inventory.end_update()
-		return false
-	var delayed: Array[BuildCommand] = []
+	var allocations: Dictionary = funding.crates
 	var queued_candidates: Array[Building] = []
-	for command in placements:
-		if construction != null and ConstructionService.needs_builders(command.option, quotes[command]):
-			delayed.append(command)
-		else:
-			if construction != null: inventory.try_spend_all(quotes[command], true)
+	if construction == null:
+		inventory.try_spend_all(funding.costs, true, true)
+	else:
+		for crates: Dictionary in allocations.values():
+			inventory.debit_build_materials(crates, logistics.main_nest)
+		for command in placements:
+			if not allocations.has(command):
+				inventory.try_spend_all(quotes[command], true, true)
 	for command in placements:
 		var cell: Vector2i = command.cell
 		var option: BuildOption = command.option
-		if option is TileBuildOption and not delayed.has(command):
+		if option is TileBuildOption and not allocations.has(command):
 			apply_surface(option, cell)
 	for workplace in removed_improvements:
 		var definition: WorkplaceUpgradeOption = workplace.improvement
@@ -208,7 +242,7 @@ func try_build_plan(commands: Array[BuildCommand]) -> bool:
 		_refund_for_demolish(definition)
 		if prices != null: prices.record(GameEvents.Kind.BUILDING_DEMOLISHED, definition.id)
 	for command in placements:
-		if command.option is WorkplaceUpgradeOption and not delayed.has(command):
+		if command.option is WorkplaceUpgradeOption and not allocations.has(command):
 			var workplace := registry.at(command.cell) as Workplace
 			workplace.install_improvement(command.option)
 	for building in removed:
@@ -228,8 +262,8 @@ func try_build_plan(commands: Array[BuildCommand]) -> bool:
 		if command.option is SceneBuildOption:
 			candidate = candidates[candidate_index]
 			candidate_index += 1
-		if delayed.has(command):
-			construction.enqueue(command, candidate, quotes[command])
+		if allocations.has(command):
+			construction.enqueue(command, candidate, quotes[command], allocations[command])
 			if candidate != null: queued_candidates.append(candidate)
 	for candidate in queued_candidates: candidates.erase(candidate)
 	var blocked: Array[Vector2i] = registry.blocked_cells()
@@ -245,7 +279,7 @@ func try_build_plan(commands: Array[BuildCommand]) -> bool:
 	_committing = false
 	inventory.end_update()
 	for command in placements:
-		if delayed.has(command): continue
+		if allocations.has(command): continue
 		if prices != null: prices.record(GameEvents.Kind.TERRAIN_CHANGED if command.option is TileBuildOption else GameEvents.Kind.BUILDING_BUILT, command.option.id)
 		built.emit(command.option, command.cell)
 	if not removed_improvements.is_empty() or placements.any(func(command: BuildCommand) -> bool: return command.option is WorkplaceUpgradeOption):

@@ -5,6 +5,13 @@
 [ext_resource type="PackedScene" path="res://game/entities/base_nest.tscn" id="scene"]
 [ext_resource type="Resource" path="res://game/resources/dot_treses/royal.tres" id="royal"]
 
+[ext_resource type="Script" path="res://game/economy/price_rule.gd" id="price_rule"]
+
+[sub_resource type="Resource" id="growth"]
+script = ExtResource("price_rule")
+subject = &"base_nest"
+value = 6.0
+
 [sub_resource type="Resource" id="cost"]
 script = ExtResource("amount")
 type = ExtResource("royal")
@@ -19,3 +26,4 @@ spawn_count = 5
 id = &"base_nest"
 display_name = "ui.storage.main"
 costs = Array[ExtResource("amount")]([SubResource("cost")])
+price_rules = Array[ExtResource("price_rule")]([SubResource("growth")])

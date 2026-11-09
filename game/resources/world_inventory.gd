@@ -63,13 +63,13 @@ func try_spend(cost: ResourceAmount) -> bool:
 
 
 ## Duplicate resource IDs share one budget, including outstanding food reservations.
-func can_afford_all(costs: Array[ResourceAmount], main_only: bool = false) -> bool:
+func can_afford_all(costs: Array[ResourceAmount], main_only: bool = false, use_reserved_food := false) -> bool:
 	var totals: Dictionary[StringName, int] = {}
 	for cost in costs:
 		if cost == null or cost.amount < 0 or not is_registered(cost.type):
 			return false
 		totals[cost.type.id] = totals.get(cost.type.id, 0) + cost.amount
-		var limit: int = available(cost.type)
+		var limit: int = _physical_stock(cost.type) if use_reserved_food and cost.type.id == &"food" else available(cost.type)
 		if main_only:
 			limit = mini(limit, main_quantity(cost.type))
 		if totals[cost.type.id] > limit:
@@ -78,8 +78,8 @@ func can_afford_all(costs: Array[ResourceAmount], main_only: bool = false) -> bo
 
 
 ## Validate every component before spending; observers see only the complete purchase.
-func try_spend_all(costs: Array[ResourceAmount], main_only: bool = false) -> bool:
-	if not can_afford_all(costs, main_only):
+func try_spend_all(costs: Array[ResourceAmount], main_only: bool = false, use_reserved_food := false) -> bool:
+	if not can_afford_all(costs, main_only, use_reserved_food):
 		return false
 	for cost in costs:
 		_withdraw(cost.type.id, cost.amount, main_only)
@@ -88,32 +88,42 @@ func try_spend_all(costs: Array[ResourceAmount], main_only: bool = false) -> boo
 	return true
 
 
-## Prepaid construction crates stay at their actual base until an ant collects them.
-## They leave spendable colony stock once; the site owns their subsequent lifecycle.
-func claim_build_materials(costs: Array[ResourceAmount], primary: House) -> Dictionary:
-	if not can_afford_all(costs, true):
-		return {}
+## Preview crates without debiting any stock. Orders share a temporary ledger.
+func allocate_build_materials(costs: Array[ResourceAmount], primary: House, sources: Array[House], planned: Dictionary) -> Variant:
 	var crates: Dictionary = {}
 	for cost in costs:
 		var remaining: int = cost.amount
-		for house in [primary] + _depots.keys():
-			if house != primary and not house.is_main_nest:
-				continue
-			var stock: Dictionary = _main_stock if house == primary else _depots[house]
-			var taken: int = mini(remaining, stock.get(cost.type.id, 0))
+		for source in sources:
+			var stock: Dictionary = _main_stock if source == primary else _depots[source]
+			if not planned.has(source):
+				planned[source] = {}
+			var used: int = planned[source].get(cost.type.id, 0)
+			var taken: int = mini(remaining, stock.get(cost.type.id, 0) - used)
 			if taken <= 0:
 				continue
-			stock[cost.type.id] -= taken
-			_amounts[cost.type.id] -= taken
+			planned[source][cost.type.id] = used + taken
 			var item := ResourceAmount.new()
 			item.type = cost.type
 			item.amount = taken
-			if not crates.has(house): crates[house] = []
-			crates[house].append(item)
+			if not crates.has(source):
+				crates[source] = []
+			crates[source].append(item)
 			remaining -= taken
-			if remaining == 0: break
-	if not costs.is_empty(): _notify()
+			if remaining == 0:
+				break
+		if remaining > 0:
+			return null
 	return crates
+
+## Commit the allocation once all orders and their combined budget have passed preflight.
+func debit_build_materials(crates: Dictionary, primary: House) -> void:
+	for source: House in crates:
+		var stock: Dictionary = _main_stock if source == primary else _depots[source]
+		for item: ResourceAmount in crates[source]:
+			stock[item.type.id] -= item.amount
+			_amounts[item.type.id] -= item.amount
+	if not crates.is_empty():
+		_notify()
 
 
 func add(type: ResourceType, amount: int) -> bool:
@@ -125,10 +135,13 @@ func add(type: ResourceType, amount: int) -> bool:
 	return true
 
 func available(type: ResourceType) -> int:
-	return quantity(type) - int(_reserved.get(type.id, 0)) - int(_transit.get(type.id, 0)) if type != null else 0
+	return _physical_stock(type) - int(_reserved.get(type.id, 0)) if type != null else 0
 
-func reserve(type: ResourceType, amount: int = 1) -> StockReservation:
-	if amount <= 0 or not is_registered(type) or available(type) < amount:
+func _physical_stock(type: ResourceType) -> int:
+	return quantity(type) - int(_transit.get(type.id, 0))
+
+func reserve(type: ResourceType, amount: int = 1, restoring := false) -> StockReservation:
+	if amount <= 0 or not is_registered(type) or (not restoring and available(type) < amount):
 		return null
 	var ticket := StockReservation.new()
 	ticket.id = _next_ticket
@@ -151,6 +164,9 @@ func release(ticket: StockReservation) -> bool:
 
 func consume(ticket: StockReservation) -> bool:
 	if ticket == null or not ticket.active or _tickets.get(ticket.id) != ticket:
+		return false
+	if _physical_stock(ticket.type) < ticket.amount:
+		release(ticket)
 		return false
 	begin_update()
 	_withdraw(ticket.type.id, ticket.amount)

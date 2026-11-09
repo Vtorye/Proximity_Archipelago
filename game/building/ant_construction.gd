@@ -14,7 +14,10 @@ func decide() -> bool:
 	ant._release_work()
 	ant._waiting_for_work = false
 	ant._set_waiting_reason(WorkPlan.WaitReason.NONE)
-	return resume()
+	if resume():
+		return true
+	release()
+	return false
 
 func has_cargo() -> bool:
 	return job != null and job.picked_up and not job.materials.is_empty()

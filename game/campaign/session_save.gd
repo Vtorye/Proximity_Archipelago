@@ -217,7 +217,7 @@ static func apply(world: World, data: Dictionary) -> void:
 		var ant: AntAgent = world.population._create_resident(home, state.role)
 		world.population._add_resident(home, ant)
 		world.inventory.release(ant._meal)
-		ant._meal = world.planner.reserve_meal() if state.meal else null
+		ant._meal = world.inventory.reserve(world.planner.food_type, 1, true) if state.meal else null
 		ant.needs.capacity = state.capacity
 		ant.needs.satiety = state.satiety
 		ant.cargo = unpack(state.cargo, world)

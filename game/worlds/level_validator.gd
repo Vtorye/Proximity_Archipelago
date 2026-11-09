@@ -111,7 +111,7 @@ static func validate_world(world: World, path: String) -> Array[String]:
 			for cost in option.costs:
 				if cost != null and cost.type != null and not types.has(cost.type.id): errors.append(prefix + ": unknown resource " + str(cost.type.id))
 			if option is SceneBuildOption:
-				if option.blocks_movement and option.entry_offsets.is_empty(): errors.append(prefix + ": building has no entrance")
+				if (option.blocks_movement or option.requires_water) and option.entry_offsets.is_empty(): errors.append(prefix + ": building has no entrance")
 				if option.scene == null: errors.append(prefix + ": missing building scene")
 				else:
 					var candidate: Node = option.scene.instantiate()

@@ -20,4 +20,7 @@ static func text(code: PlacementCheck.Code) -> String:
 		PlacementCheck.Code.INVALID_BUILDING: return TranslationServer.translate("ui.placement.invalid_building")
 		PlacementCheck.Code.NO_BUILDING: return TranslationServer.translate("ui.placement.no_building")
 		PlacementCheck.Code.NO_ESCAPE: return TranslationServer.translate("ui.placement.no_escape")
+		PlacementCheck.Code.WATER_REQUIRED: return TranslationServer.translate("ui.placement.water_required")
+		PlacementCheck.Code.SHORE_REQUIRED: return TranslationServer.translate("ui.placement.shore_required")
+		PlacementCheck.Code.NO_BUILD_SUPPLY: return TranslationServer.translate("ui.placement.no_build_supply")
 	return TranslationServer.translate("ui.placement.unavailable")

@@ -99,8 +99,21 @@ func run(test: Node) -> void:
 	for suffix in ["", ".bak", ".tmp"]: DirAccess.remove_absolute(path + suffix)
 	# Complete the ship through the same registered-building event as physical construction.
 	world.build_controller.construction = null
-	var ship_cell: Vector2i = home.cell + Vector2i(4, 0)
-	test.expect(world.build_controller.try_build(Voyage.SHIP, ship_cell), "unlocked ship can finish and trigger departure")
+	var map: TerrainMap = world.get_node("Map")
+	var land_cell: Vector2i = home.cell
+	test.expect(world.build_controller.placement_check(Voyage.SHIP, land_cell).code == PlacementCheck.Code.WATER_REQUIRED, "the ship requires water")
+	var ship_cell := Vector2i(-1, -1)
+	var deep_water := Vector2i(-1, -1)
+	for cell in map.get_used_cells():
+		if map.surface_at(cell).kind != TerrainType.Kind.WATER:
+			continue
+		var check: PlacementCheck = world.build_controller.placement_check(Voyage.SHIP, cell)
+		if check.code == PlacementCheck.Code.SHORE_REQUIRED:
+			deep_water = cell
+		elif check.allowed() and world.logistics.construction_sources(Voyage.SHIP.entries_at(cell)).has(home):
+			ship_cell = cell
+	test.expect(world.build_controller.placement_check(Voyage.SHIP, deep_water).code == PlacementCheck.Code.SHORE_REQUIRED, "water without a walkable shore is rejected")
+	test.expect(world.build_controller.try_build(Voyage.SHIP, ship_cell), "unlocked ship can finish on water at the shore")
 	test.expect(world.voyage.departed and world.match_controller.is_finished() and world.voyage.offers.size() == 3, "finished ship commits one victory and three destinations")
 	var destination: Dictionary = world.voyage.travel(1)
 	var next: World = LevelLayout.create_world(destination)

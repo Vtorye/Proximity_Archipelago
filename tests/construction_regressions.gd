@@ -92,3 +92,51 @@ func run(test: Node) -> void:
 	test.expect(map.get_cell_atlas_coords(cell) == road.atlas_coords and is_equal_approx(world.route_service.entry_cost(cell), 0.35), "finished roads update terrain and navigation")
 	world.free()
 	await test.get_tree().process_frame
+
+	# A funded site on a separate island must draw crates from that island.
+	var tiles: Array = []
+	for origin in [0, 12]:
+		for x in range(origin, origin + 7):
+			for y in range(5):
+				tiles.append([x, y, 3, 0, 0, 0])
+	world = LevelLayout.create_world({"version": 1, "tiles": tiles, "objects": [
+		[0, 2, "build/base_nest"], [0, 3, "Food"],
+		[12, 2, "build/base_nest"], [12, 3, "Food"],
+	]})
+	world.auto_start = false
+	test.add_child(world)
+	controller = world.build_controller
+	var remote := Vector2i(14, 2)
+	var depot := world.registry.at(Vector2i(12, 2)) as House
+	var primary: House = world.logistics.main_nest
+	test.expect(controller.check(road, remote).code == PlacementCheck.Code.NO_BUILD_SUPPLY, "unreachable treasury stock cannot fund a physical order")
+	before = world.inventory.nest_quantity(primary, primary, wood)
+	world.inventory.deposit(depot, [test.entry(wood, 3)])
+	test.expect(controller.try_build(road, remote) and world.inventory.nest_quantity(primary, primary, wood) == before, "connected base supplies an order without debiting the isolated treasury")
+	var waiting: AntAgent = depot.residents[0]
+	waiting._set_status(AntAgent.Status.WAITING_FOR_FOOD)
+	waiting._timer = 0.0
+	waiting._physics_process(1.0 / 30.0)
+	test.expect(waiting._destination == &"site_pickup", "a worker waiting for food rechecks funded construction")
+	await _advance(test, world, 15)
+	test.expect(controller.construction.at(remote, true) == null, "the second island finishes its own construction")
+	world.free()
+	await test.get_tree().process_frame
+
+	world = _world(test)
+	controller = world.build_controller
+	var stock: WorldInventory = world.inventory
+	var food: ResourceType = stock.type_by_id(&"food")
+	stock.try_spend_all([test.entry(food, stock.available(food))])
+	var food_order: SceneBuildOption = load("res://game/building/options/apple_tree.tres").duplicate(true)
+	food_order.costs = [test.entry(food, 1)]
+	controller.options.append(food_order)
+	test.expect(stock.available(food) == 0 and controller.try_build(food_order, Vector2i(2, 2)), "construction can pay with berries promised for meals")
+	test.expect(stock.available(food) == -1, "committed meal balance may be negative after building")
+	var missed := 0
+	for ant in world.population.agents():
+		if not stock.consume(ant._meal):
+			missed += 1
+	test.expect(stock.quantity(food) == 0 and missed == 1, "unfunded meals fail cleanly without taking physical berry stock below zero")
+	world.free()
+	await test.get_tree().process_frame

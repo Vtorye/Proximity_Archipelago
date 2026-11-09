@@ -13,11 +13,6 @@ var active := true
 var _field: NavigationField
 var _revision := -1
 
-func entry_cells() -> Array[Vector2i]:
-	if option is SceneBuildOption and option.blocks_movement:
-		return super.entry_cells()
-	return [cell]
-
 func material_count() -> int:
 	var count := 0
 	for amount: int in delivered.values(): count += amount

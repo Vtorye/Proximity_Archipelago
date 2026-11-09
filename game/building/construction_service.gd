@@ -28,12 +28,12 @@ func at(cell: Vector2i, terrain: bool = false) -> ConstructionSite:
 		if site.active and (site.option is TileBuildOption) == terrain and site.footprint().has(cell): return site
 	return null
 
-func enqueue(command: BuildCommand, candidate: Building, quote: Array[ResourceAmount]) -> ConstructionSite:
+func enqueue(command: BuildCommand, candidate: Building, quote: Array[ResourceAmount], crates: Dictionary) -> ConstructionSite:
 	var site := ConstructionSite.new()
 	site.service = self
 	site.candidate = candidate
 	site.required = _aggregate(quote)
-	site.crates = controller.inventory.claim_build_materials(quote, controller.logistics.main_nest)
+	site.crates = crates
 	site.setup(command.cell, command.option)
 	site.position = controller.buildings.to_local(controller.route_service.cell_to_world(command.cell))
 	sites.append(site)
@@ -67,8 +67,11 @@ func claim(ant: AntAgent) -> ConstructionJob:
 			for source: House in site.crates:
 				if not is_instance_valid(source) or not source.is_inside_tree() or site.crates[source].is_empty(): continue
 				var pickup: Route = controller.logistics.route_to(source, cell)
-				var outward: Route = site.route(source.entry_cells()[0])
-				if not pickup.is_valid() or not outward.is_valid() or not ant._can_start_pickup(pickup, outward): continue
+				if not pickup.is_valid():
+					continue
+				var outward: Route = site.route(pickup.cells.back())
+				if not ant._can_start_pickup(pickup, outward):
+					continue
 				var cost: float = pickup.cost + outward.cost
 				if cost >= lowest: continue
 				best = ConstructionJob.new()
@@ -137,7 +140,7 @@ func complete(site: ConstructionSite) -> bool:
 		if source == null or not source.accepts_improvement(site.option):
 			controller._remove_site(site)
 			return true
-	if controller.terrain != null and not controller.terrain.allows(site.option, site.cell):
+	if controller.terrain != null and not (site.option is SceneBuildOption and site.option.requires_water) and not controller.terrain.allows(site.option, site.cell):
 		controller._remove_site(site)
 		return true
 	if not controller._safety().preserves_escape([command], candidates): return false
@@ -195,8 +198,14 @@ func _replenish(site: ConstructionSite) -> void:
 			for item: ResourceAmount in site.crates[source]:
 				if item.type.id == required.type.id: accounted += item.amount
 		if accounted < required.amount: missing.append(_item(required.type, required.amount - accounted))
-	if missing.is_empty() or not controller.inventory.can_afford_all(missing, true): return
-	var replacements: Dictionary = controller.inventory.claim_build_materials(missing, controller.logistics.main_nest)
+	if missing.is_empty() or not controller.inventory.can_afford_all(missing, true, true):
+		return
+	var sources: Array[House] = controller.logistics.construction_sources(site.entry_cells())
+	var primary: House = controller.logistics.main_nest
+	var replacements: Variant = controller.inventory.allocate_build_materials(missing, primary, sources, {})
+	if replacements == null:
+		return
+	controller.inventory.debit_build_materials(replacements, primary)
 	for source: House in replacements:
 		if not site.crates.has(source): site.crates[source] = []
 		site.crates[source].append_array(replacements[source])

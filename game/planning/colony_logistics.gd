@@ -85,6 +85,18 @@ func closest_base(cell: Vector2i, count: int) -> House:
 			best = house
 	return best
 
+func construction_sources(entries: Array[Vector2i], removed: Array[Building] = []) -> Array[House]:
+	var grid: TileGrid = navigation.snapshot()
+	var sources: Array[House] = []
+	for house: House in [main_nest] + _depots:
+		if not owns(house) or not house.is_main_nest or removed.has(house):
+			continue
+		for entry in entries:
+			if house.entry_cells().any(func(cell: Vector2i) -> bool: return grid.connected(cell, entry)):
+				sources.append(house)
+				break
+	return sources
+
 func route_to(house: House, cell: Vector2i) -> Route:
 	return navigation.make_route(_field(house).path(cell)) if is_instance_valid(house) and (house == main_nest or _depots.has(house)) else Route.invalid()
 

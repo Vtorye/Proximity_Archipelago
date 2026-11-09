@@ -68,10 +68,6 @@ func footprint() -> Array[Vector2i]:
 	return cells
 
 func entry_cells() -> Array[Vector2i]:
-	var cells: Array[Vector2i] = []
-	if option is SceneBuildOption and option.blocks_movement:
-		for offset in option.entry_offsets:
-			cells.append(cell + offset)
-	else:
-		cells.append(cell)
-	return cells
+	if option is SceneBuildOption:
+		return option.entries_at(cell)
+	return [cell]
