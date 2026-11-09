@@ -13,8 +13,11 @@ func _ready() -> void:
 	scroll.custom_minimum_size.y = 180
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	add_child(scroll)
-	_content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.add_child(_content)
+	var inset := MarginContainer.new()
+	inset.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	inset.add_theme_constant_override("margin_right", 8)
+	scroll.add_child(inset)
+	inset.add_child(_content)
 	AppSettings.changed.connect(_queue_refresh)
 	director.changed.connect(_queue_refresh)
 	director.world.inventory.changed.connect(_update_availability)

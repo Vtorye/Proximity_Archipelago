@@ -44,6 +44,16 @@ static func state_box(name: String) -> StyleBoxTexture:
 	style.content_margin_bottom = 4
 	return style
 
+static func _scroll_style(color: Color) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = color
+	style.anti_aliasing = false
+	style.content_margin_left = 3
+	style.content_margin_right = 3
+	style.content_margin_top = 4
+	style.content_margin_bottom = 4
+	return style
+
 static func apply(control: Control) -> void:
 	var theme := Theme.new()
 	theme.default_font = FONT
@@ -65,6 +75,11 @@ static func apply(control: Control) -> void:
 	theme.set_stylebox("panel", "TooltipPanel", box())
 	theme.set_color("font_color", "TooltipLabel", TEXT)
 	theme.set_font_size("font_size", "TooltipLabel", 16)
+	theme.set_stylebox("scroll", "VScrollBar", _scroll_style(Color("1a2020")))
+	theme.set_stylebox("scroll_focus", "VScrollBar", _scroll_style(Color("30352f")))
+	theme.set_stylebox("grabber", "VScrollBar", _scroll_style(Color("8d8b7f")))
+	theme.set_stylebox("grabber_highlight", "VScrollBar", _scroll_style(Color("b9b39c")))
+	theme.set_stylebox("grabber_pressed", "VScrollBar", _scroll_style(ACCENT))
 	var track := StyleBoxFlat.new()
 	track.bg_color = Color("161616")
 	track.border_color = Color("666666")
