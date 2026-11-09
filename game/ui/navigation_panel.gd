@@ -2,7 +2,7 @@ class_name NavigationPanel
 extends PanelContainer
 ## Compact key and live enterprise breakdown, separate from the world labels.
 var overlay: NavigationOverlay
-var inspected_building: Building
+var inspected_cell: Variant = null
 var _legend: VBoxContainer
 var _heading: Label
 var _source: Label
@@ -54,28 +54,25 @@ func _process(delta: float) -> void:
 	if _elapsed >= 0.2:
 		_elapsed = 0.0
 		refresh()
-func inspect(building: Building) -> void:
-	inspected_building = building
+func inspect_cell(cell: Variant) -> void:
+	inspected_cell = cell
 	refresh()
 
 func refresh() -> void:
-	if not is_instance_valid(inspected_building) or not inspected_building.is_inside_tree():
-		inspected_building = null
-	var show_routes: bool = overlay != null and overlay.mode > 0
-	var terrain: TileData
-	if overlay != null and overlay.hover_active:
-		var map: TileMapLayer = overlay.world.get_node("Map")
-		terrain = map.get_cell_tile_data(overlay.hovered)
-	var cell: Vector2i = inspected_building.cell if inspected_building != null else overlay.hovered
+	var show_routes: bool = overlay.mode > 0
+	var cell: Vector2i = inspected_cell if inspected_cell != null else overlay.hovered
+	var map: TileMapLayer = overlay.world.get_node("Map")
+	var terrain: TileData = map.get_cell_tile_data(cell) if inspected_cell != null or overlay.hover_active or show_routes else null
+	var building: Building = overlay.world.build_controller.demolition_target(cell) if terrain != null else null
 	var combat: CombatDirector = overlay.world.combat
-	var has_trap: bool = combat != null and combat.traps.has(cell)
-	_clear_trap.visible = has_trap
+	var has_trap: bool = terrain != null and combat != null and combat.traps.has(cell)
+	_clear_trap.visible = has_trap and inspected_cell != null
 	if has_trap:
 		_trap_cell = cell
 		_clear_trap.text = tr("ui.trap.clear") % BuildCostText.format(combat.rules.trap_removal_costs)
 		_clear_trap.disabled = not overlay.world.inventory.can_afford_all(combat.rules.trap_removal_costs)
-	mouse_filter = Control.MOUSE_FILTER_STOP if has_trap or show_routes or inspected_building != null else Control.MOUSE_FILTER_IGNORE
-	visible = has_trap or show_routes or inspected_building != null or terrain != null
+	mouse_filter = Control.MOUSE_FILTER_STOP if show_routes or inspected_cell != null else Control.MOUSE_FILTER_IGNORE
+	visible = show_routes or terrain != null
 	if not visible:
 		return
 	_legend.visible = show_routes
@@ -83,9 +80,10 @@ func refresh() -> void:
 		_heading.text = "Вход в клетку · мс" if overlay.mode == 1 else "Приоритеты · секунды"
 		_source.text = "От (%d, %d) · скорость %.1f" % [overlay.origin.x, overlay.origin.y, overlay.reference_speed]
 	var value: Dictionary = overlay.sample(cell) if show_routes or terrain != null else {}
-	var building: Building = inspected_building if inspected_building != null else value.get("building")
 	if has_trap:
 		_detail.text = tr("ui.trap.title") + "\n" + tr("ui.trap.hint")
+		if inspected_cell == null:
+			_detail.text += "\n" + tr("ui.trap.inspect")
 	elif building is ConstructionSite:
 		_detail.text = building.details()
 	elif building is Workplace:

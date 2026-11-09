@@ -18,6 +18,7 @@ var _confirmation: HBoxContainer
 var _confirm_label: Label
 var _painting := false
 var _panning := false
+var _pan_moved := false
 var _last_cell := Vector2i.ZERO
 var _has_last := false
 var _refresh_queued := false
@@ -164,7 +165,7 @@ func _cancel_confirmation() -> void:
 
 func _refresh() -> void:
 	_refresh_queued = false
-	_hint.text = "ui.construction.build_hint" if _tool == &"build" else ("ui.construction.move_hint" if _tool == &"move" else "ui.construction.demolish_hint")
+	_hint.text = "ui.construction.build_hint" if _tool == &"build" else ("ui.construction.inspect_hint" if _tool == &"move" else "ui.construction.demolish_hint")
 	if context.controller.terrain != null:
 		var soil: TerrainType = context.controller.terrain.map.ground_at(_pricing_cell)
 		if soil != null: _hint.text = tr(soil.display_name)
@@ -221,12 +222,17 @@ func _input(event: InputEvent) -> void:
 	elif event is InputEventMouseButton and not event.pressed:
 		if event.button_index == MOUSE_BUTTON_LEFT:
 			_end_stroke()
+			if _panning and _pan_mask == MOUSE_BUTTON_MASK_LEFT and not _pan_moved and _point_allowed(event.position):
+				_panning = false
+				map_inspection_requested.emit(_cell(event.position))
+				get_viewport().set_input_as_handled()
 		elif event.button_index == MOUSE_BUTTON_MIDDLE:
 			_panning = false
 		if (event.button_mask & _pan_mask) == 0: _panning = false
 	elif event is InputEventMouseMotion:
 		if _panning:
 			if event.button_mask & _pan_mask:
+				_pan_moved = _pan_moved or not event.relative.is_zero_approx()
 				context.camera.pan(event.relative)
 			else:
 				_panning = false
@@ -246,6 +252,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			_end_stroke()
 			_panning = true
 			_pan_mask = MOUSE_BUTTON_MASK_LEFT
+			_pan_moved = false
 			get_viewport().set_input_as_handled()
 		elif event.button_index == MOUSE_BUTTON_LEFT:
 			draft.begin_stroke()
