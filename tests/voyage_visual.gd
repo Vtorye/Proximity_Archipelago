@@ -17,12 +17,26 @@ func _run() -> void:
 	editor._camera.set_level(WorldCamera.MIN_LEVEL)
 	editor._camera.position.y -= 80
 	await capture("01b-whole-generated-archipelago", 35)
-	var layout: Dictionary = LevelLayout.capture(editor._map, editor._objects.get_children())
-	layout["wave_mode"] = true
-	Router.goto(&"match", layout)
+	editor._title.text = "Пробный архипелаг"
+	await click(_button(editor, "ui.map.save"))
+	var filename: String = editor._saved.get_selected_metadata()
+	expect(not filename.is_empty(), "the generated layout saves as an ordinary editable map")
+	_choose_map(editor._starting_maps[0], "builtin/tidal_shards")
+	_choose_map(editor._starting_maps[1], filename)
+	expect(LevelStore.starting_level(false) == "builtin/tidal_shards" and LevelStore.starting_level(true) == filename, "normal and waves starting maps are saved separately")
+	await capture("01c-starting-maps", 35)
+	await click(_button(editor, "ui.common.main_menu"))
+	await frames(25)
+	await click(Router._current.controls[&"play"])
+	await frames(30)
+	expect(Router._current.world.map_size == Vector2i(136, 84) and Router._current.world.combat == null, "Play opens the selected standard map")
+	Router.goto(&"main_menu")
+	await frames(30)
+	await click(Router._current.controls[&"waves"])
 	await frames(30)
 	screen = Router._current
 	var world: World = screen.world
+	expect(world.map_size == Vector2i(50, 50) and world.combat != null, "Spider waves opens the saved custom map with combat enabled")
 	world.combat.spawner.remaining = 500
 	world.match_controller.add_time(600)
 	for type in world.inventory.registered_types(): world.inventory.add(type, 10000)
@@ -57,8 +71,16 @@ func _run() -> void:
 		await click(screen.campaign_panel.controls[stage % 3])
 	expect(world.tasks.level == 5 and world.build_controller.options.has(Voyage.SHIP), "ship appears after reaching development level five")
 	# A real ship order: ants transport paid materials and perform its assembly.
-	var ship_cell: Vector2i = home.cell + Vector2i(3, -1)
-	expect(world.build_controller.try_build(Voyage.SHIP, ship_cell), "ship order accepts a valid funded tile")
+	var ship_cell: Vector2i = _nearest_ship_cell(world, home.cell)
+	expect(world.build_controller.try_build(Voyage.SHIP, ship_cell), "ship order accepts a funded coastal water tile")
+	screen.camera.position = world.route_service.cell_to_world(ship_cell)
+	screen.camera.force_update_scroll()
+	await frames(4)
+	var requests: TaskPanel = screen.hud.task_panel
+	var scroll := requests.find_children("*", "ScrollContainer", true, false)[0] as ScrollContainer
+	var bar: VScrollBar = scroll.get_v_scroll_bar()
+	expect(bar.visible and bar.size.x <= 6, "task scrolling uses a narrow visible thumb")
+	expect(bar.get_global_rect().position.x - requests._content.get_global_rect().end.x >= 4, "task text and buttons have a separate scrollbar gutter")
 	await capture("05-ship-material-delivery", 50)
 	await key(KEY_ESCAPE)
 	await click(Router.top_overlay().controls[&"save"])
@@ -73,12 +95,14 @@ func _run() -> void:
 	screen = Router._current
 	world = screen.world
 	expect(world.tasks.level == 5 and world.build_controller.construction.at(ship_cell) != null, "Continue restores the ship site and development stage")
-	screen.camera.position = world.logistics.main_nest.global_position + Vector2(20, 0)
+	screen.camera.position = world.route_service.cell_to_world(ship_cell)
 	screen.camera.set_level(3)
-	for second in range(160):
+	for second in range(210):
 		if world.voyage.departed: break
 		await frames(30)
 	expect(world.voyage.departed and screen.campaign_panel.visible, "workers physically complete the ship and show scored victory")
+	for index in range(3):
+		expect(screen.campaign_panel.controls[index].icon != null, "the victory screen has a real preview for each destination")
 	await capture("08-victory-and-three-islands", 60)
 	var previous_stock: Dictionary = world.voyage.wealth()
 	await click(screen.campaign_panel.controls[1])
@@ -96,3 +120,28 @@ func _button(root: Node, text: String) -> Button:
 	for child in root.find_children("*", "Button", true, false):
 		if child.text == text: return child
 	return null
+
+
+func _choose_map(choice: OptionButton, filename: String) -> void:
+	for index in range(choice.item_count):
+		if choice.get_item_metadata(index) == filename:
+			choice.select(index)
+			choice.item_selected.emit(index)
+			return
+
+func _nearest_ship_cell(world: World, origin: Vector2i) -> Vector2i:
+	var map: TerrainMap = world.get_node("Map")
+	var best := Vector2i(-1, -1)
+	var distance := INF
+	var field: NavigationField = world.route_service.reverse_field([origin])
+	for cell in map.get_used_cells():
+		if map.surface_at(cell).kind != TerrainType.Kind.WATER:
+			continue
+		if not world.build_controller.placement_check(Voyage.SHIP, cell).allowed():
+			continue
+		for shore in Voyage.SHIP.entries_at(cell):
+			var cost: float = field.cost(shore)
+			if cost < distance:
+				distance = cost
+				best = cell
+	return best
