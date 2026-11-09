@@ -2,6 +2,7 @@ class_name LevelStore
 extends RefCounted
 
 const DIRECTORY := "user://maps"
+const STARTING_MAPS := "user://starting_maps.cfg"
 const MAX_BYTES := 32 * 1024 * 1024
 const BUILT_IN_LEVELS := {
 	"builtin/tidal_shards": preload("res://game/worlds/maps/tidal_shards.tres"),
@@ -69,3 +70,22 @@ static func load_level(filename: String) -> Dictionary:
 	if not title is String or title.strip_edges().is_empty() or title.length() > 64:
 		return {}
 	return data
+
+static func starting_level(waves: bool) -> String:
+	var config := ConfigFile.new()
+	config.load(STARTING_MAPS)
+	return str(config.get_value("maps", "waves" if waves else "standard", ""))
+
+static func set_starting_level(filename: String, waves: bool) -> Error:
+	if not filename.is_empty() and load_level(filename).is_empty():
+		return ERR_INVALID_DATA
+	var config := ConfigFile.new()
+	config.load(STARTING_MAPS)
+	config.set_value("maps", "waves" if waves else "standard", filename)
+	var temporary: String = STARTING_MAPS + ".%d.tmp" % OS.get_process_id()
+	var error: Error = config.save(temporary)
+	if error == OK:
+		error = DirAccess.rename_absolute(temporary, STARTING_MAPS)
+	if error != OK:
+		DirAccess.remove_absolute(temporary)
+	return error

@@ -9,6 +9,7 @@ var _camera: WorldCamera
 var _selection: TileSelection
 var _brush: OptionButton
 var _saved: OptionButton
+var _starting_maps: Array[OptionButton] = []
 var _title: LineEdit
 var _status: Label
 var _brushes: Array[Variant] = []
@@ -93,6 +94,18 @@ func _make_ui() -> void:
 	files.add_child(_saved)
 	_button(files, "ui.map.load", _load_map)
 	_button(files, "ui.terrain.generate", _generate_soils)
+	var starting := HBoxContainer.new()
+	rows.add_child(starting)
+	starting.add_child(ColonyStyle.label("ui.map.starting_maps", 8))
+	for waves: bool in [false, true]:
+		var choice := OptionButton.new()
+		choice.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		choice.fit_to_longest_item = false
+		choice.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		choice.tooltip_text = "ui.menu.waves" if waves else "ui.menu.play"
+		choice.item_selected.connect(func(index: int): _set_starting_map(waves, choice, index))
+		starting.add_child(choice)
+		_starting_maps.append(choice)
 	var generation := HBoxContainer.new()
 	rows.add_child(generation)
 	generation.add_child(ColonyStyle.label("ui.voyage.seed", 8))
@@ -215,15 +228,57 @@ func _show_world(world: World) -> void:
 	_discard_action = ""
 
 func _refresh_saved() -> void:
-	_saved.clear()
-	_saved.add_item(tr("ui.map.default"))
-	_saved.set_item_metadata(0, "")
-	for data in LevelStore.saved_levels():
+	var levels: Array[Dictionary] = LevelStore.saved_levels()
+	_fill_map_choices(_saved, levels)
+	for index in range(_starting_maps.size()):
+		var waves: bool = index == 1
+		var label: String = tr("ui.menu.waves" if waves else "ui.map.normal_mode")
+		_fill_map_choices(_starting_maps[index], levels, LevelStore.starting_level(waves), label)
+
+func _fill_map_choices(menu: OptionButton, levels: Array[Dictionary], selected := "", mode := "") -> void:
+	menu.clear()
+	var starting: bool = not mode.is_empty()
+	var default_title: String = tr("ui.map.default")
+	menu.add_item(tr("ui.map.mode_title") % [mode, default_title] if starting else default_title)
+	menu.set_item_metadata(0, "")
+	for data in levels:
 		var title: String = data.title
-		if LevelStore.BUILT_IN_LEVELS.has(data.file):
+		if starting:
+			title = tr("ui.map.mode_title") % [mode, title]
+		elif LevelStore.BUILT_IN_LEVELS.has(data.file):
 			title += " · " + tr("ui.map.bundled")
-		_saved.add_item(title)
-		_saved.set_item_metadata(_saved.item_count - 1, data.file)
+		menu.add_item(title)
+		var index: int = menu.item_count - 1
+		menu.set_item_metadata(index, data.file)
+		if data.file == selected:
+			menu.select(index)
+
+func _set_starting_map(waves: bool, choice: OptionButton, index: int) -> void:
+	var filename: String = choice.get_item_metadata(index)
+	if not filename.is_empty():
+		var data: Dictionary = LevelStore.load_level(filename)
+		var world: World = LevelLayout.create_world(data)
+		if world == null:
+			_status.text = "ui.map.load_failed"
+			_refresh_saved()
+			return
+		world.waves.enabled = waves
+		var errors: Array[String] = LevelValidator.validate_world(world, str(data.title))
+		if not LevelLayout.prototypes(world).values().any(func(building: Building) -> bool: return building is House):
+			errors.append(tr("ui.map.starting_requires_nest"))
+		world.free()
+		if not errors.is_empty():
+			_status.text = errors[0]
+			_status.tooltip_text = "\n".join(errors)
+			_refresh_saved()
+			return
+	var error: Error = LevelStore.set_starting_level(filename, waves)
+	if error != OK:
+		_status.text = tr("ui.map.save_failed") % error_string(error)
+		_refresh_saved()
+		return
+	_status.text = "ui.map.starting_saved"
+	_status.tooltip_text = ""
 
 func _mark_dirty() -> void:
 	_dirty = true
@@ -304,6 +359,7 @@ func _play(waves := false) -> void:
 	if world == null:
 		_status.text = "ui.map.load_failed"
 		return
+	world.waves.enabled = waves
 	var errors: Array[String] = LevelValidator.validate_world(world, tr("ui.menu.maps"))
 	world.free()
 	if not errors.is_empty():

@@ -16,11 +16,21 @@ var _camera_moved := false
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	if payload is Dictionary:
+	var waves: bool = payload is Dictionary and payload.get("wave_mode", false)
+	if payload is Dictionary and payload.has("tiles"):
 		world = LevelLayout.create_world(payload)
+	else:
+		var filename: String = LevelStore.starting_level(waves)
+		if not filename.is_empty():
+			world = LevelLayout.create_world(LevelStore.load_level(filename))
+			if world != null:
+				world.waves.enabled = waves
+				if not LevelValidator.validate_world(world, filename).is_empty() or not LevelLayout.prototypes(world).values().any(func(building: Building) -> bool: return building is House):
+					world.free()
+					world = null
 	if world == null:
 		world = LevelLayout.DEFAULT_WORLD.instantiate()
-	world.waves.enabled = payload is Dictionary and payload.get("wave_mode", false)
+	world.waves.enabled = waves
 	world.name = "World"
 	world.auto_start = false
 	add_child(world)

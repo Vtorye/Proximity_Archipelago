@@ -225,3 +225,16 @@ ui.voyage.seed,Seed,Зерно
 ui.voyage.generate,Generate islands,Создать острова
 ui.voyage.generate_confirm,Unsaved changes. Save them or press Generate islands again.,Есть несохранённые изменения. Сохраните их или нажмите «Создать острова» ещё раз.
 ui.voyage.generated,"Islands generated. Edit, save and play.","Острова созданы. Можно редактировать, сохранить и играть."
+ui.map.starting_maps,Starting maps,Стартовые карты
+ui.map.mode_title,%s · %s,%s · %s
+ui.map.starting_saved,Starting map selected,Стартовая карта выбрана
+ui.map.starting_requires_nest,Add a nest before using this as a starting map,Добавьте муравейник на стартовую карту
+ui.placement.water_required,Build the ship on water,Корабль строится на воде
+ui.placement.shore_required,Choose water next to a walkable shore,Выберите воду рядом с проходимым берегом
+ui.placement.no_build_supply,Not enough materials at bases connected to this site,На доступных стройке базах не хватает материалов
+ui.trap.inspect,Right-click to select and remove,ПКМ: выбрать и убрать
+ui.voyage.fertile_short,Green shore,Зелёный берег
+ui.voyage.dry_short,Dry plateau,Сухое плато
+ui.voyage.rocky_short,Stone islands,Каменные острова
+ui.construction.inspect_hint,Click: inspect · Drag: pan · Wheel: zoom,Клик: осмотр · Перетаскивание: камера · Колесо: зум
+ui.map.normal_mode,Standard,Обычная
