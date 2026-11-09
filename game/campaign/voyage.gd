@@ -7,6 +7,7 @@ var seed_value := 1
 var score := 0
 var offers: Array[Dictionary] = []
 var departed := false
+var _destinations: Dictionary[int, Dictionary] = {}
 const SHIP = preload("res://game/campaign/ship.tres")
 
 func configure(colony: World) -> void:
@@ -32,10 +33,19 @@ func _built(building: Building) -> void:
 		offers.append({"seed": seed_value + island * 7919 + index * 1543, "difficulty": island, "biome": index})
 	world.match_controller.complete_objective()
 
+func destination(index: int) -> Dictionary:
+	if not departed or index < 0 or index >= offers.size():
+		return {}
+	if not _destinations.has(index):
+		var choice: Dictionary = offers[index]
+		_destinations[index] = IslandGenerator.generate(choice.seed, choice.difficulty, choice.biome)
+	return _destinations[index]
+
 func travel(index: int) -> Dictionary:
-	if not departed or index < 0 or index >= offers.size(): return {}
+	var layout: Dictionary = destination(index).duplicate()
+	if layout.is_empty():
+		return {}
 	var choice: Dictionary = offers[index]
-	var layout: Dictionary = IslandGenerator.generate(choice.seed, choice.difficulty, choice.biome)
 	layout["journey"] = {"island": island + 1, "seed": choice.seed, "score": score, "wealth": wealth(), "buffs": world.tasks.buffs.duplicate()}
 	layout["wave_mode"] = world.combat != null
 	return layout

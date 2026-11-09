@@ -24,16 +24,33 @@ static func generate(seed_value: int, difficulty := 0, biome := 0, extent := 80)
 				value = maxf(value, 1.0 - Vector2(x - lobe.x, (y - lobe.y) * 1.12).length() / lobe.z)
 			if value + noise.get_noise_2d(x, y) * 0.28 > 0 or (cell - center).length_squared() < 81: land[cell] = true
 			tiles.append([x, y, 3, 1 if land.has(cell) else 3, 0, 0])
-	var objects: Array = [[center.x, center.y, "build/base_nest"], [center.x, center.y + 3, "Food"]]
-	var occupied: Dictionary[Vector2i, bool] = {center: true, center + Vector2i(0, 3): true}
+	var canteen: Vector2i = center + [Vector2i(0, 3), Vector2i(3, 0), Vector2i(0, -3), Vector2i(-3, 0)][rng.randi_range(0, 3)]
+	var objects: Array = [[center.x, center.y, "build/base_nest"], [canteen.x, canteen.y, "Food"]]
+	var occupied: Dictionary[Vector2i, bool] = {center: true, canteen: true}
 	var kinds := ["Workplace", "Workplace2", "AppleTree"]
-	# Guarantee a useful start; distant islands contain additional finite deposits.
-	for offset in [Vector2i(-3, 2), Vector2i(3, 2), Vector2i(1, -3)]:
-		var cell: Vector2i = center + offset
-		objects.append([cell.x, cell.y, kinds[objects.size() - 2], {"finite_supply": false, "remaining_supply": 100}])
+	var favored: int = [2, 0, 1][clampi(biome, 0, 2)]
+	# The central land disk guarantees reachable, finite deposits. Seed and biome
+	# determine where each kind appears and which resource is easiest to acquire.
+	for deposit in range(6):
+		var kind: int = deposit % kinds.size()
+		var minimum: int = 5 if deposit >= 3 else (2 if kind == favored else 3 + clampi(difficulty, 0, 2))
+		var maximum: int = 8 if deposit >= 3 else 6 + clampi(difficulty, 0, 2)
+		var candidates: Array[Vector2i] = []
+		for y in range(-8, 9):
+			for x in range(-8, 9):
+				var offset := Vector2i(x, y)
+				var distance: int = absi(x) + absi(y)
+				var cell: Vector2i = center + offset
+				if distance >= minimum and distance <= maximum and land.has(cell) and not occupied.has(cell):
+					candidates.append(cell)
+		var cell: Vector2i = candidates[rng.randi_range(0, candidates.size() - 1)]
+		var supply: int = maxi(60, rng.randi_range(130, 220) - difficulty * 10)
+		if kind == favored:
+			supply += 55
+		objects.append([cell.x, cell.y, kinds[kind], {"finite_supply": true, "remaining_supply": supply}])
 		occupied[cell] = true
 	for cell in land:
-		if (cell - center).length_squared() < 49 or occupied.has(cell) or rng.randf() > 0.025: continue
+		if (cell - center).length_squared() < 81 or occupied.has(cell) or rng.randf() > 0.025: continue
 		var kind: String = kinds[rng.randi_range(0, 2)]
 		objects.append([cell.x, cell.y, kind, {"finite_supply": true, "remaining_supply": maxi(20, 140 - difficulty * 12)}])
 	var layout := {"version": LevelLayout.VERSION, "tiles": tiles, "objects": objects, "seed": seed_value, "difficulty": difficulty, "biome": biome}

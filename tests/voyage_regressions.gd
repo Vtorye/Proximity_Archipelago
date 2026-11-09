@@ -10,6 +10,9 @@ func run(test: Node) -> void:
 		for cell in grid.walkable_cells(): components[grid.component(cell)] = true
 		test.expect(components.size() >= 3, "archipelago generation retains disconnected islands")
 		sample.free()
+	for row in first.objects:
+		if row.size() > 3:
+			test.expect(row[3].finite_supply and row[3].remaining_supply > 0, "generated resource nodes have finite, positive stock")
 	var again: Dictionary = IslandGenerator.generate(8123, 0, 0, 50)
 	test.expect(first == again and first.tiles.size() == 2500, "island generation is deterministic and respects the chosen extent")
 	test.expect(first != IslandGenerator.generate(8124, 0, 0, 50), "different seeds create different maps")
@@ -115,7 +118,9 @@ func run(test: Node) -> void:
 	test.expect(world.build_controller.placement_check(Voyage.SHIP, deep_water).code == PlacementCheck.Code.SHORE_REQUIRED, "water without a walkable shore is rejected")
 	test.expect(world.build_controller.try_build(Voyage.SHIP, ship_cell), "unlocked ship can finish on water at the shore")
 	test.expect(world.voyage.departed and world.match_controller.is_finished() and world.voyage.offers.size() == 3, "finished ship commits one victory and three destinations")
+	var preview_layout: Dictionary = world.voyage.destination(1)
 	var destination: Dictionary = world.voyage.travel(1)
+	test.expect(preview_layout.tiles == destination.tiles and preview_layout.objects == destination.objects, "destination preview and traveled layout share the exact cells and landmarks")
 	var next: World = LevelLayout.create_world(destination)
 	next.auto_start = false
 	test.add_child(next)

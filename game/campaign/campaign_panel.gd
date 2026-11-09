@@ -36,14 +36,15 @@ func _text(value: String, color := ColonyStyle.TEXT, heading := false) -> void:
 	label.custom_minimum_size.x = 200 * AppSettings.ui_scale
 	_content.add_child(label)
 
-func _action(title: String, action: Callable) -> void:
+func _action(title: String, action: Callable, parent: Container = null) -> Button:
 	var button: Button = ColonyStyle.button(title)
 	button.custom_minimum_size.y = 28 * AppSettings.ui_scale
 	button.add_theme_font_override("font", ColonyStyle.SECONDARY_FONT)
 	button.add_theme_font_size_override("font_size", 8)
 	button.pressed.connect(action)
-	_content.add_child(button)
+	(parent if parent != null else _content).add_child(button)
 	controls.append(button)
+	return button
 
 func _reward() -> void:
 	_text(tr("ui.voyage.level_complete") % world.tasks.level, ColonyStyle.ACCENT, true)
@@ -64,9 +65,28 @@ func _victory() -> void:
 	_text(tr("ui.voyage.departure"), ColonyStyle.ACCENT, true)
 	_text(tr("ui.voyage.score") % world.voyage.score)
 	_text(tr("ui.voyage.next_island") % (world.voyage.island + 1), ColonyStyle.MUTED)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 6)
+	_content.add_child(row)
+	var titles := ["ui.voyage.fertile_short", "ui.voyage.dry_short", "ui.voyage.rocky_short"]
+	var descriptions := ["ui.voyage.fertile_island", "ui.voyage.dry_island", "ui.voyage.rocky_island"]
+	var map: TileMapLayer = world.get_node("Map")
 	for index in range(3):
-		_action(tr(["ui.voyage.fertile_island", "ui.voyage.dry_island", "ui.voyage.rocky_island"][index]), func():
-			var layout: Dictionary = world.voyage.travel(index)
-			if not layout.is_empty(): Router.goto(&"match", layout))
+		var layout: Dictionary = world.voyage.destination(index)
+		var choice: Button = _action(tr(titles[index]), func():
+			var selected: Dictionary = world.voyage.travel(index)
+			if not selected.is_empty():
+				Router.goto(&"match", selected), row)
+		choice.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		choice.custom_minimum_size = Vector2(91, 101)
+		choice.clip_text = true
+		choice.tooltip_text = tr(descriptions[index])
+		choice.icon = MapPreview.texture(layout, map.tile_set)
+		choice.expand_icon = true
+		choice.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		choice.vertical_icon_alignment = VERTICAL_ALIGNMENT_TOP
+		choice.add_theme_constant_override("icon_max_width", 74)
+		choice.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		choice.disabled = layout.is_empty()
 	_text(tr("ui.voyage.carry_over"), ColonyStyle.MUTED)
 	_action(tr("ui.common.main_menu"), func(): Router.goto(&"main_menu"))
