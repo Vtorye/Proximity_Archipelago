@@ -1,26 +1,31 @@
-[gd_resource type="Resource" script_class="SceneBuildOption" format=3]
-[ext_resource type="Script" path="res://game/building/scene_build_option.gd" id="option"]
-[ext_resource type="Script" path="res://game/resources/resource_amount.gd" id="amount"]
+[gd_resource type="Resource" script_class="SceneBuildOption" format=3 uid="uid://copapubq0gp67"]
+
+[ext_resource type="Script" uid="uid://clwif6xxyitqt" path="res://game/economy/price_rule.gd" id="5_gb8id"]
+[ext_resource type="Script" uid="uid://dohq4yj0b3afb" path="res://game/resources/resource_amount.gd" id="amount"]
+[ext_resource type="Texture2D" uid="uid://dm5kimeop2cqg" path="res://game/assets/sprites/ship.svg" id="icon"]
+[ext_resource type="Script" uid="uid://ctb7np3cfufgu" path="res://game/building/scene_build_option.gd" id="option"]
 [ext_resource type="PackedScene" path="res://game/campaign/ship.tscn" id="scene"]
-[ext_resource type="Texture2D" path="res://game/assets/sprites/ship.svg" id="icon"]
-[ext_resource type="Resource" path="res://game/resources/dot_treses/wood.tres" id="wood"]
 [ext_resource type="Resource" path="res://game/resources/dot_treses/stone.tres" id="stone"]
+[ext_resource type="Resource" path="res://game/resources/dot_treses/wood.tres" id="wood"]
+
 [sub_resource type="Resource" id="wood_cost"]
 script = ExtResource("amount")
 type = ExtResource("wood")
 amount = 60
+
 [sub_resource type="Resource" id="stone_cost"]
 script = ExtResource("amount")
 type = ExtResource("stone")
 amount = 30
+
 [resource]
 script = ExtResource("option")
-id = &"ship"
-display_name = "ui.voyage.ship"
 scene = ExtResource("scene")
-icon = ExtResource("icon")
 blocks_movement = false
 requires_water = true
 entry_offsets = Array[Vector2i]([Vector2i(0, -1), Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0)])
-construction_seconds = 20.0
+id = &"ship"
+display_name = "ui.voyage.ship"
+icon = ExtResource("icon")
 costs = Array[ExtResource("amount")]([SubResource("wood_cost"), SubResource("stone_cost")])
+construction_seconds = 20.0

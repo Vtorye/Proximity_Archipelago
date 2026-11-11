@@ -1,5 +1,6 @@
 [gd_resource type="Resource" script_class="SceneBuildOption" format=3 uid="uid://buu6g5wpbtgif"]
 
+[ext_resource type="Script" uid="uid://clwif6xxyitqt" path="res://game/economy/price_rule.gd" id="3_pltjl"]
 [ext_resource type="Script" uid="uid://dohq4yj0b3afb" path="res://game/resources/resource_amount.gd" id="amount"]
 [ext_resource type="Resource" uid="uid://bc4vd8o7qyldd" path="res://game/resources/dot_treses/food.tres" id="food"]
 [ext_resource type="Script" uid="uid://ctb7np3cfufgu" path="res://game/building/scene_build_option.gd" id="option"]
@@ -12,9 +13,9 @@ amount = 5
 
 [resource]
 script = ExtResource("option")
-placement_kind = 2
 scene = ExtResource("scene")
 blocks_movement = false
+placement_kind = 2
 id = &"apple_tree"
 display_name = "ui.building.berries"
 costs = Array[ExtResource("amount")]([SubResource("cost")])

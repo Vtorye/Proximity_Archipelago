@@ -1,9 +1,10 @@
-[gd_resource type="Resource" script_class="WorkplaceUpgradeOption" format=3]
+[gd_resource type="Resource" script_class="WorkplaceUpgradeOption" format=3 uid="uid://0byesl65qnvb"]
 
-[ext_resource type="Script" path="res://game/building/workplace_upgrade_option.gd" id="option"]
-[ext_resource type="Script" path="res://game/resources/resource_amount.gd" id="amount"]
-[ext_resource type="Texture2D" path="res://game/assets/sprites/farm.svg" id="icon"]
-[ext_resource type="Resource" path="res://game/resources/dot_treses/food.tres" id="food"]
+[ext_resource type="Script" uid="uid://clwif6xxyitqt" path="res://game/economy/price_rule.gd" id="5_4bbwi"]
+[ext_resource type="Script" uid="uid://dohq4yj0b3afb" path="res://game/resources/resource_amount.gd" id="amount"]
+[ext_resource type="Resource" uid="uid://bc4vd8o7qyldd" path="res://game/resources/dot_treses/food.tres" id="food"]
+[ext_resource type="Texture2D" uid="uid://kvw4n2vj1gs5" path="res://game/assets/sprites/farm.svg" id="icon"]
+[ext_resource type="Script" uid="uid://h1ws6w2g6pxi" path="res://game/building/workplace_upgrade_option.gd" id="option"]
 [ext_resource type="Resource" path="res://game/resources/dot_treses/wood.tres" id="wood"]
 
 [sub_resource type="Resource" id="cost_wood"]
@@ -18,9 +19,8 @@ amount = 5
 
 [resource]
 script = ExtResource("option")
+source_type = ExtResource("food")
 id = &"farm"
 display_name = "ui.building.farm"
 icon = ExtResource("icon")
-source_type = ExtResource("food")
-added_slots = 2
 costs = Array[ExtResource("amount")]([SubResource("cost_wood"), SubResource("cost_food")])

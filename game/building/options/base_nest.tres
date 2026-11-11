@@ -1,28 +1,26 @@
-[gd_resource type="Resource" script_class="SceneBuildOption" format=3]
+[gd_resource type="Resource" script_class="SceneBuildOption" format=3 uid="uid://cwg6he5xyq7c7"]
 
-[ext_resource type="Script" path="res://game/resources/resource_amount.gd" id="amount"]
-[ext_resource type="Script" path="res://game/building/scene_build_option.gd" id="option"]
-[ext_resource type="PackedScene" path="res://game/entities/base_nest.tscn" id="scene"]
+[ext_resource type="Script" uid="uid://dohq4yj0b3afb" path="res://game/resources/resource_amount.gd" id="amount"]
+[ext_resource type="Script" uid="uid://ctb7np3cfufgu" path="res://game/building/scene_build_option.gd" id="option"]
+[ext_resource type="Script" uid="uid://clwif6xxyitqt" path="res://game/economy/price_rule.gd" id="price_rule"]
 [ext_resource type="Resource" path="res://game/resources/dot_treses/royal.tres" id="royal"]
+[ext_resource type="PackedScene" path="res://game/entities/base_nest.tscn" id="scene"]
 
-[ext_resource type="Script" path="res://game/economy/price_rule.gd" id="price_rule"]
+[sub_resource type="Resource" id="cost"]
+script = ExtResource("amount")
+type = ExtResource("royal")
 
 [sub_resource type="Resource" id="growth"]
 script = ExtResource("price_rule")
 subject = &"base_nest"
 value = 6.0
 
-[sub_resource type="Resource" id="cost"]
-script = ExtResource("amount")
-type = ExtResource("royal")
-amount = 1
-
 [resource]
 script = ExtResource("option")
-placement_kind = 3
 scene = ExtResource("scene")
 blocks_movement = false
 spawn_count = 5
+placement_kind = 3
 id = &"base_nest"
 display_name = "ui.storage.main"
 costs = Array[ExtResource("amount")]([SubResource("cost")])

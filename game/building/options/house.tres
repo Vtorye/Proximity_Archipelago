@@ -1,28 +1,28 @@
 [gd_resource type="Resource" script_class="SceneBuildOption" format=3 uid="uid://bi3bebyyyf4kk"]
 
+[ext_resource type="Script" uid="uid://clwif6xxyitqt" path="res://game/economy/price_rule.gd" id="4_jgd4o"]
 [ext_resource type="Script" uid="uid://dohq4yj0b3afb" path="res://game/resources/resource_amount.gd" id="amount"]
 [ext_resource type="Script" uid="uid://ctb7np3cfufgu" path="res://game/building/scene_build_option.gd" id="option"]
 [ext_resource type="PackedScene" path="res://game/entities/house.tscn" id="scene"]
-[ext_resource type="Resource" path="res://game/resources/dot_treses/wood.tres" id="wood"]
-
 [ext_resource type="Resource" path="res://game/resources/dot_treses/stone.tres" id="stone"]
-
-[sub_resource type="Resource" id="stone_cost"]
-script = ExtResource("amount")
-type = ExtResource("stone")
-amount = 20
+[ext_resource type="Resource" path="res://game/resources/dot_treses/wood.tres" id="wood"]
 
 [sub_resource type="Resource" id="cost"]
 script = ExtResource("amount")
 type = ExtResource("wood")
 amount = 10
 
+[sub_resource type="Resource" id="stone_cost"]
+script = ExtResource("amount")
+type = ExtResource("stone")
+amount = 20
+
 [resource]
 script = ExtResource("option")
-placement_kind = 3
 scene = ExtResource("scene")
 blocks_movement = false
 spawn_count = 5
+placement_kind = 3
 id = &"house"
 display_name = "ui.storage.local"
 costs = Array[ExtResource("amount")]([SubResource("cost"), SubResource("stone_cost")])
