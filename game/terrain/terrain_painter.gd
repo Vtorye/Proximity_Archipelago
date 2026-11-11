@@ -27,7 +27,7 @@ static func populate(map: TerrainMap, objects: Array[Node], seed_value := 814) -
 		var id: StringName = &""
 		if distance == 1: id = &"sand" if value > 0.1 else &"wet"
 		elif distance == 2: id = &"wet"
-		elif stone_cells.any(func(stone: Vector2i) -> bool: return (stone - cell).length_squared() <= 5): id = &"rocky"
+		elif stone_cells.any(func(stone: Vector2i) -> bool: return (stone - cell).length_squared() <= 2): id = &"rocky"
 		elif distance >= 5 and value > 0.08: id = &"dry"
 		elif value < -0.04: id = &"fertile"
 		var type: TerrainType = map.catalog.by_id(id) if id != &"" else (map.catalog.default_ground if ground.preserve_ground else ground)

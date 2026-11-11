@@ -20,14 +20,9 @@ func _ready() -> void:
 	if payload is Dictionary and payload.has("tiles"):
 		world = LevelLayout.create_world(payload)
 	else:
-		var filename: String = LevelStore.starting_level(waves)
-		if not filename.is_empty():
-			world = LevelLayout.create_world(LevelStore.load_level(filename))
-			if world != null:
-				world.waves.enabled = waves
-				if not LevelValidator.validate_world(world, filename).is_empty() or not LevelLayout.prototypes(world).values().any(func(building: Building) -> bool: return building is House):
-					world.free()
-					world = null
+		var seed_generator := RandomNumberGenerator.new()
+		seed_generator.randomize()
+		world = LevelLayout.create_world(IslandGenerator.generate(seed_generator.randi(), 0, 0))
 	if world == null:
 		world = LevelLayout.DEFAULT_WORLD.instantiate()
 	world.waves.enabled = waves

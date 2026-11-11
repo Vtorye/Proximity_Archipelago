@@ -1,6 +1,7 @@
 extends RefCounted
 func run(test: Node) -> void:
 	var first: Dictionary = IslandGenerator.generate(8123, 0, 0, 50)
+	var starter := Vector2i(int(first.objects[0][0]), int(first.objects[0][1]))
 	for seed_value in [1, 52, 991]:
 		var sample: World = LevelLayout.create_world(IslandGenerator.generate(seed_value, 2, seed_value % 3, 50))
 		test.expect(sample != null and LevelValidator.validate_world(sample, "seed " + str(seed_value)).is_empty(), "multiple seed and biome combinations produce playable maps")
@@ -13,11 +14,17 @@ func run(test: Node) -> void:
 	for row in first.objects:
 		if row.size() > 3:
 			test.expect(row[3].finite_supply and row[3].remaining_supply > 0, "generated resource nodes have finite, positive stock")
+			if row[2] != "Food":
+				var offset := Vector2i(int(row[0]), int(row[1])) - starter
+				test.expect(absi(offset.x) + absi(offset.y) >= 6, "generated deposits stay away from the starter nest")
 	var again: Dictionary = IslandGenerator.generate(8123, 0, 0, 50)
 	test.expect(first == again and first.tiles.size() == 2500, "island generation is deterministic and respects the chosen extent")
 	test.expect(first != IslandGenerator.generate(8124, 0, 0, 50), "different seeds create different maps")
 	var world: World = LevelLayout.create_world(first)
 	test.expect(LevelValidator.validate_world(world, "generated").is_empty(), "generated starter colony has valid terrain, entrances and resources")
+	var built_berry := load("res://game/entities/apple_tree.tscn").instantiate() as Workplace
+	test.expect(built_berry.finite_supply and built_berry.remaining_supply == 100, "built berry bushes have finite stock")
+	built_berry.free()
 	world.auto_start = false
 	world.waves.enabled = true
 	world.waves.rules = load("res://game/combat/default_waves.tres")

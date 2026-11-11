@@ -33,16 +33,23 @@ static func generate(seed_value: int, difficulty := 0, biome := 0, extent := 80)
 	# determine where each kind appears and which resource is easiest to acquire.
 	for deposit in range(6):
 		var kind: int = deposit % kinds.size()
-		var minimum: int = 5 if deposit >= 3 else (2 if kind == favored else 3 + clampi(difficulty, 0, 2))
-		var maximum: int = 8 if deposit >= 3 else 6 + clampi(difficulty, 0, 2)
+		var minimum: int = 7 if deposit >= 3 else (6 if kind == favored else 7 + clampi(difficulty, 0, 2))
+		var maximum: int = 12 + clampi(difficulty, 0, 2)
 		var candidates: Array[Vector2i] = []
-		for y in range(-8, 9):
-			for x in range(-8, 9):
+		for y in range(-12, 13):
+			for x in range(-12, 13):
 				var offset := Vector2i(x, y)
 				var distance: int = absi(x) + absi(y)
 				var cell: Vector2i = center + offset
 				if distance >= minimum and distance <= maximum and land.has(cell) and not occupied.has(cell):
 					candidates.append(cell)
+		if candidates.is_empty():
+			for cell in land:
+				var distance: int = absi(cell.x - center.x) + absi(cell.y - center.y)
+				if distance >= minimum and land.has(cell) and not occupied.has(cell):
+					candidates.append(cell)
+		if candidates.is_empty():
+			return {}
 		var cell: Vector2i = candidates[rng.randi_range(0, candidates.size() - 1)]
 		var supply: int = maxi(60, rng.randi_range(130, 220) - difficulty * 10)
 		if kind == favored:
@@ -64,10 +71,11 @@ static func generate(seed_value: int, difficulty := 0, biome := 0, extent := 80)
 	TerrainPainter.populate(map, nodes, seed_value)
 	# The selected destination has a recognizable terrain bias, without invalidating buildings.
 	var preferred: TerrainType = map.catalog.by_id([&"fertile", &"dry", &"rocky"][clampi(biome, 0, 2)])
+	var preferred_chance: float = 0.08 if biome == 2 else 0.22
 	for cell in land:
 		if occupied.has(cell) or (cell - center).length_squared() < 36: continue
 		var ground: TerrainType = map.ground_at(cell)
-		if ground != null and ground.kind == TerrainType.Kind.LAND and rng.randf() < 0.22: map.paint_tile(cell, preferred.tile, true)
+		if ground != null and ground.kind == TerrainType.Kind.LAND and rng.randf() < preferred_chance: map.paint_tile(cell, preferred.tile, true)
 	for building in buildings:
 		if not building.has_meta(&"layout_kind"): building.set_meta(&"layout_kind", str(world.get_path_to(building)))
 	var result: Dictionary = LevelLayout.capture(map, nodes)
