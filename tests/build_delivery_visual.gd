@@ -33,8 +33,8 @@ func _run() -> void:
 		if not assembling and site.progress > 0:
 			assembling = true
 			screen.hud.navigation_panel.refresh()
-			await capture("03-worker-assembly", 20)
-	expect(delivered and assembling and world.registry.at(cell) is House and world.population.count() == 10, "physical deliveries precede worker assembly and resident spawning")
+			await capture("03-carrier-assembly", 20)
+	expect(delivered and assembling and world.registry.at(cell) is House and world.population.count() == 10, "physical deliveries precede carrier assembly and resident spawning")
 	await capture("04-completed-barracks", 30)
 	await click_at(cell_point(cell))
 	var nest := Router.top_overlay() as NestMenu

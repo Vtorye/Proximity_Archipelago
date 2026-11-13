@@ -38,7 +38,7 @@ func run(test: Node) -> void:
 	await _advance(test, world, 0.2)
 	test.expect(world.registry.at(cell) is ConstructionSite, "a house cannot finish before physical deliveries")
 	await _advance(test, world, 25.0)
-	test.expect(world.registry.at(cell) is House and service.sites.is_empty() and world.population.count() == 15, "couriers deliver every material then a worker assembles and opens the house")
+	test.expect(world.registry.at(cell) is House and service.sites.is_empty() and world.population.count() == 15, "couriers deliver every material then a carrier assembles and opens the house")
 	test.expect(world.inventory.quantity(wood) == before - 4, "delivery and assembly never charge the order a second time")
 	world.free()
 	await test.get_tree().process_frame

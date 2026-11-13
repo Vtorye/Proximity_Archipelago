@@ -9,7 +9,7 @@
 [sub_resource type="Resource" id="carrier"]
 script = ExtResource("amount")
 type = ExtResource("food")
-amount = 8
+amount = 2
 
 [sub_resource type="Resource" id="warrior_food"]
 script = ExtResource("amount")

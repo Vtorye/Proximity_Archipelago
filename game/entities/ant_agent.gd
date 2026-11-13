@@ -187,7 +187,7 @@ func _decide() -> void:
 		return
 	var foodless: bool = _is_foodless()
 	refresh_meal_reservation()
-	if construction != null and construction.decide(): return
+	if construction != null and status in [Status.HOME, Status.WAITING_FOR_FOOD, Status.WANDERING] and construction.decide(): return
 	if role == Role.CARRIER:
 		_decide_pickup(foodless)
 		return
