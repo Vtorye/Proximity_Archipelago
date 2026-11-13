@@ -222,7 +222,7 @@ func _refund(source, materials: Array) -> void:
 	var cargo: Array[ResourceAmount] = []
 	cargo.assign(materials)
 	if not is_instance_valid(source) or not controller.logistics.owns(source): return
-	controller.inventory.deposit(null if source == controller.logistics.main_nest else source, cargo)
+	controller.inventory.deposit(null if source == controller.logistics.main_nest else source, cargo, true)
 
 static func _item(type: ResourceType, count: int) -> ResourceAmount:
 	var item := ResourceAmount.new()

@@ -32,7 +32,7 @@ func run(test: Node) -> void:
 	var registry := BuildingRegistry.new()
 	var planner := TripPlanner.new()
 	var stock := WorldInventory.new()
-	planner.configure(registry, routes, stock, null)
+	planner.configure(registry, routes, stock, null, null)
 	var a := Workplace.new()
 	var b := Workplace.new()
 	a.setup(Vector2i(-2, -1), null)
@@ -310,7 +310,7 @@ func test_multiple_bases(test: Node) -> void:
 	var base_tint: Color = (base.get_node("Sprite") as Sprite2D).modulate
 	var barracks_tint: Color = (barracks.get_node("Sprite") as Sprite2D).modulate
 	test.expect(base_tint.is_equal_approx(Color.WHITE) and barracks_tint.is_equal_approx(House.BARRACKS_TINT), "barracks have a different tint from base nests: %s / %s" % [base_tint, barracks_tint])
-	test.expect(stock.can_deposit(base, 10001) and not stock.can_deposit(barracks, 101), "base storage remains unlimited while barracks share a limited store")
+	test.expect(not stock.can_deposit(base, 10001) and stock.can_deposit(base, 1) and not stock.can_deposit(barracks, 101), "each base caps its store at 1000 while barracks keep their own limit")
 	var initial: int = stock.quantity(wood)
 	stock.deposit(barracks, [test.entry(wood, 8)])
 	var courier := main.residents.back() as AntAgent

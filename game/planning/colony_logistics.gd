@@ -52,13 +52,17 @@ func _remove_building(building: Building) -> void:
 func owns(house: House) -> bool:
 	return is_instance_valid(house) and (house == main_nest or _depots.has(house))
 
+## A worker's cargo goes only to the storage of the nest it lives in.
+func accepts_home(house: House, count: int) -> bool:
+	return owns(house) and inventory.can_deposit(null if house == main_nest else house, count)
+
 func can_remove(house: House) -> bool:
 	return house != main_nest and inventory.depot_fill(house) == 0
 
 func closest_depot(cell: Vector2i, count: int) -> House:
 	var best: House
 	var lowest := INF
-	if is_instance_valid(main_nest):
+	if is_instance_valid(main_nest) and inventory.can_deposit(null, count):
 		lowest = _field(main_nest).cost(cell)
 		if is_finite(lowest):
 			best = main_nest
@@ -77,7 +81,7 @@ func closest_base(cell: Vector2i, count: int) -> House:
 	for house in [main_nest] + _depots:
 		if not owns(house) or not house.is_main_nest:
 			continue
-		if house != main_nest and not inventory.can_deposit(house, count):
+		if not inventory.can_deposit(null if house == main_nest else house, count):
 			continue
 		var cost: float = _field(house).cost(cell)
 		if cost < lowest:

@@ -76,6 +76,8 @@ func arrive(destination: StringName) -> void:
 			service.deliver(job)
 			job = null
 			ant._carrying = false
+			# Status is still WALKING here, so decide() must be called explicitly to chain the next haul.
+			if decide(): return
 			ant._decide()
 		&"site_assembly":
 			ant._set_status(AntAgent.Status.CONSTRUCTING)

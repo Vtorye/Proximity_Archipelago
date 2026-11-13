@@ -205,17 +205,21 @@ func refresh() -> void:
 	var busy := 0
 	var unsafe_work := 0
 	var missing_inputs := 0
+	var storage_full := 0
 	for ant in agents:
 		if ant.status != AntAgent.Status.HOME: continue
 		if ant.waiting_reason == WorkPlan.WaitReason.SLOTS_FULL: busy += 1
 		elif ant.waiting_reason == WorkPlan.WaitReason.NO_SAFE_WORK: unsafe_work += 1
 		elif ant.waiting_reason == WorkPlan.WaitReason.MISSING_INPUTS: missing_inputs += 1
+		elif ant.waiting_reason == WorkPlan.WaitReason.STORAGE_FULL: storage_full += 1
 	_waiting.text = tr("ui.hud.waiting") % busy if busy > 0 else ""
 	if unsafe_work > 0:
 		_waiting.text += ("\n" if busy > 0 else "") + tr("ui.hud.no_safe_work") % unsafe_work
 	if missing_inputs > 0:
 		_waiting.text += ("\n" if not _waiting.text.is_empty() else "") + tr("ui.hud.missing_inputs") % missing_inputs
-	_waiting.visible = busy > 0 or unsafe_work > 0 or missing_inputs > 0
+	if storage_full > 0:
+		_waiting.text += ("\n" if not _waiting.text.is_empty() else "") + tr("ui.hud.storage_full") % storage_full
+	_waiting.visible = busy > 0 or unsafe_work > 0 or missing_inputs > 0 or storage_full > 0
 	var food: ResourceType = world.inventory.type_by_id(&"food")
 	_warning.text = "ui.hud.need_food" if world.inventory.available(food) < 3 else ""
 

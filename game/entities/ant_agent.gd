@@ -275,9 +275,14 @@ func _deliver() -> void:
 	_carrying = true
 	var cell: Vector2i = route_service.world_to_cell(global_position)
 	var count: int = WorldInventory.cargo_size(cargo)
-	_delivery_nest = logistics.closest_base(cell, count) if _main_delivery else logistics.closest_depot(cell, count)
+	if role == Role.WORKER:
+		# Workers return only to the storage of the nest they live in.
+		_delivery_nest = _home_storage(count)
+	else:
+		_delivery_nest = logistics.closest_base(cell, count) if _main_delivery else logistics.closest_depot(cell, count)
 	var route: Route = logistics.route_to(_delivery_nest, cell)
 	if route.is_valid() and _can_deliver(route, cell):
+		_set_waiting_reason(WorkPlan.WaitReason.NONE)
 		_walk(route, &"delivery")
 		return
 	var meal_energy: float = planner.escape_energy(cell, speed * TripPlanner.CARRY_SPEED_RATIO)
@@ -285,9 +290,29 @@ func _deliver() -> void:
 	var meal_due: bool = meal_would_enable_delivery or needs.satiety <= meal_energy + AntNeeds.SAFETY_MARGIN + 2.0
 	if meal_due and needs.satiety > meal_energy and not _is_foodless():
 		_seek_food()
+	elif role == Role.WORKER:
+		_idle_with_cargo()
 	else:
 		_set_status(Status.WAITING_FOR_FOOD)
 		_timer = 1.0
+
+## Home storage when it has room for this cargo, otherwise null.
+func _home_storage(count: int) -> House:
+	if not is_instance_valid(home) or not logistics.accepts_home(home, count):
+		return null
+	return home
+
+## Holds cargo near home until storage frees up; _decide() retries delivery on each arrival.
+func _idle_with_cargo() -> void:
+	_set_waiting_reason(WorkPlan.WaitReason.STORAGE_FULL)
+	var cell: Vector2i = route_service.world_to_cell(global_position)
+	var origin: Vector2i = planner.accessible_entry(home) if is_instance_valid(home) else cell
+	var nearby := route_service.snapshot().neighbors(cell).filter(func(next: Vector2i) -> bool:
+		return absi(next.x - origin.x) + absi(next.y - origin.y) <= 2)
+	if nearby.is_empty():
+		_go_home()
+	else:
+		_walk(route_service.make_route([cell, nearby.pick_random()]), &"wander")
 
 func _can_deliver(route: Route, from_cell: Vector2i) -> bool:
 	var energy: float = _delivery_energy(route, from_cell)
@@ -303,12 +328,17 @@ func _delivery_energy(route: Route, from_cell: Vector2i) -> float:
 
 func _unload() -> void:
 	if _shipment and logistics.owns(_delivery_nest) and _delivery_nest.is_main_nest:
-		planner.inventory.close_shipment(cargo, true, null if _delivery_nest == logistics.main_nest else _delivery_nest)
+		if not planner.inventory.close_shipment(cargo, true, null if _delivery_nest == logistics.main_nest else _delivery_nest):
+			# Main storage filled while this load was en route; keep the cargo and retry.
+			_main_delivery = true
+			_deliver()
+			return
 	elif _shipment or not logistics.deposit(_delivery_nest, cargo):
 		_main_delivery = true
 		_deliver()
 		return
 	_clear_cargo()
+	_set_waiting_reason(WorkPlan.WaitReason.NONE)
 	_go_home()
 
 func _clear_cargo() -> void:

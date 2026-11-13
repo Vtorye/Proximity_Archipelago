@@ -117,7 +117,9 @@ func refresh() -> void:
 	if not is_instance_valid(house) or not is_instance_valid(world):
 		return
 	var main: bool = house.is_main_nest
-	_capacity.text = tr("ui.nest.unlimited") if main else tr("ui.storage.fill") % [world.inventory.depot_fill(house), house.storage_capacity]
+	var used: int = world.inventory.storage_load(null if house == world.logistics.main_nest else house) if main else world.inventory.depot_fill(house)
+	var capacity: int = WorldInventory.MAIN_CAPACITY if main else house.storage_capacity
+	_capacity.text = tr("ui.storage.fill") % [used, capacity]
 	for type in world.inventory.registered_types():
 		var amount: int = world.inventory.nest_quantity(house, world.logistics.main_nest, type)
 		_stock_labels[type.id].text = "%s · %d" % [tr(type.display_name), amount]

@@ -94,6 +94,7 @@ ui.tutorial.lesson4.title,Camera and demolition,Камера и снос
 ui.tutorial.lesson4.body,"Use the wheel to zoom, and MMB, arrows or WASD to pan.\nIn construction, the Move tool lets you pan with LMB.\n\nThe Demolish tool marks buildings and roads for removal.\nRemoval happens when you apply the plan, with no refund.\nDemolishing a nest kills residents and needs confirmation.\nThe top menu offers settings, restart, and exit.","Колесо меняет масштаб, СКМ, стрелки и WASD двигают камеру.\nВ стройке инструмент «Перемещение» включает перенос ЛКМ.\n\nИнструмент «Снос» отмечает здания и дороги для удаления.\nОтметки применяются вместе с планом, без возврата ресурсов.\nСнос муравейника убивает жителей и требует подтверждения.\nМеню вверху содержит настройки, перезапуск и выход."
 ui.menu.language,Language: English,Язык: Русский
 ui.hud.missing_inputs,Waiting for inputs: %d,Ждут сырья: %d
+ui.hud.storage_full,Base storage full: %d,Склады баз полны: %d
 ui.placement.unbuildable,This terrain cannot be built on,Это покрытие запрещает строительство
 ui.placement.impassable,Tile is impassable,Клетка непроходима
 ui.tutorial.progress.title,Rewards and upgrades,Награды и развитие
@@ -134,7 +135,6 @@ ui.terrain.coast,Coast,Побережье
 ui.nest.inventory,Inventory,Запасы
 ui.nest.residents,Ants,Муравьи
 ui.nest.buy,Recruit,Нанять
-ui.nest.unlimited,Storage · unlimited,Склад · без ограничений
 ui.nest.population,Residents %d / %d,Жители %d / %d
 ui.nest.worker,Workers,Рабочие
 ui.nest.carrier,Carriers,Носильщики

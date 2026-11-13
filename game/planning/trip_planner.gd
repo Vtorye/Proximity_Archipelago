@@ -9,8 +9,10 @@ const LOAD_PENALTY_SECONDS := 0.5
 var registry: BuildingRegistry
 var navigation: RouteService
 var inventory: WorldInventory
+var logistics: ColonyLogistics
 var food_type: ResourceType
 var _opportunities_queued := false
+var _storage_had_room := true
 var _home_fields: Dictionary[Vector2i, NavigationField] = {}
 var _revision := -1
 var _workplace_revision := -1
@@ -18,12 +20,14 @@ var _workplaces_dirty := true
 var _work_fields: Dictionary[Vector2i, NavigationField] = {}
 var _workplace_components: Dictionary[int, Array] = {}
 
-func configure(buildings: BuildingRegistry, routes: RouteService, stock: WorldInventory, food: ResourceType) -> void:
+func configure(buildings: BuildingRegistry, routes: RouteService, stock: WorldInventory, food: ResourceType, colony: ColonyLogistics) -> void:
 	registry = buildings
 	navigation = routes
 	inventory = stock
+	logistics = colony
 	food_type = food
 	registry.changed.connect(refresh_food)
+	inventory.changed.connect(_on_inventory_changed)
 	registry.added.connect(_on_workplace_membership_changed)
 	registry.removed.connect(_on_workplace_membership_changed)
 	navigation.navigation_changed.connect(_queue_workplace_refresh)
@@ -52,6 +56,12 @@ func travel_energy(cost: float, speed: float) -> float:
 func plan_work(agent: Node2D, home: Building, needs: AntNeeds, speed: float, work_time: float, ticket: StockReservation, current: Workplace = null) -> WorkPlan:
 	if not is_instance_valid(home) or (agent is AntAgent and agent.role != AntAgent.Role.WORKER):
 		return null
+	if not logistics.accepts_home(home as House, 1):
+		# Workers do not start a job while their own storage is full.
+		var full := WorkPlan.new()
+		full.waiting_for_slot = true
+		full.waiting_reason = WorkPlan.WaitReason.STORAGE_FULL
+		return full
 	var home_cell: Vector2i = accessible_entry(home)
 	if not navigation.walkable(home_cell):
 		return null
@@ -121,6 +131,13 @@ func plan_work(agent: Node2D, home: Building, needs: AntNeeds, speed: float, wor
 	if best != null and is_instance_valid(current) and current != best.workplace:
 		current.release_worker(agent)
 	return best
+
+## Wake waiting workers only when base storage transitions between full and not full.
+func _on_inventory_changed() -> void:
+	var has_room: bool = inventory.has_base_room(1)
+	if has_room != _storage_had_room:
+		_storage_had_room = has_room
+		_queue_workplace_refresh()
 
 func _on_workplace_membership_changed(building: Building) -> void:
 	if not building is Workplace: return

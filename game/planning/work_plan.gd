@@ -1,7 +1,7 @@
 class_name WorkPlan
 extends RefCounted
 ## A work assignment. A foodless assignment has no planned return for a meal.
-enum WaitReason { NONE, SLOTS_FULL, NO_SAFE_WORK, MISSING_INPUTS }
+enum WaitReason { NONE, SLOTS_FULL, NO_SAFE_WORK, MISSING_INPUTS, STORAGE_FULL }
 var waiting_reason: WaitReason = WaitReason.NONE
 var workplace: Workplace
 var outward: Route

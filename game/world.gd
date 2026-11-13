@@ -77,7 +77,7 @@ func _ready() -> void:
 	planner = TripPlanner.new()
 	planner.name = "TripPlanner"
 	add_child(planner)
-	planner.configure(registry, route_service, inventory, inventory.type_by_id(&"food"))
+	planner.configure(registry, route_service, inventory, inventory.type_by_id(&"food"), logistics)
 	units = Node2D.new()
 	units.name = "Units"
 	units.z_index = 2

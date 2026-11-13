@@ -127,8 +127,9 @@ func _stock_details(house: House) -> String:
 	var inventory: WorldInventory = overlay.world.inventory
 	var is_main: bool = house.is_main_nest
 	var lines := PackedStringArray([tr("ui.storage.main" if is_main else "ui.storage.local")])
-	if not is_main:
-		lines.append(tr("ui.storage.fill") % [inventory.depot_fill(house), house.storage_capacity])
+	var used: int = inventory.storage_load(null if overlay.world.logistics.main_nest == house else house) if is_main else inventory.depot_fill(house)
+	var capacity: int = WorldInventory.MAIN_CAPACITY if is_main else house.storage_capacity
+	lines.append(tr("ui.storage.fill") % [used, capacity])
 	for type in inventory.registered_types():
 		var count: int = inventory.nest_quantity(house, overlay.world.logistics.main_nest, type)
 		lines.append("%s · %d" % [tr(type.display_name), count])

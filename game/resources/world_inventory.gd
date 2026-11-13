@@ -3,6 +3,10 @@ extends Node
 
 signal changed
 
+## Physical goods held by the main nest. Royal is a crown currency, not carried by ants.
+const MAIN_CAPACITY := 1000
+const CURRENCY_ID := &"royal"
+
 var _types: Dictionary[StringName, ResourceType] = {}
 var _amounts: Dictionary[StringName, int] = {}
 var _main_stock: Dictionary[StringName, int] = {}
@@ -221,14 +225,43 @@ func depot_fill(house: House) -> int:
 		count += amount
 	return count
 
-func can_deposit(house: House, count: int) -> bool:
-	return count >= 0 and (house == null or (_depots.has(house) and (house.is_main_nest or count <= house.storage_capacity - depot_fill(house))))
+## Physical goods held by one base (null is the first base). Royal is currency, not cargo.
+func storage_load(house: House) -> int:
+	var stock: Dictionary = _main_stock if house == null else _depots.get(house, {})
+	var total := 0
+	for id: StringName in stock:
+		if id != CURRENCY_ID:
+			total += stock[id]
+	return total
 
-func deposit(house: House, cargo: Array[ResourceAmount]) -> bool:
+## True when at least one base can take this many goods.
+func has_base_room(count: int) -> bool:
+	if can_deposit(null, count):
+		return true
+	for house: House in _depots:
+		if house.is_main_nest and can_deposit(house, count):
+			return true
+	return false
+
+## Each base holds up to MAIN_CAPACITY; barracks use their own storage_capacity.
+func can_deposit(house: House, count: int) -> bool:
+	if count < 0:
+		return false
+	if house == null:
+		return storage_load(null) + count <= MAIN_CAPACITY
+	if not _depots.has(house):
+		return false
+	if house.is_main_nest:
+		return storage_load(house) + count <= MAIN_CAPACITY
+	return count <= house.storage_capacity - depot_fill(house)
+
+## force skips capacity limits for refunds so paid materials are never lost.
+func deposit(house: House, cargo: Array[ResourceAmount], force := false) -> bool:
 	for item in cargo:
 		if item == null or item.amount <= 0 or not is_registered(item.type):
 			return false
-	if not can_deposit(house, cargo_size(cargo)):
+	var fits: bool = (force and (house == null or _depots.has(house))) or can_deposit(house, cargo_size(cargo))
+	if not fits:
 		return false
 	var stock: Dictionary = _main_stock if house == null else _depots[house]
 	for item in cargo:
@@ -270,6 +303,8 @@ func dispatch(house: House, limit: int) -> Array[ResourceAmount]:
 
 func close_shipment(cargo: Array[ResourceAmount], delivered: bool, destination: House = null) -> bool:
 	if delivered and destination != null and (not _depots.has(destination) or not destination.is_main_nest or not can_deposit(destination, cargo_size(cargo))):
+		return false
+	if delivered and destination == null and not can_deposit(null, cargo_size(cargo)):
 		return false
 	var stock: Dictionary = _main_stock if destination == null else _depots.get(destination, {})
 	for item in cargo:

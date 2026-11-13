@@ -129,7 +129,7 @@ func _check_storage_and_hover() -> void:
 	var main: House = screen.world.logistics.main_nest
 	await click_at(cell_point(main.cell))
 	menu = Router.top_overlay() as NestMenu
-	expect(menu != null and menu.house == main and not menu._dispatch.visible, "the main nest shows unlimited storage")
+	expect(menu != null and menu.house == main and not menu._dispatch.visible and menu._capacity.text.contains("/ %d" % WorldInventory.MAIN_CAPACITY), "the main nest shows its 1000-unit storage limit")
 	await click(menu.controls[&"residents"])
 	var food: ResourceType = screen.world.inventory.type_by_id(&"food")
 	screen.world.inventory.add(food, 100)
