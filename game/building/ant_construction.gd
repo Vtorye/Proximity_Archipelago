@@ -11,8 +11,8 @@ func decide() -> bool:
 		release()
 	job = service.claim(ant)
 	if job == null: return false
-	ant._release_work()
-	ant._waiting_for_work = false
+	ant.work.release()
+	ant.work.waiting_for_work = false
 	ant._set_waiting_reason(WorkPlan.WaitReason.NONE)
 	if resume():
 		return true
@@ -28,10 +28,10 @@ func resume() -> bool:
 	if not job.live():
 		if has_cargo():
 			# Cancelled orders send carried materials back through normal physical delivery.
-			ant.cargo.assign(job.materials)
+			ant.transport.cargo.assign(job.materials)
 			job.materials.clear()
 			job = null
-			ant._deliver()
+			ant.resume_delivery()
 			return true
 		return false
 	var route: Route
@@ -47,14 +47,14 @@ func resume() -> bool:
 		route = service.controller.logistics.route_to(job.source, cell)
 		destination = &"site_pickup"
 	if not route.is_valid(): return false
-	var energy: float = ant.planner.travel_energy(route.cost, ant.speed * (TripPlanner.CARRY_SPEED_RATIO if has_cargo() else 1.0))
+	var energy: float = ant.planner.travel_energy(route.cost, ant.speed * (ant.planner.carry_speed_ratio if has_cargo() else 1.0))
 	if not ant._is_foodless(): energy += ant.planner.escape_energy(route.cells.back(), ant.speed)
 	if not ant.needs.can_afford(energy):
 		if has_cargo():
 			ant._seek_food()
 			return true
 		return false
-	ant._carrying = has_cargo()
+	ant.transport.carrying = has_cargo()
 	ant._walk(route, destination)
 	return true
 
@@ -75,7 +75,7 @@ func arrive(destination: StringName) -> void:
 		&"site_delivery":
 			service.deliver(job)
 			job = null
-			ant._carrying = false
+			ant.transport.carrying = false
 			# Status is still WALKING here, so decide() must be called explicitly to chain the next haul.
 			if decide(): return
 			ant._decide()

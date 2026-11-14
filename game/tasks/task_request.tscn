@@ -1,0 +1,41 @@
+[gd_scene format=3]
+
+[ext_resource type="FontFile" path="res://game/assets/fonts/Pixuf.ttf" id="small_font"]
+
+[node name="Request" type="VBoxContainer"]
+theme_override_constants/separation = 3
+
+[node name="Title" type="Label" parent="."]
+mouse_filter = 2
+text = ""
+theme_override_font_sizes/font_size = 8
+theme_override_fonts/font = ExtResource("small_font")
+text_overrun_behavior = 3
+
+[node name="Cost" type="Label" parent="."]
+mouse_filter = 2
+text = ""
+theme_override_font_sizes/font_size = 8
+theme_override_fonts/font = ExtResource("small_font")
+autowrap_mode = 3
+
+[node name="Actions" type="HBoxContainer" parent="."]
+theme_override_constants/separation = 3
+
+[node name="Submit" type="Button" parent="Actions"]
+unique_name_in_owner = true
+mouse_default_cursor_shape = 2
+text = ""
+theme_override_fonts/font = ExtResource("small_font")
+theme_override_font_sizes/font_size = 8
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(0, 22)
+
+[node name="Cancel" type="Button" parent="Actions"]
+unique_name_in_owner = true
+mouse_default_cursor_shape = 2
+text = "Отказ"
+theme_override_fonts/font = ExtResource("small_font")
+theme_override_font_sizes/font_size = 8
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(0, 22)

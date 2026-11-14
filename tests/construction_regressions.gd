@@ -70,9 +70,9 @@ func run(test: Node) -> void:
 	job.picked_up = true
 	controller.demolish_at(cell)
 	carrier.construction.job = job
-	test.expect(carrier.construction.resume() and carrier.cargo.size() == 2, "a courier carrying cancelled materials physically returns them to storage")
+	test.expect(carrier.construction.resume() and carrier.transport.cargo.size() == 2, "a courier carrying cancelled materials physically returns them to storage")
 	await _advance(test, world, 20)
-	test.expect(carrier.cargo.is_empty(), "cancelled carried materials finish normal warehouse delivery")
+	test.expect(carrier.transport.cargo.is_empty(), "cancelled carried materials finish normal warehouse delivery")
 	world.free()
 	await test.get_tree().process_frame
 
@@ -135,11 +135,11 @@ func run(test: Node) -> void:
 	site.crates[primary] = legacy_crate
 	world.inventory.deposit(depot, legacy_crate)
 	world.inventory.try_spend_all(legacy_crate, true)
-	var waiting: AntAgent = depot.residents[0]
+	var waiting: AntAgent = depot.residents.back()
 	waiting._set_status(AntAgent.Status.WAITING_FOR_FOOD)
 	waiting._timer = 0.0
 	waiting._physics_process(1.0 / 30.0)
-	test.expect(waiting._destination == &"site_pickup", "a worker waiting for food rechecks funded construction")
+	test.expect(waiting._destination == &"site_pickup", "a carrier waiting for food rechecks funded construction")
 	test.expect(world.inventory.nest_quantity(primary, primary, wood) == before and world.inventory.nest_quantity(depot, primary, wood) == 2, "a stuck saved order refunds unreachable crates and funds them from the connected base")
 	await _advance(test, world, 15)
 	test.expect(controller.construction.at(remote, true) == null, "the second island finishes its own construction")

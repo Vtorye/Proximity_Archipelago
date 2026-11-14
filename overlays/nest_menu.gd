@@ -5,16 +5,16 @@ extends MenuBase
 var world: World
 var house: House
 var controls: Dictionary[StringName, Button] = {}
-var _inventory_tab: VBoxContainer
-var _residents_tab: VBoxContainer
+@onready var _inventory_tab: VBoxContainer = %InventoryTab
+@onready var _residents_tab: VBoxContainer = %ResidentsTab
 var _stock_labels: Dictionary[StringName, Label] = {}
 var _role_labels: Dictionary[int, Label] = {}
 var _purchase_labels: Dictionary[int, Label] = {}
-var _population: Label
-var _capacity: Label
-var _orders_tab: VBoxContainer
+@onready var _population: Label = %Population
+@onready var _capacity: Label = %Capacity
+@onready var _orders_tab: VBoxContainer = %OrdersTab
 var _order_rows: Dictionary[String, Dictionary] = {}
-var _funds: CheckButton
+@onready var _funds: CheckButton = %Funds
 
 func _ready() -> void:
 	if not payload is Dictionary:
@@ -25,57 +25,30 @@ func _ready() -> void:
 	if not is_instance_valid(world) or not world.logistics.owns(house):
 		close_requested.emit.call_deferred(self)
 		return
-	var content: VBoxContainer = ColonyStyle.modal(self, 240 if world.combat != null else 224)
-	var header := HBoxContainer.new()
-	content.add_child(header)
-	var title: Label = ColonyStyle.label("ui.storage.main" if house.is_main_nest else "ui.storage.local", 12, ColonyStyle.ACCENT)
-	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	header.add_child(title)
-	var close: Button = ColonyStyle.button("ui.common.back")
-	close.pressed.connect(func(): close_requested.emit(self))
-	header.add_child(close)
-	controls[&"close"] = close
-	var tabs := HBoxContainer.new()
-	content.add_child(tabs)
-	var group := ButtonGroup.new()
-	for key in [&"inventory", &"orders", &"residents"]:
-		var button: Button = ColonyStyle.button("ui.nest." + str(key))
-		button.toggle_mode = true
-		button.button_group = group
-		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		button.pressed.connect(_show_tab.bind(key))
-		tabs.add_child(button)
-		controls[key] = button
-	_inventory_tab = VBoxContainer.new()
-	_inventory_tab.add_theme_constant_override("separation", 6)
-	content.add_child(_inventory_tab)
-	_capacity = ColonyStyle.label("")
-	_inventory_tab.add_child(_capacity)
+	ColonyStyle.apply(self)
+	if world.combat != null:
+		%Dialog.custom_minimum_size.x = 480.0
+	%Title.text = "ui.storage.main" if house.is_main_nest else "ui.storage.local"
+	controls[&"close"] = %Close
+	%Close.pressed.connect(AppSettings.play_click)
+	%Close.pressed.connect(func(): close_requested.emit(self))
+	controls[&"inventory"] = %Inventory
+	%Inventory.pressed.connect(AppSettings.play_click)
+	%Inventory.pressed.connect(_show_tab.bind(&"inventory"))
+	controls[&"orders"] = %Orders
+	%Orders.pressed.connect(AppSettings.play_click)
+	%Orders.pressed.connect(_show_tab.bind(&"orders"))
+	controls[&"residents"] = %Residents
+	%Residents.pressed.connect(AppSettings.play_click)
+	%Residents.pressed.connect(_show_tab.bind(&"residents"))
 	for type in world.inventory.registered_types():
 		var line: Label = ColonyStyle.label("")
 		_stock_labels[type.id] = line
 		_inventory_tab.add_child(line)
-	_orders_tab = VBoxContainer.new()
-	_orders_tab.add_theme_constant_override("separation", 6)
-	content.add_child(_orders_tab)
-	_funds = CheckButton.new()
-	_funds.text = "ui.nest.funds_construction"
 	_funds.toggled.connect(func(enabled: bool):
-		if is_instance_valid(house): house.funds_construction = enabled)
-	_orders_tab.add_child(_funds)
-	# One grid for the header and every row keeps the four columns aligned:
-	# name | min | max | owed.
-	var order_grid := GridContainer.new()
-	order_grid.columns = 4
-	order_grid.add_theme_constant_override("h_separation", 6)
-	order_grid.add_theme_constant_override("v_separation", 6)
-	_orders_tab.add_child(order_grid)
-	order_grid.add_child(ColonyStyle.label(""))
-	for key in ["ui.order.min", "ui.order.max", "ui.order.once"]:
-		var caption: Label = ColonyStyle.label(key, 4, ColonyStyle.MUTED)
-		caption.custom_minimum_size.x = 72
-		caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		order_grid.add_child(caption)
+		if is_instance_valid(house):
+			house.funds_construction = enabled)
+	var order_grid: GridContainer = %OrderGrid
 	for type in world.inventory.registered_types():
 		if type.id == WorldInventory.CURRENCY_ID:
 			continue
@@ -102,43 +75,26 @@ func _ready() -> void:
 		row.add_child(once)
 		spins["once"] = once
 		_order_rows[str(type.id)] = {"name": name_label, "spins": spins, "type": type}
-	_residents_tab = VBoxContainer.new()
-	_residents_tab.add_theme_constant_override("separation", 8)
-	content.add_child(_residents_tab)
-	_population = ColonyStyle.label("", 8, ColonyStyle.ACCENT)
-	_residents_tab.add_child(_population)
 	for role in world.population.roles():
-		var line := HBoxContainer.new()
-		line.add_theme_constant_override("separation", 8)
-		_residents_tab.add_child(line)
-		var labels := VBoxContainer.new()
-		labels.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		line.add_child(labels)
-		var count: Label = ColonyStyle.label("")
-		labels.add_child(count)
-		_role_labels[role] = count
-		var price: Label = ColonyStyle.label("", 4, ColonyStyle.MUTED)
-		price.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		price.custom_minimum_size.x = 104
-		labels.add_child(price)
-		_purchase_labels[role] = price
-		var buy: Button = ColonyStyle.button("ui.nest.buy")
+		var row: HBoxContainer = preload("res://game/ui/nest_resident_row.tscn").instantiate()
+		_role_labels[role] = row.get_node("Labels/Count")
+		_purchase_labels[role] = row.get_node("Labels/Price")
+		var buy: Button = row.get_node("Buy")
+		buy.pressed.connect(AppSettings.play_click)
 		buy.pressed.connect(_recruit.bind(role))
-		line.add_child(buy)
 		controls[_control_key("buy", role)] = buy
-		var kill: Button = ColonyStyle.button("ui.nest.kill")
-		kill.add_theme_color_override("font_color", ColonyStyle.DANGER)
-		kill.tooltip_text = "ui.nest.kill_hint"
+		var kill: Button = row.get_node("Kill")
+		kill.pressed.connect(AppSettings.play_click)
 		kill.pressed.connect(_kill.bind(role))
-		line.add_child(kill)
 		controls[_control_key("kill", role)] = kill
-	_residents_tab.add_child(ColonyStyle.label("ui.nest.assigned", 4, ColonyStyle.MUTED))
+		_residents_tab.add_child(row)
+	_residents_tab.move_child(%Assigned, -1)
 	world.inventory.changed.connect(refresh)
 	world.population.changed.connect(refresh)
 	house.tree_exiting.connect(func(): close_requested.emit(self))
 	_show_tab(&"inventory")
 	refresh()
-	default_focus = close
+	default_focus = %Close
 
 func _show_tab(key: StringName) -> void:
 	_inventory_tab.visible = key == &"inventory"

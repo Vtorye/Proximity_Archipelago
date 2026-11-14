@@ -9,30 +9,24 @@ const LESSONS := [
 ]
 var controls: Dictionary[StringName, Button] = {}
 var _page := 0
-var _heading: Label
-var _body: Label
-var _counter: Label
+@onready var _heading: Label = %Heading
+@onready var _body: Label = %Body
+@onready var _counter: Label = %Counter
 
 func _ready() -> void:
-	var content: VBoxContainer = ColonyStyle.modal(self, 286)
-	_heading = ColonyStyle.label("", 12, ColonyStyle.ACCENT)
-	content.add_child(_heading)
-	_body = ColonyStyle.label("", 8)
-	_body.custom_minimum_size = Vector2(520, 146)
-	_body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	content.add_child(_body)
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 8)
-	content.add_child(row)
-	for entry in [[&"back", "В меню", func(): Router.goto(&"main_menu")], [&"previous", "Назад", func(): _show_page(_page - 1)], [&"next", "Далее", func(): _show_page(_page + 1)], [&"play", "Играть", func(): Router.goto(&"match")]]:
-		var button: Button = ColonyStyle.button(entry[1], entry[0] == &"play")
-		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		button.pressed.connect(entry[2])
-		row.add_child(button)
-		controls[entry[0]] = button
-	_counter = ColonyStyle.label("", 6, ColonyStyle.MUTED)
-	_counter.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	content.add_child(_counter)
+	ColonyStyle.apply(self)
+	controls[&"back"] = %Back
+	%Back.pressed.connect(AppSettings.play_click)
+	%Back.pressed.connect(func(): Router.goto(&"main_menu"))
+	controls[&"previous"] = %Previous
+	%Previous.pressed.connect(AppSettings.play_click)
+	%Previous.pressed.connect(func(): _show_page(_page - 1))
+	controls[&"next"] = %Next
+	%Next.pressed.connect(AppSettings.play_click)
+	%Next.pressed.connect(func(): _show_page(_page + 1))
+	controls[&"play"] = %Play
+	%Play.pressed.connect(AppSettings.play_click)
+	%Play.pressed.connect(func(): Router.goto(&"match"))
 	_show_page(0)
 
 func _show_page(page: int) -> void:

@@ -1,6 +1,10 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://overlays/nest_menu.gd" id="script"]
+[ext_resource type="StyleBox" path="res://game/ui/dialog_panel.tres" id="dialog_style"]
+
+[sub_resource type="ButtonGroup" id="tabs"]
+resource_local_to_scene = true
 
 [node name="NestMenu" type="Control"]
 layout_mode = 3
@@ -10,3 +14,151 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("script")
+
+[node name="Shade" type="ColorRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.5)
+
+[node name="Center" type="CenterContainer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Dialog" type="PanelContainer" parent="Center"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(448, 0)
+theme_override_styles/panel = ExtResource("dialog_style")
+
+[node name="Margin" type="MarginContainer" parent="Center/Dialog"]
+theme_override_constants/margin_left = 6
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 6
+theme_override_constants/margin_bottom = 6
+
+[node name="Content" type="VBoxContainer" parent="Center/Dialog/Margin"]
+unique_name_in_owner = true
+theme_override_constants/separation = 8
+
+[node name="Header" type="HBoxContainer" parent="Center/Dialog/Margin/Content"]
+
+[node name="Title" type="Label" parent="Center/Dialog/Margin/Content/Header"]
+unique_name_in_owner = true
+mouse_filter = 2
+text = ""
+theme_override_font_sizes/font_size = 24
+theme_override_colors/font_color = Color(0.8745, 0.7765, 0.5451, 1)
+size_flags_horizontal = 3
+
+[node name="Close" type="Button" parent="Center/Dialog/Margin/Content/Header"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 28)
+mouse_default_cursor_shape = 2
+text = "ui.common.back"
+
+[node name="Tabs" type="HBoxContainer" parent="Center/Dialog/Margin/Content"]
+
+[node name="Inventory" type="Button" parent="Center/Dialog/Margin/Content/Tabs"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 28)
+mouse_default_cursor_shape = 2
+text = "ui.nest.inventory"
+size_flags_horizontal = 3
+toggle_mode = true
+button_group = SubResource("tabs")
+
+[node name="Orders" type="Button" parent="Center/Dialog/Margin/Content/Tabs"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 28)
+mouse_default_cursor_shape = 2
+text = "ui.nest.orders"
+size_flags_horizontal = 3
+toggle_mode = true
+button_group = SubResource("tabs")
+
+[node name="Residents" type="Button" parent="Center/Dialog/Margin/Content/Tabs"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 28)
+mouse_default_cursor_shape = 2
+text = "ui.nest.residents"
+size_flags_horizontal = 3
+toggle_mode = true
+button_group = SubResource("tabs")
+
+[node name="InventoryTab" type="VBoxContainer" parent="Center/Dialog/Margin/Content"]
+unique_name_in_owner = true
+theme_override_constants/separation = 6
+
+[node name="Capacity" type="Label" parent="Center/Dialog/Margin/Content/InventoryTab"]
+unique_name_in_owner = true
+mouse_filter = 2
+text = ""
+theme_override_font_sizes/font_size = 16
+
+[node name="OrdersTab" type="VBoxContainer" parent="Center/Dialog/Margin/Content"]
+unique_name_in_owner = true
+theme_override_constants/separation = 6
+visible = false
+
+[node name="Funds" type="CheckButton" parent="Center/Dialog/Margin/Content/OrdersTab"]
+unique_name_in_owner = true
+text = "ui.nest.funds_construction"
+
+[node name="OrderGrid" type="GridContainer" parent="Center/Dialog/Margin/Content/OrdersTab"]
+unique_name_in_owner = true
+columns = 4
+theme_override_constants/h_separation = 6
+theme_override_constants/v_separation = 6
+
+[node name="Resource" type="Label" parent="Center/Dialog/Margin/Content/OrdersTab/OrderGrid"]
+mouse_filter = 2
+text = ""
+theme_override_font_sizes/font_size = 16
+
+[node name="Minimum" type="Label" parent="Center/Dialog/Margin/Content/OrdersTab/OrderGrid"]
+mouse_filter = 2
+text = "ui.order.min"
+theme_override_font_sizes/font_size = 8
+theme_override_colors/font_color = Color(0.6667, 0.651, 0.6118, 1)
+custom_minimum_size = Vector2(72, 0)
+horizontal_alignment = 1
+
+[node name="Maximum" type="Label" parent="Center/Dialog/Margin/Content/OrdersTab/OrderGrid"]
+mouse_filter = 2
+text = "ui.order.max"
+theme_override_font_sizes/font_size = 8
+theme_override_colors/font_color = Color(0.6667, 0.651, 0.6118, 1)
+custom_minimum_size = Vector2(72, 0)
+horizontal_alignment = 1
+
+[node name="Owed" type="Label" parent="Center/Dialog/Margin/Content/OrdersTab/OrderGrid"]
+mouse_filter = 2
+text = "ui.order.once"
+theme_override_font_sizes/font_size = 8
+theme_override_colors/font_color = Color(0.6667, 0.651, 0.6118, 1)
+custom_minimum_size = Vector2(72, 0)
+horizontal_alignment = 1
+
+[node name="ResidentsTab" type="VBoxContainer" parent="Center/Dialog/Margin/Content"]
+unique_name_in_owner = true
+theme_override_constants/separation = 8
+visible = false
+
+[node name="Population" type="Label" parent="Center/Dialog/Margin/Content/ResidentsTab"]
+unique_name_in_owner = true
+mouse_filter = 2
+text = ""
+theme_override_font_sizes/font_size = 16
+theme_override_colors/font_color = Color(0.8745, 0.7765, 0.5451, 1)
+
+[node name="Assigned" type="Label" parent="Center/Dialog/Margin/Content/ResidentsTab"]
+unique_name_in_owner = true
+mouse_filter = 2
+text = "ui.nest.assigned"
+theme_override_font_sizes/font_size = 8
+theme_override_colors/font_color = Color(0.6667, 0.651, 0.6118, 1)

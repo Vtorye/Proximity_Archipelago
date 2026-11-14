@@ -136,34 +136,3 @@ static func button(text: String, primary: bool = false, feedback: bool = true) -
 
 static func fill(control: Control) -> void:
 	control.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-
-static func margin(parent: Node, pixels: int = 4) -> MarginContainer:
-	var result := MarginContainer.new()
-	for side in ["left", "top", "right", "bottom"]:
-		result.add_theme_constant_override("margin_" + side, pixels)
-	parent.add_child(result)
-	return result
-
-static func modal(root: Control, width: float = 248.0, pass_background_input: bool = false) -> VBoxContainer:
-	apply(root)
-	var shade := ColorRect.new()
-	shade.color = Color(0, 0, 0, 0.5)
-	root.add_child(shade)
-	fill(shade)
-	var center := CenterContainer.new()
-	root.add_child(center)
-	fill(center)
-	if pass_background_input:
-		root.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		center.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var panel := PanelContainer.new()
-	var opaque_panel: StyleBoxTexture = dialog_box()
-	opaque_panel.modulate_color.a = 1.0
-	panel.add_theme_stylebox_override("panel", opaque_panel)
-	panel.custom_minimum_size.x = minf(width * 2, 608)
-	center.add_child(panel)
-	var content := VBoxContainer.new()
-	content.add_theme_constant_override("separation", 8)
-	margin(panel, 6).add_child(content)
-	return content

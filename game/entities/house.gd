@@ -1,10 +1,11 @@
 class_name House
 extends Building
 
-const MAIN_RESIDENT_LIMIT := 20
 const BARRACKS_TINT := Color("91b7df")
 @export var capacity: int = 5
 @export var is_main_nest := false
+## Population limit used only by the main nest.
+@export_range(1, 1000) var main_resident_limit := 20
 @export var human_scene: PackedScene
 @export_range(1.0, 4.0, 0.05) var carrier_speed_multiplier := 1.5
 @export_range(1, 100) var carrier_capacity := 6
@@ -40,7 +41,7 @@ func display_title() -> String:
 
 
 func resident_limit() -> int:
-	return floori((MAIN_RESIDENT_LIMIT if is_main_nest else capacity) * terrain_capacity_multiplier + 0.000001)
+	return floori((main_resident_limit if is_main_nest else capacity) * terrain_capacity_multiplier + 0.000001)
 
 func has_space() -> bool:
 	_prune()
@@ -119,3 +120,18 @@ func _on_setup() -> bool:
 	if option is SceneBuildOption and option.spawn_count > 0:
 		capacity = option.spawn_count
 	return true
+
+func _apply_default_appearance(sprite: Sprite2D, art: ArtCatalog) -> void:
+	sprite.texture = art.nest
+
+func capture_storage_settings() -> Dictionary:
+	return {
+		"funds_construction": funds_construction, "storage_capacity": storage_capacity,
+		"orders": orders.duplicate(true), "requests": requests.duplicate(),
+	}
+
+func restore_storage_settings(state: Dictionary) -> void:
+	funds_construction = state.funds_construction
+	storage_capacity = state.storage_capacity
+	orders = state.orders.duplicate(true)
+	requests = state.requests.duplicate()

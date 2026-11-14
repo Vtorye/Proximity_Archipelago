@@ -172,3 +172,36 @@ func _skin(building: Building) -> void:
 	if not building is House: return
 	building.development_tint = [Color.WHITE, Color("efd38e"), Color("a8d4e9"), Color("d2b3ed")][mini(level - 1, 3)]
 	building.refresh_appearance()
+
+func capture_state() -> Dictionary:
+	return {
+		"level": level, "closed": closed, "completed_count": completed_count,
+		"skipped_count": skipped_count, "pending_reward": pending_reward,
+		"buffs": buffs.duplicate(), "_speed": _speed, "difficulty_multiplier": difficulty_multiplier,
+		"message": message, "rng": _rng.state,
+		"slots": slots.map(func(task: TaskSpec): return str(task.id) if task != null else ""),
+		"pool": _pool.map(func(task: TaskSpec): return str(task.id)),
+	}
+
+func restore_state(state: Dictionary) -> void:
+	var definitions: Dictionary[String, TaskSpec] = {}
+	for stage_definition in deck.stages:
+		for task in stage_definition.tasks:
+			definitions[str(task.id)] = task
+	slots.clear()
+	for id in state.slots:
+		slots.append(definitions.get(id))
+	_pool.clear()
+	for id in state.pool:
+		_pool.append(definitions[id])
+	_rng.state = state.rng
+	level = state.level
+	closed = state.closed
+	completed_count = state.completed_count
+	skipped_count = state.skipped_count
+	pending_reward = state.pending_reward
+	buffs.assign(state.buffs)
+	_speed = state._speed
+	difficulty_multiplier = state.difficulty_multiplier
+	message = state.message
+	changed.emit()

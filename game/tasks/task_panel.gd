@@ -2,22 +2,10 @@ class_name TaskPanel
 extends PanelContainer
 ## Three compact requests. Availability uses the same atomic inventory rules as payment.
 var director: TaskDirector
-var _content: VBoxContainer
+@onready var _requests: VBoxContainer = %Requests
 var _queued := false
-var _waiting: Label
+@onready var _waiting: Label = %Waiting
 func _ready() -> void:
-	custom_minimum_size.x = 198
-	_content = VBoxContainer.new()
-	_content.add_theme_constant_override("separation", 3)
-	var scroll := ScrollContainer.new()
-	scroll.custom_minimum_size.y = 180
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	add_child(scroll)
-	var inset := MarginContainer.new()
-	inset.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	inset.add_theme_constant_override("margin_right", 8)
-	scroll.add_child(inset)
-	inset.add_child(_content)
 	AppSettings.changed.connect(_queue_refresh)
 	director.changed.connect(_queue_refresh)
 	director.world.inventory.changed.connect(_update_availability)
@@ -29,20 +17,19 @@ func _queue_refresh() -> void:
 	_refresh.call_deferred()
 func _refresh() -> void:
 	_queued = false
-	for child in _content.get_children():
-		_content.remove_child(child)
+	for child in _requests.get_children():
+		_requests.remove_child(child)
 		child.queue_free()
-	_content.add_child(_label("Уровень %d · %d/%d" % [director.level, director.closed, director.stage().tasks.size()], ColonyStyle.ACCENT))
+	%Heading.text = "Уровень %d · %d/%d" % [director.level, director.closed, director.stage().tasks.size()]
 	for index in range(director.slots.size()):
 		var task: TaskSpec = director.slots[index]
 		if task == null: continue
-		var title: Label = _label(task.title)
-		title.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-		_content.add_child(title)
-		var cost: Label = _label(BuildCostText.format(director.price(index)))
-		cost.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		var request: VBoxContainer = preload("res://game/tasks/task_request.tscn").instantiate()
+		var title: Label = request.get_node("Title")
+		title.text = task.title
+		var cost: Label = request.get_node("Cost")
+		cost.text = BuildCostText.format(director.price(index))
 		cost.custom_minimum_size.x = 160 * AppSettings.ui_scale
-		_content.add_child(cost)
 		if not task.unlocks.is_empty():
 			var names := PackedStringArray()
 			for option in task.unlocks:
@@ -51,10 +38,11 @@ func _refresh() -> void:
 				title.text += " · " + ", ".join(names)
 				title.tooltip_text = tr("ui.task.unlocks") % ", ".join(names)
 				title.add_theme_color_override("font_color", ColonyStyle.ACCENT)
-		var row := HBoxContainer.new()
-		row.add_theme_constant_override("separation", 3)
 		for cancel in [false, true]:
-			var button: Button = ColonyStyle.button("Отказ" if cancel else "+%d c" % task.reward_seconds)
+			var button: Button = request.get_node("Actions/Cancel" if cancel else "Actions/Submit")
+			if not cancel:
+				button.text = "+%d c" % task.reward_seconds
+			button.pressed.connect(AppSettings.play_click)
 			if not cancel and not task.rewards.is_empty():
 				button.text += " +%d" % BuildController.price_amount(task.rewards, task.rewards[0].type)
 				button.icon = task.rewards[0].type.icon
@@ -62,27 +50,18 @@ func _refresh() -> void:
 				button.icon_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 				button.add_theme_constant_override("icon_max_width", 8)
 			button.custom_minimum_size.y = 22 * AppSettings.ui_scale
-			button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-			button.add_theme_font_override("font", ColonyStyle.SECONDARY_FONT)
-			button.add_theme_font_size_override("font_size", 8)
 			button.set_meta(&"cancel", cancel)
 			button.set_meta(&"task_index", index)
 			button.disabled = not director.can_pay(index, cancel)
 			button.tooltip_text = "Отказ: %s. Без награды." % BuildCostText.format(director.price(index, true)) if cancel else "Сдать: %s. Награда: %s и %d с." % [BuildCostText.format(director.price(index)), BuildCostText.format(task.rewards), task.reward_seconds]
 			button.pressed.connect(func(): director.submit(index, cancel))
-			row.add_child(button)
-		_content.add_child(row)
-	var message: Label = _label(director.message, ColonyStyle.MUTED)
-	message.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_content.add_child(message)
-	_waiting = _label("", ColonyStyle.MUTED)
-	_waiting.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_content.add_child(_waiting)
+		_requests.add_child(request)
+	%Message.text = director.message
 	_update_availability()
 
 func _update_availability() -> void:
-	if _content == null: return
-	for button in _content.find_children("*", "Button", true, false):
+	if _requests == null: return
+	for button in _requests.find_children("*", "Button", true, false):
 		button.disabled = not director.can_pay(button.get_meta(&"task_index"), button.get_meta(&"cancel"))
 	var missing := 0
 	var occupied := 0
@@ -93,9 +72,3 @@ func _update_availability() -> void:
 	if is_instance_valid(_waiting):
 		_waiting.text = "Ждут мест: %d; сырья: %d" % [occupied, missing]
 		_waiting.visible = occupied > 0 or missing > 0
-
-func _label(text: String, color: Color = ColonyStyle.TEXT) -> Label:
-	var label: Label = ColonyStyle.label(text, 4, color)
-	label.add_theme_font_override("font", ColonyStyle.SECONDARY_FONT)
-	label.add_theme_font_size_override("font_size", 8)
-	return label

@@ -13,3 +13,9 @@ func publish(event: GameEvents.Kind, subject: StringName = &"", amount: int = 1)
 	occurred.emit(event, subject, amount)
 func count(event: GameEvents.Kind, subject: StringName) -> int:
 	return _counts.get(GameEvents.key(event, subject), 0)
+
+func capture_counts() -> Dictionary[String, int]:
+	return _counts.duplicate()
+
+func restore_counts(counts: Dictionary) -> void:
+	_counts.assign(counts)

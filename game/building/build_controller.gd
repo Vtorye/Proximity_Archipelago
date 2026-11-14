@@ -7,6 +7,8 @@ signal changed
 
 @export var catalog: BuildCatalog
 @export var physical_construction := true
+## Share of the build cost returned on demolition. Zero disables refunds.
+@export_range(0.0, 1.0, 0.01) var demolish_refund_ratio := 0.0
 var construction: ConstructionService
 var terrain: TerrainRules
 var prices: PriceService
@@ -283,7 +285,7 @@ func try_build_plan(commands: Array[BuildCommand]) -> bool:
 		if prices != null: prices.record(GameEvents.Kind.TERRAIN_CHANGED if command.option is TileBuildOption else GameEvents.Kind.BUILDING_BUILT, command.option.id)
 		built.emit(command.option, command.cell)
 	if not removed_improvements.is_empty() or placements.any(func(command: BuildCommand) -> bool: return command.option is WorkplaceUpgradeOption):
-		population.planner._queue_workplace_refresh()
+		population.planner.queue_workplace_refresh()
 	changed.emit()
 	return true
 
@@ -294,9 +296,6 @@ func _remove_site(site: ConstructionSite) -> void:
 	construction.cancel(site)
 	site.demolish()
 	site.queue_free()
-
-## Share of the build cost returned on demolition. 0 = no refund; raise to enable refunds.
-const DEMOLISH_REFUND_RATIO := 0.0
 
 func demolition_target(cell: Vector2i) -> Building:
 	if construction != null:
@@ -339,7 +338,7 @@ func demolish_at(cell: Vector2i) -> bool:
 		if prices != null: prices.record(GameEvents.Kind.BUILDING_DEMOLISHED, definition.id)
 		_committing = false
 		inventory.end_update()
-		population.planner._queue_workplace_refresh()
+		population.planner.queue_workplace_refresh()
 		changed.emit()
 		return true
 	_refund_for_demolish(building.option)
@@ -358,7 +357,7 @@ func _refund_for_demolish(option: BuildOption) -> void:
 	if option == null:
 		return
 	for type in inventory.registered_types():
-		var amount: int = floori(option.cost_amount(type) * DEMOLISH_REFUND_RATIO)
+		var amount: int = floori(option.cost_amount(type) * demolish_refund_ratio)
 		if amount > 0:
 			inventory.add(type, amount)
 

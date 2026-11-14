@@ -4,60 +4,43 @@ extends Screen
 ## Manual check of the end-of-match overlay: enable in the Inspector and start the match.
 @export var debug_show_result := false
 var world: World
-var camera: WorldCamera
-var navigation_overlay: NavigationOverlay
-var selection: TileSelection
-var campaign_panel: CampaignPanel
-var hud: MatchHud
+@onready var camera: WorldCamera = $ColonyCamera
+@onready var navigation_overlay: NavigationOverlay = $Navigation
+@onready var selection: TileSelection = $Selection
+@onready var campaign_panel: CampaignPanel = $Interface/Campaign
+@onready var hud: MatchHud = $Interface/Hud
 var _active := false
 var _pointer := Vector2(-1, -1)
 var _camera_moved := false
 
 func _ready() -> void:
-	process_mode = Node.PROCESS_MODE_ALWAYS
-	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var waves: bool = payload is Dictionary and payload.get("wave_mode", false)
 	if payload is Dictionary and payload.has("tiles"):
 		world = LevelLayout.create_world(payload)
 	else:
 		var seed_generator := RandomNumberGenerator.new()
 		seed_generator.randomize()
-		world = LevelLayout.create_world(IslandGenerator.generate(seed_generator.randi(), 0, 0))
+		var generated: LevelData = IslandGenerator.generate_data(seed_generator.randi())
+		if generated != null:
+			world = LevelLayout.instantiate_world(generated)
 	if world == null:
 		world = LevelLayout.DEFAULT_WORLD.instantiate()
 	world.waves.enabled = waves
 	world.name = "World"
 	world.auto_start = false
 	add_child(world)
+	move_child(world, 0)
 	world.match_controller.completed.connect(_on_completed)
-	camera = WorldCamera.new()
-	camera.name = "ColonyCamera"
 	camera.bounds = world.map_bounds()
 	camera.position = camera.bounds.get_center() - Vector2(0, 8)
-	world.add_child(camera)
 	camera.make_current()
-	navigation_overlay = NavigationOverlay.new()
-	navigation_overlay.process_mode = Node.PROCESS_MODE_ALWAYS
-	navigation_overlay.world = world
-	navigation_overlay.z_index = 19
-	world.add_child(navigation_overlay)
-	selection = TileSelection.new()
-	selection.process_mode = Node.PROCESS_MODE_ALWAYS
-	selection.map = world.get_node("Map") as TileMapLayer
-	world.add_child(selection)
-	var layer := CanvasLayer.new()
-	layer.layer = 5
-	add_child(layer)
-	hud = MatchHud.new()
-	hud.world = world
-	hud.navigation = navigation_overlay
-	layer.add_child(hud)
+	navigation_overlay.configure(world)
+	selection.map = world.map
+	hud.configure(world, navigation_overlay)
 	if world.voyage != null:
 		if payload is Dictionary and payload.has("journey"): world.voyage.apply(payload.journey)
 	if payload is Dictionary and payload.has("snapshot"): SessionSave.apply(world, payload.snapshot)
-	campaign_panel = CampaignPanel.new()
-	campaign_panel.world = world
-	layer.add_child(campaign_panel)
+	campaign_panel.configure(world)
 	hud.settings_requested.connect(_open_settings)
 	hud.navigation_requested.connect(_toggle_navigation)
 	hud.construction_requested.connect(_open_construction)
@@ -156,7 +139,7 @@ func _process(_delta: float) -> void:
 
 
 func _cell_at(point: Vector2) -> Vector2i:
-	var map: TileMapLayer = world.get_node("Map")
+	var map: TileMapLayer = world.map
 	return map.local_to_map(map.get_global_transform_with_canvas().affine_inverse() * point)
 
 func _inspect_building(cell: Vector2i) -> void:

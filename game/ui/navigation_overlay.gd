@@ -43,7 +43,16 @@ func _refresh_points() -> void:
 		for site in world.build_controller.construction.sites:
 			for cell in site.footprint(): _points[cell] = site
 
+func configure(session: World) -> void:
+	world = session
+	if is_node_ready():
+		_connect_world()
+
 func _ready() -> void:
+	if world != null:
+		_connect_world()
+
+func _connect_world() -> void:
 	world.registry.changed.connect(_refresh_points)
 	if world.build_controller.construction != null: world.build_controller.construction.changed.connect(_refresh_points)
 
@@ -70,7 +79,7 @@ func sample(cell: Vector2i) -> Dictionary:
 			for entry in building.entry_cells(): travel = minf(travel, world.planner.travel_seconds(_field.cost(entry), reference_speed))
 		else: travel = world.planner.travel_seconds(_field.cost(cell), reference_speed)
 	var load: int = building.worker_count() if building is Workplace else 0
-	var score: float = travel + TripPlanner.LOAD_PENALTY_SECONDS * load
+	var score: float = travel + world.planner.load_penalty_seconds * load
 	return {"building": building, "kind": kind, "color": COLORS[kind], "seconds": travel, "load": load, "score": score}
 
 func _produces_food(workplace: Workplace) -> bool:
@@ -87,7 +96,7 @@ func explanation(workplace: Workplace) -> String:
 
 func _draw() -> void:
 	if mode == 0 or _field == null: return
-	var map: TileMapLayer = world.get_node("Map")
+	var map: TileMapLayer = world.map
 	var canvas: Transform2D = map.get_global_transform_with_canvas()
 	var screen_size: Vector2 = Vector2(map.tile_set.tile_size) * canvas.get_scale()
 	var font: Font = ColonyStyle.SECONDARY_FONT

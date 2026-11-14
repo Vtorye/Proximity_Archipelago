@@ -7,7 +7,7 @@ var seed_value := 1
 var score := 0
 var offers: Array[Dictionary] = []
 var departed := false
-var _destinations: Dictionary[int, Dictionary] = {}
+var _destinations: Dictionary[int, LevelData] = {}
 const SHIP = preload("res://game/campaign/ship.tres")
 
 func configure(colony: World) -> void:
@@ -34,11 +34,15 @@ func _built(building: Building) -> void:
 	world.match_controller.complete_objective()
 
 func destination(index: int) -> Dictionary:
+	var data: LevelData = destination_data(index)
+	return LevelLayout.encode(data) if data != null else {}
+
+func destination_data(index: int) -> LevelData:
 	if not departed or index < 0 or index >= offers.size():
-		return {}
+		return null
 	if not _destinations.has(index):
 		var choice: Dictionary = offers[index]
-		_destinations[index] = IslandGenerator.generate(choice.seed, choice.difficulty, choice.biome)
+		_destinations[index] = IslandGenerator.generate_data(choice.seed, choice.difficulty, choice.biome)
 	return _destinations[index]
 
 func travel(index: int) -> Dictionary:
@@ -69,5 +73,18 @@ func apply(data: Dictionary) -> void:
 	world.match_controller.match_duration = maxf(90.0, 180.0 - (island - 1) * 10.0)
 	world.tasks.difficulty_multiplier = 1.0 + (island - 1) * 0.2
 	if world.combat != null:
-		world.combat.rules = world.combat.rules.duplicate()
-		world.combat.rules.wave_interval_seconds = maxf(20.0, 60.0 - (island - 1) * 5.0)
+		world.combat.spawner.interval_seconds = maxf(20.0, 60.0 - (island - 1) * 5.0)
+
+func capture_state() -> Dictionary:
+	return {
+		"island": island, "seed_value": seed_value, "score": score,
+		"departed": departed, "offers": offers.duplicate(true),
+	}
+
+func restore_state(state: Dictionary) -> void:
+	island = state.island
+	seed_value = state.seed_value
+	score = state.score
+	departed = state.departed
+	offers.assign(state.offers.duplicate(true))
+	_destinations.clear()

@@ -139,3 +139,10 @@ func agents() -> Array[AntAgent]:
 		if child is AntAgent and child.status != AntAgent.Status.DEAD:
 			result.append(child)
 	return result
+
+## Restore uses the same scene, dependencies and signal connections as recruitment.
+func restore_resident(house: House, role: AntAgent.Role) -> AntAgent:
+	var ant: AntAgent = _create_resident(house, role)
+	if ant != null:
+		_add_resident(house, ant)
+	return ant

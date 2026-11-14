@@ -2,12 +2,16 @@ class_name ConstructionService
 extends Node
 ## Orders reserve space immediately; carriers deliver crates and assemble buildings. Workers only gather resources.
 signal changed
+
+@export var site_scene: PackedScene = preload("res://game/building/construction_site.tscn")
 var controller: BuildController
 var art: ArtCatalog
 var sites: Array[ConstructionSite] = []
 var _servicing := false
 
-func _ready() -> void:
+func configure(building_controller: BuildController, catalog: ArtCatalog) -> void:
+	controller = building_controller
+	art = catalog
 	controller.registry.removed.connect(_source_removed)
 
 func _source_removed(building: Building) -> void:
@@ -29,8 +33,7 @@ func at(cell: Vector2i, terrain: bool = false) -> ConstructionSite:
 	return null
 
 func enqueue(command: BuildCommand, candidate: Building, quote: Array[ResourceAmount], crates: Dictionary) -> ConstructionSite:
-	var site := ConstructionSite.new()
-	site.service = self
+	var site: ConstructionSite = instantiate_site()
 	site.candidate = candidate
 	site.required = _aggregate(quote)
 	site.crates = crates
@@ -41,6 +44,11 @@ func enqueue(command: BuildCommand, candidate: Building, quote: Array[ResourceAm
 	if command.option is SceneBuildOption: controller.registry.register(site)
 	if controller.prices != null: controller.prices.queue_order(command.option, 1)
 	changed.emit()
+	return site
+
+func instantiate_site() -> ConstructionSite:
+	var site: ConstructionSite = site_scene.instantiate() as ConstructionSite
+	site.service = self
 	return site
 
 func claim(ant: AntAgent) -> ConstructionJob:
@@ -71,7 +79,7 @@ func claim(ant: AntAgent) -> ConstructionJob:
 				if not pickup.is_valid():
 					continue
 				var outward: Route = site.route(pickup.cells.back())
-				if not ant._can_start_pickup(pickup, outward):
+				if not ant.transport.can_start_pickup(pickup, outward):
 					continue
 				var cost: float = pickup.cost + outward.cost
 				if cost >= lowest: continue
@@ -170,7 +178,7 @@ func complete(site: ConstructionSite) -> bool:
 	controller._committing = false
 	if controller.prices != null: controller.prices.record(GameEvents.Kind.TERRAIN_CHANGED if option is TileBuildOption else GameEvents.Kind.BUILDING_BUILT, option.id)
 	controller.built.emit(option, cell)
-	controller.population.planner._queue_workplace_refresh()
+	controller.population.planner.queue_workplace_refresh()
 	controller.changed.emit()
 	return true
 

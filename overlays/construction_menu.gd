@@ -6,16 +6,16 @@ signal map_inspection_requested(cell: Vector2i)
 var context: ConstructionContext
 var draft := BuildDraft.new()
 var controls: Dictionary[StringName, Button] = {}
-var panel: PanelContainer
-var _cost: Label
-var _status: Label
-var _hint: Label
+@onready var panel: PanelContainer = %Panel
+@onready var _cost: Label = %Cost
+@onready var _status: Label = %Status
+@onready var _hint: Label = %Hint
 var _preview: BuildPreview
 var _selected: BuildOption
 var _tool: StringName = &"build"
 var _pan_mask := MOUSE_BUTTON_MASK_MIDDLE
-var _confirmation: HBoxContainer
-var _confirm_label: Label
+@onready var _confirmation: HBoxContainer = %Confirmation
+@onready var _confirm_label: Label = %ConfirmLabel
 var _painting := false
 var _panning := false
 var _pan_moved := false
@@ -40,33 +40,11 @@ func _ready() -> void:
 	_preview.art = context.art
 	_preview.z_index = 3
 	context.controller.map.get_parent().add_child(_preview)
-	panel = PanelContainer.new()
-	panel.set_meta(&"ui_manual_layout", true)
-	panel.add_theme_stylebox_override("panel", ColonyStyle.dialog_box())
-	add_child(panel)
-	panel.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
-	panel.offset_left = 8
-	panel.offset_right = -8
-	panel.offset_top = -150
-	panel.offset_bottom = -6
-	var content := VBoxContainer.new()
-	content.add_theme_constant_override("separation", 4)
-	panel.add_child(content)
-	var toolbar := HBoxContainer.new()
-	toolbar.add_theme_constant_override("separation", 6)
-	content.add_child(toolbar)
-	var scroll := ScrollContainer.new()
-	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.custom_minimum_size.y = 34
-	toolbar.add_child(scroll)
-	var choices := HBoxContainer.new()
-	choices.add_theme_constant_override("separation", 4)
-	scroll.add_child(choices)
-	var group := ButtonGroup.new()
+	var choices: HBoxContainer = %Choices
+	var group: ButtonGroup = %Move.button_group
 	for option in context.controller.options:
 		if option == null: continue
-		var button := BuildChoiceButton.new()
+		var button: BuildChoiceButton = preload("res://game/ui/build_choice_button.tscn").instantiate()
 		button.controller = context.controller
 		button.option = option
 		button.art = context.art
@@ -78,58 +56,30 @@ func _ready() -> void:
 		button.pressed.connect(_select.bind(option))
 		choices.add_child(button)
 		controls[option.id] = button
-		if _selected == null: _select(option)
-	for entry in [[&"move", "ui.construction.move", "move"], [&"demolish", "ui.construction.demolish", "demolish"]]:
-		var tool: Button = ColonyStyle.button("")
-		tool.custom_minimum_size = Vector2(32, 32)
-		tool.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		tool.icon = load("res://game/assets/ui/build_%s.svg" % entry[2])
-		tool.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		tool.tooltip_text = entry[1]
-		tool.toggle_mode = true
-		tool.button_group = group
-		tool.pressed.connect(_select_tool.bind(entry[0]))
-		toolbar.add_child(tool)
-		controls[entry[0]] = tool
-	var actions := HBoxContainer.new()
-	actions.add_theme_constant_override("separation", 4)
-	toolbar.add_child(actions)
-	for entry in [[&"undo", "ui.construction.undo", "undo", _undo], [&"cancel", "ui.construction.cancel", "cancel", _cancel], [&"apply", "ui.construction.apply", "apply", apply_and_resume]]:
-		var button: Button = ColonyStyle.button("", entry[0] == &"apply")
-		button.custom_minimum_size = Vector2(32, 32)
-		button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		button.icon = load("res://game/assets/ui/build_%s.svg" % entry[2])
-		button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		button.tooltip_text = entry[1]
-		button.pressed.connect(entry[3])
-		actions.add_child(button)
-		controls[entry[0]] = button
-	var summary := HBoxContainer.new()
-	summary.add_theme_constant_override("separation", 8)
-	content.add_child(summary)
-	_cost = ColonyStyle.label("", 6)
-	_cost.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_cost.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	summary.add_child(_cost)
-	_hint = ColonyStyle.label("", 4, ColonyStyle.MUTED)
-	summary.add_child(_hint)
-	_status = ColonyStyle.label("", 6, ColonyStyle.DANGER)
-	_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_status.hide()
-	content.add_child(_status)
-	_confirmation = HBoxContainer.new()
-	_confirmation.add_theme_constant_override("separation", 4)
-	_confirm_label = ColonyStyle.label("", 6, ColonyStyle.DANGER)
-	_confirm_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_confirm_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_confirmation.add_child(_confirm_label)
-	for entry in [[&"confirm_demolish", "ui.build.confirm", _commit], [&"keep_residents", "ui.common.back", _cancel_confirmation]]:
-		var button: Button = ColonyStyle.button(entry[1])
-		button.pressed.connect(entry[2])
-		_confirmation.add_child(button)
-		controls[entry[0]] = button
-	content.add_child(_confirmation)
-	_confirmation.hide()
+	controls[&"move"] = %Move
+	%Move.pressed.connect(AppSettings.play_click)
+	%Move.pressed.connect(_select_tool.bind(&"move"))
+	controls[&"demolish"] = %Demolish
+	%Demolish.pressed.connect(AppSettings.play_click)
+	%Demolish.pressed.connect(_select_tool.bind(&"demolish"))
+	controls[&"undo"] = %Undo
+	%Undo.pressed.connect(AppSettings.play_click)
+	%Undo.pressed.connect(_undo)
+	controls[&"cancel"] = %Cancel
+	%Cancel.pressed.connect(AppSettings.play_click)
+	%Cancel.pressed.connect(_cancel)
+	controls[&"apply"] = %Apply
+	%Apply.pressed.connect(AppSettings.play_click)
+	%Apply.pressed.connect(apply_and_resume)
+	controls[&"confirm_demolish"] = %Confirm
+	%Confirm.pressed.connect(AppSettings.play_click)
+	%Confirm.pressed.connect(_commit)
+	controls[&"keep_residents"] = %KeepResidents
+	%KeepResidents.pressed.connect(AppSettings.play_click)
+	%KeepResidents.pressed.connect(_cancel_confirmation)
+	if choices.get_child_count() > 0:
+		var first: BuildChoiceButton = choices.get_child(0)
+		_select(first.option)
 	draft.changed.connect(_cancel_confirmation)
 	if context.controller.prices != null: context.controller.prices.changed.connect(func():
 		draft.last_result = PlacementCheck.new()

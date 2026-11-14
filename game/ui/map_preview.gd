@@ -2,28 +2,28 @@ class_name MapPreview
 extends RefCounted
 ## One pixel per actual terrain cell, with landmarks taken from the destination layout.
 
-static func texture(layout: Dictionary, tiles: TileSet) -> Texture2D:
-	var cells: Array = layout.get("tiles", [])
-	if cells.is_empty():
+static func texture(layout: LevelData, tiles: TileSet) -> Texture2D:
+	if layout == null or layout.tiles.is_empty():
 		return null
-	var first: Array = cells[0]
-	var bounds := Rect2i(Vector2i(first[0], first[1]), Vector2i.ONE)
-	for row in cells:
-		bounds = bounds.expand(Vector2i(row[0], row[1]) + Vector2i.ONE)
-		bounds = bounds.expand(Vector2i(row[0], row[1]))
+	var first: Vector2i = layout.tiles.keys().front()
+	var bounds := Rect2i(first, Vector2i.ONE)
+	for cell in layout.tiles:
+		bounds = bounds.expand(cell + Vector2i.ONE)
+		bounds = bounds.expand(cell)
 	var image := Image.create(bounds.size.x, bounds.size.y, false, Image.FORMAT_RGB8)
 	image.fill(Color("152825"))
 	var palette: Dictionary[Vector3i, Color] = {}
-	for row in cells:
-		var key := Vector3i(row[2], row[3], row[4])
+	for cell in layout.tiles:
+		var tile: Vector4i = layout.tiles[cell]
+		var key := Vector3i(tile.x, tile.y, tile.z)
 		if not palette.has(key):
 			palette[key] = _tile_color(tiles, key)
-		image.set_pixelv(Vector2i(row[0], row[1]) - bounds.position, palette[key])
-	for object in layout.get("objects", []):
-		var cell := Vector2i(object[0], object[1]) - bounds.position
-		if object[2] == "build/base_nest":
+		image.set_pixelv(cell - bounds.position, palette[key])
+	for object in layout.objects:
+		var cell: Vector2i = object.cell - bounds.position
+		if object.kind == "build/base_nest":
 			image.fill_rect(Rect2i(cell - Vector2i.ONE, Vector2i(3, 3)), Color("f5cd87"))
-		elif object[2] == "Food" or object[2] == "AppleTree":
+		elif object.kind == "Food" or object.kind == "AppleTree":
 			image.set_pixelv(cell, Color("f0a386"))
 		else:
 			image.set_pixelv(cell, Color("cbd6ce"))

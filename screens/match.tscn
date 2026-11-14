@@ -1,5 +1,11 @@
-[gd_scene load_steps=2 format=3 uid="uid://be2ypvwrx3kfg"]
+[gd_scene format=3 uid="uid://be2ypvwrx3kfg"]
 [ext_resource type="Script" path="res://screens/match.gd" id="screen"]
+[ext_resource type="Script" path="res://game/ui/world_camera.gd" id="camera"]
+[ext_resource type="Script" path="res://game/ui/navigation_overlay.gd" id="navigation"]
+[ext_resource type="Script" path="res://game/ui/tile_selection.gd" id="selection"]
+[ext_resource type="PackedScene" path="res://game/ui/match_hud.tscn" id="hud"]
+[ext_resource type="PackedScene" path="res://game/campaign/campaign_panel.tscn" id="campaign"]
+
 [node name="Match" type="Control"]
 layout_mode = 3
 anchors_preset = 15
@@ -10,3 +16,22 @@ grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("screen")
 pausable = true
+process_mode = 3
+
+[node name="ColonyCamera" type="Camera2D" parent="."]
+process_mode = 1
+script = ExtResource("camera")
+
+[node name="Navigation" type="Node2D" parent="."]
+z_index = 19
+script = ExtResource("navigation")
+
+[node name="Selection" type="Node2D" parent="."]
+script = ExtResource("selection")
+
+[node name="Interface" type="CanvasLayer" parent="."]
+layer = 5
+
+[node name="Hud" parent="Interface" instance=ExtResource("hud")]
+
+[node name="Campaign" parent="Interface" instance=ExtResource("campaign")]

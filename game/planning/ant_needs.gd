@@ -12,6 +12,7 @@ const MEAL_SECONDS := 2.0
 const CAPACITY := 120.0
 var capacity := CAPACITY
 var satiety := CAPACITY
+var safety_margin := SAFETY_MARGIN
 
 func configure(maximum: float) -> void:
 	capacity = maxf(1.0, maximum)
@@ -27,4 +28,4 @@ func eat() -> void:
 	satiety = capacity
 
 func can_afford(cost: float) -> bool:
-	return is_finite(cost) and satiety >= cost + SAFETY_MARGIN
+	return is_finite(cost) and satiety >= cost + safety_margin

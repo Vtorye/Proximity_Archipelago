@@ -6,6 +6,13 @@ signal opportunities_changed
 
 const CARRY_SPEED_RATIO := 0.8
 const LOAD_PENALTY_SECONDS := 0.5
+
+## Speed as a fraction of normal movement while carrying goods.
+@export_range(0.05, 1.0, 0.05) var carry_speed_ratio := CARRY_SPEED_RATIO
+## Additional score cost in seconds for each worker assigned to a workplace.
+@export_range(0.0, 60.0, 0.1) var load_penalty_seconds := LOAD_PENALTY_SECONDS
+## Minimum energy left after reaching the next meal.
+@export_range(0.0, 100.0, 0.5) var safety_margin := AntNeeds.SAFETY_MARGIN
 var registry: BuildingRegistry
 var navigation: RouteService
 var inventory: WorldInventory
@@ -30,7 +37,7 @@ func configure(buildings: BuildingRegistry, routes: RouteService, stock: WorldIn
 	inventory.changed.connect(_on_inventory_changed)
 	registry.added.connect(_on_workplace_membership_changed)
 	registry.removed.connect(_on_workplace_membership_changed)
-	navigation.navigation_changed.connect(_queue_workplace_refresh)
+	navigation.navigation_changed.connect(queue_workplace_refresh)
 
 func refresh_food() -> void:
 	var cells: Array[Vector2i] = []
@@ -45,7 +52,7 @@ func escape_energy(cell: Vector2i, speed: float) -> float:
 	return travel_energy(navigation.food_field().cost(cell), speed) + AntNeeds.MEAL_SECONDS * AntNeeds.EAT_RATE
 
 func food_within_range(cell: Vector2i, speed: float, capacity: float = AntNeeds.CAPACITY) -> bool:
-	return escape_energy(cell, speed) + AntNeeds.SAFETY_MARGIN <= capacity
+	return escape_energy(cell, speed) + safety_margin <= capacity
 
 func travel_seconds(cost: float, speed: float) -> float:
 	return cost * navigation.cell_size() / maxf(speed, 0.01)
@@ -100,9 +107,9 @@ func plan_work(agent: Node2D, home: Building, needs: AntNeeds, speed: float, wor
 				if energy >= needs.satiety:
 					continue
 			else:
-				var back_home: float = travel_energy(home_field.cost(entry), speed * CARRY_SPEED_RATIO)
+				var back_home: float = travel_energy(home_field.cost(entry), speed * carry_speed_ratio)
 				energy += work_time * AntNeeds.WORK_RATE + back_home + food_after_home + 2.0
-				possible_after_meal = possible_after_meal or energy + AntNeeds.SAFETY_MARGIN <= needs.capacity
+				possible_after_meal = possible_after_meal or energy + safety_margin <= needs.capacity
 				if not needs.can_afford(energy):
 					continue
 			if not workplace.has_worker(agent) and not workplace.has_free_slot():
@@ -110,7 +117,7 @@ func plan_work(agent: Node2D, home: Building, needs: AntNeeds, speed: float, wor
 				continue
 			# Compare other ants; the deciding ant would occupy one slot at either choice.
 			var load_count: int = workplace.worker_count() - (1 if workplace.has_worker(agent) else 0)
-			var score: float = to_work + LOAD_PENALTY_SECONDS * load_count
+			var score: float = to_work + load_penalty_seconds * load_count
 			if score < best_score or is_equal_approx(score, best_score) and workplace == current:
 				best_score = score
 				best = WorkPlan.new()
@@ -137,14 +144,14 @@ func _on_inventory_changed() -> void:
 	var has_room: bool = inventory.has_base_room(1)
 	if has_room != _storage_had_room:
 		_storage_had_room = has_room
-		_queue_workplace_refresh()
+		queue_workplace_refresh()
 
 func _on_workplace_membership_changed(building: Building) -> void:
 	if not building is Workplace: return
 	_workplaces_dirty = true
-	_queue_workplace_refresh()
+	queue_workplace_refresh()
 
-func _queue_workplace_refresh() -> void:
+func queue_workplace_refresh() -> void:
 	if _opportunities_queued: return
 	_opportunities_queued = true
 	_refresh_workplaces.call_deferred()
@@ -164,7 +171,7 @@ func food_route(from_cell: Vector2i) -> Route:
 	return navigation.make_route(navigation.food_field().path(from_cell))
 
 func can_finish_work(cell: Vector2i, needs: AntNeeds, speed: float, remaining_work: float) -> bool:
-	return needs.can_afford(remaining_work * AntNeeds.WORK_RATE + escape_energy(cell, speed * CARRY_SPEED_RATIO))
+	return needs.can_afford(remaining_work * AntNeeds.WORK_RATE + escape_energy(cell, speed * carry_speed_ratio))
 
 func prepare_home(home: Building) -> void:
 	if _revision != navigation.revision:

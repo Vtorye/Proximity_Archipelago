@@ -4,42 +4,33 @@ extends Screen
 var _template: World
 var _prototypes: Dictionary[String, Building]
 var _map: TileMapLayer
-var _objects: Node2D
-var _camera: WorldCamera
-var _selection: TileSelection
-var _brush: OptionButton
-var _saved: OptionButton
-var _starting_maps: Array[OptionButton] = []
-var _title: LineEdit
-var _status: Label
+@onready var _objects: Node2D = $Objects
+@onready var _camera: WorldCamera = $Camera
+@onready var _selection: TileSelection = $Selection
+@onready var _brush: OptionButton = %Brush
+@onready var _saved: OptionButton = %SavedMaps
+@onready var _starting_maps: Array[OptionButton] = [%StartingStandard, %StartingWaves]
+@onready var _title: LineEdit = %MapTitle
+@onready var _status: Label = %Status
 var _brushes: Array[Variant] = []
 var _dirty := false
 var _discard_action := ""
 var _drag_button := MOUSE_BUTTON_NONE
 var _pending_move: Building
 var _selected_source: Workplace
-var _source_controls: HBoxContainer
-var _finite: Button
-var _supply: SpinBox
-var _generator_seed: SpinBox
-var _generator_size: OptionButton
+@onready var _source_controls: HBoxContainer = %SourceControls
+@onready var _finite: Button = %Finite
+@onready var _supply: SpinBox = %Supply
+@onready var _generator_seed: SpinBox = %Seed
+@onready var _generator_size: OptionButton = %Extent
 var _active := false
 
 func _ready() -> void:
-	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_template = LevelLayout.DEFAULT_WORLD.instantiate()
-	(_template.get_node("Map") as TerrainMap).prepare_terrain()
+	(_template.map as TerrainMap).prepare_terrain()
 	_prototypes = LevelLayout.editor_prototypes(_template)
-	_objects = Node2D.new()
-	add_child(_objects)
-	_objects.z_index = 1
-	_camera = WorldCamera.new()
-	add_child(_camera)
-	_camera.enabled_input = false
 	_camera.make_current()
-	_selection = TileSelection.new()
-	add_child(_selection)
-	_make_ui()
+	_configure_controls()
 	_show_world(LevelLayout.DEFAULT_WORLD.instantiate())
 	_refresh_saved()
 
@@ -53,88 +44,35 @@ func _exit_tree() -> void:
 	if is_instance_valid(_template):
 		_template.free()
 
-func _make_ui() -> void:
-	var layer := CanvasLayer.new()
-	layer.layer = 5
-	add_child(layer)
-	var ui := Control.new()
-	ui.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	layer.add_child(ui)
-	ColonyStyle.fill(ui)
-	ColonyStyle.apply(ui)
-
-	var top := PanelContainer.new()
-	top.add_theme_stylebox_override("panel", ColonyStyle.dialog_box())
-	ui.add_child(top)
-	top.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
-	top.offset_left = 6
-	top.offset_right = -6
-	top.offset_top = 6
-	var rows := VBoxContainer.new()
-	top.add_child(rows)
-	var actions := HBoxContainer.new()
-	rows.add_child(actions)
-	_button(actions, "ui.common.main_menu", _back)
-	_button(actions, "ui.map.new", _new_map)
-	_title = LineEdit.new()
-	_title.placeholder_text = "ui.map.name"
-	_title.max_length = 64
-	_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+func _configure_controls() -> void:
+	ColonyStyle.apply($Interface/UI)
+	%Top.add_theme_stylebox_override("panel", ColonyStyle.dialog_box())
+	%Bottom.add_theme_stylebox_override("panel", ColonyStyle.dialog_box())
+	%Back.pressed.connect(_back)
+	%Back.pressed.connect(AppSettings.play_click)
+	%NewMap.pressed.connect(_new_map)
+	%NewMap.pressed.connect(AppSettings.play_click)
+	%SaveMap.pressed.connect(_save_map)
+	%SaveMap.pressed.connect(AppSettings.play_click)
+	%Play.pressed.connect(_play)
+	%Play.pressed.connect(AppSettings.play_click)
+	%PlayWaves.pressed.connect(_play.bind(true))
+	%PlayWaves.pressed.connect(AppSettings.play_click)
+	%LoadMap.pressed.connect(_load_map)
+	%LoadMap.pressed.connect(AppSettings.play_click)
+	%GenerateSoils.pressed.connect(_generate_soils)
+	%GenerateSoils.pressed.connect(AppSettings.play_click)
+	%GenerateMap.pressed.connect(_generate_map)
+	%GenerateMap.pressed.connect(AppSettings.play_click)
 	_title.text_changed.connect(func(_value: String): _mark_dirty())
-	actions.add_child(_title)
-	_button(actions, "ui.map.save", _save_map)
-	_button(actions, "ui.menu.play", _play)
-	_button(actions, "ui.menu.waves", func(): _play(true))
-	var files := HBoxContainer.new()
-	rows.add_child(files)
-	_saved = OptionButton.new()
-	_saved.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_saved.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	_saved.fit_to_longest_item = false
-	files.add_child(_saved)
-	_button(files, "ui.map.load", _load_map)
-	_button(files, "ui.terrain.generate", _generate_soils)
-	var starting := HBoxContainer.new()
-	rows.add_child(starting)
-	starting.add_child(ColonyStyle.label("ui.map.starting_maps", 8))
-	for waves: bool in [false, true]:
-		var choice := OptionButton.new()
-		choice.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		choice.fit_to_longest_item = false
-		choice.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-		choice.tooltip_text = "ui.menu.waves" if waves else "ui.menu.play"
-		choice.item_selected.connect(func(index: int): _set_starting_map(waves, choice, index))
-		starting.add_child(choice)
-		_starting_maps.append(choice)
-	var generation := HBoxContainer.new()
-	rows.add_child(generation)
-	generation.add_child(ColonyStyle.label("ui.voyage.seed", 8))
-	_generator_seed = SpinBox.new()
-	_generator_seed.min_value = 0
-	_generator_seed.max_value = 2147483647
+	for index in range(_starting_maps.size()):
+		var choice: OptionButton = _starting_maps[index]
+		choice.item_selected.connect(func(item: int): _set_starting_map(index == 1, choice, item))
 	_generator_seed.value = randi_range(1, 1000000)
-	_generator_seed.custom_minimum_size.x = 110
-	generation.add_child(_generator_seed)
-	_generator_size = OptionButton.new()
-	for extent in [50, 80, 120, 160]: _generator_size.add_item("%d × %d" % [extent, extent], extent)
+	for extent in [50, 80, 120, 160]:
+		_generator_size.add_item("%d × %d" % [extent, extent], extent)
 	_generator_size.select(1)
-	generation.add_child(_generator_size)
-	_button(generation, "ui.voyage.generate", _generate_map)
-	_status = ColonyStyle.label("", 8)
-	_status.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	rows.add_child(_status)
-	_source_controls = HBoxContainer.new()
-	rows.add_child(_source_controls)
-	_finite = ColonyStyle.button("ui.source.infinite")
-	_finite.toggle_mode = true
-	_source_controls.add_child(_finite)
-	_source_controls.add_child(ColonyStyle.label("ui.source.amount", 8))
-	_supply = SpinBox.new()
-	_supply.min_value = 0
-	_supply.max_value = 1000000
-	_supply.step = 1
-	_supply.custom_minimum_size.x = 100
-	_source_controls.add_child(_supply)
+	_finite.pressed.connect(AppSettings.play_click)
 	_finite.toggled.connect(func(enabled: bool):
 		if is_instance_valid(_selected_source):
 			_selected_source.finite_supply = enabled
@@ -145,23 +83,12 @@ func _make_ui() -> void:
 		if is_instance_valid(_selected_source):
 			_selected_source.remaining_supply = int(value)
 			_mark_dirty())
-	_source_controls.hide()
-
-	var bottom := PanelContainer.new()
-	bottom.add_theme_stylebox_override("panel", ColonyStyle.dialog_box())
-	ui.add_child(bottom)
-	bottom.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
-	bottom.grow_vertical = Control.GROW_DIRECTION_BEGIN
-	bottom.offset_left = 6
-	bottom.offset_right = -6
-	bottom.offset_bottom = -6
-	var tools := VBoxContainer.new()
-	bottom.add_child(tools)
-	_brush = OptionButton.new()
-	tools.add_child(_brush)
 	_brush.item_selected.connect(func(_index: int): _pending_move = null)
+	_populate_brushes()
+
+func _populate_brushes() -> void:
 	_add_brush("ui.map.move_object", &"move")
-	var tiles: TileSet = (_template.get_node("Map") as TileMapLayer).tile_set
+	var tiles: TileSet = _template.map.tile_set
 	for index in range(tiles.get_source_count()):
 		var id: int = tiles.get_source_id(index)
 		var atlas := tiles.get_source(id) as TileSetAtlasSource
@@ -180,14 +107,7 @@ func _make_ui() -> void:
 		if not seen.has(label):
 			_add_brush(label, id)
 			seen[label] = true
-	tools.add_child(ColonyStyle.label("ui.map.controls", 8))
 
-func _button(parent: Control, key: String, action: Callable) -> void:
-	var button: Button = ColonyStyle.button(key)
-	button.add_theme_font_override("font", ColonyStyle.SECONDARY_FONT)
-	button.add_theme_font_size_override("font_size", 8)
-	button.pressed.connect(action)
-	parent.add_child(button)
 
 func _add_brush(label: String, brush: Variant) -> void:
 	_brush.add_item(tr(label))
@@ -199,12 +119,13 @@ func _show_world(world: World) -> void:
 		_map.free()
 	for child in _objects.get_children():
 		child.free()
-	_map = world.get_node("Map")
+	_map = world.map
 	_map.owner = null
 	world.remove_child(_map)
 	add_child(_map)
-	for id in LevelLayout.prototypes(world):
-		var building: Building = world.get_node(id)
+	var placed: Dictionary[String, Building] = LevelLayout.prototypes(world)
+	for id in placed:
+		var building: Building = placed[id]
 		var position_in_map: Vector2 = _map.to_local(building.global_position)
 		building.cell = _map.local_to_map(position_in_map)
 		if not building.has_meta(&"layout_kind"):
@@ -465,8 +386,8 @@ func _generate_map() -> void:
 		_discard_action = "generate"
 		_status.text = "ui.voyage.generate_confirm"
 		return
-	var layout: Dictionary = IslandGenerator.generate(int(_generator_seed.value), 0, 0, _generator_size.get_selected_id())
-	var generated: World = LevelLayout.create_world(layout)
+	var layout: LevelData = IslandGenerator.generate_data(int(_generator_seed.value), 0, 0, _generator_size.get_selected_id())
+	var generated: World = LevelLayout.instantiate_world(layout) if layout != null else null
 	if generated == null:
 		_status.text = "ui.map.load_failed"
 		return

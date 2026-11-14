@@ -401,3 +401,23 @@ func _notify() -> void:
 
 func type_by_id(id: StringName) -> ResourceType:
 	return _types.get(id)
+
+## The snapshot stores totals and transit separately. Residents rebuild meal reservations on load.
+func capture_stock() -> Dictionary:
+	return {"amounts": _amounts.duplicate(), "main": _main_stock.duplicate(), "transit": _transit.duplicate()}
+
+func restore_stock(state: Dictionary) -> void:
+	_amounts.assign(state.amounts)
+	_main_stock.assign(state.main)
+	_transit.assign(state.transit)
+	for ticket in _tickets.values():
+		ticket.active = false
+	_reserved.clear()
+	_tickets.clear()
+
+func capture_depot(house: House) -> Dictionary:
+	return _depots.get(house, {}).duplicate()
+
+func restore_depot(house: House, stock: Dictionary) -> void:
+	if _depots.has(house):
+		_depots[house] = stock.duplicate()

@@ -39,19 +39,24 @@ func _roles_and_fleeing(test: Node) -> void:
 	var food: ResourceType = world.inventory.type_by_id(&"food")
 	var wood: ResourceType = world.inventory.type_by_id(&"wood")
 	var stock: int = world.inventory.quantity(wood)
+	var price: Array[ResourceAmount] = world.population.recruitment.price(AntAgent.Role.WARRIOR)
+	var food_cost: int = BuildController.price_amount(price, food)
+	var missing_food: int = world.inventory.stock_of(null, food) - food_cost + 1
+	if missing_food > 0:
+		world.inventory.pay_at(null, [test.entry(food, missing_food)])
 	test.expect(world.population.allow_warriors and not world.population.can_recruit(home, AntAgent.Role.WARRIOR), "warriors require their full expensive recruitment price")
 	world.inventory.add(food, 100)
 	test.expect(world.population.recruit(home, AntAgent.Role.WARRIOR), "a wave-mode nest recruits a warrior")
 	var warrior: AntAgent = world.population.agents().back()
-	test.expect(warrior.role == AntAgent.Role.WARRIOR and warrior.health == 4 and warrior.attack_damage == 1 and world.inventory.quantity(wood) == stock - 10, "warrior configuration and multi-resource price apply exactly once")
+	test.expect(warrior.role == AntAgent.Role.WARRIOR and warrior.health == 4 and warrior.attack_damage == 1 and world.inventory.quantity(wood) == stock - BuildController.price_amount(price, wood), "warrior configuration and multi-resource price apply exactly once")
 	var workplace: Workplace = world.registry.workplaces()[0]
 	test.expect(not workplace.reserve_worker(warrior) and world.planner.plan_work(warrior, home, warrior.needs, warrior.speed, warrior.work_time, warrior._meal) == null, "warriors cannot reserve or receive production work")
 	var worker: AntAgent = world.population.agents()[0]
 	worker.global_position = world.route_service.cell_to_world(Vector2i(5, 2))
-	worker._release_work()
+	worker.work.release()
 	workplace.reserve_worker(worker)
 	workplace.begin_work(worker)
-	worker.current_workplace = workplace
+	worker.work.workplace = workplace
 	worker._set_status(AntAgent.Status.WORKING)
 	var spider: SpiderAgent = world.combat.spawn_spider(Vector2i(6, 2))
 	worker._physics_process(0.05)
@@ -61,7 +66,7 @@ func _roles_and_fleeing(test: Node) -> void:
 	for hit in range(6): world.combat.damage(spider, 1)
 	test.expect(spider.health == 0 and world.combat.spiders.is_empty(), "six one-damage attacks kill a six-HP spider exactly once")
 	await _advance(test, world, 2)
-	test.expect(warrior.current_workplace == null, "idle warrior execution never falls through to gathering")
+	test.expect(warrior.work.workplace == null, "idle warrior execution never falls through to gathering")
 	world.free()
 	await test.get_tree().process_frame
 
@@ -161,10 +166,10 @@ func _waves_and_walls(test: Node) -> void:
 	test.expect(not spawn_cells.is_empty() and spawn_cells.all(func(cell: Vector2i) -> bool: return world.route_service.walkable(cell) and cell.x >= 8), "wave entrances use distant reachable shore land, never water or the colony interior")
 	combat.spawner.remaining = 0.05
 	combat._physics_process(0.1)
-	test.expect(combat.spawner.number == 1 and combat.spiders.size() == 2 and combat.spawner.remaining == 60, "the first wave spawns its configured count and schedules the next wave")
+	test.expect(combat.spawner.number == 1 and combat.spiders.size() == combat.rules.initial_spiders and is_equal_approx(combat.spawner.remaining, combat.rules.wave_interval_seconds), "the first wave spawns its configured count and schedules the next wave")
 	combat.spawner.remaining = 0
 	combat._physics_process(0.1)
-	test.expect(combat.spawner.number == 2 and combat.spiders.size() == 5, "later waves add the configured extra spider")
+	test.expect(combat.spawner.number == 2 and combat.spiders.size() == combat.rules.initial_spiders * 2 + combat.rules.spiders_per_wave, "later waves add the configured extra spider")
 	var wall_option: SceneBuildOption = load("res://game/combat/wall.tres")
 	test.expect(world.build_controller.try_build(wall_option, Vector2i(3, 3)) and not world.route_service.walkable(Vector2i(3, 3)), "finished walls block civilian and spider navigation")
 	var wall: Building = world.registry.at(Vector2i(3, 3))

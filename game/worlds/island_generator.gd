@@ -2,6 +2,10 @@ class_name IslandGenerator
 extends RefCounted
 ## Deterministic map data, editable and saveable through the existing level editor.
 static func generate(seed_value: int, difficulty := 0, biome := 0, extent := 80) -> Dictionary:
+	var data: LevelData = generate_data(seed_value, difficulty, biome, extent)
+	return LevelLayout.encode(data) if data != null else {}
+
+static func generate_data(seed_value: int, difficulty := 0, biome := 0, extent := 80) -> LevelData:
 	extent = clampi(extent, 40, 160)
 	var rng := RandomNumberGenerator.new()
 	rng.seed = seed_value
@@ -9,7 +13,7 @@ static func generate(seed_value: int, difficulty := 0, biome := 0, extent := 80)
 	var noise := FastNoiseLite.new()
 	noise.seed = seed_value
 	noise.frequency = 0.1
-	var tiles: Array = []
+	var layout := LevelData.new()
 	var land: Dictionary[Vector2i, bool] = {}
 	var lobes: Array[Vector3] = [Vector3(center.x, center.y, extent * 0.24)]
 	for index in range(7):
@@ -23,9 +27,10 @@ static func generate(seed_value: int, difficulty := 0, biome := 0, extent := 80)
 			for lobe in lobes:
 				value = maxf(value, 1.0 - Vector2(x - lobe.x, (y - lobe.y) * 1.12).length() / lobe.z)
 			if value + noise.get_noise_2d(x, y) * 0.28 > 0 or (cell - center).length_squared() < 81: land[cell] = true
-			tiles.append([x, y, 3, 1 if land.has(cell) else 3, 0, 0])
+			layout.tiles[cell] = Vector4i(3, 1 if land.has(cell) else 3, 0, 0)
 	var canteen: Vector2i = center + [Vector2i(0, 3), Vector2i(3, 0), Vector2i(0, -3), Vector2i(-3, 0)][rng.randi_range(0, 3)]
-	var objects: Array = [[center.x, center.y, "build/base_nest"], [canteen.x, canteen.y, "Food"]]
+	layout.objects.append(LevelData.Placement.new(center, "build/base_nest"))
+	layout.objects.append(LevelData.Placement.new(canteen, "Food"))
 	var occupied: Dictionary[Vector2i, bool] = {center: true, canteen: true}
 	var kinds := ["Workplace", "Workplace2", "AppleTree"]
 	var favored: int = [2, 0, 1][clampi(biome, 0, 2)]
@@ -49,23 +54,22 @@ static func generate(seed_value: int, difficulty := 0, biome := 0, extent := 80)
 				if distance >= minimum and land.has(cell) and not occupied.has(cell):
 					candidates.append(cell)
 		if candidates.is_empty():
-			return {}
+			return null
 		var cell: Vector2i = candidates[rng.randi_range(0, candidates.size() - 1)]
 		var supply: int = maxi(60, rng.randi_range(130, 220) - difficulty * 10)
 		if kind == favored:
 			supply += 55
-		objects.append([cell.x, cell.y, kinds[kind], {"finite_supply": true, "remaining_supply": supply}])
+		layout.objects.append(LevelData.Placement.new(cell, kinds[kind], supply, true))
 		occupied[cell] = true
 	for cell in land:
 		if (cell - center).length_squared() < 81 or occupied.has(cell) or rng.randf() > 0.025: continue
 		var kind: String = kinds[rng.randi_range(0, 2)]
-		objects.append([cell.x, cell.y, kind, {"finite_supply": true, "remaining_supply": maxi(20, 140 - difficulty * 12)}])
-	var layout := {"version": LevelLayout.VERSION, "tiles": tiles, "objects": objects, "seed": seed_value, "difficulty": difficulty, "biome": biome}
-	var world: World = LevelLayout.create_world(layout)
-	if world == null: return {}
-	var map := world.get_node("Map") as TerrainMap
-	var buildings: Array[Building] = []
-	world._collect_buildings(world, buildings)
+		layout.objects.append(LevelData.Placement.new(cell, kind, maxi(20, 140 - difficulty * 12), true))
+	var world: World = LevelLayout.instantiate_world(layout)
+	if world == null:
+		return null
+	var map := world.map as TerrainMap
+	var buildings: Array[Building] = world.placed_buildings()
 	var nodes: Array[Node] = []
 	nodes.assign(buildings)
 	TerrainPainter.populate(map, nodes, seed_value)
@@ -78,7 +82,11 @@ static func generate(seed_value: int, difficulty := 0, biome := 0, extent := 80)
 		if ground != null and ground.kind == TerrainType.Kind.LAND and rng.randf() < preferred_chance: map.paint_tile(cell, preferred.tile, true)
 	for building in buildings:
 		if not building.has_meta(&"layout_kind"): building.set_meta(&"layout_kind", str(world.get_path_to(building)))
-	var result: Dictionary = LevelLayout.capture(map, nodes)
-	result.merge({"seed": seed_value, "difficulty": difficulty, "biome": biome, "title": "Остров %d" % seed_value})
+	var result: LevelData = LevelLayout.capture_data(map, nodes)
+	result.generated = true
+	result.seed_value = seed_value
+	result.difficulty = difficulty
+	result.biome = biome
+	result.title = "Остров %d" % seed_value
 	world.free()
 	return result

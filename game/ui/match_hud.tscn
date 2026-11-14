@@ -1,0 +1,178 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://game/ui/match_hud.gd" id="script"]
+
+[ext_resource type="Texture2D" path="res://game/assets/ui/menu_dots.svg" id="menu_icon"]
+
+[node name="Hud" type="Control"]
+script = ExtResource("script")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+process_mode = 1
+
+[node name="Top" type="PanelContainer" parent="."]
+anchor_right = 1.0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = 56.0
+grow_horizontal = 2
+
+[node name="Counters" type="HBoxContainer" parent="Top"]
+unique_name_in_owner = true
+theme_override_constants/separation = 8
+
+[node name="Ants" type="Label" parent="Top/Counters"]
+unique_name_in_owner = true
+mouse_filter = 2
+text = "5"
+theme_override_font_sizes/font_size = 16
+tooltip_text = "ui.hud.ants"
+
+[node name="AntCaption" type="Label" parent="Top/Counters"]
+mouse_filter = 2
+text = "ui.hud.ants_short"
+theme_override_font_sizes/font_size = 16
+theme_override_colors/font_color = Color(0.6667, 0.651, 0.6118, 1)
+
+[node name="Timer" type="Label" parent="Top/Counters"]
+unique_name_in_owner = true
+mouse_filter = 2
+text = "3:00"
+theme_override_font_sizes/font_size = 16
+theme_override_colors/font_color = Color(0.8745, 0.7765, 0.5451, 1)
+custom_minimum_size = Vector2(48, 0)
+
+[node name="Routes" type="Button" parent="Top/Counters"]
+unique_name_in_owner = true
+mouse_default_cursor_shape = 2
+text = ""
+custom_minimum_size = Vector2(32, 32)
+size_flags_horizontal = 4
+size_flags_vertical = 4
+theme_override_font_sizes/font_size = 16
+process_mode = 3
+toggle_mode = true
+
+[node name="Settings" type="Button" parent="Top/Counters"]
+unique_name_in_owner = true
+mouse_default_cursor_shape = 2
+text = ""
+custom_minimum_size = Vector2(32, 32)
+size_flags_horizontal = 4
+size_flags_vertical = 4
+theme_override_font_sizes/font_size = 16
+icon = ExtResource("menu_icon")
+icon_alignment = 1
+tooltip_text = "ui.hud.menu"
+
+[node name="Objectives" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(168, 0)
+offset_left = 8.0
+offset_top = 64.0
+
+[node name="Goals" type="VBoxContainer" parent="Objectives"]
+unique_name_in_owner = true
+theme_override_constants/separation = 2
+
+[node name="GoalTitle" type="Label" parent="Objectives/Goals"]
+unique_name_in_owner = true
+mouse_filter = 2
+text = ""
+theme_override_font_sizes/font_size = 16
+theme_override_colors/font_color = Color(0.6667, 0.651, 0.6118, 1)
+
+[node name="Warning" type="Label" parent="Objectives/Goals"]
+unique_name_in_owner = true
+mouse_filter = 2
+text = ""
+theme_override_font_sizes/font_size = 16
+theme_override_colors/font_color = Color(0.8471, 0.5451, 0.4745, 1)
+custom_minimum_size = Vector2(144, 0)
+autowrap_mode = 3
+
+[node name="Waiting" type="Label" parent="Objectives/Goals"]
+unique_name_in_owner = true
+mouse_filter = 2
+text = ""
+theme_override_font_sizes/font_size = 16
+theme_override_colors/font_color = Color(0.6667, 0.651, 0.6118, 1)
+custom_minimum_size = Vector2(144, 0)
+autowrap_mode = 3
+visible = false
+
+[node name="Bottom" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = -34.0
+offset_right = -8.0
+offset_bottom = -6.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="Actions" type="HBoxContainer" parent="Bottom"]
+theme_override_constants/separation = 6
+
+[node name="Help" type="Label" parent="Bottom/Actions"]
+mouse_filter = 2
+text = "ui.hud.controls"
+theme_override_font_sizes/font_size = 16
+theme_override_colors/font_color = Color(0.6667, 0.651, 0.6118, 1)
+text_overrun_behavior = 3
+size_flags_horizontal = 3
+
+[node name="Build" type="Button" parent="Bottom/Actions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 28)
+mouse_default_cursor_shape = 2
+text = "ui.hud.build"
+
+[node name="ZoomOut" type="Button" parent="Bottom/Actions"]
+unique_name_in_owner = true
+mouse_default_cursor_shape = 2
+text = "-"
+custom_minimum_size = Vector2(24, 24)
+size_flags_horizontal = 4
+size_flags_vertical = 4
+theme_override_font_sizes/font_size = 12
+
+[node name="Zoom" type="Label" parent="Bottom/Actions"]
+unique_name_in_owner = true
+mouse_filter = 2
+text = "1x"
+theme_override_font_sizes/font_size = 16
+theme_override_colors/font_color = Color(0.6667, 0.651, 0.6118, 1)
+
+[node name="ZoomIn" type="Button" parent="Bottom/Actions"]
+unique_name_in_owner = true
+mouse_default_cursor_shape = 2
+text = "+"
+custom_minimum_size = Vector2(24, 24)
+size_flags_horizontal = 4
+size_flags_vertical = 4
+theme_override_font_sizes/font_size = 12
+
+[node name="Toast" type="Label" parent="."]
+unique_name_in_owner = true
+mouse_filter = 2
+text = ""
+theme_override_font_sizes/font_size = 16
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = -64.0
+offset_right = -8.0
+offset_bottom = -34.0
+grow_horizontal = 2
+grow_vertical = 0
+horizontal_alignment = 1
+visible = false

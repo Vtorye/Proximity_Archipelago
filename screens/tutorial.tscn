@@ -1,5 +1,7 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene format=3]
 [ext_resource type="Script" path="res://screens/tutorial.gd" id="script"]
+[ext_resource type="StyleBox" path="res://game/ui/dialog_panel.tres" id="dialog_style"]
+
 [node name="Tutorial" type="Control"]
 layout_mode = 3
 anchors_preset = 15
@@ -8,3 +10,88 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("script")
+
+[node name="Shade" type="ColorRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.5)
+
+[node name="Center" type="CenterContainer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Dialog" type="PanelContainer" parent="Center"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(572, 0)
+theme_override_styles/panel = ExtResource("dialog_style")
+
+[node name="Margin" type="MarginContainer" parent="Center/Dialog"]
+theme_override_constants/margin_left = 6
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 6
+theme_override_constants/margin_bottom = 6
+
+[node name="Content" type="VBoxContainer" parent="Center/Dialog/Margin"]
+unique_name_in_owner = true
+theme_override_constants/separation = 8
+
+[node name="Heading" type="Label" parent="Center/Dialog/Margin/Content"]
+unique_name_in_owner = true
+mouse_filter = 2
+text = ""
+theme_override_font_sizes/font_size = 24
+theme_override_colors/font_color = Color(0.8745, 0.7765, 0.5451, 1)
+
+[node name="Body" type="Label" parent="Center/Dialog/Margin/Content"]
+unique_name_in_owner = true
+mouse_filter = 2
+text = ""
+theme_override_font_sizes/font_size = 16
+custom_minimum_size = Vector2(520, 146)
+autowrap_mode = 3
+
+[node name="Actions" type="HBoxContainer" parent="Center/Dialog/Margin/Content"]
+theme_override_constants/separation = 8
+
+[node name="Back" type="Button" parent="Center/Dialog/Margin/Content/Actions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 28)
+mouse_default_cursor_shape = 2
+text = "В меню"
+size_flags_horizontal = 3
+
+[node name="Previous" type="Button" parent="Center/Dialog/Margin/Content/Actions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 28)
+mouse_default_cursor_shape = 2
+text = "Назад"
+size_flags_horizontal = 3
+
+[node name="Next" type="Button" parent="Center/Dialog/Margin/Content/Actions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 28)
+mouse_default_cursor_shape = 2
+text = "Далее"
+size_flags_horizontal = 3
+
+[node name="Play" type="Button" parent="Center/Dialog/Margin/Content/Actions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 28)
+mouse_default_cursor_shape = 2
+text = "Играть"
+theme_override_colors/font_color = Color(0.8745, 0.7765, 0.5451, 1)
+size_flags_horizontal = 3
+
+[node name="Counter" type="Label" parent="Center/Dialog/Margin/Content"]
+unique_name_in_owner = true
+mouse_filter = 2
+text = ""
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(0.6667, 0.651, 0.6118, 1)
+horizontal_alignment = 1

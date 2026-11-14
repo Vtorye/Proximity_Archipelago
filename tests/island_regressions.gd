@@ -124,7 +124,7 @@ func test_foodless_colonies(test: Node) -> void:
 	stranded._decide()
 	test.expect(stranded.status == AntAgent.Status.WANDERING and stranded.motion.route == null, "isolated ant waits if there are no walkable neighbors")
 	test.expect(worker._destination == &"work" and workplace.incoming_count() == 1 and worker._meal == null, "dry ant leaves its nest and immediately reserves a job slot without a meal")
-	test.expect(wanderer._destination == &"wander" and wanderer.current_workplace == null, "idle ant leaves its nest to wander instead of choosing work across water")
+	test.expect(wanderer._destination == &"wander" and wanderer.work.workplace == null, "idle ant leaves its nest to wander instead of choosing work across water")
 	var cycles: Array[int] = [0]
 	worker.work_completed.connect(func(_ant: Node2D, _job: Node2D): cycles[0] += 1)
 	for step in range(30 * 12):
@@ -197,31 +197,34 @@ func test_physical_logistics(test: Node) -> void:
 	depot.storage_capacity = 5
 	job.output_amount = 5
 	test.expect(world.logistics.main_nest == main and not world.build_controller.demolition_check(main.cell).allowed(), "the first nest is the single protected construction center")
-	var ant := main.residents[0] as AntAgent
+	var ant := depot.residents[0] as AntAgent
 	ant.global_position = world.route_service.cell_to_world(job.cell)
 	ant._decide()
 	ant._physics_process(0.05)
 	var before: int = stock.quantity(wood)
 	ant._physics_process(ant.work_time)
-	test.expect(WorldInventory.cargo_size(ant.cargo) == ant.carry_capacity and stock.quantity(wood) == before and job.worker_count() == 0, "production loads only what the ant can carry and credits nothing before delivery")
-	_step_until(ant, func() -> bool: return ant.cargo.is_empty())
-	test.expect(stock.depot_quantity(depot, wood) == 2 and stock.main_quantity(wood) == before and stock.quantity(wood) == before + 2, "the nearest depot receives the physical cargo and counts toward colony totals")
+	test.expect(WorldInventory.cargo_size(ant.transport.cargo) == ant.carry_capacity and stock.quantity(wood) == before and job.worker_count() == 0, "production loads only what the ant can carry and credits nothing before delivery")
+	_step_until(ant, func() -> bool: return ant.transport.cargo.is_empty())
+	test.expect(stock.depot_quantity(depot, wood) == 2 and stock.main_quantity(wood) == before and stock.quantity(wood) == before + 2, "a worker delivers production to its own nest")
 	var central_price: Array[ResourceAmount] = [test.entry(wood, before + 1)]
-	test.expect(stock.can_afford_all(central_price) and not stock.can_afford_all(central_price, true), "construction cannot spend timber stored outside the main nest")
+	test.expect(stock.can_afford_all(central_price) and not stock.can_afford_all(central_price, true), "barracks stock does not count toward the immediate construction budget")
 	test.expect(stock.deposit(depot, [test.entry(stone, 1)]), "mixed resources occupy the same depot")
 	ant.global_position = world.route_service.cell_to_world(job.cell)
-	ant.cargo = job.take_output(ant.carry_capacity)
-	ant._deliver()
-	test.expect(ant._delivery_nest == depot and stock.deposit(depot, [test.entry(food, 2)]), "another delivery can fill the chosen depot while a carrier is moving")
+	ant.transport.cargo = job.take_output(ant.carry_capacity)
+	ant.transport.deliver()
+	test.expect(ant.transport.delivery_nest == depot and stock.deposit(depot, [test.entry(stone, 2)]), "another delivery can fill the chosen depot while a worker is moving")
 	test.expect(stock.depot_fill(depot) == 5 and not stock.deposit(depot, [test.entry(stone, 1)]) and not world.build_controller.demolition_check(depot.cell).allowed(), "a full depot rejects additional stock and cannot be demolished")
-	ant.needs.satiety = 11.0
-	for step in range(90):
+	for step in range(180):
 		ant._physics_process(1.0 / 60.0)
-		if ant._destination == &"food":
+		if ant.waiting_reason == WorkPlan.WaitReason.STORAGE_FULL:
 			break
-	test.expect(ant._destination == &"food" and WorldInventory.cargo_size(ant.cargo) == 2, "a rejected carrier keeps the cargo and goes to eat before continuing to the main nest")
-	_step_until(ant, func() -> bool: return ant.cargo.is_empty())
-	test.expect(stock.main_quantity(wood) == before + 2 and stock.depot_fill(other) == 0, "rejected cargo goes to the main nest rather than another small nest")
+	test.expect(ant.waiting_reason == WorkPlan.WaitReason.STORAGE_FULL and WorldInventory.cargo_size(ant.transport.cargo) == 2, "a worker holds cargo near home when its storage fills up")
+	test.expect(stock.main_quantity(wood) == before and stock.depot_fill(other) == 0, "a worker never unloads at another nest")
+	test.expect(stock.pay_at(depot, [test.entry(stone, 2)]), "spending from the worker's home makes room")
+	_step_until(ant, func() -> bool: return ant.transport.cargo.is_empty())
+	test.expect(stock.depot_quantity(depot, wood) == 4, "held cargo reaches home after storage frees up")
+	# Leave two surplus wood for the order, and isolate it from other resource orders.
+	stock.pay_at(depot, [test.entry(wood, 2), test.entry(stone, 1)])
 	var courier := main.residents.back() as AntAgent
 	test.expect(courier.role == AntAgent.Role.CARRIER and courier.speed > ant.speed and courier.carry_capacity > ant.carry_capacity, "main nest spawns a faster carrier with a larger load")
 	test.expect(world.planner.plan_work(courier, main, courier.needs, courier.speed, courier.work_time, courier._meal) == null and not job.reserve_worker(courier), "a carrier cannot get a production assignment or take a worker slot")
@@ -232,11 +235,11 @@ func test_physical_logistics(test: Node) -> void:
 	var total: int = stock.quantity(wood)
 	var main_before: int = stock.main_quantity(wood)
 	courier._decide()
-	test.expect(courier._destination == &"pickup" and courier._pickup_source == depot and courier.cargo.is_empty(), "an order sends the main carrier to the depot that has surplus before loading")
-	_step_until(courier, func() -> bool: return courier._shipment)
-	test.expect(courier._shipment and courier._order_target == main and WorldInventory.cargo_size(courier.cargo) == 2, "the carrier loads exactly what the target needs")
+	test.expect(courier._destination == &"pickup" and courier.transport.pickup_source == depot and courier.transport.cargo.is_empty(), "an order sends the main carrier to the depot that has surplus before loading")
+	_step_until(courier, func() -> bool: return courier.transport.shipment)
+	test.expect(courier.transport.shipment and courier.transport.order_target == main and WorldInventory.cargo_size(courier.transport.cargo) == 2, "the carrier loads exactly what the target needs")
 	test.expect(stock.quantity(wood) == total and stock.main_quantity(wood) == main_before and stock.depot_quantity(depot, wood) == 0, "dispatched cargo counts in totals during transport but cannot be spent centrally")
-	_step_until(courier, func() -> bool: return courier.cargo.is_empty())
+	_step_until(courier, func() -> bool: return courier.transport.cargo.is_empty())
 	test.expect(stock.quantity(wood) == total and stock.main_quantity(wood) == main_before + 2, "shipment arrival moves stock without counting it twice")
 	test.expect(world.logistics.order_surplus(depot, wood) == 0 and main.incoming.get(str(wood.id), 0) == 0, "an emptied depot has no surplus and the delivered batch no longer counts as incoming")
 	var walked: Array[Vector2i] = []
@@ -246,22 +249,22 @@ func test_physical_logistics(test: Node) -> void:
 	var visited_workplace := false
 	for step in range(600):
 		courier._physics_process(1.0 / 60.0)
-		visited_workplace = visited_workplace or courier._pickup_source is Workplace or courier._destination == &"work" or courier.status == AntAgent.Status.WORKING
-	test.expect(not visited_workplace and courier.cargo.is_empty() and job.pending_output_amount() == 1 and job.worker_count() == 0, "an idle carrier ignores workplace surplus and never attempts production")
+		visited_workplace = visited_workplace or courier.transport.pickup_source is Workplace or courier._destination == &"work" or courier.status == AntAgent.Status.WORKING
+	test.expect(not visited_workplace and courier.transport.cargo.is_empty() and job.pending_output_amount() == 1 and job.worker_count() == 0, "an idle carrier ignores workplace surplus and never attempts production")
 	test.expect(walked.size() >= 2 and courier.needs.satiety < satiety_before, "a fed idle carrier leaves the nest and loses satiety while wandering")
 	test.expect(walked.all(func(cell: Vector2i) -> bool:
 		return world.route_service.walkable(cell) and absi(cell.x - main.cell.x) + absi(cell.y - main.cell.y) <= 2), "carrier walks remain on nearby walkable cells")
 	# Even a stale pickup target must not let a carrier collect from a workplace.
-	courier._pickup_source = job
-	courier._load_pickup()
-	test.expect(courier.cargo.is_empty() and job.pending_output_amount() == 1, "a carrier cannot load goods directly from a workplace")
+	courier.transport.pickup_source = job
+	courier.transport.load_pickup()
+	test.expect(courier.transport.cargo.is_empty() and job.pending_output_amount() == 1, "a carrier cannot load goods directly from a workplace")
 	ant.global_position = world.route_service.cell_to_world(job.cell)
 	ant.needs.eat()
 	ant._decide()
-	_step_until(ant, func() -> bool: return not ant.cargo.is_empty())
-	test.expect(WorldInventory.cargo_size(ant.cargo) == 1 and job.pending_output_amount() == 0 and job.worker_count() == 0 and stock.quantity(wood) == total, "a worker collects remaining output before producing another batch")
-	_step_until(ant, func() -> bool: return ant.cargo.is_empty())
-	test.expect(stock.quantity(wood) == total + 1 and stock.depot_quantity(depot, wood) == 1, "the worker delivers workshop surplus to the nearest depot")
+	_step_until(ant, func() -> bool: return not ant.transport.cargo.is_empty())
+	test.expect(WorldInventory.cargo_size(ant.transport.cargo) == 1 and job.pending_output_amount() == 0 and job.worker_count() == 0 and stock.quantity(wood) == total, "a worker collects remaining output before producing another batch")
+	_step_until(ant, func() -> bool: return ant.transport.cargo.is_empty())
+	test.expect(stock.quantity(wood) == total + 1 and stock.depot_quantity(depot, wood) == 1, "the worker delivers workshop surplus to its own depot")
 	courier.global_position = world.route_service.cell_to_world(main.cell)
 	courier.needs.satiety = 10.0
 	courier._decide()
@@ -304,7 +307,7 @@ func test_multiple_bases(test: Node) -> void:
 	var base_tint: Color = (base.get_node("Sprite") as Sprite2D).modulate
 	var barracks_tint: Color = (barracks.get_node("Sprite") as Sprite2D).modulate
 	test.expect(base_tint.is_equal_approx(Color.WHITE) and barracks_tint.is_equal_approx(House.BARRACKS_TINT), "barracks have a different tint from base nests: %s / %s" % [base_tint, barracks_tint])
-	test.expect(not stock.can_deposit(base, 10001) and stock.can_deposit(base, 1) and not stock.can_deposit(barracks, 101), "each base caps its store at base_capacity() while barracks keep their own limit")
+	test.expect(stock.can_deposit(base, WorldInventory.base_capacity()) and not stock.can_deposit(base, WorldInventory.base_capacity() + 1) and stock.can_deposit(barracks, barracks.storage_capacity) and not stock.can_deposit(barracks, barracks.storage_capacity + 1), "each base caps its store at base_capacity() while barracks keep their own limit")
 	var initial: int = stock.quantity(wood)
 	stock.deposit(barracks, [test.entry(wood, 8)])
 	# The base wants 10 wood (max 10); the barracks surplus supplies one full carrier load of 6.
@@ -312,12 +315,31 @@ func test_multiple_bases(test: Node) -> void:
 	base.set_order(str(wood.id), "max", 10)
 	var courier := main.residents.back() as AntAgent
 	courier._decide()
-	_step_until(courier, func() -> bool: return courier._shipment)
-	test.expect(courier._order_target == base and WorldInventory.cargo_size(courier.cargo) == 6, "an order carries a full carrier load from the barracks surplus to the base that is short")
+	_step_until(courier, func() -> bool: return courier.transport.shipment)
+	test.expect(courier.transport.order_target == base and WorldInventory.cargo_size(courier.transport.cargo) == 6, "an order carries a full carrier load from the barracks surplus to the base that is short")
 	test.expect(stock.quantity(wood) == initial + 8 and stock.nest_quantity(base, main, wood) == 0 and base.incoming.get(str(wood.id), 0) == 6, "units en route count as incoming without appearing in the base")
-	_step_until(courier, func() -> bool: return courier.cargo.is_empty())
+	_step_until(courier, func() -> bool: return courier.transport.cargo.is_empty())
 	test.expect(stock.nest_quantity(base, main, wood) == 6 and stock.nest_quantity(main, main, wood) == initial and base.incoming.get(str(wood.id), 0) == 0, "base windows show separate stock and arrival clears the incoming count")
-	test.expect(stock.quantity(wood) == 2 and stock.nest_quantity(base, main, wood) == 2 and stock.depot_fill(barracks) == 0, "redirected cargo arrives without loss or duplication")
+	test.expect(stock.quantity(wood) == initial + 8 and stock.depot_quantity(barracks, wood) == 2, "delivery leaves the unshipped stock at the source")
+	var house_option: SceneBuildOption = load("res://game/building/options/house.tres")
+	var destination_cell := Vector2i(13, 1)
+	test.expect(world.build_controller.try_build(house_option, destination_cell), "redirect fixture builds an empty destination")
+	var destination := world.registry.at(destination_cell) as House
+	# Suspend standing orders so the new request is the only demand for these two units.
+	main.set_order(str(wood.id), "min", stock.nest_quantity(main, main, wood))
+	base.set_order(str(wood.id), "min", stock.nest_quantity(base, main, wood))
+	destination.request(str(wood.id), 2)
+	courier._decide()
+	_step_until(courier, func() -> bool: return courier.transport.shipment)
+	test.expect(courier.transport.order_target == destination, "the one-time request claims the remaining two wood")
+	var before_redirect: int = stock.quantity(wood)
+	var base_before_redirect: int = stock.depot_quantity(base, wood)
+	test.expect(world.build_controller.demolish_at(destination_cell), "an empty destination can be removed before delivery")
+	courier.global_position = world.route_service.cell_to_world(world.planner.accessible_entry(base))
+	courier.transport.deliver()
+	test.expect(courier.transport.delivery_nest == base, "a removed destination reroutes the shipment to the closest available store")
+	_step_until(courier, func() -> bool: return courier.transport.cargo.is_empty())
+	test.expect(stock.quantity(wood) == before_redirect and stock.depot_quantity(base, wood) == base_before_redirect + 2 and stock.depot_fill(barracks) == 0, "redirected cargo arrives without loss or duplication")
 	world.free()
 	# Explicit base types survive editor save/load and register before legacy barracks.
 	var layout := {"version": LevelLayout.VERSION, "tiles": tiles,
@@ -460,7 +482,7 @@ func test_recruitment(test: Node) -> void:
 	var stock: WorldInventory = world.inventory
 	var food: ResourceType = stock.type_by_id(&"food")
 	test.expect(main.residents.size() == 5 and main.resident_limit() == 20, "main nest starts with five residents and room for twenty")
-	stock.try_spend(test.entry(food, stock.available(food)))
+	stock.pay_at(null, [test.entry(food, stock.nest_quantity(main, main, food))])
 	var before: int = stock.quantity(food)
 	test.expect(not population.recruit(main, AntAgent.Role.WORKER) and stock.quantity(food) == before and main.residents.size() == 5, "unaffordable recruitment leaves residents and stock intact")
 	stock.add(food, 300)
@@ -477,7 +499,7 @@ func test_recruitment(test: Node) -> void:
 	test.expect(not population.recruit(main, AntAgent.Role.WORKER) and stock.quantity(food) == before, "a full main nest rejects a purchase without spending")
 	var dead := main.residents[0] as AntAgent
 	dead._decide()
-	var job: Workplace = dead.current_workplace
+	var job: Workplace = dead.work.workplace
 	var ticket: StockReservation = dead._meal
 	var death_causes: Array[int] = []
 	dead.died.connect(func(_ant: Node2D, cause: int): death_causes.append(cause))
@@ -503,9 +525,9 @@ func test_recruitment(test: Node) -> void:
 	main.set_order(str(wood.id), "min", main_wood + 1)
 	main.set_order(str(wood.id), "max", main_wood + 6)
 	carrier._decide()
-	_step_until(carrier, func() -> bool: return carrier._shipment)
+	_step_until(carrier, func() -> bool: return carrier.transport.shipment)
 	var total: int = stock.quantity(wood)
-	test.expect(carrier._shipment and population.kill_resident(main, AntAgent.Role.CARRIER), "a carrier can be killed while hauling a shipment")
+	test.expect(carrier.transport.shipment and population.kill_resident(main, AntAgent.Role.CARRIER), "a carrier can be killed while hauling a shipment")
 	test.expect(stock.quantity(wood) == total - 6 and not main.residents.has(carrier), "killing a carrier removes its cargo from totals exactly once")
 	test.expect(population.kill_resident(local, AntAgent.Role.CARRIER) and not population.kill_resident(local, AntAgent.Role.CARRIER), "empty role removal fails without affecting another nest")
 	world.free()

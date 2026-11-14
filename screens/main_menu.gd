@@ -4,29 +4,32 @@ var controls: Dictionary[StringName, Button] = {}
 
 func _ready() -> void:
 	ColonyStyle.apply(self)
-	var backdrop := ColonyBackdrop.new()
-	add_child(backdrop)
-	ColonyStyle.fill(backdrop)
-	var shade := ColorRect.new()
-	shade.color = Color(0, 0, 0, 0.28)
-	shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(shade)
-	ColonyStyle.fill(shade)
-	var center := CenterContainer.new()
-	add_child(center)
-	ColonyStyle.fill(center)
-	var content := VBoxContainer.new()
-	content.add_theme_constant_override("separation", 14)
-	center.add_child(content)
-	if not SessionSave.read().is_empty():
-		_add_action(content, &"continue", "ui.voyage.continue", _continue)
-	_add_action(content, &"play", "ui.menu.play", func(): Router.goto(&"match"))
-	_add_action(content, &"waves", "ui.menu.waves", func(): Router.goto(&"match", {"wave_mode": true}))
-	_add_action(content, &"maps", "ui.menu.maps", func(): Router.goto(&"level_editor"))
-	_add_action(content, &"tutorial", "ui.menu.tutorial", func(): Router.goto(&"tutorial"))
-	_add_action(content, &"settings", "ui.menu.settings", func(): Router.push_overlay(&"settings"))
-	_add_action(content, &"language", "ui.menu.language", _toggle_language)
-	_add_action(content, &"quit", "ui.menu.quit", AppSettings.quit_game)
+	var has_save: bool = not SessionSave.read().is_empty()
+	%Continue.visible = has_save
+	controls[&"play"] = %Play
+	%Play.pressed.connect(AppSettings.play_click)
+	%Play.pressed.connect(func(): Router.goto(&"match"))
+	controls[&"waves"] = %Waves
+	%Waves.pressed.connect(AppSettings.play_click)
+	%Waves.pressed.connect(func(): Router.goto(&"match", {"wave_mode": true}))
+	controls[&"maps"] = %Maps
+	%Maps.pressed.connect(AppSettings.play_click)
+	%Maps.pressed.connect(func(): Router.goto(&"level_editor"))
+	controls[&"tutorial"] = %Tutorial
+	%Tutorial.pressed.connect(AppSettings.play_click)
+	%Tutorial.pressed.connect(func(): Router.goto(&"tutorial"))
+	controls[&"settings"] = %Settings
+	%Settings.pressed.connect(AppSettings.play_click)
+	%Settings.pressed.connect(func(): Router.push_overlay(&"settings"))
+	controls[&"language"] = %Language
+	%Language.pressed.connect(AppSettings.play_click)
+	%Language.pressed.connect(_toggle_language)
+	controls[&"quit"] = %Quit
+	%Quit.pressed.connect(AppSettings.quit_game)
+	if has_save:
+		controls[&"continue"] = %Continue
+		%Continue.pressed.connect(AppSettings.play_click)
+		%Continue.pressed.connect(_continue)
 
 func _continue() -> void:
 	var saved: Dictionary = SessionSave.read()
@@ -34,18 +37,6 @@ func _continue() -> void:
 		var layout: Dictionary = saved.layout.duplicate()
 		layout["snapshot"] = saved
 		Router.goto(&"match", layout)
-
-func _add_action(parent: VBoxContainer, key: StringName, text: String, action: Callable) -> void:
-	var button: Button = ColonyStyle.button(text, false, key != &"quit")
-	button.custom_minimum_size = Vector2(208, 34)
-	button.add_theme_font_size_override("font_size", 24)
-	button.add_theme_color_override("font_outline_color", Color.BLACK)
-	button.add_theme_constant_override("outline_size", 2)
-	for state in ["normal", "hover", "pressed", "disabled", "focus"]:
-		button.add_theme_stylebox_override(state, StyleBoxEmpty.new())
-	button.pressed.connect(action)
-	parent.add_child(button)
-	controls[key] = button
 
 func on_focus() -> void:
 	controls[&"play"].grab_focus()

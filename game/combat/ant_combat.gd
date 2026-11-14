@@ -64,7 +64,7 @@ func _civilian() -> bool:
 		if value > distance:
 			distance = value
 			escape = next
-	ant._release_work()
+	ant.work.release()
 	if ant.construction != null and ant.construction.job != null and not ant.construction.has_cargo(): ant.construction.release()
 	if escape != cell:
 		ant._walk(navigation.make_route([cell, escape]), &"flee")
@@ -78,8 +78,8 @@ func _civilian() -> bool:
 	return false
 
 func decide() -> void:
-	ant._release_work()
-	ant._waiting_for_work = false
+	ant.work.release()
+	ant.work.waiting_for_work = false
 	ant._set_waiting_reason(WorkPlan.WaitReason.NONE)
 	if _meal_due():
 		seek_meal()
@@ -118,7 +118,7 @@ func _chase(enemy: SpiderAgent) -> bool:
 	var route: Route = director.approach(enemy, _cell())
 	if not route.is_valid(): return false
 	var energy: float = ant.planner.travel_energy(route.cost, ant.speed) + _home_energy(route.cells.back())
-	if energy + 4.0 + AntNeeds.SAFETY_MARGIN > ant.needs.capacity: return false
+	if energy + 4.0 + ant.needs.safety_margin > ant.needs.capacity: return false
 	if not ant.needs.can_afford(energy + 4.0):
 		seek_meal()
 		return true
@@ -139,7 +139,7 @@ func _reachable_enemy() -> SpiderAgent:
 	return best
 
 func _meal_due() -> bool:
-	return ant.needs.satiety <= maxf(ant.needs.capacity * (ant.profile.meal_fraction if ant.profile != null else 0.5), _home_energy(_cell()) + AntNeeds.SAFETY_MARGIN + 4.0)
+	return ant.needs.satiety <= maxf(ant.needs.capacity * (ant.profile.meal_fraction if ant.profile != null else 0.5), _home_energy(_cell()) + ant.needs.safety_margin + 4.0)
 
 func _patrol_next() -> bool:
 	var best: Building
@@ -202,3 +202,12 @@ func navigation_changed() -> void:
 
 func _cell() -> Vector2i:
 	return ant.route_service.world_to_cell(ant.global_position)
+
+func attack_cooldown() -> float:
+	return _attack
+
+func restore_state(cooldown: float, occupied_tower: DefenseBuilding) -> void:
+	_attack = cooldown
+	tower = occupied_tower
+	if tower != null:
+		tower.gunner = ant

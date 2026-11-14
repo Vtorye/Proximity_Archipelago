@@ -55,7 +55,7 @@ func _agents_can_escape(grid: TileGrid, field: NavigationField, removed: Array[B
 		var cell: Vector2i = route_service.world_to_cell(ant.global_position)
 		if not grid.walkable(cell):
 			return false
-		var speed: float = ant.speed * TripPlanner.CARRY_SPEED_RATIO
+		var speed: float = ant.speed * ant.planner.carry_speed_ratio
 		var before: float = previous.cost(cell) * route_service.cell_size() / speed + AntNeeds.MEAL_SECONDS
 		var after: float = field.cost(cell) * route_service.cell_size() / speed + AntNeeds.MEAL_SECONDS
 		if ant.needs.can_afford(before) and not ant.needs.can_afford(after):

@@ -4,6 +4,8 @@ extends RefCounted
 var director: CombatDirector
 var number := 0
 var remaining := 0.0
+## Current campaign interval, initialized from WaveRules and changed by voyage progression.
+var interval_seconds: float
 
 func tick(delta: float) -> void:
 	remaining -= delta
@@ -15,11 +17,11 @@ func tick(delta: float) -> void:
 	number += 1
 	var count: int = mini(director.rules.maximum_spiders - director.spiders.size(), director.rules.initial_spiders + (number - 1) * director.rules.spiders_per_wave)
 	for index in range(count): director.spawn_spider(cells.pick_random())
-	remaining = director.rules.wave_interval_seconds
+	remaining = interval_seconds
 	director.changed.emit()
 
 func spawn_cells() -> Array[Vector2i]:
-	var map: TileMapLayer = director.world.get_node("Map")
+	var map: TileMapLayer = director.world.map
 	var terrain := TileGrid.new()
 	terrain.setup(map, [])
 	var bases: Array[Vector2i] = []

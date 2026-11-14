@@ -29,7 +29,7 @@ static func validate_world(world: World, path: String) -> Array[String]:
 		if not ant is AntAgent or ant.profile == null: errors.append(scene.resource_path + ": ant scene requires AntAgent and AntProfile")
 		else: errors.append_array(ant.profile.validate())
 		ant.free()
-	var map: TileMapLayer = world.get_node_or_null("Map") as TileMapLayer
+	var map: TileMapLayer = world.map
 	if map == null or map.tile_set == null or map.get_used_cells().is_empty():
 		errors.append(path + ": missing painted TileMap/TileSet")
 	else:
@@ -53,8 +53,7 @@ static func validate_world(world: World, path: String) -> Array[String]:
 				errors.append(path + ": walkable tile has no positive movement cost at " + str(cell))
 		var grid := TileGrid.new()
 		grid.setup(map, [])
-		var buildings: Array[Building] = []
-		world._collect_buildings(world, buildings)
+		var buildings: Array[Building] = world.placed_buildings()
 		for building in buildings:
 			building.cell = map.local_to_map(map.to_local(building.global_position))
 			if map is TerrainMap:

@@ -71,3 +71,21 @@ func entry_cells() -> Array[Vector2i]:
 	if option is SceneBuildOption:
 		return option.entries_at(cell)
 	return [cell]
+
+func configure_appearance(art: ArtCatalog, tile_size: float) -> void:
+	var sprite: Sprite2D = get_node_or_null("Sprite") as Sprite2D
+	if sprite == null:
+		return
+	if option != null and option.icon != null:
+		sprite.texture = option.icon
+	else:
+		_apply_default_appearance(sprite, art)
+	if sprite.texture != null:
+		_finalize_appearance(sprite)
+		sprite.scale = Vector2.ONE * tile_size / sprite.texture.get_width()
+
+func _apply_default_appearance(_sprite: Sprite2D, _art: ArtCatalog) -> void:
+	pass
+
+func _finalize_appearance(_sprite: Sprite2D) -> void:
+	pass

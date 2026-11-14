@@ -36,6 +36,14 @@
 [ext_resource type="Script" uid="uid://cg5b70md5qokg" path="res://game/entities/workplace.gd" id="workplace"]
 [ext_resource type="Script" uid="uid://b5xnctodqs6m0" path="res://game/world.gd" id="world"]
 
+[ext_resource type="Script" path="res://game/resources/world_inventory.gd" id="inventory"]
+[ext_resource type="Script" path="res://game/navigation/route_service.gd" id="route_service"]
+[ext_resource type="Script" path="res://game/entities/building_registry.gd" id="registry"]
+[ext_resource type="Script" path="res://game/terrain/terrain_rules.gd" id="terrain_rules"]
+[ext_resource type="Script" path="res://game/planning/colony_logistics.gd" id="logistics"]
+[ext_resource type="Script" path="res://game/planning/trip_planner.gd" id="planner"]
+[ext_resource type="Script" path="res://game/building/construction_service.gd" id="construction_service"]
+
 [sub_resource type="Resource" id="wood_stock"]
 script = ExtResource("amount")
 type = ExtResource("wood")
@@ -160,7 +168,7 @@ sources/7 = SubResource("TileSetAtlasSource_ji35t")
 sources/8 = SubResource("TileSetAtlasSource_ctrto")
 sources/9 = SubResource("TileSetAtlasSource_tv22y")
 
-[node name="World" type="Node2D" unique_id=1653711899 node_paths=PackedStringArray("waves", "prices", "build_controller", "population")]
+[node name="World" type="Node2D" unique_id=1653711899 node_paths=PackedStringArray("waves", "prices", "build_controller", "population", "map", "match_controller", "inventory", "route_service", "registry", "terrain_rules", "logistics", "planner", "construction_service", "units", "buildings")]
 process_mode = 4
 script = ExtResource("world")
 auto_start = false
@@ -168,6 +176,17 @@ waves = NodePath("Waves")
 prices = NodePath("Economy")
 build_controller = NodePath("Construction")
 population = NodePath("Ants")
+map = NodePath("Map")
+match_controller = NodePath("MatchController")
+inventory = NodePath("Inventory")
+route_service = NodePath("RouteService")
+registry = NodePath("BuildingRegistry")
+terrain_rules = NodePath("TerrainRules")
+logistics = NodePath("Logistics")
+planner = NodePath("TripPlanner")
+construction_service = NodePath("ConstructionService")
+units = NodePath("Units")
+buildings = NodePath("Buildings")
 
 [node name="Waves" type="Node2D" parent="." unique_id=1215530649]
 z_index = 3
@@ -241,3 +260,29 @@ option = ExtResource("berry_option")
 [node name="MatchController" type="Node" parent="." unique_id=345457114]
 script = ExtResource("rules")
 tracked_types = Array[ExtResource("resource_type")]([ExtResource("wood"), ExtResource("stone"), ExtResource("food")])
+
+[node name="Inventory" type="Node" parent="."]
+script = ExtResource("inventory")
+
+[node name="RouteService" type="Node" parent="."]
+script = ExtResource("route_service")
+
+[node name="BuildingRegistry" type="Node" parent="."]
+script = ExtResource("registry")
+
+[node name="TerrainRules" type="Node" parent="."]
+script = ExtResource("terrain_rules")
+
+[node name="Logistics" type="Node" parent="."]
+script = ExtResource("logistics")
+
+[node name="TripPlanner" type="Node" parent="."]
+script = ExtResource("planner")
+
+[node name="ConstructionService" type="Node" parent="."]
+script = ExtResource("construction_service")
+
+[node name="Units" type="Node2D" parent="."]
+z_index = 2
+
+[node name="Buildings" type="Node2D" parent="."]

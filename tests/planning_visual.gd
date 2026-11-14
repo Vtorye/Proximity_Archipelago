@@ -43,7 +43,7 @@ func _run() -> void:
 	await key(KEY_SPACE)
 	await frames(4)
 	var bush: Workplace = world.registry.at(target) as Workplace
-	expect(bush != null and ants[0].current_workplace == bush, "construction redirects the moving ant")
+	expect(bush != null and ants[0].work.workplace == bush, "construction redirects the moving ant")
 	await click_at(cell_point(target))
 	await hover(Vector2i(26, 25))
 	expect(panel.inspected_cell == bush.cell and panel._detail.text.contains("0+1 / 3"), "click pins the new workplace and shows its incoming ant")
@@ -53,11 +53,11 @@ func _run() -> void:
 	expect(panel._detail.text.contains("1+0 / 3"), "workplace panel updates on arrival")
 	await capture("03-arrived-at-bush")
 	for frame in range(150):
-		if ants[0]._carrying and ants[0]._destination == &"delivery": break
+		if ants[0].transport.carrying and ants[0]._destination == &"delivery": break
 		await frames(1)
 	await hover(target)
 	panel.refresh()
-	expect(ants[0]._carrying and panel._detail.text.contains("0+0 / 3"), "returning carrier is no longer included in enterprise load")
+	expect(ants[0].transport.carrying and panel._detail.text.contains("0+0 / 3"), "returning carrier is no longer included in enterprise load")
 	await capture("04-returning-with-load")
 	await click_at(cell_point(Vector2i(26, 25)))
 	world.process_mode = Node.PROCESS_MODE_DISABLED
@@ -92,9 +92,9 @@ func _run() -> void:
 	var attempted_work := false
 	for frame in range(90):
 		courier._physics_process(1.0 / 30.0)
-		attempted_work = attempted_work or courier._pickup_source is Workplace or courier._destination == &"work" or courier.status == AntAgent.Status.WORKING
+		attempted_work = attempted_work or courier.transport.pickup_source is Workplace or courier._destination == &"work" or courier.status == AntAgent.Status.WORKING
 		await frames(1)
-	expect(not attempted_work and courier.cargo.is_empty() and bush.pending_output_amount() == pending and not bush.has_worker(courier), "the carrier ignores a bush without working or collecting its output")
+	expect(not attempted_work and courier.transport.cargo.is_empty() and bush.pending_output_amount() == pending and not bush.has_worker(courier), "the carrier ignores a bush without working or collecting its output")
 	expect(walked.size() >= 2 and courier._destination == &"wander", "an idle carrier visibly walks around its nest")
 	await hover(bush.cell)
 	await capture("06b-carrier-ignores-bush")
@@ -122,16 +122,16 @@ func _run() -> void:
 		base.set_order(str(wood.id), "max", 12)
 		courier._decide()
 		for frame in range(150):
-			if courier._shipment: break
+			if courier.transport.shipment: break
 			await frames(1)
-		expect(courier._shipment and WorldInventory.cargo_size(courier.cargo) == 6, "an order makes the main carrier load six units from the small depot")
-		expect(courier._order_target == base, "the carrier takes its ordered batch toward the base that asked for it")
+		expect(courier.transport.shipment and WorldInventory.cargo_size(courier.transport.cargo) == 6, "an order makes the main carrier load six units from the small depot")
+		expect(courier.transport.order_target == base, "the carrier takes its ordered batch toward the base that asked for it")
 		await key(KEY_N)
 		await capture("07-carrier-with-load")
 		for frame in range(150):
-			if courier.cargo.is_empty(): break
+			if courier.transport.cargo.is_empty(): break
 			await frames(1)
-		expect(courier.cargo.is_empty() and world.inventory.depot_quantity(base, wood) == 6, "the shipment physically reaches the new base inventory")
+		expect(courier.transport.cargo.is_empty() and world.inventory.depot_quantity(base, wood) == 6, "the shipment physically reaches the new base inventory")
 		await capture("08-delivered-to-nearest-base")
 	Router.goto(&"main_menu")
 	await frames(45)
@@ -139,10 +139,10 @@ func _run() -> void:
 
 func _reset_ants(ants: Array[AntAgent]) -> void:
 	for ant in ants:
-		ant._release_work()
+		ant.work.release()
 		ant.needs.eat()
 		ant.global_position = ant.home.global_position
-		ant._carrying = false
+		ant.transport.carrying = false
 		ant._destination = &"home"
 		ant._timer = 1000.0
 		ant._set_waiting_reason(WorkPlan.WaitReason.NONE)

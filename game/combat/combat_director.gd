@@ -35,6 +35,7 @@ func configure(colony: World, definition: WaveRules) -> void:
 	world = colony
 	rules = definition
 	spawner.director = self
+	spawner.interval_seconds = rules.wave_interval_seconds
 	spawner.remaining = rules.first_wave_seconds
 	world.registry.added.connect(_register)
 	world.registry.removed.connect(_unregister)
@@ -196,7 +197,7 @@ func clear_trap(cell: Vector2i) -> bool:
 func ruin_road(cell: Vector2i) -> bool:
 	if world.route_service.entry_cost(cell) <= 0 or world.route_service.entry_cost(cell) >= 0.5 or rules.ruined_road == null: return false
 	var ground: TileBuildOption = rules.ruined_road
-	var map: TileMapLayer = world.get_node("Map")
+	var map: TileMapLayer = world.map
 	world.build_controller.apply_surface(ground, cell)
 	world.route_service.update_cells([cell], world.registry.blocked_cells())
 	world.events.publish(GameEvents.Kind.TERRAIN_CHANGED, ground.id)
@@ -230,3 +231,6 @@ func _draw() -> void:
 		draw_rect(Rect2(point, Vector2(12, 2)), Color("292a27"))
 		draw_rect(Rect2(point, Vector2(12.0 * _health[building] / maximum, 2)), Color("e58b76"))
 	for bolt in _bolts: draw_line(bolt.from, bolt.to, Color("e2c887"), 1)
+
+func restore_building_health(building: Building, value: int) -> void:
+	_health[building] = value

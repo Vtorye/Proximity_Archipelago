@@ -453,15 +453,15 @@ func _test_assignment_lifecycle() -> void:
 	var food: ResourceType = world.inventory.type_by_id(&"food")
 	var before: int = world.inventory.quantity(food)
 	ant._decide()
-	expect(ant.status == AntAgent.Status.HOME and ant._plan.waiting_for_slot, "busy work slots leave a healthy ant waiting at home")
+	expect(ant.status == AntAgent.Status.HOME and ant.work.plan.waiting_for_slot, "busy work slots leave a healthy ant waiting at home")
 	expect(ant._meal.active and world.inventory.quantity(food) == before, "waiting preserves the next reserved meal")
 	for workplace in world.registry.workplaces(): workplace.work_slots = 4
 	ant._decide()
-	var job: Workplace = ant.current_workplace
+	var job: Workplace = ant.work.workplace
 	expect(job != null and ant.status == AntAgent.Status.WALKING, "released work slots allow a new assignment")
 	job.demolish()
 	job.free()
-	expect(ant.current_workplace == null and ant._destination != &"work", "removed workplace immediately cancels the walking assignment")
+	expect(ant.work.workplace == null and ant._destination != &"work", "removed workplace immediately cancels the walking assignment")
 	world.free()
 	await get_tree().process_frame
 

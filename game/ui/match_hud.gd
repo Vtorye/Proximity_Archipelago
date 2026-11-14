@@ -10,161 +10,85 @@ var controls: Dictionary[StringName, Button] = {}
 var stock_labels: Dictionary[StringName, Label] = {}
 var stock_chips: Dictionary[StringName, Control] = {}
 var progress: Dictionary[StringName, ProgressBar] = {}
-var _timer: Label
-var _ants: Label
-var _zoom: Label
-var _toast: Label
+@onready var _timer: Label = %Timer
+@onready var _ants: Label = %Ants
+@onready var _zoom: Label = %Zoom
+@onready var _toast: Label = %Toast
 var _toast_time := 0.0
-var _warning: Label
-var _waiting: Label
+@onready var _warning: Label = %Warning
+@onready var _waiting: Label = %Waiting
 var _zoom_level := 2
-var _objectives: PanelContainer
+@onready var _objectives: PanelContainer = %Objectives
 var navigation: NavigationOverlay
 var navigation_panel: NavigationPanel
 var task_panel: TaskPanel
-var _bottom: PanelContainer
+@onready var _bottom: PanelContainer = %Bottom
+
+func configure(session: World, routes: NavigationOverlay) -> void:
+	world = session
+	navigation = routes
+	if is_node_ready():
+		_build_hud()
 
 func _ready() -> void:
-	process_mode = Node.PROCESS_MODE_PAUSABLE
-	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	ColonyStyle.fill(self)
+	if world != null:
+		_build_hud()
+
+func _build_hud() -> void:
 	ColonyStyle.apply(self)
-	var top := PanelContainer.new()
-	add_child(top)
-	top.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
-	top.offset_left = 8
-	top.offset_right = -8
-	top.offset_top = 8
-	top.offset_bottom = 56
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 8)
-	top.add_child(row)
+	var row: HBoxContainer = %Counters
 	for type in world.inventory.registered_types():
-		var chip := HBoxContainer.new()
-		chip.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		chip.add_theme_constant_override("separation", 4)
-		stock_chips[type.id] = chip
-		var icon := TextureRect.new()
-		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var chip: HBoxContainer = preload("res://game/ui/hud_resource_chip.tscn").instantiate()
+		var icon: TextureRect = chip.get_node("Icon")
 		icon.texture = _resource_icon(type.id)
-		icon.custom_minimum_size = Vector2(32, 32)
-		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		chip.add_child(icon)
-		var amount: Label = ColonyStyle.label("0")
-		amount.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		chip.add_child(amount)
-		stock_labels[type.id] = amount
+		stock_chips[type.id] = chip
+		stock_labels[type.id] = chip.get_node("Amount")
 		row.add_child(chip)
-	_ants = ColonyStyle.label("5")
-	_ants.tooltip_text = "ui.hud.ants"
-	row.add_child(_ants)
-	row.add_child(ColonyStyle.label("ui.hud.ants_short", 8, ColonyStyle.MUTED))
-	_timer = ColonyStyle.label("3:00", 8, ColonyStyle.ACCENT)
-	_timer.custom_minimum_size.x = 48
-	row.add_child(_timer)
-	var routes: Button = _square_button("", 32)
-	routes.process_mode = Node.PROCESS_MODE_ALWAYS
-	routes.toggle_mode = true
-	routes.pressed.connect(func(): navigation_requested.emit())
-	row.add_child(routes)
-	controls[&"routes"] = routes
-	var settings: Button = _square_button("", 32)
-	settings.icon = preload("res://game/assets/ui/menu_dots.svg")
-	settings.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	settings.tooltip_text = "ui.hud.menu"
-	settings.pressed.connect(func(): settings_requested.emit())
-	row.add_child(settings)
-	controls[&"settings"] = settings
-	var objectives := PanelContainer.new()
-	_objectives = objectives
-	objectives.position = Vector2(8, 64)
-	objectives.custom_minimum_size = Vector2(168, 0)
-	add_child(objectives)
-	var goals := VBoxContainer.new()
-	goals.add_theme_constant_override("separation", 2)
-	objectives.add_child(goals)
-	goals.add_child(ColonyStyle.label(tr("ui.hud.goal") % world.match_controller.target_amount, 8, ColonyStyle.MUTED))
+		row.move_child(chip, stock_chips.size() - 1)
+	var goals: VBoxContainer = %Goals
+	%GoalTitle.text = tr("ui.hud.goal") % world.match_controller.target_amount
 	for type in world.match_controller.tracked_types:
-		var line := HBoxContainer.new()
-		line.add_theme_constant_override("separation", 4)
-		var caption: Label = ColonyStyle.label(type.display_name)
-		caption.custom_minimum_size.x = 84
-		line.add_child(caption)
-		var bar := ProgressBar.new()
-		bar.custom_minimum_size = Vector2(56, 6)
-		bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-		bar.show_percentage = false
+		var line: HBoxContainer = preload("res://game/ui/hud_resource_goal.tscn").instantiate()
+		var caption: Label = line.get_node("Caption")
+		caption.text = type.display_name
+		var bar: ProgressBar = line.get_node("Progress")
 		bar.max_value = world.match_controller.target_amount
 		bar.add_theme_stylebox_override("background", ColonyStyle.box(Color("151515"), Color("555555"), 0))
 		bar.add_theme_stylebox_override("fill", ColonyStyle.box(ColonyStyle.ACCENT, ColonyStyle.ACCENT, 0))
-		line.add_child(bar)
 		progress[type.id] = bar
 		goals.add_child(line)
-	_warning = ColonyStyle.label("", 8, ColonyStyle.DANGER)
-	_warning.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_warning.custom_minimum_size.x = 144
-	goals.add_child(_warning)
-	_waiting = ColonyStyle.label("", 8, ColonyStyle.MUTED)
-	_waiting.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_waiting.custom_minimum_size.x = 144
-	_waiting.hide()
-	goals.add_child(_waiting)
-	var bottom := PanelContainer.new()
-	_bottom = bottom
+		goals.move_child(line, progress.size())
 	var compact_panel: StyleBoxTexture = ColonyStyle.box()
 	compact_panel.content_margin_top = 2
 	compact_panel.content_margin_bottom = 2
-	bottom.add_theme_stylebox_override("panel", compact_panel)
-	add_child(bottom)
-	bottom.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
-	bottom.offset_left = 8
-	bottom.offset_right = -8
-	bottom.offset_top = -34
-	bottom.offset_bottom = -6
-	var hints := HBoxContainer.new()
-	hints.add_theme_constant_override("separation", 6)
-	bottom.add_child(hints)
-	var help: Label = ColonyStyle.label("ui.hud.controls", 8, ColonyStyle.MUTED)
-	help.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	help.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	hints.add_child(help)
-	var build: Button = ColonyStyle.button("ui.hud.build")
-	build.pressed.connect(func(): construction_requested.emit())
-	hints.add_child(build)
-	controls[&"build"] = build
-	for key in [&"zoom_out", &"zoom_in"]:
-		var button: Button = _square_button("-" if key == &"zoom_out" else "+", 24, 12)
-		button.pressed.connect(func():
-			if key == &"zoom_out": zoom_out_requested.emit()
-			else: zoom_in_requested.emit())
-		hints.add_child(button)
-		controls[key] = button
-		if key == &"zoom_out":
-			_zoom = ColonyStyle.label("1x", 8, ColonyStyle.MUTED)
-			hints.add_child(_zoom)
-	_toast = ColonyStyle.label("", 8)
-	_toast.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_bottom.add_theme_stylebox_override("panel", compact_panel)
 	_toast.add_theme_stylebox_override("normal", ColonyStyle.box())
-	add_child(_toast)
-	_toast.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
-	_toast.offset_left = 8
-	_toast.offset_right = -8
-	_toast.offset_top = -64
-	_toast.offset_bottom = -34
-	_toast.hide()
+	controls[&"routes"] = %Routes
+	%Routes.pressed.connect(AppSettings.play_click)
+	%Routes.pressed.connect(func(): navigation_requested.emit())
+	controls[&"settings"] = %Settings
+	%Settings.pressed.connect(AppSettings.play_click)
+	%Settings.pressed.connect(func(): settings_requested.emit())
+	controls[&"build"] = %Build
+	%Build.pressed.connect(AppSettings.play_click)
+	%Build.pressed.connect(func(): construction_requested.emit())
+	controls[&"zoom_out"] = %ZoomOut
+	%ZoomOut.pressed.connect(AppSettings.play_click)
+	%ZoomOut.pressed.connect(func(): zoom_out_requested.emit())
+	controls[&"zoom_in"] = %ZoomIn
+	%ZoomIn.pressed.connect(AppSettings.play_click)
+	%ZoomIn.pressed.connect(func(): zoom_in_requested.emit())
 	world.inventory.changed.connect(refresh)
 	world.population.changed.connect(refresh)
 	world.match_controller.time_changed.connect(_on_time_changed)
 	if world.tasks != null:
 		_objectives.hide()
-		task_panel = TaskPanel.new()
+		task_panel = preload("res://game/tasks/task_panel.tscn").instantiate()
 		task_panel.director = world.tasks
 		task_panel.position = Vector2(8, 64)
 		add_child(task_panel)
 	if navigation != null:
-		navigation_panel = NavigationPanel.new()
+		navigation_panel = preload("res://game/ui/navigation_panel.tscn").instantiate()
 		navigation_panel.process_mode = Node.PROCESS_MODE_ALWAYS
 		navigation_panel.overlay = navigation
 		add_child(navigation_panel)
@@ -173,20 +97,12 @@ func _ready() -> void:
 		navigation_panel.offset_right = -8
 		navigation_panel.offset_top = 64
 	if world.combat != null:
-		var waves := WaveHud.new()
+		var waves: WaveHud = preload("res://game/combat/wave_hud.tscn").instantiate()
 		waves.director = world.combat
 		add_child(waves)
 	refresh()
 	set_zoom(2)
 	set_navigation_mode(0)
-
-func _square_button(text: String, side: int, font_size: int = 16) -> Button:
-	var button: Button = ColonyStyle.button(text)
-	button.custom_minimum_size = Vector2.ONE * side
-	button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	button.add_theme_font_size_override("font_size", font_size)
-	return button
 
 func _resource_icon(id: StringName) -> Texture2D:
 	var type: ResourceType = world.inventory.type_by_id(id)

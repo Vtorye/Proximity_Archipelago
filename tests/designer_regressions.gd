@@ -183,7 +183,7 @@ func test_resource_facilities(test: Node) -> void:
 	var retry_world: World = test.make_world()
 	var ant: AntAgent = retry_world.population.agents()[0]
 	ant._decide()
-	var job: Workplace = ant.current_workplace
+	var job: Workplace = ant.work.workplace
 	var blocked := WorkRecipe.new()
 	blocked.inputs = [test.entry(retry_world.inventory.type_by_id(&"wood"), 10000)]
 	blocked.outputs = [test.entry(retry_world.inventory.type_by_id(&"wood"), 1)]
@@ -191,7 +191,7 @@ func test_resource_facilities(test: Node) -> void:
 	ant._set_status(AntAgent.Status.WORKING)
 	ant._timer = 0.0
 	ant._physics_process(1.0 / 60.0)
-	test.expect(ant.current_workplace == null and not ant._carrying and not job.has_worker(ant), "ingredient contention releases the slot and never traps an ant in unsafe repeat cycles")
+	test.expect(ant.work.workplace == null and not ant.transport.carrying and not job.has_worker(ant), "ingredient contention releases the slot and never traps an ant in unsafe repeat cycles")
 	for place in retry_world.registry.workplaces(): place.recipe = blocked
 	ant.global_position = ant.home.global_position
 	ant._set_status(AntAgent.Status.HOME)

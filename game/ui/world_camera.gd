@@ -5,7 +5,7 @@ const MIN_LEVEL := -1
 const MAX_LEVEL := 4
 const ZOOMS := {-1: 0.25, 0: 0.5, 1: 1.0, 2: 2.0, 3: 4.0, 4: 6.0}
 var level := 2
-var enabled_input := true
+@export var enabled_input := true
 var bounds := Rect2(0, 0, 800, 800)
 var dragging := false
 

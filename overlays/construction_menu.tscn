@@ -1,6 +1,15 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene format=3]
 
 [ext_resource type="Script" path="res://overlays/construction_menu.gd" id="script"]
+[ext_resource type="StyleBox" path="res://game/ui/dialog_panel.tres" id="dialog_style"]
+[ext_resource type="Texture2D" path="res://game/assets/ui/build_move.svg" id="move_icon"]
+[ext_resource type="Texture2D" path="res://game/assets/ui/build_demolish.svg" id="demolish_icon"]
+[ext_resource type="Texture2D" path="res://game/assets/ui/build_undo.svg" id="undo_icon"]
+[ext_resource type="Texture2D" path="res://game/assets/ui/build_cancel.svg" id="cancel_icon"]
+[ext_resource type="Texture2D" path="res://game/assets/ui/build_apply.svg" id="apply_icon"]
+
+[sub_resource type="ButtonGroup" id="tools"]
+resource_local_to_scene = true
 
 [node name="ConstructionMenu" type="Control"]
 layout_mode = 3
@@ -11,3 +20,143 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("script")
+
+[node name="Panel" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = -150.0
+offset_right = -8.0
+offset_bottom = -6.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_styles/panel = ExtResource("dialog_style")
+metadata/ui_manual_layout = true
+
+[node name="Content" type="VBoxContainer" parent="Panel"]
+theme_override_constants/separation = 4
+
+[node name="Toolbar" type="HBoxContainer" parent="Panel/Content"]
+theme_override_constants/separation = 6
+
+[node name="Scroll" type="ScrollContainer" parent="Panel/Content/Toolbar"]
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(0, 34)
+vertical_scroll_mode = 0
+
+[node name="Choices" type="HBoxContainer" parent="Panel/Content/Toolbar/Scroll"]
+unique_name_in_owner = true
+theme_override_constants/separation = 4
+
+[node name="Move" type="Button" parent="Panel/Content/Toolbar"]
+unique_name_in_owner = true
+mouse_default_cursor_shape = 2
+text = ""
+custom_minimum_size = Vector2(32, 32)
+size_flags_vertical = 4
+icon = ExtResource("move_icon")
+icon_alignment = 1
+tooltip_text = "ui.construction.move"
+toggle_mode = true
+button_group = SubResource("tools")
+
+[node name="Demolish" type="Button" parent="Panel/Content/Toolbar"]
+unique_name_in_owner = true
+mouse_default_cursor_shape = 2
+text = ""
+custom_minimum_size = Vector2(32, 32)
+size_flags_vertical = 4
+icon = ExtResource("demolish_icon")
+icon_alignment = 1
+tooltip_text = "ui.construction.demolish"
+toggle_mode = true
+button_group = SubResource("tools")
+
+[node name="Actions" type="HBoxContainer" parent="Panel/Content/Toolbar"]
+theme_override_constants/separation = 4
+
+[node name="Undo" type="Button" parent="Panel/Content/Toolbar/Actions"]
+unique_name_in_owner = true
+mouse_default_cursor_shape = 2
+text = ""
+custom_minimum_size = Vector2(32, 32)
+size_flags_vertical = 4
+icon = ExtResource("undo_icon")
+icon_alignment = 1
+tooltip_text = "ui.construction.undo"
+
+[node name="Cancel" type="Button" parent="Panel/Content/Toolbar/Actions"]
+unique_name_in_owner = true
+mouse_default_cursor_shape = 2
+text = ""
+custom_minimum_size = Vector2(32, 32)
+size_flags_vertical = 4
+icon = ExtResource("cancel_icon")
+icon_alignment = 1
+tooltip_text = "ui.construction.cancel"
+
+[node name="Apply" type="Button" parent="Panel/Content/Toolbar/Actions"]
+unique_name_in_owner = true
+mouse_default_cursor_shape = 2
+text = ""
+theme_override_colors/font_color = Color(0.8745, 0.7765, 0.5451, 1)
+custom_minimum_size = Vector2(32, 32)
+size_flags_vertical = 4
+icon = ExtResource("apply_icon")
+icon_alignment = 1
+tooltip_text = "ui.construction.apply"
+
+[node name="Summary" type="HBoxContainer" parent="Panel/Content"]
+theme_override_constants/separation = 8
+
+[node name="Cost" type="Label" parent="Panel/Content/Summary"]
+unique_name_in_owner = true
+mouse_filter = 2
+text = ""
+theme_override_font_sizes/font_size = 12
+size_flags_horizontal = 3
+autowrap_mode = 3
+
+[node name="Hint" type="Label" parent="Panel/Content/Summary"]
+unique_name_in_owner = true
+mouse_filter = 2
+text = ""
+theme_override_font_sizes/font_size = 8
+theme_override_colors/font_color = Color(0.6667, 0.651, 0.6118, 1)
+
+[node name="Status" type="Label" parent="Panel/Content"]
+unique_name_in_owner = true
+mouse_filter = 2
+text = ""
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(0.8471, 0.5451, 0.4745, 1)
+autowrap_mode = 3
+visible = false
+
+[node name="Confirmation" type="HBoxContainer" parent="Panel/Content"]
+unique_name_in_owner = true
+theme_override_constants/separation = 4
+visible = false
+
+[node name="ConfirmLabel" type="Label" parent="Panel/Content/Confirmation"]
+unique_name_in_owner = true
+mouse_filter = 2
+text = ""
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(0.8471, 0.5451, 0.4745, 1)
+size_flags_horizontal = 3
+autowrap_mode = 3
+
+[node name="Confirm" type="Button" parent="Panel/Content/Confirmation"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 28)
+mouse_default_cursor_shape = 2
+text = "ui.build.confirm"
+
+[node name="KeepResidents" type="Button" parent="Panel/Content/Confirmation"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 28)
+mouse_default_cursor_shape = 2
+text = "ui.common.back"

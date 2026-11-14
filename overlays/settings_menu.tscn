@@ -1,5 +1,7 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene format=3]
 [ext_resource type="Script" path="res://overlays/settings_menu.gd" id="script"]
+[ext_resource type="StyleBox" path="res://game/ui/dialog_panel.tres" id="dialog_style"]
+
 [node name="SettingsMenu" type="Control"]
 layout_mode = 3
 anchors_preset = 15
@@ -8,3 +10,175 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("script")
+
+[node name="Shade" type="ColorRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.5)
+
+[node name="Center" type="CenterContainer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Dialog" type="PanelContainer" parent="Center"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(512, 0)
+theme_override_styles/panel = ExtResource("dialog_style")
+
+[node name="Margin" type="MarginContainer" parent="Center/Dialog"]
+theme_override_constants/margin_left = 6
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 6
+theme_override_constants/margin_bottom = 6
+
+[node name="Content" type="VBoxContainer" parent="Center/Dialog/Margin"]
+unique_name_in_owner = true
+theme_override_constants/separation = 8
+
+[node name="Heading" type="Label" parent="Center/Dialog/Margin/Content"]
+mouse_filter = 2
+text = "ui.menu.settings"
+theme_override_font_sizes/font_size = 24
+
+[node name="Volume" type="HBoxContainer" parent="Center/Dialog/Margin/Content"]
+theme_override_constants/separation = 8
+
+[node name="Caption" type="Label" parent="Center/Dialog/Margin/Content/Volume"]
+mouse_filter = 2
+text = "ui.settings.volume"
+theme_override_font_sizes/font_size = 16
+custom_minimum_size = Vector2(180, 0)
+
+[node name="Slider" type="HSlider" parent="Center/Dialog/Margin/Content/Volume"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(160, 24)
+size_flags_horizontal = 3
+max_value = 100.0
+step = 1.0
+
+[node name="VolumeValue" type="Label" parent="Center/Dialog/Margin/Content/Volume"]
+unique_name_in_owner = true
+mouse_filter = 2
+text = ""
+theme_override_font_sizes/font_size = 16
+custom_minimum_size = Vector2(44, 0)
+
+[node name="Scale" type="HBoxContainer" parent="Center/Dialog/Margin/Content"]
+theme_override_constants/separation = 8
+
+[node name="Caption" type="Label" parent="Center/Dialog/Margin/Content/Scale"]
+mouse_filter = 2
+text = "ui.settings.ui_scale"
+theme_override_font_sizes/font_size = 16
+size_flags_horizontal = 3
+
+[node name="ScaleMinus" type="Button" parent="Center/Dialog/Margin/Content/Scale"]
+unique_name_in_owner = true
+mouse_default_cursor_shape = 2
+text = "-"
+custom_minimum_size = Vector2(32, 28)
+
+[node name="ScaleValue" type="Label" parent="Center/Dialog/Margin/Content/Scale"]
+unique_name_in_owner = true
+mouse_filter = 2
+text = ""
+theme_override_font_sizes/font_size = 16
+custom_minimum_size = Vector2(44, 0)
+horizontal_alignment = 1
+
+[node name="ScalePlus" type="Button" parent="Center/Dialog/Margin/Content/Scale"]
+unique_name_in_owner = true
+mouse_default_cursor_shape = 2
+text = "+"
+custom_minimum_size = Vector2(32, 28)
+
+[node name="FullscreenRow" type="HBoxContainer" parent="Center/Dialog/Margin/Content"]
+
+[node name="Caption" type="Label" parent="Center/Dialog/Margin/Content/FullscreenRow"]
+mouse_filter = 2
+text = "ui.settings.fullscreen"
+theme_override_font_sizes/font_size = 16
+size_flags_horizontal = 3
+
+[node name="Fullscreen" type="Button" parent="Center/Dialog/Margin/Content/FullscreenRow"]
+unique_name_in_owner = true
+mouse_default_cursor_shape = 2
+text = ""
+custom_minimum_size = Vector2(48, 28)
+toggle_mode = true
+
+[node name="VsyncRow" type="HBoxContainer" parent="Center/Dialog/Margin/Content"]
+
+[node name="Caption" type="Label" parent="Center/Dialog/Margin/Content/VsyncRow"]
+mouse_filter = 2
+text = "ui.settings.vsync"
+theme_override_font_sizes/font_size = 16
+size_flags_horizontal = 3
+
+[node name="Vsync" type="Button" parent="Center/Dialog/Margin/Content/VsyncRow"]
+unique_name_in_owner = true
+mouse_default_cursor_shape = 2
+text = ""
+custom_minimum_size = Vector2(48, 28)
+toggle_mode = true
+
+[node name="ShowGridRow" type="HBoxContainer" parent="Center/Dialog/Margin/Content"]
+
+[node name="Caption" type="Label" parent="Center/Dialog/Margin/Content/ShowGridRow"]
+mouse_filter = 2
+text = "ui.settings.grid"
+theme_override_font_sizes/font_size = 16
+size_flags_horizontal = 3
+
+[node name="ShowGrid" type="Button" parent="Center/Dialog/Margin/Content/ShowGridRow"]
+unique_name_in_owner = true
+mouse_default_cursor_shape = 2
+text = ""
+custom_minimum_size = Vector2(48, 28)
+toggle_mode = true
+
+[node name="ReducedMotionRow" type="HBoxContainer" parent="Center/Dialog/Margin/Content"]
+
+[node name="Caption" type="Label" parent="Center/Dialog/Margin/Content/ReducedMotionRow"]
+mouse_filter = 2
+text = "ui.settings.reduced_motion"
+theme_override_font_sizes/font_size = 16
+size_flags_horizontal = 3
+
+[node name="ReducedMotion" type="Button" parent="Center/Dialog/Margin/Content/ReducedMotionRow"]
+unique_name_in_owner = true
+mouse_default_cursor_shape = 2
+text = ""
+custom_minimum_size = Vector2(48, 28)
+toggle_mode = true
+
+[node name="Saved" type="Label" parent="Center/Dialog/Margin/Content"]
+unique_name_in_owner = true
+mouse_filter = 2
+text = "ui.settings.saved"
+theme_override_font_sizes/font_size = 16
+theme_override_colors/font_color = Color(0.6667, 0.651, 0.6118, 1)
+
+[node name="Actions" type="HBoxContainer" parent="Center/Dialog/Margin/Content"]
+theme_override_constants/separation = 8
+
+[node name="Reset" type="Button" parent="Center/Dialog/Margin/Content/Actions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 28)
+mouse_default_cursor_shape = 2
+text = "ui.settings.reset"
+size_flags_horizontal = 3
+
+[node name="Done" type="Button" parent="Center/Dialog/Margin/Content/Actions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 28)
+mouse_default_cursor_shape = 2
+text = "ui.common.done"
+theme_override_colors/font_color = Color(0.8745, 0.7765, 0.5451, 1)
+size_flags_horizontal = 3

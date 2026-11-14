@@ -3,52 +3,22 @@ extends PanelContainer
 ## Compact key and live enterprise breakdown, separate from the world labels.
 var overlay: NavigationOverlay
 var inspected_cell: Variant = null
-var _legend: VBoxContainer
-var _heading: Label
-var _source: Label
-var _detail: Label
-var _clear_trap: Button
+@onready var _legend: VBoxContainer = %Legend
+@onready var _heading: Label = %Heading
+@onready var _source: Label = %Source
+@onready var _detail: Label = %Detail
+@onready var _clear_trap: Button = %ClearTrap
 var _trap_cell := Vector2i.ZERO
 var _elapsed := 0.0
 func _ready() -> void:
-	mouse_filter = Control.MOUSE_FILTER_STOP
-	custom_minimum_size.x = 190
-	var content := VBoxContainer.new()
-	content.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	content.add_theme_constant_override("separation", 3)
-	add_child(content)
-	_legend = VBoxContainer.new()
-	_legend.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_legend.add_theme_constant_override("separation", 3)
-	content.add_child(_legend)
-	_heading = _line(_legend, "", ColonyStyle.ACCENT)
-	_source = _line(_legend, "")
-	_line(_legend, "Меньше число — выше приоритет")
-	_line(_legend, "Путь + 0.5 × (работают + идут)")
-	var row := HBoxContainer.new()
-	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	row.add_theme_constant_override("separation", 8)
-	_legend.add_child(row)
-	_line(row, "Земля", NavigationOverlay.COLORS[&"terrain"])
-	_line(row, "Работа", NavigationOverlay.COLORS[&"work"])
-	_line(row, "Дом", NavigationOverlay.COLORS[&"home"])
-	_line(row, "Еда", NavigationOverlay.COLORS[&"food"])
-	_detail = _line(content, "Наведите курсор на предприятие")
-	_detail.custom_minimum_size.x = 172
-	_detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_clear_trap = ColonyStyle.button("")
+	%Formula.text = "Путь + %s × (работают + идут)" % str(overlay.world.planner.load_penalty_seconds)
+	_clear_trap.pressed.connect(AppSettings.play_click)
 	_clear_trap.pressed.connect(func():
-		if overlay.world.combat != null: overlay.world.combat.clear_trap(_trap_cell)
+		if overlay.world.combat != null:
+			overlay.world.combat.clear_trap(_trap_cell)
 		refresh())
-	content.add_child(_clear_trap)
-	_clear_trap.hide()
 	refresh()
-func _line(parent: Node, text: String, color: Color = ColonyStyle.TEXT) -> Label:
-	var label: Label = ColonyStyle.label(text, 4, color)
-	label.add_theme_font_override("font", ColonyStyle.SECONDARY_FONT)
-	label.add_theme_font_size_override("font_size", 8)
-	parent.add_child(label)
-	return label
+
 func _process(delta: float) -> void:
 	_elapsed += delta
 	if _elapsed >= 0.2:
@@ -61,7 +31,7 @@ func inspect_cell(cell: Variant) -> void:
 func refresh() -> void:
 	var show_routes: bool = overlay.mode > 0
 	var cell: Vector2i = inspected_cell if inspected_cell != null else overlay.hovered
-	var map: TileMapLayer = overlay.world.get_node("Map")
+	var map: TileMapLayer = overlay.world.map
 	var terrain: TileData = map.get_cell_tile_data(cell) if inspected_cell != null or overlay.hover_active or show_routes else null
 	var building: Building = overlay.world.build_controller.demolition_target(cell) if terrain != null else null
 	var combat: CombatDirector = overlay.world.combat

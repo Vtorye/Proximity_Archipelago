@@ -1,6 +1,9 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=4 format=3]
 [ext_resource type="Script" path="res://game/entities/ant_agent.gd" id="agent"]
 [ext_resource type="Resource" path="res://game/ants/worker.tres" id="profile"]
+[ext_resource type="PackedScene" path="res://game/ants/ant_visual.tscn" id="visual"]
 [node name="Worker" type="Node2D"]
 script = ExtResource("agent")
 profile = ExtResource("profile")
+
+[node name="Visual" parent="." instance=ExtResource("visual")]

@@ -2,6 +2,10 @@
 
 [ext_resource type="Script" path="res://screens/level_editor.gd" id="editor"]
 
+[ext_resource type="Script" path="res://game/ui/world_camera.gd" id="camera"]
+[ext_resource type="Script" path="res://game/ui/tile_selection.gd" id="selection"]
+[ext_resource type="FontFile" path="res://game/assets/fonts/Pixuf.ttf" id="small_font"]
+
 [node name="LevelEditor" type="Control"]
 layout_mode = 3
 anchors_preset = 15
@@ -10,3 +14,202 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("editor")
+mouse_filter = 2
+
+[node name="Objects" type="Node2D" parent="."]
+z_index = 1
+
+[node name="Camera" type="Camera2D" parent="."]
+script = ExtResource("camera")
+enabled_input = false
+
+[node name="Selection" type="Node2D" parent="."]
+script = ExtResource("selection")
+
+[node name="Interface" type="CanvasLayer" parent="."]
+layer = 5
+
+[node name="UI" type="Control" parent="Interface"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Top" type="PanelContainer" parent="Interface/UI"]
+unique_name_in_owner = true
+anchor_right = 1.0
+offset_left = 6.0
+offset_right = -6.0
+offset_top = 6.0
+grow_horizontal = 2
+
+[node name="Rows" type="VBoxContainer" parent="Interface/UI/Top"]
+
+[node name="Actions" type="HBoxContainer" parent="Interface/UI/Top/Rows"]
+
+[node name="Back" type="Button" parent="Interface/UI/Top/Rows/Actions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 28)
+mouse_default_cursor_shape = 2
+text = "ui.common.main_menu"
+theme_override_fonts/font = ExtResource("small_font")
+theme_override_font_sizes/font_size = 8
+
+[node name="NewMap" type="Button" parent="Interface/UI/Top/Rows/Actions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 28)
+mouse_default_cursor_shape = 2
+text = "ui.map.new"
+theme_override_fonts/font = ExtResource("small_font")
+theme_override_font_sizes/font_size = 8
+
+[node name="MapTitle" type="LineEdit" parent="Interface/UI/Top/Rows/Actions"]
+unique_name_in_owner = true
+placeholder_text = "ui.map.name"
+max_length = 64
+size_flags_horizontal = 3
+
+[node name="SaveMap" type="Button" parent="Interface/UI/Top/Rows/Actions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 28)
+mouse_default_cursor_shape = 2
+text = "ui.map.save"
+theme_override_fonts/font = ExtResource("small_font")
+theme_override_font_sizes/font_size = 8
+
+[node name="Play" type="Button" parent="Interface/UI/Top/Rows/Actions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 28)
+mouse_default_cursor_shape = 2
+text = "ui.menu.play"
+theme_override_fonts/font = ExtResource("small_font")
+theme_override_font_sizes/font_size = 8
+
+[node name="PlayWaves" type="Button" parent="Interface/UI/Top/Rows/Actions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 28)
+mouse_default_cursor_shape = 2
+text = "ui.menu.waves"
+theme_override_fonts/font = ExtResource("small_font")
+theme_override_font_sizes/font_size = 8
+
+[node name="Files" type="HBoxContainer" parent="Interface/UI/Top/Rows"]
+
+[node name="SavedMaps" type="OptionButton" parent="Interface/UI/Top/Rows/Files"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+text_overrun_behavior = 3
+fit_to_longest_item = false
+
+[node name="LoadMap" type="Button" parent="Interface/UI/Top/Rows/Files"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 28)
+mouse_default_cursor_shape = 2
+text = "ui.map.load"
+theme_override_fonts/font = ExtResource("small_font")
+theme_override_font_sizes/font_size = 8
+
+[node name="GenerateSoils" type="Button" parent="Interface/UI/Top/Rows/Files"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 28)
+mouse_default_cursor_shape = 2
+text = "ui.terrain.generate"
+theme_override_fonts/font = ExtResource("small_font")
+theme_override_font_sizes/font_size = 8
+
+[node name="StartingMaps" type="HBoxContainer" parent="Interface/UI/Top/Rows"]
+
+[node name="Caption" type="Label" parent="Interface/UI/Top/Rows/StartingMaps"]
+mouse_filter = 2
+theme_override_font_sizes/font_size = 16
+text = "ui.map.starting_maps"
+
+[node name="StartingStandard" type="OptionButton" parent="Interface/UI/Top/Rows/StartingMaps"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+text_overrun_behavior = 3
+fit_to_longest_item = false
+tooltip_text = "ui.menu.play"
+
+[node name="StartingWaves" type="OptionButton" parent="Interface/UI/Top/Rows/StartingMaps"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+text_overrun_behavior = 3
+fit_to_longest_item = false
+tooltip_text = "ui.menu.waves"
+
+[node name="Generation" type="HBoxContainer" parent="Interface/UI/Top/Rows"]
+
+[node name="Caption" type="Label" parent="Interface/UI/Top/Rows/Generation"]
+mouse_filter = 2
+theme_override_font_sizes/font_size = 16
+text = "ui.voyage.seed"
+
+[node name="Seed" type="SpinBox" parent="Interface/UI/Top/Rows/Generation"]
+unique_name_in_owner = true
+max_value = 2147483647.0
+custom_minimum_size = Vector2(110, 0)
+
+[node name="Extent" type="OptionButton" parent="Interface/UI/Top/Rows/Generation"]
+unique_name_in_owner = true
+
+[node name="GenerateMap" type="Button" parent="Interface/UI/Top/Rows/Generation"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 28)
+mouse_default_cursor_shape = 2
+text = "ui.voyage.generate"
+theme_override_fonts/font = ExtResource("small_font")
+theme_override_font_sizes/font_size = 8
+
+[node name="Status" type="Label" parent="Interface/UI/Top/Rows"]
+mouse_filter = 2
+theme_override_font_sizes/font_size = 16
+text = ""
+unique_name_in_owner = true
+text_overrun_behavior = 3
+
+[node name="SourceControls" type="HBoxContainer" parent="Interface/UI/Top/Rows"]
+unique_name_in_owner = true
+visible = false
+
+[node name="Finite" type="Button" parent="Interface/UI/Top/Rows/SourceControls"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 28)
+mouse_default_cursor_shape = 2
+toggle_mode = true
+text = "ui.source.infinite"
+
+[node name="Caption" type="Label" parent="Interface/UI/Top/Rows/SourceControls"]
+mouse_filter = 2
+theme_override_font_sizes/font_size = 16
+text = "ui.source.amount"
+
+[node name="Supply" type="SpinBox" parent="Interface/UI/Top/Rows/SourceControls"]
+unique_name_in_owner = true
+max_value = 1000000.0
+step = 1.0
+custom_minimum_size = Vector2(100, 0)
+
+[node name="Bottom" type="PanelContainer" parent="Interface/UI"]
+unique_name_in_owner = true
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 6.0
+offset_right = -6.0
+offset_bottom = -6.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="Tools" type="VBoxContainer" parent="Interface/UI/Bottom"]
+
+[node name="Brush" type="OptionButton" parent="Interface/UI/Bottom/Tools"]
+unique_name_in_owner = true
+
+[node name="Help" type="Label" parent="Interface/UI/Bottom/Tools"]
+mouse_filter = 2
+theme_override_font_sizes/font_size = 16
+text = "ui.map.controls"

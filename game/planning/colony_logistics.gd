@@ -164,10 +164,24 @@ func construction_pending() -> bool:
 func _source_allowed(house: House) -> bool:
 	return not (house.funds_construction and construction_pending())
 
+class StockOrder:
+	var source: House
+	var target: House
+	var type: ResourceType
+	var amount: int
+	var pickup: Route
+
+	func _init(origin: House, destination: House, resource: ResourceType, quantity: int, approach: Route) -> void:
+		source = origin
+		target = destination
+		type = resource
+		amount = quantity
+		pickup = approach
+
 ## Best (source, target) pair for one trip. A trip carries what the target needs, up to the carrier's
 ## capacity and the source's surplus. can_collect(pickup, delivery) checks the carrier's energy.
-func nearest_order(from_cell: Vector2i, capacity: int, can_collect: Callable) -> Dictionary:
-	var best := {}
+func nearest_order(from_cell: Vector2i, capacity: int, can_collect: Callable) -> StockOrder:
+	var best: StockOrder
 	var lowest := INF
 	for target in nests():
 		for type in _order_types():
@@ -187,7 +201,7 @@ func nearest_order(from_cell: Vector2i, capacity: int, can_collect: Callable) ->
 				var cost: float = pickup.cost + delivery.cost
 				if cost < lowest:
 					lowest = cost
-					best = {"source": source, "target": target, "type": type, "amount": amount, "pickup": pickup}
+					best = StockOrder.new(source, target, type, amount, pickup)
 	return best
 
 func _field(house: House) -> NavigationField:
