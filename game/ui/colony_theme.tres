@@ -147,10 +147,10 @@ anti_aliasing = false
 
 [resource]
 default_font = ExtResource("font")
-default_font_size = 24
+default_font_size = 14
 TooltipLabel/font_sizes/font_size = 10
 Caption/font_sizes/font_size = 10
-Heading/font_sizes/font_size = 32
+Heading/font_sizes/font_size = 20
 CompactButton/font_sizes/font_size = 10
 UiPalette/colors/text = Color(0.9333333333333333, 0.9098039215686274, 0.8352941176470589, 1)
 UiPalette/colors/muted = Color(0.6666666666666666, 0.6509803921568628, 0.611764705882353, 1)

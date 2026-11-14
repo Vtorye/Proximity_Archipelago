@@ -131,7 +131,10 @@ func capture_storage_settings() -> Dictionary:
 	}
 
 func restore_storage_settings(state: Dictionary) -> void:
-	funds_construction = state.funds_construction
-	storage_capacity = state.storage_capacity
-	orders = state.orders.duplicate(true)
-	requests = state.requests.duplicate()
+	# Older saves omit storage settings. Keep the values from the loaded scene.
+	funds_construction = state.get("funds_construction", funds_construction)
+	storage_capacity = state.get("storage_capacity", storage_capacity)
+	var saved_orders: Dictionary = state.get("orders", orders)
+	var saved_requests: Dictionary = state.get("requests", requests)
+	orders = saved_orders.duplicate(true)
+	requests = saved_requests.duplicate()

@@ -90,7 +90,14 @@ func run(test: Node) -> void:
 	restored.waves.enabled = true
 	restored.waves.rules = load("res://game/combat/default_waves.tres")
 	test.add_child(restored)
+	# Simulate an older snapshot without per-nest storage settings.
+	for index in range(snapshot.layout.objects.size()):
+		var row: Array = snapshot.layout.objects[index]
+		if restored.registry.at(Vector2i(row[0], row[1])) is House:
+			for key in ["funds_construction", "storage_capacity", "orders", "requests"]:
+				snapshot.buildings[index].erase(key)
 	SessionSave.apply(restored, snapshot)
+	test.expect(restored.logistics.main_nest.funds_construction, "legacy snapshot keeps the authored construction funding default")
 	test.expect(restored.population.count() == world.population.count() and restored.tasks.level == 5 and restored.tasks.buffs == world.tasks.buffs, "save restores residents, progression and chosen rewards")
 	for type in world.inventory.registered_types():
 		test.expect(restored.inventory.quantity(type) == world.inventory.quantity(type), "save preserves each colony resource total")

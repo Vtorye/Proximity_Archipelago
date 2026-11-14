@@ -59,13 +59,9 @@ theme_override_constants/margin_bottom = 6
 unique_name_in_owner = true
 theme_override_constants/separation = 8
 
-[node name="Title" type="Label" parent="Center/Dialog/WindowContents/Margin/Content"]
-theme_type_variation = &"Heading"
-mouse_filter = 2
-text = "ui.pause.title"
-
 [node name="Resume" type="Button" parent="Center/Dialog/WindowContents/Margin/Content"]
 unique_name_in_owner = true
+theme_type_variation = &"CompactButton"
 custom_minimum_size = Vector2(0, 28)
 mouse_default_cursor_shape = 2
 text = "ui.pause.resume"
@@ -73,24 +69,28 @@ theme_override_colors/font_color = Color(0.8745, 0.7765, 0.5451, 1)
 
 [node name="Save" type="Button" parent="Center/Dialog/WindowContents/Margin/Content"]
 unique_name_in_owner = true
+theme_type_variation = &"CompactButton"
 custom_minimum_size = Vector2(0, 28)
 mouse_default_cursor_shape = 2
 text = "ui.voyage.save"
 
 [node name="Restart" type="Button" parent="Center/Dialog/WindowContents/Margin/Content"]
 unique_name_in_owner = true
+theme_type_variation = &"CompactButton"
 custom_minimum_size = Vector2(0, 28)
 mouse_default_cursor_shape = 2
 text = "ui.pause.restart"
 
 [node name="Settings" type="Button" parent="Center/Dialog/WindowContents/Margin/Content"]
 unique_name_in_owner = true
+theme_type_variation = &"CompactButton"
 custom_minimum_size = Vector2(0, 28)
 mouse_default_cursor_shape = 2
 text = "ui.menu.settings"
 
 [node name="MainMenu" type="Button" parent="Center/Dialog/WindowContents/Margin/Content"]
 unique_name_in_owner = true
+theme_type_variation = &"CompactButton"
 custom_minimum_size = Vector2(0, 28)
 mouse_default_cursor_shape = 2
 text = "ui.common.main_menu"

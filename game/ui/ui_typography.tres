@@ -4,9 +4,9 @@
 
 [resource]
 script = ExtResource("typography")
-minimum_sizes = Array[int]([12, 26, 24])
+minimum_sizes = Array[int]([12, 16, 20])
 default_index = 0
 caption_size = 10
 compact_button_size = 10
-body_size = 24
-heading_size = 32
+body_size = 14
+heading_size = 20

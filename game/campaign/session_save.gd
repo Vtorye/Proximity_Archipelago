@@ -123,7 +123,7 @@ static func apply(world: World, data: Dictionary) -> void:
 		var state: Dictionary = data.buildings[index]
 		if building is House:
 			building.restore_storage_settings(state)
-			world.inventory.restore_depot(building, state.stock)
+			world.inventory.restore_depot(building, state.get("stock", world.inventory.capture_depot(building)))
 		elif building is Workplace:
 			building.restore_production(state, ResourceAmount.unpack(state.output, world.inventory.type_by_id))
 		elif building is DefenseBuilding:

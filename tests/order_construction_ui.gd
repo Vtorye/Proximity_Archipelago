@@ -7,6 +7,21 @@ func _run() -> void:
 	open_fixed_match()
 	await frames(45)
 	screen = Router._current
+	for size in range(AppSettings.TYPOGRAPHY.minimum_sizes.size()):
+		AppSettings.text_size = size
+		AppSettings.changed.emit()
+		await click(screen.hud.controls[&"settings"])
+		var pause := Router.top_overlay() as PauseMenu
+		if pause == null:
+			expect(false, "settings opens the pause menu")
+			get_tree().quit(1)
+			return
+		var header: WindowHeader = pause.get_node("%WindowHeader")
+		expect(header.handle.text == "ui.pause.title" and pause.get_node("%Content").find_children("*", "Label").is_empty(), "pause appears once as the window title")
+		expect(pause.controls[&"resume"].get_theme_font_size("font_size") == AppSettings.minimum_text_size(), "pause buttons use the selected compact font size")
+		await click(pause.controls[&"resume"])
+	AppSettings.text_size = AppSettings.TYPOGRAPHY.default_index
+	AppSettings.changed.emit()
 	var world: World = screen.world
 	var construction := world.build_controller.construction
 	world.build_controller.construction = null
