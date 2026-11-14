@@ -3,6 +3,7 @@
 [ext_resource type="Script" path="res://game/campaign/campaign_panel.gd" id="script"]
 [ext_resource type="StyleBox" path="res://game/ui/dialog_panel.tres" id="dialog_style"]
 [ext_resource type="FontFile" path="res://game/assets/fonts/Pixuf.ttf" id="small_font"]
+[ext_resource type="PackedScene" path="res://game/ui/window_header.tscn" id="window_header"]
 
 [node name="Campaign" type="Control"]
 script = ExtResource("script")
@@ -22,7 +23,7 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0, 0, 0, 0.5)
 
-[node name="Center" type="CenterContainer" parent="."]
+[node name="Center" type="Control" parent="."]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -31,25 +32,37 @@ grow_vertical = 2
 
 [node name="Dialog" type="PanelContainer" parent="Center"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(416, 0)
+metadata/ui_manual_layout = true
 theme_override_styles/panel = ExtResource("dialog_style")
 
-[node name="Margin" type="MarginContainer" parent="Center/Dialog"]
+[node name="WindowContents" type="VBoxContainer" parent="Center/Dialog"]
+theme_override_constants/separation = 2
+
+[node name="WindowHeader" parent="Center/Dialog/WindowContents" node_paths=PackedStringArray("panel", "body") instance=ExtResource("window_header")]
+unique_name_in_owner = true
+title = "ui.window.campaign"
+dock = 0
+panel_width = 416.0
+inset = Vector2(8, 8)
+panel = NodePath("../..")
+body = NodePath("../Margin")
+
+[node name="Margin" type="MarginContainer" parent="Center/Dialog/WindowContents"]
 theme_override_constants/margin_left = 6
 theme_override_constants/margin_top = 6
 theme_override_constants/margin_right = 6
 theme_override_constants/margin_bottom = 6
 
-[node name="Content" type="VBoxContainer" parent="Center/Dialog/Margin"]
+[node name="Content" type="VBoxContainer" parent="Center/Dialog/WindowContents/Margin"]
 unique_name_in_owner = true
 theme_override_constants/separation = 8
 
-[node name="Reward" type="VBoxContainer" parent="Center/Dialog/Margin/Content"]
+[node name="Reward" type="VBoxContainer" parent="Center/Dialog/WindowContents/Margin/Content"]
 unique_name_in_owner = true
 theme_override_constants/separation = 8
 visible = false
 
-[node name="RewardHeading" type="Label" parent="Center/Dialog/Margin/Content/Reward"]
+[node name="RewardHeading" type="Label" parent="Center/Dialog/WindowContents/Margin/Content/Reward"]
 unique_name_in_owner = true
 mouse_filter = 2
 text = ""
@@ -58,7 +71,7 @@ theme_override_colors/font_color = Color(0.8745, 0.7765, 0.5451, 1)
 autowrap_mode = 3
 custom_minimum_size = Vector2(200, 0)
 
-[node name="RewardPrompt" type="Label" parent="Center/Dialog/Margin/Content/Reward"]
+[node name="RewardPrompt" type="Label" parent="Center/Dialog/WindowContents/Margin/Content/Reward"]
 unique_name_in_owner = true
 mouse_filter = 2
 text = ""
@@ -68,15 +81,15 @@ theme_override_fonts/font = ExtResource("small_font")
 autowrap_mode = 3
 custom_minimum_size = Vector2(200, 0)
 
-[node name="RewardChoices" type="VBoxContainer" parent="Center/Dialog/Margin/Content/Reward"]
+[node name="RewardChoices" type="VBoxContainer" parent="Center/Dialog/WindowContents/Margin/Content/Reward"]
 theme_override_constants/separation = 8
 
-[node name="Departure" type="VBoxContainer" parent="Center/Dialog/Margin/Content"]
+[node name="Departure" type="VBoxContainer" parent="Center/Dialog/WindowContents/Margin/Content"]
 unique_name_in_owner = true
 theme_override_constants/separation = 8
 visible = false
 
-[node name="DepartureHeading" type="Label" parent="Center/Dialog/Margin/Content/Departure"]
+[node name="DepartureHeading" type="Label" parent="Center/Dialog/WindowContents/Margin/Content/Departure"]
 unique_name_in_owner = true
 mouse_filter = 2
 text = ""
@@ -85,7 +98,7 @@ theme_override_colors/font_color = Color(0.8745, 0.7765, 0.5451, 1)
 autowrap_mode = 3
 custom_minimum_size = Vector2(200, 0)
 
-[node name="Score" type="Label" parent="Center/Dialog/Margin/Content/Departure"]
+[node name="Score" type="Label" parent="Center/Dialog/WindowContents/Margin/Content/Departure"]
 unique_name_in_owner = true
 mouse_filter = 2
 text = ""
@@ -94,7 +107,7 @@ theme_override_fonts/font = ExtResource("small_font")
 autowrap_mode = 3
 custom_minimum_size = Vector2(200, 0)
 
-[node name="NextIsland" type="Label" parent="Center/Dialog/Margin/Content/Departure"]
+[node name="NextIsland" type="Label" parent="Center/Dialog/WindowContents/Margin/Content/Departure"]
 unique_name_in_owner = true
 mouse_filter = 2
 text = ""
@@ -104,10 +117,10 @@ theme_override_fonts/font = ExtResource("small_font")
 autowrap_mode = 3
 custom_minimum_size = Vector2(200, 0)
 
-[node name="Destinations" type="HBoxContainer" parent="Center/Dialog/Margin/Content/Departure"]
+[node name="Destinations" type="HBoxContainer" parent="Center/Dialog/WindowContents/Margin/Content/Departure"]
 theme_override_constants/separation = 6
 
-[node name="Destination1" type="Button" parent="Center/Dialog/Margin/Content/Departure/Destinations"]
+[node name="Destination1" type="Button" parent="Center/Dialog/WindowContents/Margin/Content/Departure/Destinations"]
 unique_name_in_owner = true
 mouse_default_cursor_shape = 2
 text = ""
@@ -122,7 +135,7 @@ vertical_icon_alignment = 0
 theme_override_constants/icon_max_width = 74
 texture_filter = 1
 
-[node name="Destination2" type="Button" parent="Center/Dialog/Margin/Content/Departure/Destinations"]
+[node name="Destination2" type="Button" parent="Center/Dialog/WindowContents/Margin/Content/Departure/Destinations"]
 unique_name_in_owner = true
 mouse_default_cursor_shape = 2
 text = ""
@@ -137,7 +150,7 @@ vertical_icon_alignment = 0
 theme_override_constants/icon_max_width = 74
 texture_filter = 1
 
-[node name="Destination3" type="Button" parent="Center/Dialog/Margin/Content/Departure/Destinations"]
+[node name="Destination3" type="Button" parent="Center/Dialog/WindowContents/Margin/Content/Departure/Destinations"]
 unique_name_in_owner = true
 mouse_default_cursor_shape = 2
 text = ""
@@ -152,7 +165,7 @@ vertical_icon_alignment = 0
 theme_override_constants/icon_max_width = 74
 texture_filter = 1
 
-[node name="CarryOver" type="Label" parent="Center/Dialog/Margin/Content/Departure"]
+[node name="CarryOver" type="Label" parent="Center/Dialog/WindowContents/Margin/Content/Departure"]
 unique_name_in_owner = true
 mouse_filter = 2
 text = ""
@@ -162,7 +175,7 @@ theme_override_fonts/font = ExtResource("small_font")
 autowrap_mode = 3
 custom_minimum_size = Vector2(200, 0)
 
-[node name="MainMenu" type="Button" parent="Center/Dialog/Margin/Content/Departure"]
+[node name="MainMenu" type="Button" parent="Center/Dialog/WindowContents/Margin/Content/Departure"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 28)
 mouse_default_cursor_shape = 2
@@ -170,7 +183,7 @@ text = ""
 theme_override_fonts/font = ExtResource("small_font")
 theme_override_font_sizes/font_size = 8
 
-[node name="Reward1" type="Button" parent="Center/Dialog/Margin/Content/Reward/RewardChoices"]
+[node name="Reward1" type="Button" parent="Center/Dialog/WindowContents/Margin/Content/Reward/RewardChoices"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 28)
 mouse_default_cursor_shape = 2
@@ -178,7 +191,7 @@ text = ""
 theme_override_fonts/font = ExtResource("small_font")
 theme_override_font_sizes/font_size = 8
 
-[node name="RewardDetail1" type="Label" parent="Center/Dialog/Margin/Content/Reward/RewardChoices"]
+[node name="RewardDetail1" type="Label" parent="Center/Dialog/WindowContents/Margin/Content/Reward/RewardChoices"]
 unique_name_in_owner = true
 mouse_filter = 2
 text = ""
@@ -188,7 +201,7 @@ theme_override_fonts/font = ExtResource("small_font")
 autowrap_mode = 3
 custom_minimum_size = Vector2(200, 0)
 
-[node name="Reward2" type="Button" parent="Center/Dialog/Margin/Content/Reward/RewardChoices"]
+[node name="Reward2" type="Button" parent="Center/Dialog/WindowContents/Margin/Content/Reward/RewardChoices"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 28)
 mouse_default_cursor_shape = 2
@@ -196,7 +209,7 @@ text = ""
 theme_override_fonts/font = ExtResource("small_font")
 theme_override_font_sizes/font_size = 8
 
-[node name="RewardDetail2" type="Label" parent="Center/Dialog/Margin/Content/Reward/RewardChoices"]
+[node name="RewardDetail2" type="Label" parent="Center/Dialog/WindowContents/Margin/Content/Reward/RewardChoices"]
 unique_name_in_owner = true
 mouse_filter = 2
 text = ""
@@ -206,7 +219,7 @@ theme_override_fonts/font = ExtResource("small_font")
 autowrap_mode = 3
 custom_minimum_size = Vector2(200, 0)
 
-[node name="Reward3" type="Button" parent="Center/Dialog/Margin/Content/Reward/RewardChoices"]
+[node name="Reward3" type="Button" parent="Center/Dialog/WindowContents/Margin/Content/Reward/RewardChoices"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 28)
 mouse_default_cursor_shape = 2
@@ -214,7 +227,7 @@ text = ""
 theme_override_fonts/font = ExtResource("small_font")
 theme_override_font_sizes/font_size = 8
 
-[node name="RewardDetail3" type="Label" parent="Center/Dialog/Margin/Content/Reward/RewardChoices"]
+[node name="RewardDetail3" type="Label" parent="Center/Dialog/WindowContents/Margin/Content/Reward/RewardChoices"]
 unique_name_in_owner = true
 mouse_filter = 2
 text = ""

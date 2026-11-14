@@ -1,0 +1,25 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://game/ui/window_header.gd" id="script"]
+
+[node name="WindowHeader" type="HBoxContainer"]
+script = ExtResource("script")
+theme_override_constants/separation = 4
+
+[node name="Handle" type="Label" parent="."]
+unique_name_in_owner = true
+mouse_filter = 0
+text = ""
+theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(0.8745, 0.7765, 0.5451, 1)
+size_flags_horizontal = 3
+mouse_default_cursor_shape = 13
+text_overrun_behavior = 3
+
+[node name="Toggle" type="Button" parent="."]
+unique_name_in_owner = true
+mouse_default_cursor_shape = 2
+text = "−"
+custom_minimum_size = Vector2(24, 21)
+tooltip_text = "ui.window.collapse"
+theme_override_font_sizes/font_size = 12

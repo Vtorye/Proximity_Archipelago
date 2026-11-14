@@ -244,3 +244,43 @@ ui.voyage.dry_short,Dry plateau,Сухое плато
 ui.voyage.rocky_short,Stone islands,Каменные острова
 ui.construction.inspect_hint,Click: inspect · Drag: pan · Wheel: zoom,Клик: осмотр · Перетаскивание: камера · Колесо: зум
 ui.map.normal_mode,Standard,Обычная
+ui.construction.category.terrain,Terrain,Поверхности
+ui.construction.category.colony,Colony,Колония
+ui.construction.category.production,Production,Добыча
+ui.construction.category.defense,Defense,Оборона
+ui.construction.category.voyage,Voyage,Путешествие
+ui.construction.category.other,Other,Прочее
+ui.construction.title,Construction,Строительство
+ui.construction.details,Building details,О постройке
+ui.construction.price,Cost: %s,Цена: %s
+ui.construction.time,Assembly: %s s,Сборка: %s с
+ui.construction.instant,Instant placement,Мгновенная постройка
+ui.construction.water,Requires water,Требует воды
+ui.construction.slots,Work slots: +%d,Рабочие места: +%d
+ui.construction.footprint,Tiles: %d,Клеток: %d
+ui.construction.speed,Movement cost: %s,Стоимость перемещения: %s
+ui.construction.fast_trail,Fast trail,Быстрая тропинка
+ui.construction.category_caption,Categories,Категории
+ui.construction.empty,Choose a building to see its details.,Выберите постройку для просмотра.
+ui.construction.description.road,A trail speeds up movement for the colony.,Тропа ускоряет перемещение муравьёв.
+ui.construction.description.ground,Remove the trail and restore the underlying terrain.,Убирает тропу и восстанавливает покрытие под ней.
+ui.construction.description.road_plus,An upgraded trail for faster trips.,Улучшенная тропа для быстрых переходов.
+ui.construction.description.house,A barracks houses workers and has its own stockpile.,Казарма размещает жителей и хранит припасы на своём складе.
+ui.construction.description.base_nest,An additional base with a large stockpile and room for recruits.,Дополнительная база с большим складом и местами для найма.
+ui.construction.description.canteen,Ants come here to eat and restore satiety.,Муравьи приходят сюда поесть и восстановить сытость.
+ui.construction.description.building,A general purpose colony structure.,Обычная постройка колонии.
+ui.construction.description.apple_tree,Workers harvest food here.,Рабочие собирают здесь пищу.
+ui.construction.description.farm,Improves food production at a compatible source.,Улучшает добычу пищи на подходящем источнике.
+ui.construction.description.sawmill,Improves timber production at a compatible source.,Улучшает добычу древесины на подходящем источнике.
+ui.construction.description.quarry,Improves stone production at a compatible source.,Улучшает добычу камня на подходящем источнике.
+ui.construction.description.wall,Blocks paths and protects the colony from spiders.,Перекрывает проход и защищает колонию от пауков.
+ui.construction.description.tower,A stationed warrior fires on nearby spiders.,Воин на вышке обстреливает ближайших пауков.
+ui.construction.description.ship,Build at the water to depart for the next island.,Строится на воде для перехода на следующий остров.
+ui.window.collapse,Collapse window,Свернуть окно
+ui.window.expand,Expand window,Развернуть окно
+ui.window.nest,Nest,Муравейник
+ui.window.result,Match result,Итог матча
+ui.window.navigation,Navigation,Навигация
+ui.window.tasks,Requests,Запросы
+ui.window.campaign,Voyage,Путешествие
+ui.window.waves,Waves,Волны

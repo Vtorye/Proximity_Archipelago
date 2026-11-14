@@ -18,4 +18,5 @@ blocks_movement = false
 placement_kind = 2
 id = &"apple_tree"
 display_name = "ui.building.berries"
+description = "ui.construction.description.apple_tree"
 costs = Array[ExtResource("amount")]([SubResource("cost")])

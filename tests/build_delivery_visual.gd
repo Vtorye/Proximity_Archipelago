@@ -5,14 +5,14 @@ func _run() -> void:
 	AppSettings.reset_defaults()
 	get_viewport().add_child(load("res://boot.tscn").instantiate())
 	await frames(35)
-	await click(Router._current.controls[&"play"])
+	open_fixed_match()
 	await frames(20)
 	screen = Router._current
 	var world: World = screen.world
 	var cell := Vector2i(27, 27)
 	await key(KEY_SPACE)
 	var menu := Router.top_overlay() as ConstructionMenu
-	await click(menu.controls[&"house"])
+	await choose_building(menu, &"house")
 	await click_at(cell_point(cell))
 	expect(menu.draft.size() == 1 and menu.draft.budget_check().allowed(), "a real two-resource house order fits the starting budget")
 	await key(KEY_SPACE)

@@ -18,12 +18,14 @@ func _capture() -> void:
 		var values := {"minimum": control.custom_minimum_size, "constants": {}}
 		if control.has_theme_font_size_override("font_size"):
 			values["font"] = control.get_theme_font_size("font_size")
-		for key in ["separation", "h_separation", "margin_left", "margin_right", "margin_top", "margin_bottom", "outline_size"]:
+		for key in ["separation", "h_separation", "v_separation", "margin_left", "margin_right", "margin_top", "margin_bottom", "outline_size"]:
 			if control.has_theme_constant_override(key): values["constants"][key] = control.get_theme_constant(key)
 		if not (control.get_parent() is Container) and not control.has_meta(&"ui_manual_layout"):
 			values["offsets"] = [control.offset_left, control.offset_top, control.offset_right, control.offset_bottom]
 		for key in ["panel", "normal", "background", "fill"]:
 			if control.has_theme_stylebox_override(key): _capture_style(control.get_theme_stylebox(key))
+		if control is Button and control.has_theme_constant_override("icon_max_width"):
+			values["icon_width"] = control.get_theme_constant("icon_max_width")
 		_controls[control.get_instance_id()] = values
 		control.set_meta(&"ui_scale_bound", true)
 	for type in target.theme.get_type_list():
@@ -77,4 +79,5 @@ func _resize() -> void:
 			control.offset_bottom = roundf(values["offsets"][3] * factor)
 		if control is Button and control.icon != null:
 			control.expand_icon = true
-			control.add_theme_constant_override("icon_max_width", maxi(8, roundi(16 * factor)))
+			var icon_width: int = values.get("icon_width", 16)
+			control.add_theme_constant_override("icon_max_width", maxi(8, roundi(icon_width * factor)))

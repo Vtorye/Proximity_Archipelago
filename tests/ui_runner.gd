@@ -90,6 +90,24 @@ func cell_point(cell: Vector2i) -> Vector2:
 
 ## Legacy palette/assignment scenarios isolate immediate transaction feedback.
 ## build_delivery_visual exercises the shipping delivery/assembly pipeline through actual input.
+func open_fixed_match(waves := false) -> void:
+	var template: World = LevelLayout.DEFAULT_WORLD.instantiate()
+	var map: TerrainMap = template.map as TerrainMap
+	map.prepare_terrain()
+	var buildings: Array[Node] = []
+	buildings.assign(template.placed_buildings())
+	for building in buildings:
+		building.set_meta(&"layout_kind", str(template.get_path_to(building)))
+	var layout: Dictionary = LevelLayout.capture(map, buildings)
+	template.free()
+	layout["wave_mode"] = waves
+	Router.goto(&"match", layout)
+
+func choose_building(menu: ConstructionMenu, id: StringName) -> void:
+	menu.show_category_for(id)
+	await frames(2)
+	await click(menu.controls[id])
+
 func use_immediate_construction_fixture(world: World) -> void:
 	world.build_controller.construction = null
 	world.population.construction = null
@@ -129,7 +147,7 @@ func _run() -> void:
 	await capture("05-settings-reset")
 	await key(KEY_ESCAPE)
 	expect(not Router.has_overlay(), "escape returns from main settings")
-	await click(Router._current.controls[&"play"])
+	open_fixed_match()
 	await frames(60)
 	screen = Router._current
 	# Legacy UI regression retains the fixed-goal fixture; task behavior has its own runner.
@@ -240,19 +258,32 @@ func _run() -> void:
 func _layout_only() -> void:
 	var dimensions: Vector2i = display_size if display_size != Vector2i.ZERO else get_window().size
 	var tag: String = "layout-%dx%d-" % [dimensions.x, dimensions.y]
+	var area: Rect2 = get_viewport().get_visible_rect()
 	await capture(tag + "main")
 	await click(Router._current.controls[&"settings"])
-	await frames(10)
-	await capture(tag + "settings")
+	var settings: MenuBase = Router.top_overlay()
+	for factor: float in [0.5, 0.75, 1.0]:
+		AppSettings.ui_scale = factor
+		await frames(5)
+		expect(area.encloses(settings.get_node("%Dialog").get_global_rect()), "settings stays in bounds at %d%%" % roundi(factor * 100))
+		expect(area.encloses(settings.controls[&"done"].get_global_rect()), "settings close stays reachable")
+		await capture(tag + "settings-%d" % roundi(factor * 100), 1)
 	await key(KEY_ESCAPE)
-	await click(Router._current.controls[&"play"])
+	open_fixed_match()
 	await frames(50)
 	screen = Router._current
-	# Legacy UI regression retains the fixed-goal fixture; task behavior has its own runner.
-	if screen.world != null: screen.world.match_controller.task_mode = false
 	await key(KEY_SPACE)
-	expect(Router.top_overlay() is ConstructionMenu, "layout uses the single supported construction editor")
-	await capture(tag + "build")
+	var menu := Router.top_overlay() as ConstructionMenu
+	expect(menu != null, "layout opens construction")
+	await choose_building(menu, &"house")
+	for factor: float in [0.5, 0.75, 1.0]:
+		AppSettings.ui_scale = factor
+		await frames(5)
+		expect(area.encloses(menu.panel.get_global_rect()), "palette fits at %d%%" % roundi(factor * 100))
+		expect(area.encloses(menu.get_node("%Details").get_global_rect()), "inspector fits at %d%%" % roundi(factor * 100))
+		expect(area.encloses(screen.hud.controls[&"settings"].get_global_rect()), "HUD settings stays reachable")
+		expect(area.encloses(menu.controls[&"apply"].get_global_rect()), "apply remains reachable")
+		await capture(tag + "build-%d" % roundi(factor * 100), 1)
 	await key(KEY_SPACE)
 	await click(screen.hud.controls[&"settings"])
 	await frames(8)

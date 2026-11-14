@@ -3,7 +3,7 @@ func _run() -> void:
 	AppSettings.reset_defaults()
 	get_viewport().add_child(load("res://boot.tscn").instantiate())
 	await frames(40)
-	await click(Router._current.controls[&"play"])
+	open_fixed_match()
 	await frames(40)
 	screen = Router._current
 	await key(KEY_N)
@@ -17,15 +17,18 @@ func _run() -> void:
 	await capture("02-distance-and-job-scores", 30)
 	await key(KEY_SPACE)
 	var menu: ConstructionMenu = Router.top_overlay() as ConstructionMenu
-	expect(menu.controls[&"house"].cost_label.text == "10 Древесина + 20 Камень", "menu shows the configured composite nest price")
-	expect(menu.controls.has(&"base_nest") and menu.controls[&"base_nest"].cost_label.text == "1 Знак колонии", "the palette offers a separate base nest priced in crowns")
+	await choose_building(menu, &"house")
+	expect((menu.get_node("%Price") as Label).text.trim_prefix(tr("ui.construction.price").get_slice("%s", 0)) == "10 Древесина + 20 Камень", "menu shows the configured composite nest price")
+	await choose_building(menu, &"base_nest")
+	expect(menu.controls.has(&"base_nest") and (menu.get_node("%Price") as Label).text.trim_prefix(tr("ui.construction.price").get_slice("%s", 0)) == "1 Знак колонии", "the palette offers a separate base nest priced in crowns")
+	await choose_building(menu, &"house")
 	await capture("03-configured-house-price", 30)
 	var path := "res://game/building/options/house.tres"
 	var original := FileAccess.get_file_as_string(path)
 	await frames(65)
 	FileAccess.open(path, FileAccess.WRITE).store_string(original.replace("amount = 10", "amount = 15"))
 	await frames(90)
-	expect(menu.controls[&"house"].cost_label.text == "15 Древесина + 20 Камень", "saved configuration edits update an already open menu")
+	expect((menu.get_node("%Price") as Label).text.trim_prefix(tr("ui.construction.price").get_slice("%s", 0)) == "15 Древесина + 20 Камень", "saved configuration edits update an already open menu")
 	await capture("04-live-price-reload", 30)
 	FileAccess.open(path, FileAccess.WRITE).store_string(original)
 	await frames(65)
@@ -167,7 +170,7 @@ func _check_new_base(barracks: House) -> void:
 			break
 	await key(KEY_SPACE)
 	var construction := Router.top_overlay() as ConstructionMenu
-	await click(construction.controls[&"base_nest"])
+	await choose_building(construction, &"base_nest")
 	await click_at(cell_point(cell))
 	expect(construction.draft.size() == 1, "a player can plan a base nest from its own palette button")
 	await capture("02h-base-nest-construction")

@@ -1,17 +1,26 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://game/combat/wave_hud.gd" id="script"]
+[ext_resource type="PackedScene" path="res://game/ui/window_header.tscn" id="window_header"]
 
 [node name="WaveHud" type="PanelContainer"]
 script = ExtResource("script")
-anchor_left = 0.5
-anchor_right = 0.5
-offset_left = -76.0
-offset_right = 76.0
-offset_top = 64.0
 tooltip_text = "ui.waves.hint"
+metadata/ui_manual_layout = true
 
-[node name="Clock" type="Label" parent="."]
+[node name="WindowContents" type="VBoxContainer" parent="."]
+theme_override_constants/separation = 3
+
+[node name="WindowHeader" parent="WindowContents" node_paths=PackedStringArray("panel", "body") instance=ExtResource("window_header")]
+unique_name_in_owner = true
+title = "ui.window.waves"
+dock = 5
+panel_width = 152.0
+inset = Vector2(8, 64)
+panel = NodePath("../..")
+body = NodePath("../Clock")
+
+[node name="Clock" type="Label" parent="WindowContents"]
 unique_name_in_owner = true
 mouse_filter = 2
 text = ""

@@ -15,6 +15,7 @@ mouse_filter = 2
 process_mode = 1
 
 [node name="Top" type="PanelContainer" parent="."]
+unique_name_in_owner = true
 anchor_right = 1.0
 offset_left = 8.0
 offset_top = 8.0

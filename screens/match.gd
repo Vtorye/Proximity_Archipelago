@@ -159,6 +159,7 @@ func _inspect_secondary_cell(cell: Vector2i) -> void:
 	_inspect_building(cell)
 
 func _open_settings() -> void:
+	hud.navigation_panel.inspect_cell(null)
 	selection.clear()
 	if Router.push_overlay(&"pause") != null:
 		PauseController.acquire(&"menu")

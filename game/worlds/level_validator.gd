@@ -104,6 +104,8 @@ static func validate_world(world: World, path: String) -> Array[String]:
 			var prefix: String = option.resource_path if not option.resource_path.is_empty() else path
 			if option.id == &"" or ids.has(option.id): errors.append(prefix + ": missing or duplicate build ID")
 			ids[option.id] = true
+			if not option.has_presentation():
+				errors.append(prefix + ": building requires a name and description")
 			if not prices.valid(option): errors.append(prefix + ": invalid price or event rule")
 			for rule in option.price_rules:
 				if rule != null and rule.resource != null and not types.has(rule.resource.id): errors.append(prefix + ": unknown rule resource " + str(rule.resource.id))

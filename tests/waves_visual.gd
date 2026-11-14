@@ -7,8 +7,8 @@ func _run() -> void:
 	await frames(35)
 	expect(Router._current.controls.has(&"waves"), "spider waves have their own visible main-menu action")
 	await capture("01-wave-mode-menu", 15)
-	await click(Router._current.controls[&"waves"])
-	await frames(15)
+	open_fixed_match(true)
+	await frames(35)
 	screen = Router._current
 	var world: World = screen.world
 	var combat: CombatDirector = world.combat
@@ -17,10 +17,10 @@ func _run() -> void:
 	await key(KEY_SPACE)
 	var menu := Router.top_overlay() as ConstructionMenu
 	expect(menu.controls.has(&"wall") and menu.controls.has(&"tower"), "the defense palette offers walls and battle towers")
-	await click(menu.controls[&"tower"])
+	await choose_building(menu, &"tower")
 	var tower_cell := Vector2i(25, 24)
 	await click_at(cell_point(tower_cell))
-	await click(menu.controls[&"wall"])
+	await choose_building(menu, &"wall")
 	for cell in [Vector2i(27, 24), Vector2i(27, 25)]: await click_at(cell_point(cell))
 	expect(menu.draft.size() == 3 and menu.draft.budget_check().allowed(), "the starting stock funds one tower and two walls")
 	await capture("03-defense-plan", 20)
@@ -72,7 +72,7 @@ func _run() -> void:
 	var trap_cell := Vector2i(25, 26)
 	await key(KEY_SPACE)
 	menu = Router.top_overlay() as ConstructionMenu
-	await click(menu.controls[&"road"])
+	await choose_building(menu, &"road")
 	await click_at(cell_point(trap_cell))
 	await key(KEY_SPACE)
 	for second in range(30):

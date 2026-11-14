@@ -6,7 +6,7 @@ func _run() -> void:
 	AppSettings.reset_defaults()
 	get_viewport().add_child(load("res://boot.tscn").instantiate())
 	await frames(35)
-	await click(Router._current.controls[&"play"])
+	open_fixed_match()
 	await frames(45)
 	screen = Router._current
 	use_immediate_construction_fixture(screen.world)
@@ -37,7 +37,7 @@ func _run() -> void:
 	var target := Vector2i(25, 24)
 	await key(KEY_SPACE)
 	var construction := Router.top_overlay() as ConstructionMenu
-	await click(construction.controls[&"apple_tree"])
+	await choose_building(construction, &"apple_tree")
 	await click_at(cell_point(target))
 	expect(construction.draft.size() == 1, "bush fixture is painted on a free cell outside the HUD")
 	await key(KEY_SPACE)

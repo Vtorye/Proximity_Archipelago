@@ -22,6 +22,7 @@ var _zoom_level := 2
 var navigation: NavigationOverlay
 var navigation_panel: NavigationPanel
 var task_panel: TaskPanel
+var wave_hud: WaveHud
 @onready var _bottom: PanelContainer = %Bottom
 
 func configure(session: World, routes: NavigationOverlay) -> void:
@@ -85,21 +86,16 @@ func _build_hud() -> void:
 		_objectives.hide()
 		task_panel = preload("res://game/tasks/task_panel.tscn").instantiate()
 		task_panel.director = world.tasks
-		task_panel.position = Vector2(8, 64)
 		add_child(task_panel)
 	if navigation != null:
 		navigation_panel = preload("res://game/ui/navigation_panel.tscn").instantiate()
 		navigation_panel.process_mode = Node.PROCESS_MODE_ALWAYS
 		navigation_panel.overlay = navigation
 		add_child(navigation_panel)
-		navigation_panel.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
-		navigation_panel.offset_left = -198
-		navigation_panel.offset_right = -8
-		navigation_panel.offset_top = 64
 	if world.combat != null:
-		var waves: WaveHud = preload("res://game/combat/wave_hud.tscn").instantiate()
-		waves.director = world.combat
-		add_child(waves)
+		wave_hud = preload("res://game/combat/wave_hud.tscn").instantiate()
+		wave_hud.director = world.combat
+		add_child(wave_hud)
 	refresh()
 	set_zoom(2)
 	set_navigation_mode(0)
@@ -151,8 +147,13 @@ func set_zoom(value: int) -> void:
 
 func build_obstacles() -> Array[Rect2]:
 	var result: Array[Rect2] = []
-	result.append(task_panel.get_global_rect() if task_panel != null else _objectives.get_global_rect())
-	if navigation_panel != null and navigation_panel.visible and navigation_panel.mouse_filter == Control.MOUSE_FILTER_STOP:
+	result.append(%Top.get_global_rect())
+	var goals_panel: Control = task_panel if task_panel != null else _objectives
+	if goals_panel.is_visible_in_tree():
+		result.append(goals_panel.get_global_rect())
+	if wave_hud != null and wave_hud.is_visible_in_tree():
+		result.append(wave_hud.get_global_rect())
+	if navigation_panel != null and navigation_panel.is_visible_in_tree() and navigation_panel.mouse_filter == Control.MOUSE_FILTER_STOP:
 		result.append(navigation_panel.get_global_rect())
 	return result
 
@@ -169,6 +170,10 @@ func toast(message: String, danger: bool = false) -> void:
 
 func set_construction_mode(active: bool) -> void:
 	_bottom.visible = not active
+	if task_panel != null:
+		task_panel.visible = not active
+	else:
+		_objectives.visible = not active
 	_toast.hide()
 
 func _process(delta: float) -> void:

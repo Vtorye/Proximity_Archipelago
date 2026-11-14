@@ -35,9 +35,9 @@ func _run() -> void:
 	await key(KEY_SPACE)
 	var menu := Router.top_overlay() as ConstructionMenu
 	_focus(dry)
-	await click(menu.controls[&"house"])
+	await choose_building(menu, &"house")
 	await hover(dry)
-	expect(menu.controls[&"house"].cost_label.text == "7 Древесина + 14 Камень", "the live palette shows the discounted nest price at the hovered dry tile")
+	expect((menu.get_node("%Price") as Label).text.trim_prefix(tr("ui.construction.price").get_slice("%s", 0)) == "7 Древесина + 14 Камень", "the live palette shows the discounted nest price at the hovered dry tile")
 	await click_at(cell_point(dry))
 	expect(menu._cost.text.contains("7 Древесина + 14 Камень"), "the plan total agrees with the cell-specific palette price")
 	await capture("04-dry-soil-discount", 20)
@@ -45,7 +45,7 @@ func _run() -> void:
 	await key(KEY_SPACE)
 	menu = Router.top_overlay() as ConstructionMenu
 	_focus(rocky)
-	await click(menu.controls[&"road"])
+	await choose_building(menu, &"road")
 	await click_at(cell_point(rocky))
 	expect(menu.draft.size() == 0 and menu._status.text == tr("ui.placement.soil_restricted"), "rocky ground rejects roads with visible soil-specific feedback")
 	await capture("05-rocky-soil-restriction", 20)
@@ -53,9 +53,9 @@ func _run() -> void:
 	await key(KEY_SPACE)
 	menu = Router.top_overlay() as ConstructionMenu
 	_focus(sand)
-	await click(menu.controls[&"road"])
+	await choose_building(menu, &"road")
 	await hover(sand)
-	expect(menu.controls[&"road"].cost_label.text == "2 Древесина", "sand road pricing is visible before painting")
+	expect((menu.get_node("%Price") as Label).text.trim_prefix(tr("ui.construction.price").get_slice("%s", 0)) == "2 Древесина", "sand road pricing is visible before painting")
 	await click_at(cell_point(sand))
 	await capture("06-sand-road-price", 20)
 	await click(menu.controls[&"cancel"])
@@ -79,7 +79,7 @@ func _run() -> void:
 	_focus(building_cell)
 	await key(KEY_SPACE)
 	menu = Router.top_overlay() as ConstructionMenu
-	await click(menu.controls[&"house"])
+	await choose_building(menu, &"house")
 	await click_at(cell_point(building_cell))
 	await key(KEY_SPACE)
 	var site: ConstructionSite = world.build_controller.construction.at(building_cell)

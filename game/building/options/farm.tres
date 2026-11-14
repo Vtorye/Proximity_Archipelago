@@ -22,5 +22,6 @@ script = ExtResource("option")
 source_type = ExtResource("food")
 id = &"farm"
 display_name = "ui.building.farm"
+description = "ui.construction.description.farm"
 icon = ExtResource("icon")
 costs = Array[ExtResource("amount")]([SubResource("cost_wood"), SubResource("cost_food")])

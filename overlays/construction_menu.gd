@@ -23,9 +23,13 @@ var _last_cell := Vector2i.ZERO
 var _has_last := false
 var _refresh_queued := false
 var _pointer := Vector2.ZERO
+var category_buttons: Array[Button] = []
+var _category_for: Dictionary[StringName, Button] = {}
+
 var _pricing_cell := Vector2i(2147483647, 2147483647)
 
 func _ready() -> void:
+	%PaletteHeader.collapsed_changed.connect(func(_folded: bool): _end_stroke())
 	_pointer = get_viewport().get_mouse_position()
 	dismissable = false
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -40,22 +44,6 @@ func _ready() -> void:
 	_preview.art = context.art
 	_preview.z_index = 3
 	context.controller.map.get_parent().add_child(_preview)
-	var choices: HBoxContainer = %Choices
-	var group: ButtonGroup = %Move.button_group
-	for option in context.controller.options:
-		if option == null: continue
-		var button: BuildChoiceButton = preload("res://game/ui/build_choice_button.tscn").instantiate()
-		button.controller = context.controller
-		button.option = option
-		button.art = context.art
-		button.card_width = 96
-		button.compact = true
-		button.tooltip_text = "%s: %s" % [tr(option.display_name), BuildCostText.format(context.controller.price(option))]
-		button.toggle_mode = true
-		button.button_group = group
-		button.pressed.connect(_select.bind(option))
-		choices.add_child(button)
-		controls[option.id] = button
 	controls[&"move"] = %Move
 	%Move.pressed.connect(AppSettings.play_click)
 	%Move.pressed.connect(_select_tool.bind(&"move"))
@@ -77,9 +65,11 @@ func _ready() -> void:
 	controls[&"keep_residents"] = %KeepResidents
 	%KeepResidents.pressed.connect(AppSettings.play_click)
 	%KeepResidents.pressed.connect(_cancel_confirmation)
-	if choices.get_child_count() > 0:
-		var first: BuildChoiceButton = choices.get_child(0)
-		_select(first.option)
+	_populate_categories()
+	if not context.controller.options.is_empty() and context.controller.options[0] != null:
+		var first: BuildOption = context.controller.options[0]
+		show_category_for(first.id)
+		_select(first)
 	draft.changed.connect(_cancel_confirmation)
 	if context.controller.prices != null: context.controller.prices.changed.connect(func():
 		draft.last_result = PlacementCheck.new()
@@ -87,6 +77,91 @@ func _ready() -> void:
 	draft.changed.connect(_queue_refresh)
 	_refresh()
 	default_focus = controls[_selected.id] if _selected != null else controls[&"cancel"]
+
+func _populate_categories() -> void:
+	var remaining: Array[BuildOption] = context.controller.options.duplicate()
+	var catalog: BuildCatalog = context.controller.catalog
+	if catalog != null:
+		for category in catalog.categories:
+			if category == null:
+				continue
+			var available: Array[BuildOption] = []
+			for definition in category.options:
+				if definition == null:
+					continue
+				for option in remaining:
+					if option != null and option.id == definition.id:
+						available.append(option)
+						remaining.erase(option)
+						break
+			_add_category(category.title, available)
+	remaining = remaining.filter(func(option: BuildOption) -> bool: return option != null)
+	_add_category("ui.construction.category.other", remaining)
+
+func _add_category(title: String, options: Array[BuildOption]) -> void:
+	if options.is_empty():
+		return
+	var category: Button = preload("res://game/ui/palette_entry.tscn").instantiate()
+	category.text = title
+	category.tooltip_text = title
+	category.toggle_mode = true
+	category.pressed.connect(AppSettings.play_click)
+	category.pressed.connect(_show_category.bind(category))
+	%CategoryList.add_child(category)
+	category_buttons.append(category)
+	for option in options:
+		var entry: Button = preload("res://game/ui/palette_entry.tscn").instantiate()
+		entry.text = option.display_name
+		entry.tooltip_text = option.display_name
+		entry.toggle_mode = true
+		entry.button_group = %Move.button_group
+		entry.pressed.connect(AppSettings.play_click)
+		entry.pressed.connect(_select.bind(option))
+		%Choices.add_child(entry)
+		controls[option.id] = entry
+		_category_for[option.id] = category
+		entry.hide()
+
+func show_category_for(option_id: StringName) -> void:
+	var category: Button = _category_for.get(option_id)
+	if category != null:
+		_show_category(category)
+
+func _show_category(category: Button) -> void:
+	%Buildings.scroll_vertical = 0
+	for button in category_buttons:
+		button.set_pressed_no_signal(button == category)
+	for id in _category_for:
+		controls[id].visible = _category_for[id] == category
+
+func _update_details() -> void:
+	var option: BuildOption = _selected if _tool == &"build" else null
+	%BuildingName.text = option.display_name if option != null else ""
+	%Description.text = option.description if option != null else "ui.construction.empty"
+	%Parameters.text = ""
+	%Price.text = ""
+	if option == null:
+		return
+	var price: Array[ResourceAmount] = context.controller.price(option, _pricing_cell)
+	%Price.text = tr("ui.construction.price") % BuildCostText.format(price)
+	var parameters := PackedStringArray()
+	if context.controller.construction != null and ConstructionService.needs_builders(option, price):
+		parameters.append(tr("ui.construction.time") % str(option.construction_seconds))
+	else:
+		parameters.append(tr("ui.construction.instant"))
+	if option is SceneBuildOption:
+		parameters.append(tr("ui.construction.footprint") % option.occupied_cells.size())
+		if option.requires_water:
+			parameters.append(tr("ui.construction.water"))
+	elif option is WorkplaceUpgradeOption:
+		parameters.append(tr("ui.construction.slots") % option.added_slots)
+	elif option is TileBuildOption:
+		var map := context.controller.map as TerrainMap
+		if map != null:
+			var terrain: TerrainType = map.catalog.for_tile(Vector4i(option.source_id, option.atlas_coords.x, option.atlas_coords.y, option.alternative_tile))
+			if terrain != null:
+				parameters.append(tr("ui.construction.speed") % str(terrain.move_cost))
+	%Parameters.text = "\n".join(parameters)
 
 func _exit_tree() -> void:
 	if is_instance_valid(_preview): _preview.queue_free()
@@ -99,7 +174,7 @@ func _select(option: BuildOption) -> void:
 	controls[option.id].set_pressed_no_signal(true)
 	_preview.option = option
 	_preview.queue_redraw()
-	if _hint != null: _refresh()
+	_refresh()
 
 func _select_tool(tool: StringName) -> void:
 	_end_stroke()
@@ -128,6 +203,7 @@ func _refresh() -> void:
 	_status.text = PlacementMessages.text(reason.code)
 	_status.visible = not reason.allowed()
 	_status.add_theme_color_override("font_color", ColonyStyle.DANGER if not reason.allowed() else ColonyStyle.MUTED)
+	_update_details()
 	_preview.queue_redraw()
 
 func _queue_refresh() -> void:
@@ -231,7 +307,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 
 func _point_allowed(point: Vector2) -> bool:
-	if point.y < 60 * AppSettings.ui_scale or point.y >= panel.get_global_rect().position.y or not get_viewport_rect().has_point(point): return false
+	if not get_viewport_rect().has_point(point) or panel.get_global_rect().has_point(point) or %Details.get_global_rect().has_point(point):
+		return false
 	for obstacle: Rect2 in context.obstacles.call():
 		if obstacle.has_point(point): return false
 	return true
@@ -279,17 +356,11 @@ func _update_hover(point: Vector2) -> void:
 		_preview.hover = cell
 		if hovering:
 			_pricing_cell = cell
-			for control in controls.values():
-				if control is BuildChoiceButton: control.set_pricing_cell(cell)
 		_queue_refresh()
 		_preview.queue_redraw()
 
 func _process(delta: float) -> void:
-	if not visible: return
-	panel.offset_left = roundf(8 * AppSettings.ui_scale)
-	panel.offset_right = -roundf(8 * AppSettings.ui_scale)
-	panel.offset_bottom = -roundf(6 * AppSettings.ui_scale)
-	panel.offset_top = -panel.get_combined_minimum_size().y - roundf(6 * AppSettings.ui_scale)
+	if not visible or context == null: return
 	if not _painting:
 		var direction: Vector2 = WorldCamera.keyboard_direction()
 		if not direction.is_zero_approx():

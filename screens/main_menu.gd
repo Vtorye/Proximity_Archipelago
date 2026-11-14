@@ -8,10 +8,10 @@ func _ready() -> void:
 	%Continue.visible = has_save
 	controls[&"play"] = %Play
 	%Play.pressed.connect(AppSettings.play_click)
-	%Play.pressed.connect(func(): Router.goto(&"match"))
+	%Play.pressed.connect(_start_match.bind(false))
 	controls[&"waves"] = %Waves
 	%Waves.pressed.connect(AppSettings.play_click)
-	%Waves.pressed.connect(func(): Router.goto(&"match", {"wave_mode": true}))
+	%Waves.pressed.connect(_start_match.bind(true))
 	controls[&"maps"] = %Maps
 	%Maps.pressed.connect(AppSettings.play_click)
 	%Maps.pressed.connect(func(): Router.goto(&"level_editor"))
@@ -30,6 +30,11 @@ func _ready() -> void:
 		controls[&"continue"] = %Continue
 		%Continue.pressed.connect(AppSettings.play_click)
 		%Continue.pressed.connect(_continue)
+
+func _start_match(waves: bool) -> void:
+	var layout: Dictionary = LevelStore.load_level(LevelStore.starting_level(waves))
+	layout["wave_mode"] = waves
+	Router.goto(&"match", layout)
 
 func _continue() -> void:
 	var saved: Dictionary = SessionSave.read()

@@ -25,4 +25,5 @@ spawn_count = 5
 placement_kind = 3
 id = &"house"
 display_name = "ui.storage.local"
+description = "ui.construction.description.house"
 costs = Array[ExtResource("amount")]([SubResource("cost"), SubResource("stone_cost")])

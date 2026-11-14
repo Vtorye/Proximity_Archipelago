@@ -4,7 +4,7 @@ func _run() -> void:
 	AppSettings.reset_defaults()
 	get_viewport().add_child(load("res://boot.tscn").instantiate())
 	await frames(40)
-	await click(Router._current.controls[&"play"])
+	open_fixed_match()
 	await frames(40)
 	screen = Router._current
 	use_immediate_construction_fixture(screen.world)
@@ -38,7 +38,7 @@ func _run() -> void:
 	expect(editor.controls.has(&"road_plus") and not editor.controls.has(&"road") and editor.controls.has(&"canteen"), "palette replaces the ordinary road with its upgrade and offers the rare-resource canteen")
 	await click(editor.controls[&"road_plus"])
 	await click_at(cell_point(Vector2i(27, 24)))
-	await click(editor.controls[&"canteen"])
+	await choose_building(editor, &"canteen")
 	await click_at(cell_point(Vector2i(28, 24)))
 	await capture("05-reward-buildings-in-plan", 30)
 	await key(KEY_SPACE)

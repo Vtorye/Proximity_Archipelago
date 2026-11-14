@@ -16,7 +16,7 @@ var payload: Variant = null
 var dismissable := true
 
 func grab_focus_default() -> void:
-	if is_instance_valid(default_focus):
+	if is_instance_valid(default_focus) and default_focus.is_visible_in_tree():
 		default_focus.grab_focus()
 		return
 	# Fallback: first focusable Control in tree order

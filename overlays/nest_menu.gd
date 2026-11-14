@@ -27,7 +27,7 @@ func _ready() -> void:
 		return
 	ColonyStyle.apply(self)
 	if world.combat != null:
-		%Dialog.custom_minimum_size.x = 480.0
+		%WindowHeader.panel_width = 480.0
 	%Title.text = "ui.storage.main" if house.is_main_nest else "ui.storage.local"
 	controls[&"close"] = %Close
 	%Close.pressed.connect(AppSettings.play_click)

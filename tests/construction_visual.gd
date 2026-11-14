@@ -7,7 +7,7 @@ func _run() -> void:
 	get_viewport().add_child(load("res://boot.tscn").instantiate())
 	await frames(35)
 	await _check_tutorial_and_backdrop()
-	await click(Router._current.controls[&"play"])
+	open_fixed_match()
 	await frames(45)
 	screen = Router._current
 	use_immediate_construction_fixture(screen.world)
@@ -51,9 +51,11 @@ func _run() -> void:
 	await click(screen.hud.controls[&"build"])
 	var menu: ConstructionMenu = Router.top_overlay() as ConstructionMenu
 	expect(menu != null and get_tree().paused, "construction mode pauses the simulation")
-	_validate_palette(menu)
-	expect((menu.controls[&"house"] as BuildChoiceButton).cost_label.text == ("5 %s + 20 %s" % [TranslationServer.translate("ui.resource.stone"), TranslationServer.translate("ui.resource.food")]), "palette shows both components of an editable price")
+	await _validate_palette(menu)
+	await choose_building(menu, &"house")
+	expect((menu.get_node("%Price") as Label).text.contains("5 %s + 20 %s" % [TranslationServer.translate("ui.resource.stone"), TranslationServer.translate("ui.resource.food")]), "details show both components of an editable price")
 	await capture("03-bottom-palette-and-composite-price")
+	await choose_building(menu, &"road")
 	var time: float = world.match_controller.time_remaining
 	var satiety: float = world.population.agents()[0].needs.satiety
 	await _stroke(Vector2i(23, 28), Vector2i(29, 28))
@@ -70,7 +72,7 @@ func _run() -> void:
 	menu = Router.top_overlay() as ConstructionMenu
 	expect(menu != null and get_tree().paused, "B opens the same construction editor")
 	await _stroke(Vector2i(23, 28), Vector2i(29, 28))
-	await click(menu.controls[&"house"])
+	await choose_building(menu, &"house")
 	await click_at(cell_point(Vector2i(29, 27)))
 	expect(menu.draft.size() == 8 and not menu.controls[&"apply"].disabled, "road and nest share an affordable plan")
 	expect(menu._cost.text.contains(("7 %s" % TranslationServer.translate("ui.resource.wood"))) and menu._cost.text.contains(("5 %s" % TranslationServer.translate("ui.resource.stone"))) and menu._cost.text.contains(("20 %s" % TranslationServer.translate("ui.resource.food"))), "plan total includes every resource across all placements")
@@ -104,7 +106,7 @@ func _run() -> void:
 	await click(menu.controls[&"cancel"])
 	await key(KEY_B)
 	menu = Router.top_overlay() as ConstructionMenu
-	await click(menu.controls[&"apple_tree"])
+	await choose_building(menu, &"apple_tree")
 	await click_at(cell_point(Vector2i(29, 27)))
 	expect(menu.draft.size() == 0 and menu._status.text == (TranslationServer.translate("ui.placement.occupied")), "occupied cells explain why the brush cannot paint")
 	await capture("08-occupied-cell-feedback")
@@ -136,7 +138,7 @@ func _check_ui_scales() -> void:
 	await click(Router.top_overlay().controls[&"resume"])
 	await key(KEY_B)
 	var menu: ConstructionMenu = Router.top_overlay() as ConstructionMenu
-	_validate_palette(menu)
+	await _validate_palette(menu)
 	await capture("10-toolbar-scale-100")
 	await key(KEY_ESCAPE)
 	await click(screen.hud.controls[&"settings"])
@@ -155,7 +157,7 @@ func _check_ui_scales() -> void:
 	await click(Router.top_overlay().controls[&"resume"])
 	await key(KEY_B)
 	menu = Router.top_overlay() as ConstructionMenu
-	_validate_palette(menu)
+	await _validate_palette(menu)
 	await capture("12-toolbar-scale-50")
 	await key(KEY_ESCAPE)
 	await click(screen.hud.controls[&"settings"])
@@ -210,11 +212,44 @@ func _pan() -> void:
 
 func _validate_palette(menu: ConstructionMenu) -> void:
 	preload("res://tests/pixel_font_checks.gd").verify(self, menu)
-	print("PALETTE ", menu.panel.get_global_rect(), " MIN ", menu.panel.get_combined_minimum_size())
-	expect(get_viewport().get_visible_rect().encloses(menu.panel.get_global_rect()), "construction palette fits the viewport")
-	expect(menu.panel.get_global_rect().size.y <= get_viewport().get_visible_rect().size.y * 0.22, "compact palette occupies less than a quarter of the screen height")
-	for id in [&"road", &"ground", &"house", &"apple_tree", &"move", &"demolish", &"undo", &"cancel", &"apply"]:
-		expect(menu.panel.get_global_rect().encloses(menu.controls[id].get_global_rect()), "every construction action fits the bottom palette")
+	var viewport: Rect2 = get_viewport().get_visible_rect()
+	var details: PanelContainer = menu.get_node("%Details")
+	expect(viewport.encloses(menu.panel.get_global_rect()), "construction palette fits the viewport")
+	expect(viewport.encloses(details.get_global_rect()), "building details fit the viewport")
+	expect(not details.get_global_rect().intersects(menu.panel.get_global_rect()), "default palette and inspector do not overlap")
+	for id in [&"move", &"demolish", &"undo", &"cancel", &"apply"]:
+		expect(menu.panel.get_global_rect().encloses(menu.controls[id].get_global_rect()), "every construction action fits the palette")
+	expect(menu.category_buttons.size() >= 3 and not menu.controls[&"house"].is_visible_in_tree(), "categories filter the available buildings")
+	var header: WindowHeader = menu.get_node("%DetailsHeader")
+	var expanded_height: float = details.size.y
+	await click(header.toggle)
+	expect(header.collapsed and details.size.y < expanded_height, "the inspector collapses to its header")
+	await click(header.toggle)
+	expect(not header.collapsed and details.size.y >= expanded_height, "the inspector expands again")
+	var start: Vector2 = header.handle.get_global_rect().get_center()
+	var old: Vector2 = details.position
+	# Send a complete drag through the same GUI path used by the player.
+	var hover := InputEventMouseMotion.new()
+	hover.position = start
+	get_viewport().push_input(hover, true)
+	await frames(2)
+	var press := InputEventMouseButton.new()
+	press.position = start
+	press.button_index = MOUSE_BUTTON_LEFT
+	press.pressed = true
+	press.button_mask = MOUSE_BUTTON_MASK_LEFT
+	get_viewport().push_input(press, true)
+	var motion := InputEventMouseMotion.new()
+	motion.position = start + Vector2(-20, -34)
+	motion.relative = motion.position - start
+	motion.button_mask = MOUSE_BUTTON_MASK_LEFT
+	get_viewport().push_input(motion, true)
+	var release := InputEventMouseButton.new()
+	release.position = motion.position
+	release.button_index = MOUSE_BUTTON_LEFT
+	get_viewport().push_input(release, true)
+	await frames(4)
+	expect(details.position != old and viewport.encloses(details.get_global_rect()), "dragging the header moves the inspector within the viewport")
 
 func _check_dots(image: Image, button: Button) -> void:
 	var factor: float = floorf(minf(float(image.get_width()) / 640.0, float(image.get_height()) / 360.0))
@@ -294,7 +329,7 @@ func _check_requested_features() -> void:
 	expect(menu != null and get_tree().paused and not screen.hud.controls.has(&"pause"), "Space opens construction without a separate HUD pause button")
 	var cell := Vector2i(30, 28)
 	await click_at(cell_point(cell))
-	await click(menu.controls[&"house"])
+	await choose_building(menu, &"house")
 	await click_at(cell_point(cell))
 	expect(menu.draft.size() == 2, "real clicks stack a road and nest on one cell")
 	await capture("15-layered-road-and-nest")

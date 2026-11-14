@@ -16,5 +16,6 @@ atlas_coords = Vector2i(2, 0)
 placement_kind = 1
 id = &"road"
 display_name = "ui.building.road"
+description = "ui.construction.description.road"
 costs = Array[ExtResource("amount")]([SubResource("cost")])
 allow_when_occupied = true

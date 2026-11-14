@@ -22,5 +22,6 @@ script = ExtResource("option")
 source_type = ExtResource("wood")
 id = &"sawmill"
 display_name = "ui.building.sawmill"
+description = "ui.construction.description.sawmill"
 icon = ExtResource("icon")
 costs = Array[ExtResource("amount")]([SubResource("cost_wood"), SubResource("cost_stone")])

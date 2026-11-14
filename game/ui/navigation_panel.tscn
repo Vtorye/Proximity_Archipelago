@@ -1,23 +1,36 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://game/ui/navigation_panel.gd" id="script"]
+[ext_resource type="PackedScene" path="res://game/ui/window_header.tscn" id="window_header"]
 
 [ext_resource type="FontFile" path="res://game/assets/fonts/Pixuf.ttf" id="small_font"]
 
 [node name="NavigationPanel" type="PanelContainer"]
 script = ExtResource("script")
-custom_minimum_size = Vector2(190, 0)
+metadata/ui_manual_layout = true
 
-[node name="Content" type="VBoxContainer" parent="."]
+[node name="WindowContents" type="VBoxContainer" parent="."]
+theme_override_constants/separation = 3
+
+[node name="WindowHeader" parent="WindowContents" node_paths=PackedStringArray("panel", "body") instance=ExtResource("window_header")]
+unique_name_in_owner = true
+title = "ui.window.navigation"
+dock = 4
+panel_width = 190.0
+inset = Vector2(8, 64)
+panel = NodePath("../..")
+body = NodePath("../Content")
+
+[node name="Content" type="VBoxContainer" parent="WindowContents"]
 theme_override_constants/separation = 3
 mouse_filter = 2
 
-[node name="Legend" type="VBoxContainer" parent="Content"]
+[node name="Legend" type="VBoxContainer" parent="WindowContents/Content"]
 unique_name_in_owner = true
 theme_override_constants/separation = 3
 mouse_filter = 2
 
-[node name="Heading" type="Label" parent="Content/Legend"]
+[node name="Heading" type="Label" parent="WindowContents/Content/Legend"]
 unique_name_in_owner = true
 mouse_filter = 2
 text = ""
@@ -25,59 +38,59 @@ theme_override_font_sizes/font_size = 8
 theme_override_colors/font_color = Color(0.8745, 0.7765, 0.5451, 1)
 theme_override_fonts/font = ExtResource("small_font")
 
-[node name="Source" type="Label" parent="Content/Legend"]
+[node name="Source" type="Label" parent="WindowContents/Content/Legend"]
 unique_name_in_owner = true
 mouse_filter = 2
 text = ""
 theme_override_font_sizes/font_size = 8
 theme_override_fonts/font = ExtResource("small_font")
 
-[node name="Help" type="Label" parent="Content/Legend"]
+[node name="Help" type="Label" parent="WindowContents/Content/Legend"]
 mouse_filter = 2
 text = "Меньше число — выше приоритет"
 theme_override_font_sizes/font_size = 8
 theme_override_fonts/font = ExtResource("small_font")
 
-[node name="Formula" type="Label" parent="Content/Legend"]
+[node name="Formula" type="Label" parent="WindowContents/Content/Legend"]
 unique_name_in_owner = true
 mouse_filter = 2
 text = ""
 theme_override_font_sizes/font_size = 8
 theme_override_fonts/font = ExtResource("small_font")
 
-[node name="Keys" type="HBoxContainer" parent="Content/Legend"]
+[node name="Keys" type="HBoxContainer" parent="WindowContents/Content/Legend"]
 theme_override_constants/separation = 8
 mouse_filter = 2
 
-[node name="Terrain" type="Label" parent="Content/Legend/Keys"]
+[node name="Terrain" type="Label" parent="WindowContents/Content/Legend/Keys"]
 mouse_filter = 2
 text = "Земля"
 theme_override_font_sizes/font_size = 8
 theme_override_colors/font_color = Color(0.725, 0.725, 0.706, 1)
 theme_override_fonts/font = ExtResource("small_font")
 
-[node name="Work" type="Label" parent="Content/Legend/Keys"]
+[node name="Work" type="Label" parent="WindowContents/Content/Legend/Keys"]
 mouse_filter = 2
 text = "Работа"
 theme_override_font_sizes/font_size = 8
 theme_override_colors/font_color = Color(1, 0.569, 0.518, 1)
 theme_override_fonts/font = ExtResource("small_font")
 
-[node name="Home" type="Label" parent="Content/Legend/Keys"]
+[node name="Home" type="Label" parent="WindowContents/Content/Legend/Keys"]
 mouse_filter = 2
 text = "Дом"
 theme_override_font_sizes/font_size = 8
 theme_override_colors/font_color = Color(0.553, 0.741, 1, 1)
 theme_override_fonts/font = ExtResource("small_font")
 
-[node name="Food" type="Label" parent="Content/Legend/Keys"]
+[node name="Food" type="Label" parent="WindowContents/Content/Legend/Keys"]
 mouse_filter = 2
 text = "Еда"
 theme_override_font_sizes/font_size = 8
 theme_override_colors/font_color = Color(0.62, 0.89, 0.627, 1)
 theme_override_fonts/font = ExtResource("small_font")
 
-[node name="Detail" type="Label" parent="Content"]
+[node name="Detail" type="Label" parent="WindowContents/Content"]
 unique_name_in_owner = true
 mouse_filter = 2
 text = "Наведите курсор на предприятие"
@@ -86,7 +99,7 @@ theme_override_fonts/font = ExtResource("small_font")
 custom_minimum_size = Vector2(172, 0)
 autowrap_mode = 3
 
-[node name="ClearTrap" type="Button" parent="Content"]
+[node name="ClearTrap" type="Button" parent="WindowContents/Content"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 28)
 mouse_default_cursor_shape = 2

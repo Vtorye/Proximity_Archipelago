@@ -2,26 +2,37 @@
 
 [ext_resource type="Script" path="res://game/tasks/task_panel.gd" id="script"]
 [ext_resource type="FontFile" path="res://game/assets/fonts/Pixuf.ttf" id="small_font"]
+[ext_resource type="PackedScene" path="res://game/ui/window_header.tscn" id="window_header"]
 
 [node name="TaskPanel" type="PanelContainer"]
 script = ExtResource("script")
-custom_minimum_size = Vector2(198, 0)
-offset_left = 8.0
-offset_top = 64.0
+metadata/ui_manual_layout = true
 
-[node name="Scroll" type="ScrollContainer" parent="."]
+[node name="WindowContents" type="VBoxContainer" parent="."]
+theme_override_constants/separation = 3
+
+[node name="WindowHeader" parent="WindowContents" node_paths=PackedStringArray("panel", "body") instance=ExtResource("window_header")]
+unique_name_in_owner = true
+title = "ui.window.tasks"
+dock = 3
+panel_width = 198.0
+inset = Vector2(8, 64)
+panel = NodePath("../..")
+body = NodePath("../Scroll")
+
+[node name="Scroll" type="ScrollContainer" parent="WindowContents"]
 custom_minimum_size = Vector2(0, 180)
 horizontal_scroll_mode = 0
 
-[node name="Inset" type="MarginContainer" parent="Scroll"]
+[node name="Inset" type="MarginContainer" parent="WindowContents/Scroll"]
 size_flags_horizontal = 3
 theme_override_constants/margin_right = 8
 
-[node name="Content" type="VBoxContainer" parent="Scroll/Inset"]
+[node name="Content" type="VBoxContainer" parent="WindowContents/Scroll/Inset"]
 unique_name_in_owner = true
 theme_override_constants/separation = 3
 
-[node name="Heading" type="Label" parent="Scroll/Inset/Content"]
+[node name="Heading" type="Label" parent="WindowContents/Scroll/Inset/Content"]
 unique_name_in_owner = true
 mouse_filter = 2
 text = ""
@@ -29,11 +40,11 @@ theme_override_font_sizes/font_size = 8
 theme_override_colors/font_color = Color(0.8745, 0.7765, 0.5451, 1)
 theme_override_fonts/font = ExtResource("small_font")
 
-[node name="Requests" type="VBoxContainer" parent="Scroll/Inset/Content"]
+[node name="Requests" type="VBoxContainer" parent="WindowContents/Scroll/Inset/Content"]
 unique_name_in_owner = true
 theme_override_constants/separation = 3
 
-[node name="Message" type="Label" parent="Scroll/Inset/Content"]
+[node name="Message" type="Label" parent="WindowContents/Scroll/Inset/Content"]
 unique_name_in_owner = true
 mouse_filter = 2
 text = ""
@@ -42,7 +53,7 @@ theme_override_colors/font_color = Color(0.6667, 0.651, 0.6118, 1)
 theme_override_fonts/font = ExtResource("small_font")
 autowrap_mode = 3
 
-[node name="Waiting" type="Label" parent="Scroll/Inset/Content"]
+[node name="Waiting" type="Label" parent="WindowContents/Scroll/Inset/Content"]
 unique_name_in_owner = true
 mouse_filter = 2
 text = ""

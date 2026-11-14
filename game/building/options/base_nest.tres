@@ -23,5 +23,6 @@ spawn_count = 5
 placement_kind = 3
 id = &"base_nest"
 display_name = "ui.storage.main"
+description = "ui.construction.description.base_nest"
 costs = Array[ExtResource("amount")]([SubResource("cost")])
 price_rules = Array[ExtResource("price_rule")]([SubResource("growth")])

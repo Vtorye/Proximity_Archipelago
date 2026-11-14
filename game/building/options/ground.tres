@@ -15,5 +15,6 @@ source_id = 3
 atlas_coords = Vector2i(1, 0)
 id = &"ground"
 display_name = "ui.building.ground"
+description = "ui.construction.description.ground"
 costs = Array[ExtResource("amount")]([SubResource("cost")])
 allow_when_occupied = true

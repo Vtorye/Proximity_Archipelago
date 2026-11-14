@@ -7,6 +7,42 @@
 [ext_resource type="Resource" path="res://game/building/options/apple_tree.tres" id="berry"]
 [ext_resource type="Resource" path="res://game/building/options/canteen.tres" id="canteen"]
 [ext_resource type="Resource" path="res://game/building/options/base_nest.tres" id="base"]
+[ext_resource type="Script" path="res://game/building/build_category.gd" id="category"]
+[ext_resource type="Resource" path="res://game/building/options/road_plus.tres" id="road_plus"]
+[ext_resource type="Resource" path="res://game/building/options/building.tres" id="building"]
+[ext_resource type="Resource" path="res://game/building/options/farm.tres" id="farm"]
+[ext_resource type="Resource" path="res://game/building/options/sawmill.tres" id="sawmill"]
+[ext_resource type="Resource" path="res://game/building/options/quarry.tres" id="quarry"]
+[ext_resource type="Resource" path="res://game/combat/wall.tres" id="wall"]
+[ext_resource type="Resource" path="res://game/combat/tower.tres" id="tower"]
+[ext_resource type="Resource" path="res://game/campaign/ship.tres" id="ship"]
+
+[sub_resource type="Resource" id="terrain"]
+script = ExtResource("category")
+title = "ui.construction.category.terrain"
+options = Array[ExtResource("option")]([ExtResource("road"), ExtResource("ground"), ExtResource("road_plus")])
+
+[sub_resource type="Resource" id="colony"]
+script = ExtResource("category")
+title = "ui.construction.category.colony"
+options = Array[ExtResource("option")]([ExtResource("house"), ExtResource("base"), ExtResource("canteen"), ExtResource("building")])
+
+[sub_resource type="Resource" id="production"]
+script = ExtResource("category")
+title = "ui.construction.category.production"
+options = Array[ExtResource("option")]([ExtResource("berry"), ExtResource("farm"), ExtResource("sawmill"), ExtResource("quarry")])
+
+[sub_resource type="Resource" id="defense"]
+script = ExtResource("category")
+title = "ui.construction.category.defense"
+options = Array[ExtResource("option")]([ExtResource("wall"), ExtResource("tower")])
+
+[sub_resource type="Resource" id="voyage"]
+script = ExtResource("category")
+title = "ui.construction.category.voyage"
+options = Array[ExtResource("option")]([ExtResource("ship")])
+
 [resource]
 script = ExtResource("catalog")
 options = Array[ExtResource("option")]([ExtResource("road"), ExtResource("ground"), ExtResource("house"), ExtResource("berry"), ExtResource("canteen"), ExtResource("base")])
+categories = Array[ExtResource("category")]([SubResource("terrain"), SubResource("colony"), SubResource("production"), SubResource("defense"), SubResource("voyage")])

@@ -15,4 +15,5 @@ script = ExtResource("option")
 scene = ExtResource("scene")
 id = &"building"
 display_name = "ui.building.generic"
+description = "ui.construction.description.building"
 costs = Array[ExtResource("amount")]([SubResource("cost")])

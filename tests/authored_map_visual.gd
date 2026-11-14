@@ -40,10 +40,10 @@ func _run() -> void:
 	await capture("03-starter-bay", 30)
 	await key(KEY_SPACE)
 	var menu := Router.top_overlay() as ConstructionMenu
-	await click(menu.controls[&"house"])
+	await choose_building(menu, &"house")
 	await click_at(cell_point(Vector2i(64, 42)))
 	await click_at(cell_point(Vector2i(74, 40)))
-	await click(menu.controls[&"road"])
+	await choose_building(menu, &"road")
 	for x in range(64, 76):
 		await click_at(cell_point(Vector2i(x, 44)))
 	for y in range(39, 44):
@@ -80,7 +80,7 @@ func _run() -> void:
 	menu = Router.top_overlay() as ConstructionMenu
 	screen.camera.position = world.route_service.cell_to_world(Vector2i(67, 21))
 	screen.camera.force_update_scroll()
-	await click(menu.controls[&"base_nest"])
+	await choose_building(menu, &"base_nest")
 	await click_at(cell_point(Vector2i(67, 21)))
 	await capture("06-northern-base-plan", 30)
 	await key(KEY_SPACE)
