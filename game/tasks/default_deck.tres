@@ -37,6 +37,23 @@ tasks = Array[ExtResource("task")]([ExtResource("q10"), ExtResource("q11"), ExtR
 script = ExtResource("deck")
 requests = Array[ExtResource("task")]([ExtResource("q0"), ExtResource("q1"), ExtResource("q2"), ExtResource("q3"), ExtResource("q4"), ExtResource("q5"), ExtResource("q6"), ExtResource("q7"), ExtResource("q8"), ExtResource("q9"), ExtResource("q10"), ExtResource("q11"), ExtResource("q12"), ExtResource("q13"), ExtResource("q14")])
 stages = Array[ExtResource("stage")]([SubResource("stage_1"), SubResource("stage_2"), SubResource("stage_3")])
+legacy_task_ids = Dictionary[String, String]({
+"stage_1_task_0": "statue_feast",
+"stage_1_task_1": "quarry_feast",
+"stage_1_task_2": "farm_feast",
+"stage_1_task_3": "sawmill_feast",
+"stage_1_task_4": "house_feast",
+"stage_2_task_0": "canteen_feast",
+"stage_2_task_1": "statue_feast_b",
+"stage_2_task_2": "feast_statue_b",
+"stage_2_task_3": "feast_statue_c",
+"stage_2_task_4": "statue_feast_c",
+"stage_3_task_0": "feast_statue_d",
+"stage_3_task_1": "statue_feast_d",
+"stage_3_task_2": "feast_statue_e",
+"stage_3_task_3": "statue_feast_e",
+"stage_3_task_4": "statue_feast_f"
+})
 choose_upgrades = true
 loop_last_stage = true
 unlocked_road = ExtResource("road_plus")

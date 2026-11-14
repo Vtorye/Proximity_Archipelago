@@ -90,6 +90,23 @@ func _run() -> void:
 	SessionSave.apply(restored, snapshot)
 	expect(restored.tasks.active_order_id == task.id and restored.build_controller.construction.at(Vector2i(25, 27)) != null, "a save restores the active order and its site")
 	expect(not restored.build_controller.options.has(task.diversion), "legacy saves do not add orders to the regular catalog")
+	# A version 1 snapshot from before the order system used these IDs.
+	snapshot.tasks.level = 1
+	snapshot.tasks.closed = 1
+	snapshot.tasks.completed_count = 1
+	snapshot.tasks.slots = ["stage_1_task_0", "stage_1_task_1", "stage_1_task_2"]
+	snapshot.tasks.pool = ["stage_1_task_4"]
+	snapshot.tasks.erase("active_order_id")
+	snapshot.tasks.erase("active_order_diversion")
+	restored.tasks.restore_state(snapshot.tasks)
+	expect(restored.tasks.capture_state().pool == ["house_feast"], "legacy stage_1_task_4 in the pool is migrated")
+	expect(restored.tasks.capture_state().slots == ["statue_feast", "quarry_feast", "farm_feast"], "legacy slots retain their order")
+	expect(restored.tasks.closed == 1 and restored.tasks.completed_count == 1, "legacy task progress is preserved")
+	snapshot.tasks.slots[1] = "removed_task"
+	snapshot.tasks.pool[0] = "removed_pool_task"
+	restored.tasks.restore_state(snapshot.tasks)
+	var remaining: Dictionary = restored.tasks.capture_state()
+	expect(not remaining.slots.has("") and remaining.pool.size() == 1 and restored.tasks.closed == 1, "unmapped tasks are replaced without losing progress or blocking the stage")
 	restored.free()
 	var old_time := world.match_controller.time_remaining
 	if site != null: world.build_controller.finish_construction(site)

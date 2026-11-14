@@ -6,6 +6,8 @@ extends Resource
 @export var loop_last_stage := true
 @export var unlocked_road: TileBuildOption
 @export var replaced_road: TileBuildOption
+## IDs from older saves mapped to their replacement task IDs.
+@export var legacy_task_ids: Dictionary[String, String] = {}
 
 func validate(stock: WorldInventory) -> Array[String]:
 	var errors: Array[String] = []

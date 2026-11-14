@@ -201,22 +201,26 @@ func restore_state(state: Dictionary) -> void:
 	for stage_definition in deck.stages:
 		for task in stage_definition.tasks:
 			definitions[str(task.id)] = task
-	slots.clear()
-	for id in state.slots:
-		slots.append(definitions.get(id))
-	_pool.clear()
-	for id in state.pool:
-		_pool.append(definitions[id])
 	_rng.state = state.rng
 	level = state.level
 	closed = state.closed
+	slots.clear()
+	for id: String in state.slots:
+		slots.append(definitions.get(deck.legacy_task_ids.get(id, id)))
+	_pool.clear()
+	for id: String in state.pool:
+		var task: TaskSpec = definitions.get(deck.legacy_task_ids.get(id, id))
+		if task != null:
+			_pool.append(task)
+	_restore_missing_offers()
 	completed_count = state.completed_count
 	skipped_count = state.skipped_count
 	pending_reward = state.pending_reward
 	buffs.assign(state.buffs)
 	_speed = state._speed
 	message = state.message
-	active_order_id = StringName(state.get("active_order_id", ""))
+	var saved_order_id: String = state.get("active_order_id", "")
+	active_order_id = StringName(deck.legacy_task_ids.get(saved_order_id, saved_order_id))
 	active_order_diversion = state.get("active_order_diversion", false)
 	active_order_option = null
 	for task in slots:
@@ -229,6 +233,27 @@ func restore_state(state: Dictionary) -> void:
 	if active_order_option != null:
 		cancel_unplaced_order(active_order_option)
 	changed.emit()
+
+## If a task was removed without a replacement, keep the saved progress and
+## offer unused tasks from the current stage until the player can finish it.
+func _restore_missing_offers() -> void:
+	var remaining := stage().tasks.size() - closed
+	var available := _pool.size()
+	for task in slots:
+		if task != null:
+			available += 1
+	if available >= remaining:
+		return
+	for task in stage().tasks:
+		if task == null or slots.has(task) or _pool.has(task):
+			continue
+		_pool.append(task)
+		available += 1
+		if available >= remaining:
+			break
+	for index in range(slots.size()):
+		if slots[index] == null and not _pool.is_empty():
+			slots[index] = _pool.pop_back()
 
 func display_message() -> String:
 	if message.begins_with("ui.task.time_reward:"):
