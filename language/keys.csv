@@ -299,6 +299,7 @@ ui.building.feast,Royal feast,Королевский пир
 ui.construction.description.statue,"A passive monument that blocks movement. Placeholder art.","Пассивный монумент, преграждающий проход. Графика временная."
 ui.construction.description.feast,"A temporary royal feast. It disappears ten seconds after construction.","Временный королевский пир. Исчезает через 10 секунд после постройки."
 ui.task.request_statue,A royal monument is requested,Король требует установить монумент
+ui.placement.instance_limit,Building limit reached,Достигнут лимит построек
 ui.task.request_feast,A royal feast is requested,Король требует устроить пир
 ui.task.build,Build requested,Построить требуемое
 ui.task.diversion,Arrange a diversion,Отвлечь внимание

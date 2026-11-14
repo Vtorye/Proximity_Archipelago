@@ -144,7 +144,7 @@ func _process(_delta: float) -> void:
 	var top: MenuBase = Router.top_overlay()
 	var can_use_map: bool = top == null and not campaign_panel.visible
 	if is_instance_valid(_construction):
-		_construction.visible = can_use_map and _section == &"build"
+		_construction.visible = can_use_map and (_section == &"build" or (_section == &"tasks" and _construction.order_option != null))
 	camera.enabled_input = can_use_map and not _building_active()
 	if is_instance_valid(nest_popup):
 		nest_popup.visible = (top == null or top is PauseMenu) and not campaign_panel.visible
@@ -216,7 +216,10 @@ func _open_settings() -> void:
 func _select_section(section: StringName) -> void:
 	if Router.has_overlay() or campaign_panel.visible:
 		return
-	_section = &"" if _section == section else section
+	var previous_section := _section
+	if is_instance_valid(_construction) and _construction.order_option != null:
+		_close_construction_panel(_construction)
+	_section = &"" if previous_section == section else section
 	hud.set_section(_section)
 	if _section == &"build":
 		if not is_instance_valid(_construction):
@@ -228,7 +231,7 @@ func _select_section(section: StringName) -> void:
 	elif is_instance_valid(_construction):
 		_construction.hide()
 
-func _create_construction_panel() -> void:
+func _create_construction_panel(order_option: BuildOption = null) -> void:
 	var context := ConstructionContext.new()
 	context.controller = world.build_controller
 	context.art = world.art
@@ -237,6 +240,7 @@ func _create_construction_panel() -> void:
 	context.dismiss_map_popup = _dismiss_visible_nest_popup
 	_construction = CONSTRUCTION_PANEL.instantiate()
 	_construction.payload = context
+	_construction.order_option = order_option
 	_construction.map_inspection_requested.connect(_inspect_secondary_cell)
 	_construction.close_requested.connect(_close_construction_panel)
 	_construction.map_drag_released.connect(_set_map_drag.bind(false))
@@ -247,12 +251,12 @@ func _create_construction_panel() -> void:
 func _begin_royal_order(index: int, diversion: bool) -> void:
 	var option: BuildOption = world.tasks.start_order(index, diversion)
 	if option == null: return
-	_section = &"build"
+	if is_instance_valid(_construction):
+		_close_construction_panel(_construction)
+	_section = &"tasks"
 	hud.set_section(_section)
-	if not is_instance_valid(_construction): _create_construction_panel()
-	_construction.show()
-	_construction.order_mode = true
-	_construction.select_option(option)
+	_set_map_drag(false)
+	_create_construction_panel(option)
 	camera.dragging = false
 	camera.enabled_input = false
 	selection.clear()
@@ -260,10 +264,15 @@ func _begin_royal_order(index: int, diversion: bool) -> void:
 func _close_construction_panel(menu: MenuBase) -> void:
 	if menu != _construction:
 		return
+	var order := _construction.order_option
 	_construction.hide()
 	_construction.queue_free()
 	_construction = null
-	_section = &""
+	if order != null:
+		world.tasks.cancel_unplaced_order(order)
+		_section = &"tasks"
+	else:
+		_section = &""
 	hud.set_section(_section)
 
 func _set_map_drag(enabled: bool) -> void:

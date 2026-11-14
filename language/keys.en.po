@@ -267,6 +267,12 @@ msgstr "A passive monument that blocks movement. Placeholder art."
 msgid "ui.construction.description.feast"
 msgstr "A temporary royal feast. It disappears ten seconds after construction."
 
+msgid "ui.placement.instance_limit"
+msgstr "Building limit reached"
+
+msgid "ui.task.request_feast"
+msgstr "A royal feast is requested"
+
 msgid "ui.task.request_statue"
 msgstr "A royal monument is requested"
 

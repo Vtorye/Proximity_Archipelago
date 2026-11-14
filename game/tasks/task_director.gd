@@ -13,8 +13,6 @@ var skipped_count := 0
 var active_order_id: StringName = &""
 var active_order_option: BuildOption
 var active_order_diversion := false
-var active_order_reward_seconds := -1.0
-var active_order_rewards: Array[ResourceAmount] = []
 var slots: Array[TaskSpec] = []
 var _pool: Array[TaskSpec] = []
 var _rng := RandomNumberGenerator.new()
@@ -30,6 +28,8 @@ func configure(colony: World, definitions: TaskDeck, random_seed: int = 0) -> vo
 	world.population.spawned.connect(func(ant: AntAgent): apply_ant_buffs(ant))
 	world.registry.added.connect(func(building: Building): _skin(building))
 	world.build_controller.built.connect(_on_building_built)
+	if world.build_controller.construction != null:
+		world.build_controller.construction.cancelled.connect(cancel_unplaced_order)
 	_next_level()
 
 func stage() -> TaskStage:
@@ -44,38 +44,35 @@ func start_order(index: int, diversion: bool = false) -> BuildOption:
 	var task: TaskSpec = slots[index]
 	var option: BuildOption = task.diversion if diversion else task.building
 	if option == null: return null
-	if not world.build_controller.options.has(option): world.build_controller.options.append(option)
-	if world.prices != null:
-		world.prices.definitions = world.build_controller.options.duplicate()
-		world.prices.changed.emit()
+	world.build_controller.order_option = option
 	active_order_id = task.id
 	active_order_option = option
 	active_order_diversion = diversion
-	active_order_reward_seconds = task.diversion_reward_seconds if diversion else task.building_reward_seconds
-	active_order_rewards = (task.diversion_rewards if diversion else task.building_rewards).duplicate()
 	changed.emit()
 	return option
 
-func abandon_order() -> void:
+func cancel_unplaced_order(option: BuildOption) -> void:
+	if option != active_order_option: return
+	var construction := world.build_controller.construction
+	if construction != null and construction.sites.any(func(site: ConstructionSite) -> bool: return site.option == option):
+		return
+	_clear_order()
+	changed.emit()
+
+func _clear_order() -> void:
 	active_order_id = &""
 	active_order_option = null
 	active_order_diversion = false
-	active_order_reward_seconds = -1.0
-	active_order_rewards.clear()
-	changed.emit()
+	world.build_controller.order_option = null
 
 func _on_building_built(option: BuildOption, _cell: Vector2i) -> void:
 	if active_order_id == &"" or option != active_order_option: return
 	for index in range(slots.size()):
 		if slots[index] != null and slots[index].id == active_order_id:
 			var task: TaskSpec = slots[index]
-			var reward_seconds := active_order_reward_seconds if active_order_reward_seconds >= 0.0 else task.reward_seconds
-			var variant_rewards: Array[ResourceAmount] = active_order_rewards if not active_order_rewards.is_empty() else task.rewards
-			active_order_id = &""
-			active_order_option = null
-			active_order_diversion = false
-			active_order_reward_seconds = -1.0
-			active_order_rewards.clear()
+			var reward_seconds := task.time_reward_for(active_order_diversion)
+			var variant_rewards := task.resources_for(active_order_diversion)
+			_clear_order()
 			_complete_task(task, reward_seconds, variant_rewards)
 			closed += 1
 			slots[index] = _pool.pop_back() if not _pool.is_empty() else null
@@ -84,7 +81,7 @@ func _on_building_built(option: BuildOption, _cell: Vector2i) -> void:
 				if deck.choose_upgrades: pending_reward = true
 				else:
 					_apply_upgrade()
-				advance()
+					advance()
 			changed.emit()
 			return
 
@@ -194,7 +191,6 @@ func capture_state() -> Dictionary:
 		"message": message, "rng": _rng.state,
 		"active_order_id": str(active_order_id),
 		"active_order_diversion": active_order_diversion,
-		"active_order_reward_seconds": active_order_reward_seconds,
 		"slots": slots.map(func(task: TaskSpec): return str(task.id) if task != null else ""),
 		"pool": _pool.map(func(task: TaskSpec): return str(task.id)),
 	}
@@ -222,21 +218,16 @@ func restore_state(state: Dictionary) -> void:
 	message = state.message
 	active_order_id = StringName(state.get("active_order_id", ""))
 	active_order_diversion = state.get("active_order_diversion", false)
-	active_order_reward_seconds = state.get("active_order_reward_seconds", -1.0)
 	active_order_option = null
-	var found_order := false
-	for task in deck.requests:
-		if task.id == active_order_id:
-			found_order = true
+	for task in slots:
+		if task != null and task.id == active_order_id:
 			active_order_option = task.diversion if active_order_diversion else task.building
-	for stage_definition in deck.stages:
-		for task in stage_definition.tasks:
-			if task.id == active_order_id:
-				found_order = true
-				active_order_option = task.diversion if active_order_diversion else task.building
-	if not found_order:
+			break
+	if active_order_option == null:
 		active_order_id = &""
-		active_order_reward_seconds = -1.0
+	world.build_controller.order_option = active_order_option
+	if active_order_option != null:
+		cancel_unplaced_order(active_order_option)
 	changed.emit()
 
 func display_message() -> String:

@@ -5,7 +5,7 @@ const PRESENTATION: UiPresentation = preload("res://game/ui/ui_presentation.tres
 ## Construction editor. The draft owns edits; the controller commits the final plan.
 signal map_drag_released
 signal map_inspection_requested(cell: Vector2i)
-signal order_placement_finished
+var order_option: BuildOption
 
 var context: ConstructionContext
 var draft := BuildDraft.new()
@@ -33,7 +33,6 @@ var category_buttons: Array[Button] = []
 var _category_for: Dictionary[StringName, Button] = {}
 
 var _pricing_cell := Vector2i(2147483647, 2147483647)
-var order_mode := false
 
 func toggle_fold() -> void:
 	_header.set_collapsed(not _header.collapsed)
@@ -45,8 +44,6 @@ func dock_above(bar_height: float) -> void:
 func _ready() -> void:
 	%PreviewCategory.hide()
 	%PreviewCard.hide()
-	%Toolbar.move_child(%Demolish, %Toolbar.get_child_count() - 1)
-	%Actions.move_child(%Cancel, %Actions.get_child_count() - 1)
 	%PaletteHeader.collapsed_changed.connect(func(_folded: bool): _end_stroke())
 	_pointer = get_viewport().get_mouse_position()
 	dismissable = false
@@ -81,11 +78,20 @@ func _ready() -> void:
 	controls[&"keep_residents"] = %KeepResidents
 	%KeepResidents.pressed.connect(AppSettings.play_click)
 	%KeepResidents.pressed.connect(_cancel_confirmation)
-	_populate_categories()
-	if not context.controller.options.is_empty() and context.controller.options[0] != null:
-		var first: BuildOption = context.controller.options[0]
-		show_category_for(first.id)
-		_select(first)
+	if order_option != null:
+		%Categories.hide()
+		%Buildings.hide()
+		%Demolish.hide()
+		_header.dock = WindowHeader.Dock.BOTTOM_RIGHT
+		_header.panel_width = %Readout.custom_minimum_size.x
+
+		_select(order_option)
+	else:
+		_populate_categories()
+		if not context.controller.options.is_empty() and context.controller.options[0] != null:
+			var first: BuildOption = context.controller.options[0]
+			show_category_for(first.id)
+			_select(first)
 	draft.changed.connect(_cancel_confirmation)
 	if context.controller.prices != null: context.controller.prices.changed.connect(func():
 		draft.last_result = PlacementCheck.new()
@@ -96,7 +102,7 @@ func _ready() -> void:
 	AppSettings.changed.connect(_queue_refresh)
 	draft.changed.connect(_queue_refresh)
 	_refresh()
-	default_focus = controls[_selected.id] if _selected != null else controls[&"cancel"]
+	default_focus = controls.get(_selected.id, %Cancel) if _selected != null else %Cancel
 
 func _populate_categories() -> void:
 	var remaining: Array[BuildOption] = context.controller.options.duplicate()
@@ -200,26 +206,10 @@ func _select(option: BuildOption) -> void:
 	_selected = option
 	%DescriptionScroll.scroll_vertical = 0
 	_preview.demolishing = false
-	controls[option.id].set_pressed_no_signal(true)
+	if controls.has(option.id): controls[option.id].set_pressed_no_signal(true)
 	_preview.option = option
 	_preview.queue_redraw()
 	_refresh()
-
-func select_option(option: BuildOption) -> void:
-	if option == null: return
-	if not controls.has(option.id):
-		context.controller.options.append(option)
-		var entry: ConstructionCard = preload("res://game/ui/construction_card.tscn").instantiate()
-		entry.button_group = %Demolish.button_group
-		entry.pressed.connect(AppSettings.play_click)
-		entry.pressed.connect(_select.bind(option))
-		%Choices.add_child(entry)
-		entry.configure(option, context.art)
-		controls[option.id] = entry
-		_category_for[option.id] = category_buttons[0] if not category_buttons.is_empty() else null
-		entry.show()
-	show_category_for(option.id)
-	_select(option)
 
 func set_map_drag(enabled: bool) -> void:
 	_end_stroke()
@@ -252,7 +242,7 @@ func _refresh() -> void:
 	_cost.text = tr("ui.construction.cost") % [draft.size(), BuildCostText.format(draft.costs())]
 	_cost.add_theme_color_override("font_color", ColonyStyle.color(&"text") if budget.allowed() else ColonyStyle.color(&"danger"))
 	controls[&"undo"].disabled = not draft.can_undo()
-	controls[&"apply"].disabled = not budget.allowed()
+	controls[&"apply"].disabled = draft.size() == 0 or not budget.allowed()
 	var reason: PlacementCheck = budget if not budget.allowed() else draft.last_result
 	_status.text = PlacementMessages.text(reason.code)
 	_status.visible = not reason.allowed()
@@ -275,6 +265,7 @@ func _cancel() -> void:
 	close_requested.emit(self)
 
 func apply_plan() -> void:
+	if draft.size() == 0: return
 	_end_stroke()
 	var residents: int = draft.residents_to_demolish()
 	if residents > 0:
@@ -286,8 +277,6 @@ func apply_plan() -> void:
 
 func _commit() -> void:
 	if draft.commit():
-		if order_mode:
-			order_mode = false
 		close_requested.emit(self)
 	else:
 		%PaletteHeader.set_collapsed(false)

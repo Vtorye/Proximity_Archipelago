@@ -43,7 +43,10 @@ func _validate_request(task: TaskSpec, stock: WorldInventory, prices: PriceServi
 			if option.id == &"" or not prices.valid(option): errors.append(resource_path + ": invalid request option")
 			for cost in option.costs:
 				if cost == null or not stock.is_registered(cost.type): errors.append(resource_path + ": unknown request cost resource")
-	for reward in task.rewards:
+	for seconds in [task.building_reward_seconds, task.diversion_reward_seconds]:
+		if not is_finite(seconds) or (seconds != -1.0 and seconds < 0.0):
+			errors.append(resource_path + ": invalid variant time reward")
+	for reward in task.rewards + task.building_rewards + task.diversion_rewards:
 		if reward == null or reward.type == null or not stock.is_registered(reward.type): errors.append(resource_path + ": invalid request reward")
 	for option in task.unlocks:
 		if option == null or option.id == &"" or not prices.valid(option): errors.append(resource_path + ": invalid building unlock")

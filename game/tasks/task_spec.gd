@@ -15,3 +15,11 @@ extends Resource
 @export var building_rewards: Array[ResourceAmount] = []
 @export var diversion_reward_seconds := -1.0
 @export var diversion_rewards: Array[ResourceAmount] = []
+
+func time_reward_for(is_diversion: bool) -> float:
+	var seconds := diversion_reward_seconds if is_diversion else building_reward_seconds
+	return seconds if seconds >= 0.0 else reward_seconds
+
+func resources_for(is_diversion: bool) -> Array[ResourceAmount]:
+	var variant_rewards := diversion_rewards if is_diversion else building_rewards
+	return variant_rewards if not variant_rewards.is_empty() else rewards

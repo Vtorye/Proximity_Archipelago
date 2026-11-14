@@ -40,6 +40,13 @@ func paint(option: BuildOption, cell: Vector2i) -> bool:
 	if not last_result.allowed(): return false
 	if previous != null and previous.cell == cell and previous.option == option: return true
 	if option is SceneBuildOption:
+		var planned := 0
+		for command in _commands:
+			if command != previous and command.option != null and command.option.id == option.id:
+				planned += 1
+		if not controller.allows_another(option, _removed, planned):
+			last_result = PlacementCheck.result(PlacementCheck.Code.INSTANCE_LIMIT)
+			return false
 		for target in controller.footprint_at(option, cell):
 			if _occupied.has(target) and _occupied[target] != previous:
 				last_result = PlacementCheck.result(PlacementCheck.Code.OCCUPIED)

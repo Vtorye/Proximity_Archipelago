@@ -267,6 +267,12 @@ msgstr "Пассивный монумент, преграждающий прох
 msgid "ui.construction.description.feast"
 msgstr "Временный королевский пир. Исчезает через 10 секунд после постройки."
 
+msgid "ui.placement.instance_limit"
+msgstr "Достигнут лимит построек"
+
+msgid "ui.task.request_feast"
+msgstr "Король требует устроить пир"
+
 msgid "ui.task.request_statue"
 msgstr "Король требует установить монумент"
 

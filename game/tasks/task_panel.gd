@@ -28,12 +28,6 @@ func _refresh() -> void:
 		var request: VBoxContainer = preload("res://game/tasks/task_request.tscn").instantiate()
 		var title: Label = request.get_node("Title")
 		title.text = task.title
-		var cost: Label = request.get_node("Cost")
-		var crown_reward := ""
-		for reward: ResourceAmount in task.rewards:
-			if reward.type != null and reward.type.id == WorldInventory.CURRENCY_ID:
-				crown_reward = " · +%d %s" % [reward.amount, tr(reward.type.display_name)]
-		cost.text = "%s / %s%s · %s" % [BuildCostText.format(director.world.build_controller.price(task.building)), BuildCostText.format(director.world.build_controller.price(task.diversion)), crown_reward, tr("ui.task.time_reward") % task.reward_seconds]
 		if not task.unlocks.is_empty():
 			var names := PackedStringArray()
 			for option in task.unlocks:
@@ -46,12 +40,19 @@ func _refresh() -> void:
 			var button: Button = request.get_node("Actions/Diversion" if diversion else "Actions/Build")
 			var option: BuildOption = task.diversion if diversion else task.building
 			var label_key: String = task.diversion_label if diversion else task.building_label
-			button.text = tr(label_key if not label_key.is_empty() else option.display_name) if option != null else tr("ui.task.diversion" if diversion else "ui.task.build")
+
+			if option != null:
+				button.icon = director.world.art.build_icon(option)
+				var label := tr(label_key if not label_key.is_empty() else option.display_name)
+				var time := tr("ui.task.time_reward") % task.time_reward_for(diversion)
+				button.tooltip_text = "%s\n%s\n%s" % [label, time, BuildCostText.format(task.resources_for(diversion))]
+			else:
+				button.hide()
 			button.pressed.connect(AppSettings.play_click)
 			button.set_meta(&"diversion", diversion)
 			button.set_meta(&"task_index", index)
 			button.disabled = option == null or director.active_order_id != &""
-			button.pressed.connect(func(): order_requested.emit(index, diversion))
+			button.pressed.connect(order_requested.emit.bind(index, diversion))
 		_requests.add_child(request)
 	%Message.text = director.display_message()
 	_update_availability()
@@ -60,8 +61,10 @@ func _update_availability() -> void:
 	if _requests == null: return
 	for button in _requests.find_children("*", "Button", true, false):
 		var task: TaskSpec = director.slots[button.get_meta(&"task_index")]
-		var option: BuildOption = task.diversion if button.get_meta(&"diversion") else task.building
-		button.disabled = option == null or director.active_order_id != &""
+		var option: BuildOption
+		if task != null:
+			option = task.diversion if button.get_meta(&"diversion") else task.building
+		button.disabled = option == null or director.active_order_id != &"" or director.pending_reward
 	var missing := 0
 	var occupied := 0
 	for ant in director.world.population.agents():

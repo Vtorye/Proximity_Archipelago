@@ -18,9 +18,9 @@ var logistics: ColonyLogistics
 var map: TileMapLayer
 var buildings: Node2D
 var inventory: WorldInventory
-var world: World
 var route_service: RouteService
 var options: Array[BuildOption] = []
+var order_option: BuildOption
 var _committing := false
 var last_result := PlacementCheck.new()
 
@@ -52,7 +52,7 @@ func check(option: BuildOption, cell: Vector2i) -> PlacementCheck:
 func placement_check(option: BuildOption, cell: Vector2i, removed: Array[Building] = []) -> PlacementCheck:
 	if _committing:
 		return PlacementCheck.result(PlacementCheck.Code.BUSY)
-	if option == null or not options.has(option):
+	if option == null or (not options.has(option) and option != order_option):
 		return PlacementCheck.result(PlacementCheck.Code.INVALID_OPTION)
 	if construction != null and construction.at(cell, option is TileBuildOption) != null and not removed.has(construction.at(cell, option is TileBuildOption)):
 		return PlacementCheck.result(PlacementCheck.Code.OCCUPIED)
@@ -77,8 +77,8 @@ func placement_check(option: BuildOption, cell: Vector2i, removed: Array[Buildin
 			return PlacementCheck.result(PlacementCheck.Code.INVALID_BUILDING)
 		if (option.blocks_movement or option.requires_water) and option.entry_offsets.is_empty():
 			return PlacementCheck.result(PlacementCheck.Code.INVALID_BUILDING)
-		if option.instance_limit > 0 and _instance_count(option, removed) >= option.instance_limit:
-			return PlacementCheck.result(PlacementCheck.Code.OCCUPIED)
+		if not allows_another(option, removed):
+			return PlacementCheck.result(PlacementCheck.Code.INSTANCE_LIMIT)
 	else:
 		return PlacementCheck.result(PlacementCheck.Code.INVALID_OPTION)
 	var water_site: bool = option is SceneBuildOption and option.requires_water
@@ -107,14 +107,19 @@ func placement_check(option: BuildOption, cell: Vector2i, removed: Array[Buildin
 		return PlacementCheck.result(PlacementCheck.Code.SHORE_REQUIRED)
 	return PlacementCheck.new()
 
-func _instance_count(option: SceneBuildOption, removed: Array[Building]) -> int:
-	var count := 0
+func allows_another(option: SceneBuildOption, removed: Array[Building], planned: int = 0) -> bool:
+	if option == order_option:
+		if planned > 0:
+			return false
+		if construction != null and construction.sites.any(func(site: ConstructionSite) -> bool: return site.option == option):
+			return false
+	if option.instance_limit == 0:
+		return true
+	var count := planned
 	for building in registry.all():
-		if not removed.has(building) and building.option == option: count += 1
-	if construction != null:
-		for site in construction.sites:
-			if not removed.has(site) and site.option == option: count += 1
-	return count
+		if not removed.has(building) and building.option != null and building.option.id == option.id:
+			count += 1
+	return count < option.instance_limit
 
 func can_build(option: BuildOption, cell: Vector2i) -> bool:
 	return check(option, cell).allowed()
@@ -196,7 +201,7 @@ func try_build_plan(commands: Array[BuildCommand]) -> bool:
 	for building in removed: cells.append_array(building.footprint())
 	var occupied: Dictionary[Vector2i, bool] = {}
 	var terrain: Dictionary[Vector2i, bool] = {}
-	var planned_instances: Dictionary[SceneBuildOption, int] = {}
+	var planned_instances: Dictionary[StringName, int] = {}
 	var candidates: Array[Building] = []
 	for command in placements:
 		var cell: Vector2i = command.cell
@@ -204,13 +209,12 @@ func try_build_plan(commands: Array[BuildCommand]) -> bool:
 		last_result = placement_check(option, cell, removed)
 		if not last_result.allowed():
 			break
-		if option is SceneBuildOption and option.instance_limit > 0:
-			var scene_option := option as SceneBuildOption
-			var already_planned: int = planned_instances.get(scene_option, 0)
-			if _instance_count(scene_option, removed) + already_planned >= scene_option.instance_limit:
-				last_result = PlacementCheck.result(PlacementCheck.Code.OCCUPIED)
+		if option is SceneBuildOption:
+			var already_planned: int = planned_instances.get(option.id, 0)
+			if not allows_another(option, removed, already_planned):
+				last_result = PlacementCheck.result(PlacementCheck.Code.INSTANCE_LIMIT)
 				break
-			planned_instances[scene_option] = already_planned + 1
+			planned_instances[option.id] = already_planned + 1
 		var layer: Dictionary[Vector2i, bool] = terrain if option is TileBuildOption else occupied
 		for target in _footprint(option, cell):
 			if layer.has(target):
@@ -317,9 +321,7 @@ func _start_lifetime(building: Building, seconds: float) -> void:
 		if not is_instance_valid(building) or building.is_queued_for_deletion(): return
 		var cells: Array[Vector2i] = building.footprint()
 		building.demolish()
-		registry._unregister(building)
 		building.queue_free()
-		if world != null and world.voyage != null: world.voyage.building_removed(building)
 		route_service.update_cells(cells, registry.blocked_cells())
 		changed.emit()
 	)

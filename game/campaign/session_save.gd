@@ -131,9 +131,22 @@ static func apply(world: World, data: Dictionary) -> void:
 		if state.has("health"):
 			world.combat.restore_building_health(building, int(state.health))
 	var definitions := _definitions(world)
+	var catalog_ids: Array[String] = []
+	for option in world.build_controller.options:
+		catalog_ids.append(str(option.id))
+	catalog_ids.append(str(Voyage.SHIP.id))
+	if world.tasks != null:
+		var deck := world.tasks.deck
+		if deck.unlocked_road != null:
+			catalog_ids.append(str(deck.unlocked_road.id))
+		for stage in deck.stages:
+			for task in stage.tasks:
+				for option in task.unlocks:
+					catalog_ids.append(str(option.id))
 	world.build_controller.options.clear()
 	for id in data.options:
-		if definitions.has(id): world.build_controller.options.append(definitions[id])
+		if catalog_ids.has(id) and definitions.has(id):
+			world.build_controller.options.append(definitions[id])
 	world.prices.definitions = world.build_controller.options.duplicate()
 	world.prices.global_multiplier = data.prices.multiplier
 	world.events.restore_counts(data.prices.counts)
@@ -194,7 +207,10 @@ static func _definitions(world: World) -> Dictionary:
 			options.append(task.diversion)
 			options.append_array(task.unlocks)
 		for stage in world.tasks.deck.stages:
-			for task in stage.tasks: options.append_array(task.unlocks)
+			for task in stage.tasks:
+				options.append(task.building)
+				options.append(task.diversion)
+				options.append_array(task.unlocks)
 	for option in options:
 		if option != null: result[str(option.id)] = option
 	return result

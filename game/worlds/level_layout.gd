@@ -187,6 +187,9 @@ static func _restore_objects(world: World, map: TileMapLayer, objects: Array[Lev
 			if stage == null: continue
 			for task in stage.tasks:
 				if task == null: continue
+				for order in [task.building, task.diversion]:
+					if order is SceneBuildOption:
+						catalog["build/" + str(order.id)] = order
 				for option in task.unlocks:
 					if option is WorkplaceUpgradeOption:
 						improvements[str(option.id)] = option

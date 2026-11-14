@@ -2,6 +2,8 @@ class_name SceneBuildOption
 extends BuildOption
 
 @export var scene: PackedScene
+## Maximum simultaneous instances of this option on the map. Zero means unlimited.
+@export_range(0, 1000, 1, "or_greater") var instance_limit := 0
 ## Offsets relative to the selected cell. Include the origin.
 @export var occupied_cells: Array[Vector2i] = [Vector2i.ZERO]
 @export var blocks_movement: bool = true
@@ -16,8 +18,6 @@ extends BuildOption
 @export_group("Lifetime")
 ## Zero keeps this building permanently; positive values start after construction completes.
 @export_range(0.0, 600.0, 0.5, "suffix:s") var lifetime_seconds := 0.0
-## Maximum simultaneous instances of this option on the map. Zero means unlimited.
-@export_range(0, 1000, 1) var instance_limit := 0
 
 
 func entries_at(cell: Vector2i) -> Array[Vector2i]:

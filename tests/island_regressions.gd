@@ -458,12 +458,25 @@ func _play_authored_map(test: Node, develop: bool) -> Dictionary:
 		world.match_controller._process(1.0 / 60.0)
 		if world.match_controller.is_finished(): break
 		if tick % 60 == 0:
-			if world.tasks.active_order_id == &"":
-				for index in range(world.tasks.slots.size()):
-					if world.tasks.slots[index] != null:
-						var order: BuildOption = world.tasks.start_order(index)
-						world.build_controller.built.emit(order, world.registry.all()[0].cell)
-						break
+			if world.tasks.pending_reward:
+				world.tasks.choose_reward(0)
+			for index in range(world.tasks.slots.size()):
+				if world.tasks.slots[index] == null: continue
+				var order: BuildOption = world.tasks.start_order(index)
+				if order == null: continue
+				# Check the current stock before searching all candidate cells.
+				if not world.inventory.can_afford_all(world.build_controller.price(order), true, true):
+					world.tasks.cancel_unplaced_order(order)
+					continue
+				var placed := false
+				for y in range(40, 49):
+					for x in range(62, 78):
+						if world.build_controller.try_build(order, Vector2i(x, y)):
+							placed = true
+							break
+					if placed: break
+				if placed: break
+				world.tasks.cancel_unplaced_order(order)
 			if develop:
 				var farm: BuildOption = load("res://game/building/options/farm.tres")
 				if world.inventory.available(world.inventory.type_by_id(&"food")) >= 10 and world.build_controller.can_build(farm, Vector2i(68, 46)):

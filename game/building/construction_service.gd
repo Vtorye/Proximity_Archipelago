@@ -2,6 +2,7 @@ class_name ConstructionService
 extends Node
 ## Orders reserve space immediately; carriers deliver crates and assemble buildings. Workers only gather resources.
 signal changed
+signal cancelled(option: BuildOption)
 
 @export var site_scene: PackedScene = preload("res://game/building/construction_site.tscn")
 var controller: BuildController
@@ -191,6 +192,7 @@ func cancel(site: ConstructionSite) -> void:
 	for source: House in site.crates: _refund(source, site.crates[source])
 	site.crates.clear()
 	if controller.prices != null: controller.prices.queue_order(site.option, -1)
+	cancelled.emit(site.option)
 	changed.emit()
 
 func finished(site: ConstructionSite) -> void:

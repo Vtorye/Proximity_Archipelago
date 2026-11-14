@@ -18,6 +18,7 @@ script = ExtResource("task")
 id = &"canteen_feast"
 title = "ui.task.request_feast"
 reward_seconds = 25.0
+diversion_reward_seconds = 15.0
 building = ExtResource("feast")
 diversion = ExtResource("statue")
 building_label = "ui.building.feast"

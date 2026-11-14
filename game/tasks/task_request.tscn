@@ -10,12 +10,6 @@ mouse_filter = 2
 text = "ui.task.request_1_1"
 text_overrun_behavior = 3
 
-[node name="Cost" type="Label" parent="."]
-theme_type_variation = &"Caption"
-mouse_filter = 2
-text = "Food ×5"
-autowrap_mode = 3
-
 [node name="Actions" type="HBoxContainer" parent="."]
 theme_override_constants/separation = 3
 
@@ -23,14 +17,16 @@ theme_override_constants/separation = 3
 theme_type_variation = &"CompactButton"
 unique_name_in_owner = true
 mouse_default_cursor_shape = 2
-text = "Build"
-size_flags_horizontal = 3
-custom_minimum_size = Vector2(0, 22)
+custom_minimum_size = Vector2(40, 40)
+expand_icon = true
+icon_alignment = 1
+theme_override_constants/icon_max_width = 30
 
 [node name="Diversion" type="Button" parent="Actions"]
 theme_type_variation = &"CompactButton"
 unique_name_in_owner = true
 mouse_default_cursor_shape = 2
-text = "Diversion"
-size_flags_horizontal = 3
-custom_minimum_size = Vector2(0, 22)
+custom_minimum_size = Vector2(40, 40)
+expand_icon = true
+icon_alignment = 1
+theme_override_constants/icon_max_width = 30
