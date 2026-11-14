@@ -8,6 +8,7 @@ var level := 2
 @export var enabled_input := true
 var bounds := Rect2(0, 0, 800, 800)
 var dragging := false
+var left_button_drag := true
 var _focused_nest: House
 
 func _ready() -> void:
@@ -18,7 +19,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not enabled_input:
 		return
 	if event is InputEventMouseButton:
-		if event.button_index in [MOUSE_BUTTON_LEFT, MOUSE_BUTTON_MIDDLE]:
+		if event.button_index == MOUSE_BUTTON_MIDDLE or (left_button_drag and event.button_index == MOUSE_BUTTON_LEFT):
 			dragging = event.pressed
 			get_viewport().set_input_as_handled()
 		elif event.pressed and event.button_index in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN]:

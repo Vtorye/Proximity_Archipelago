@@ -1,5 +1,7 @@
 class_name BuildPreview
 extends Node2D
+
+const PRESENTATION: UiPresentation = preload("res://game/ui/ui_presentation.tres")
 ## World-space ghosts use the same catalog and cell size as committed buildings.
 var draft: BuildDraft
 var art: ArtCatalog
@@ -10,7 +12,7 @@ var demolishing := false
 
 func _draw() -> void:
 	if draft == null: return
-	var color: Color = ColonyStyle.ACCENT if draft.budget_check().allowed() else ColonyStyle.DANGER
+	var color: Color = ColonyStyle.color(&"accent") if draft.budget_check().allowed() else ColonyStyle.color(&"danger")
 	var commands: Array[BuildCommand] = draft.commands()
 	for terrain in [true, false]:
 		for command in commands:
@@ -26,8 +28,8 @@ func _draw() -> void:
 		_draw_removal(cells)
 	if hovering and option != null:
 		var check: PlacementCheck = draft.controller.placement_check(option, hover, draft.removals())
-		var border: Color = ColonyStyle.GREEN if check.allowed() else ColonyStyle.DANGER
-		_draw_option(hover, option, Color(1, 1, 1, 0.5), border)
+		var border: Color = ColonyStyle.color(&"green") if check.allowed() else ColonyStyle.color(&"danger")
+		_draw_option(hover, option, Color(Color.WHITE, PRESENTATION.ghost_hover_opacity), border)
 
 func _draw_option(cell: Vector2i, definition: BuildOption, tint: Color, border: Color) -> void:
 	var navigation: RouteService = draft.controller.route_service
@@ -38,18 +40,18 @@ func _draw_option(cell: Vector2i, definition: BuildOption, tint: Color, border: 
 	if definition.id == &"house":
 		tint *= House.BARRACKS_TINT
 	if texture != null:
-		draw_texture_rect(texture, rect, false, Color(tint, 0.65 * tint.a))
+		draw_texture_rect(texture, rect, false, Color(tint, PRESENTATION.ghost_opacity * tint.a))
 	for target in draft.controller.footprint_at(definition, cell):
 		var point: Vector2 = to_local(navigation.cell_to_world(target))
-		draw_rect(Rect2(point - size / 2.0 + Vector2.ONE, size - Vector2.ONE * 2), border, false, 1.0)
+		draw_rect(Rect2(point - size / 2.0 + Vector2.ONE * PRESENTATION.outline_inset, size - Vector2.ONE * PRESENTATION.outline_inset * 2), border, false, PRESENTATION.outline_width)
 
 func _draw_removal(cells: Array[Vector2i]) -> void:
 	var navigation: RouteService = draft.controller.route_service
 	var size: Vector2 = Vector2.ONE * navigation.cell_size()
 	for cell in cells:
 		var center: Vector2 = to_local(navigation.cell_to_world(cell))
-		var rect := Rect2(center - size / 2.0 + Vector2.ONE, size - Vector2.ONE * 2)
-		draw_rect(rect, Color(0.6, 0.1, 0.1, 0.4))
-		draw_rect(rect, ColonyStyle.DANGER, false, 1.0)
-		draw_line(rect.position, rect.end, ColonyStyle.DANGER, 1.0)
-		draw_line(Vector2(rect.position.x, rect.end.y), Vector2(rect.end.x, rect.position.y), ColonyStyle.DANGER, 1.0)
+		var rect := Rect2(center - size / 2.0 + Vector2.ONE * PRESENTATION.outline_inset, size - Vector2.ONE * PRESENTATION.outline_inset * 2)
+		draw_rect(rect, PRESENTATION.removal_fill)
+		draw_rect(rect, ColonyStyle.color(&"danger"), false, PRESENTATION.outline_width)
+		draw_line(rect.position, rect.end, ColonyStyle.color(&"danger"), PRESENTATION.outline_width)
+		draw_line(Vector2(rect.position.x, rect.end.y), Vector2(rect.end.x, rect.position.y), ColonyStyle.color(&"danger"), PRESENTATION.outline_width)

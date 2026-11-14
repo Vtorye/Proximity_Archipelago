@@ -90,7 +90,7 @@ func refresh() -> void:
 			if building is House and building.terrain_capacity_multiplier > 1: _detail.text += "\n" + tr("ui.terrain.capacity_bonus") % roundi((building.terrain_capacity_multiplier - 1) * 100)
 	if combat != null and building != null and combat.health(building) > 0:
 		_detail.text += "\n" + tr("ui.combat.health") % [combat.health(building), combat.maximum_health(building)]
-	_detail.add_theme_color_override("font_color", value.get("color", ColonyStyle.TEXT))
+	_detail.add_theme_color_override("font_color", value.get("color", ColonyStyle.color(&"text")))
 	size.y = get_combined_minimum_size().y
 
 func _stock_details(house: House) -> String:

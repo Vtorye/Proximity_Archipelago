@@ -1,13 +1,14 @@
 class_name NavigationOverlay
 extends Node2D
+
+const PRESENTATION: UiPresentation = preload("res://game/ui/ui_presentation.tres")
 ## One shared distance field explains the same entry costs and load term as TripPlanner.
-const COLORS := {&"terrain": Color("b9b9b4"), &"work": Color("ff9184"), &"home": Color("8dbdff"), &"food": Color("9de3a0")}
 var world: World
 var mode := 0
 var origin := Vector2i.ZERO
 var hovered := Vector2i.ZERO
 var hover_active := false
-var reference_speed := 24.0
+var reference_speed: float = PRESENTATION.navigation_fallback_speed
 var _field: NavigationField
 var _revision := -1
 var _refresh := 0.0
@@ -62,7 +63,7 @@ func _process(delta: float) -> void:
 	if not ants.is_empty(): reference_speed = ants[0].speed
 	_refresh += delta
 	if _revision != world.route_service.revision: _update_field()
-	if _refresh >= 0.25:
+	if _refresh >= PRESENTATION.navigation_refresh:
 		_refresh = 0.0
 		queue_redraw()
 
@@ -80,7 +81,7 @@ func sample(cell: Vector2i) -> Dictionary:
 		else: travel = world.planner.travel_seconds(_field.cost(cell), reference_speed)
 	var load: int = building.worker_count() if building is Workplace else 0
 	var score: float = travel + world.planner.load_penalty_seconds * load
-	return {"building": building, "kind": kind, "color": COLORS[kind], "seconds": travel, "load": load, "score": score}
+	return {"building": building, "kind": kind, "color": ColonyStyle.color(StringName("nav_" + String(kind))), "seconds": travel, "load": load, "score": score}
 
 func _produces_food(workplace: Workplace) -> bool:
 	if workplace.output != null and workplace.output.id == &"food": return true
@@ -99,7 +100,7 @@ func _draw() -> void:
 	var map: TileMapLayer = world.map
 	var canvas: Transform2D = map.get_global_transform_with_canvas()
 	var screen_size: Vector2 = Vector2(map.tile_set.tile_size) * canvas.get_scale()
-	var font: Font = ColonyStyle.SECONDARY_FONT
+	var font: Font = ColonyStyle.THEME.default_font
 	var view: Rect2 = get_viewport_rect()
 	# Visit only visible cells. A larger ocean never adds work to the overlay.
 	var first: Vector2i = map.local_to_map(canvas.affine_inverse() * view.position) - Vector2i.ONE
@@ -114,9 +115,9 @@ func _draw() -> void:
 			var value: Dictionary = sample(cell)
 			var seconds: float = world.planner.travel_seconds(world.route_service.entry_cost(cell), reference_speed) if mode == 1 else value.score
 			var color: Color = value.color
-			draw_rect(Rect2(center - screen_size * 0.5, screen_size), Color(color.r * 0.45, color.g * 0.45, color.b * 0.45, 0.82))
-			if screen_size.x < 26: continue
+			draw_rect(Rect2(center - screen_size * 0.5, screen_size), Color(color.r * PRESENTATION.navigation_cell_brightness, color.g * PRESENTATION.navigation_cell_brightness, color.b * PRESENTATION.navigation_cell_brightness, PRESENTATION.navigation_cell_opacity))
+			if screen_size.x < PRESENTATION.navigation_min_label_width: continue
 			var text: String = "—" if not is_finite(seconds) else ("%d" % roundi(seconds * 1000) if mode == 1 else "%.1f" % seconds)
-			var text_position: Vector2 = center + Vector2(-font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, 8).x / 2, 3)
-			draw_string(font, text_position + Vector2.ONE, text, HORIZONTAL_ALIGNMENT_LEFT, -1, 8, Color.BLACK)
-			draw_string(font, text_position, text, HORIZONTAL_ALIGNMENT_LEFT, -1, 8, color)
+			var text_position: Vector2 = center + Vector2(-font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, PRESENTATION.navigation_font_size).x / 2, PRESENTATION.navigation_baseline)
+			draw_string(font, text_position + Vector2.ONE, text, HORIZONTAL_ALIGNMENT_LEFT, -1, PRESENTATION.navigation_font_size, Color.BLACK)
+			draw_string(font, text_position, text, HORIZONTAL_ALIGNMENT_LEFT, -1, PRESENTATION.navigation_font_size, color)

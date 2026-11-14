@@ -8,6 +8,8 @@
 
 [ext_resource type="StyleBox" path="res://game/ui/hud_bottom_bar.tres" id="bottom_bar"]
 
+[ext_resource type="Texture2D" path="res://game/assets/ui/build_move.svg" id="move_icon"]
+
 [node name="Hud" type="Control"]
 script = ExtResource("script")
 anchors_preset = 15
@@ -35,7 +37,7 @@ theme_override_constants/separation = 8
 theme_type_variation = &"Caption"
 unique_name_in_owner = true
 mouse_filter = 2
-text = ""
+text = "Match 5:00"
 theme_override_colors/font_color = Color(0.8745, 0.7765, 0.5451, 1)
 custom_minimum_size = Vector2(48, 0)
 
@@ -90,13 +92,13 @@ theme_override_constants/separation = 2
 [node name="GoalTitle" type="Label" parent="Objectives/Goals"]
 unique_name_in_owner = true
 mouse_filter = 2
-text = ""
+text = "Goal: 10 each"
 theme_override_colors/font_color = Color(0.6667, 0.651, 0.6118, 1)
 
 [node name="Warning" type="Label" parent="Objectives/Goals"]
 unique_name_in_owner = true
 mouse_filter = 2
-text = ""
+text = "ui.hud.need_food"
 theme_override_colors/font_color = Color(0.8471, 0.5451, 0.4745, 1)
 custom_minimum_size = Vector2(144, 0)
 autowrap_mode = 3
@@ -104,7 +106,7 @@ autowrap_mode = 3
 [node name="Waiting" type="Label" parent="Objectives/Goals"]
 unique_name_in_owner = true
 mouse_filter = 2
-text = ""
+text = "Waiting for slots: 2"
 theme_override_colors/font_color = Color(0.6667, 0.651, 0.6118, 1)
 custom_minimum_size = Vector2(144, 0)
 autowrap_mode = 3
@@ -148,6 +150,19 @@ text = "ui.hud.tab_tasks"
 toggle_mode = true
 mouse_default_cursor_shape = 2
 
+[node name="Move" type="Button" parent="Bottom/Actions"]
+unique_name_in_owner = true
+mouse_default_cursor_shape = 2
+text = ""
+custom_minimum_size = Vector2(27, 27)
+size_flags_vertical = 4
+icon = ExtResource("move_icon")
+expand_icon = true
+theme_override_constants/icon_max_width = 16
+icon_alignment = 1
+tooltip_text = "ui.construction.inspect_hint"
+toggle_mode = true
+
 [node name="Spacer" type="Control" parent="Bottom/Actions"]
 mouse_filter = 2
 size_flags_horizontal = 3
@@ -179,7 +194,7 @@ size_flags_vertical = 4
 [node name="Toast" type="Label" parent="."]
 unique_name_in_owner = true
 mouse_filter = 2
-text = ""
+text = "ui.storage.protected"
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -196,6 +211,7 @@ visible = false
 unique_name_in_owner = true
 
 [node name="WaveTimer" type="Label" parent="Top/Counters"]
+text = "Wave 0:30"
 theme_type_variation = &"Caption"
 unique_name_in_owner = true
 visible = false

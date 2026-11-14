@@ -1,6 +1,9 @@
 class_name ConstructionMenu
 extends MenuBase
+
+const PRESENTATION: UiPresentation = preload("res://game/ui/ui_presentation.tres")
 ## Construction editor. The draft owns edits; the controller commits the final plan.
+signal map_drag_released
 signal map_inspection_requested(cell: Vector2i)
 
 var context: ConstructionContext
@@ -13,6 +16,7 @@ var controls: Dictionary[StringName, Button] = {}
 @onready var _hint: Label = %Hint
 var _preview: BuildPreview
 var _selected: BuildOption
+var _map_drag := false
 var _tool: StringName = &"build"
 var _pan_mask := MOUSE_BUTTON_MASK_MIDDLE
 @onready var _confirmation: HBoxContainer = %Confirmation
@@ -33,10 +37,12 @@ func toggle_fold() -> void:
 	_header.set_collapsed(not _header.collapsed)
 
 func dock_above(bar_height: float) -> void:
-	_header.inset.y = bar_height + 4.0
+	_header.inset.y = bar_height + PRESENTATION.dock_clearance
 	_header.queue_layout()
 
 func _ready() -> void:
+	%PreviewCategory.hide()
+	%PreviewCard.hide()
 	%PaletteHeader.collapsed_changed.connect(func(_folded: bool): _end_stroke())
 	_pointer = get_viewport().get_mouse_position()
 	dismissable = false
@@ -53,9 +59,6 @@ func _ready() -> void:
 	_preview.art = context.art
 	_preview.z_index = 3
 	context.controller.map.get_parent().add_child(_preview)
-	controls[&"move"] = %Move
-	%Move.pressed.connect(AppSettings.play_click)
-	%Move.pressed.connect(_select_tool.bind(&"move"))
 	controls[&"demolish"] = %Demolish
 	%Demolish.pressed.connect(AppSettings.play_click)
 	%Demolish.pressed.connect(_select_tool.bind(&"demolish"))
@@ -124,7 +127,7 @@ func _add_category(title: String, options: Array[BuildOption]) -> void:
 	category_buttons.append(category)
 	for option in options:
 		var entry: ConstructionCard = preload("res://game/ui/construction_card.tscn").instantiate()
-		entry.button_group = %Move.button_group
+		entry.button_group = %Demolish.button_group
 		entry.pressed.connect(AppSettings.play_click)
 		entry.pressed.connect(_select.bind(option))
 		%Choices.add_child(entry)
@@ -187,6 +190,7 @@ func _exit_tree() -> void:
 	if is_instance_valid(_preview): _preview.queue_free()
 
 func _select(option: BuildOption) -> void:
+	if _map_drag: map_drag_released.emit()
 	_end_stroke()
 	_tool = &"build"
 	_selected = option
@@ -197,7 +201,16 @@ func _select(option: BuildOption) -> void:
 	_preview.queue_redraw()
 	_refresh()
 
+func set_map_drag(enabled: bool) -> void:
+	_end_stroke()
+	_panning = false
+	_map_drag = enabled
+	_preview.option = _selected if not enabled and _tool == &"build" else null
+	_preview.demolishing = not enabled and _tool == &"demolish"
+	_refresh()
+
 func _select_tool(tool: StringName) -> void:
+	if _map_drag: map_drag_released.emit()
 	_end_stroke()
 	_tool = tool
 	controls[tool].set_pressed_no_signal(true)
@@ -211,19 +224,19 @@ func _cancel_confirmation() -> void:
 
 func _refresh() -> void:
 	_refresh_queued = false
-	_hint.text = "ui.construction.build_hint" if _tool == &"build" else ("ui.construction.inspect_hint" if _tool == &"move" else "ui.construction.demolish_hint")
+	_hint.text = "ui.construction.inspect_hint" if _map_drag else ("ui.construction.build_hint" if _tool == &"build" else "ui.construction.demolish_hint")
 	if context.controller.terrain != null:
 		var soil: TerrainType = context.controller.terrain.map.ground_at(_pricing_cell)
 		if soil != null: _hint.text = tr(soil.display_name)
 	var budget: PlacementCheck = draft.budget_check()
 	_cost.text = tr("ui.construction.cost") % [draft.size(), BuildCostText.format(draft.costs())]
-	_cost.add_theme_color_override("font_color", ColonyStyle.TEXT if budget.allowed() else ColonyStyle.DANGER)
+	_cost.add_theme_color_override("font_color", ColonyStyle.color(&"text") if budget.allowed() else ColonyStyle.color(&"danger"))
 	controls[&"undo"].disabled = not draft.can_undo()
 	controls[&"apply"].disabled = not budget.allowed()
 	var reason: PlacementCheck = budget if not budget.allowed() else draft.last_result
 	_status.text = PlacementMessages.text(reason.code)
 	_status.visible = not reason.allowed()
-	_status.add_theme_color_override("font_color", ColonyStyle.DANGER if not reason.allowed() else ColonyStyle.MUTED)
+	_status.add_theme_color_override("font_color", ColonyStyle.color(&"danger") if not reason.allowed() else ColonyStyle.color(&"muted"))
 	_update_details()
 	_preview.queue_redraw()
 
@@ -300,7 +313,7 @@ func _input(event: InputEvent) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if not visible: return
 	if event is InputEventMouseButton and event.pressed and _point_allowed(event.position):
-		if event.button_index == MOUSE_BUTTON_LEFT and _tool == &"move":
+		if event.button_index == MOUSE_BUTTON_LEFT and _map_drag:
 			_end_stroke()
 			_panning = true
 			_pan_mask = MOUSE_BUTTON_MASK_LEFT

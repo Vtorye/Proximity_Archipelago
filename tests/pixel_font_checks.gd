@@ -9,4 +9,4 @@ static func verify(test: Node, root: Control) -> void:
 		if not control.is_visible_in_tree() or not (control is Label or control is Button):
 			continue
 		var pixels: int = control.get_theme_font_size("font_size")
-		test.expect(pixels in allowed and control.get_theme_font("font") == ColonyStyle.SECONDARY_FONT and control.get_global_transform().get_scale().is_equal_approx(Vector2.ONE), "text follows the selected theme size without scaling controls")
+		test.expect(pixels in allowed and control.get_theme_font("font") == ColonyStyle.THEME.default_font and control.get_global_transform().get_scale().is_equal_approx(Vector2.ONE), "text follows the selected theme size without scaling controls")

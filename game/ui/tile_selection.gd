@@ -1,5 +1,7 @@
 class_name TileSelection
 extends Node2D
+
+const PRESENTATION: UiPresentation = preload("res://game/ui/ui_presentation.tres")
 ## Four crisp corner brackets belong to presentation, not the simulation grid.
 var map: TileMapLayer
 var selected := false
@@ -33,15 +35,15 @@ func _draw() -> void:
 		var last: Vector2i = map.local_to_map(transform * get_viewport_rect().end) + Vector2i(2, 2)
 		var region: Rect2i = Rect2i(first, last - first).intersection(map.get_used_rect())
 		for x in range(region.position.x, region.end.x + 1):
-			draw_line(_corner_at(Vector2i(x, region.position.y), Vector2(-0.5, -0.5)), _corner_at(Vector2i(x, region.end.y), Vector2(-0.5, -0.5)), Color(1, 1, 1, 0.1), 0.3)
+			draw_line(_corner_at(Vector2i(x, region.position.y), Vector2(-0.5, -0.5)), _corner_at(Vector2i(x, region.end.y), Vector2(-0.5, -0.5)), PRESENTATION.grid_color, PRESENTATION.grid_width)
 		for y in range(region.position.y, region.end.y + 1):
-			draw_line(_corner_at(Vector2i(region.position.x, y), Vector2(-0.5, -0.5)), _corner_at(Vector2i(region.end.x, y), Vector2(-0.5, -0.5)), Color(1, 1, 1, 0.1), 0.3)
+			draw_line(_corner_at(Vector2i(region.position.x, y), Vector2(-0.5, -0.5)), _corner_at(Vector2i(region.end.x, y), Vector2(-0.5, -0.5)), PRESENTATION.grid_color, PRESENTATION.grid_width)
 	if not selected:
 		return
-	var alpha: float = 1.0 if AppSettings.reduced_motion else 0.65 + 0.35 * sin(_time * TAU / 1.2)
+	var alpha: float = 1.0 if AppSettings.reduced_motion else lerpf(PRESENTATION.selection_min_opacity, 1.0, (1.0 + sin(_time * TAU / PRESENTATION.selection_pulse_seconds)) / 2.0)
 	var white := Color(1, 1, 1, alpha)
 	var pixel: float = 1.0 / maxf(get_global_transform_with_canvas().get_scale().x, 0.01)
-	var arm: float = minf(3.0 * pixel, 7.0)
+	var arm: float = minf(PRESENTATION.selection_arm_pixels * pixel, PRESENTATION.selection_max_arm)
 	for x in [-1.0, 1.0]:
 		for y in [-1.0, 1.0]:
 			var corner: Vector2 = _corner_at(cell, Vector2(x, y) * 0.5)

@@ -29,7 +29,6 @@ func _refresh() -> void:
 		title.text = task.title
 		var cost: Label = request.get_node("Cost")
 		cost.text = BuildCostText.format(director.price(index))
-		cost.custom_minimum_size.x = 160
 		if not task.unlocks.is_empty():
 			var names := PackedStringArray()
 			for option in task.unlocks:
@@ -37,7 +36,7 @@ func _refresh() -> void:
 			if not names.is_empty():
 				title.text += " · " + ", ".join(names)
 				title.tooltip_text = tr("ui.task.unlocks") % ", ".join(names)
-				title.add_theme_color_override("font_color", ColonyStyle.ACCENT)
+				title.add_theme_color_override("font_color", ColonyStyle.color(&"accent"))
 		for cancel in [false, true]:
 			var button: Button = request.get_node("Actions/Cancel" if cancel else "Actions/Submit")
 			if not cancel:

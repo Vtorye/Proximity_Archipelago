@@ -58,13 +58,13 @@ theme_override_constants/separation = 8
 theme_type_variation = &"Heading"
 unique_name_in_owner = true
 mouse_filter = 2
-text = ""
+text = "ui.result.victory"
 theme_override_colors/font_color = Color(0.8745, 0.7765, 0.5451, 1)
 
 [node name="Reason" type="Label" parent="Center/Dialog/WindowContents/Margin/Content"]
 unique_name_in_owner = true
 mouse_filter = 2
-text = ""
+text = "ui.result.goal_reached"
 
 [node name="Resources" type="VBoxContainer" parent="Center/Dialog/WindowContents/Margin/Content"]
 unique_name_in_owner = true
@@ -73,20 +73,20 @@ theme_override_constants/separation = 8
 [node name="TimeLeft" type="Label" parent="Center/Dialog/WindowContents/Margin/Content"]
 unique_name_in_owner = true
 mouse_filter = 2
-text = ""
+text = "Time left: 02:30"
 theme_override_colors/font_color = Color(0.6667, 0.651, 0.6118, 1)
 visible = false
 
 [node name="Level" type="Label" parent="Center/Dialog/WindowContents/Margin/Content"]
 unique_name_in_owner = true
 mouse_filter = 2
-text = ""
+text = "Level: 1"
 visible = false
 
 [node name="Completed" type="Label" parent="Center/Dialog/WindowContents/Margin/Content"]
 unique_name_in_owner = true
 mouse_filter = 2
-text = ""
+text = "Completed: 2 · declined: 0"
 visible = false
 
 [node name="Again" type="Button" parent="Center/Dialog/WindowContents/Margin/Content"]

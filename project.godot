@@ -65,6 +65,10 @@ locale/translations=PackedStringArray("res://language/keys.en.po", "res://langua
 
 3d/physics_engine="Jolt Physics"
 
+[gui]
+
+theme/custom="res://game/ui/colony_theme.tres"
+
 [rendering]
 
 textures/canvas_textures/default_texture_filter=0

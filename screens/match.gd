@@ -18,6 +18,7 @@ var _section: StringName
 var _active := false
 var _pointer := Vector2(-1, -1)
 var _camera_moved := false
+var _map_drag := false
 
 func _ready() -> void:
 	var waves: bool = payload is Dictionary and payload.get("wave_mode", false)
@@ -43,6 +44,7 @@ func _ready() -> void:
 	navigation_overlay.configure(world)
 	selection.map = world.map
 	hud.configure(world, navigation_overlay)
+	camera.left_button_drag = _map_drag
 	if world.voyage != null:
 		if payload is Dictionary and payload.has("journey"): world.voyage.apply(payload.journey)
 	if payload is Dictionary and payload.has("snapshot"): SessionSave.apply(world, payload.snapshot)
@@ -51,6 +53,7 @@ func _ready() -> void:
 	hud.settings_requested.connect(_open_settings)
 	hud.navigation_requested.connect(_toggle_navigation)
 	hud.construction_requested.connect(_select_section.bind(&"build"))
+	hud.map_drag_toggled.connect(_set_map_drag)
 	hud.section_requested.connect(_select_section)
 	hud.bottom_bar_resized.connect(_update_construction_dock)
 	hud.pause_requested.connect(PauseController.toggle_manual)
@@ -123,7 +126,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			_inspect_secondary_cell(_cell_at(event.position))
 			get_viewport().set_input_as_handled()
 			return
-		if top is PauseMenu and not event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		if not event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 			_inspect_building(_cell_at(event.position))
 			get_viewport().set_input_as_handled()
 			return
@@ -235,7 +238,9 @@ func _create_construction_panel() -> void:
 	_construction.payload = context
 	_construction.map_inspection_requested.connect(_inspect_secondary_cell)
 	_construction.close_requested.connect(_close_construction_panel)
+	_construction.map_drag_released.connect(_set_map_drag.bind(false))
 	$ConstructionLayer.add_child(_construction)
+	_construction.set_map_drag(_map_drag)
 	_update_construction_dock()
 
 func _close_construction_panel(menu: MenuBase) -> void:
@@ -246,6 +251,14 @@ func _close_construction_panel(menu: MenuBase) -> void:
 	_construction = null
 	_section = &""
 	hud.set_section(_section)
+
+func _set_map_drag(enabled: bool) -> void:
+	_map_drag = enabled
+	camera.left_button_drag = enabled
+	camera.dragging = false
+	hud.set_map_drag(enabled)
+	if is_instance_valid(_construction):
+		_construction.set_map_drag(enabled)
 
 func _building_active() -> bool:
 	return is_instance_valid(_construction) and _construction.visible

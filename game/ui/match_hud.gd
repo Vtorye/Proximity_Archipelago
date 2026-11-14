@@ -1,10 +1,13 @@
 class_name MatchHud
 extends Control
+
+const PRESENTATION: UiPresentation = preload("res://game/ui/ui_presentation.tres")
 signal nest_selected(nest: House)
 signal settings_requested
 signal pause_requested
 signal navigation_requested
 signal construction_requested
+signal map_drag_toggled(enabled: bool)
 signal section_requested(section: StringName)
 signal bottom_bar_resized
 signal zoom_in_requested
@@ -61,12 +64,12 @@ func _build_hud() -> void:
 		caption.text = type.display_name
 		var bar: ProgressBar = line.get_node("Progress")
 		bar.max_value = world.match_controller.target_amount
-		bar.add_theme_stylebox_override("background", ColonyStyle.box(Color("151515"), Color("555555"), 0))
-		bar.add_theme_stylebox_override("fill", ColonyStyle.box(ColonyStyle.ACCENT, ColonyStyle.ACCENT, 0))
+
+
 		progress[type.id] = bar
 		goals.add_child(line)
 		goals.move_child(line, progress.size())
-	_toast.add_theme_stylebox_override("normal", ColonyStyle.box())
+	_toast.add_theme_stylebox_override("normal", theme.get_stylebox("panel", "PanelContainer"))
 	controls[&"routes"] = %Routes
 	%Routes.pressed.connect(AppSettings.play_click)
 	%Routes.pressed.connect(func(): navigation_requested.emit())
@@ -85,6 +88,8 @@ func _build_hud() -> void:
 	%ColonyTab.pressed.connect(func(): section_requested.emit(&"colony"))
 	%TasksTab.pressed.connect(AppSettings.play_click)
 	%TasksTab.pressed.connect(func(): section_requested.emit(&"tasks"))
+	%Move.pressed.connect(AppSettings.play_click)
+	%Move.toggled.connect(map_drag_toggled.emit)
 	_bottom.resized.connect(bottom_bar_resized.emit)
 	controls[&"zoom_out"] = %ZoomOut
 	%ZoomOut.pressed.connect(AppSettings.play_click)
@@ -144,7 +149,7 @@ func refresh() -> void:
 		_waiting.text += ("\n" if not _waiting.text.is_empty() else "") + tr("ui.hud.storage_full") % storage_full
 	_waiting.visible = busy > 0 or unsafe_work > 0 or missing_inputs > 0 or storage_full > 0
 	var food: ResourceType = world.inventory.type_by_id(&"food")
-	_warning.text = "ui.hud.need_food" if world.inventory.available(food) < 3 else ""
+	_warning.text = "ui.hud.need_food" if world.inventory.available(food) < PRESENTATION.low_food_threshold else ""
 
 func _refresh_localized_labels() -> void:
 	%GoalTitle.text = tr("ui.hud.goal") % world.match_controller.target_amount
@@ -159,7 +164,7 @@ func _refresh_wave_timer() -> void:
 
 func _on_time_changed(seconds: int) -> void:
 	_timer.text = tr("ui.hud.match_timer") % [seconds / 60, seconds % 60]
-	_timer.add_theme_color_override("font_color", ColonyStyle.DANGER if seconds <= 30 else ColonyStyle.ACCENT)
+	_timer.add_theme_color_override("font_color", ColonyStyle.color(&"danger") if seconds <= PRESENTATION.timer_warning_seconds else ColonyStyle.color(&"accent"))
 
 func set_zoom(value: int) -> void:
 	_zoom_level = value
@@ -172,6 +177,9 @@ func _refresh_pause_indicator(paused: bool) -> void:
 	%Pause.icon = preload("res://game/assets/ui/build_apply.svg") if manual else preload("res://game/assets/ui/pause.svg")
 	%Pause.tooltip_text = "ui.hud.unpause" if manual else "ui.hud.pause"
 	%Pause.disabled = paused and not manual
+
+func set_map_drag(enabled: bool) -> void:
+	%Move.set_pressed_no_signal(enabled)
 
 func build_obstacles() -> Array[Rect2]:
 	var result: Array[Rect2] = []
@@ -193,8 +201,8 @@ func lock_zoom(locked: bool) -> void:
 
 func toast(message: String, danger: bool = false) -> void:
 	_toast.text = message
-	_toast.add_theme_color_override("font_color", ColonyStyle.DANGER if danger else ColonyStyle.TEXT)
-	_toast_time = 3.0
+	_toast.add_theme_color_override("font_color", ColonyStyle.color(&"danger") if danger else ColonyStyle.color(&"text"))
+	_toast_time = PRESENTATION.toast_duration
 	_toast.show()
 
 func bottom_bar_height() -> float:

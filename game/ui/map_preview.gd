@@ -11,7 +11,7 @@ static func texture(layout: LevelData, tiles: TileSet) -> Texture2D:
 		bounds = bounds.expand(cell + Vector2i.ONE)
 		bounds = bounds.expand(cell)
 	var image := Image.create(bounds.size.x, bounds.size.y, false, Image.FORMAT_RGB8)
-	image.fill(Color("152825"))
+	image.fill(ColonyStyle.color(&"map_background"))
 	var palette: Dictionary[Vector3i, Color] = {}
 	for cell in layout.tiles:
 		var tile: Vector4i = layout.tiles[cell]
@@ -22,11 +22,11 @@ static func texture(layout: LevelData, tiles: TileSet) -> Texture2D:
 	for object in layout.objects:
 		var cell: Vector2i = object.cell - bounds.position
 		if object.kind == "build/base_nest":
-			image.fill_rect(Rect2i(cell - Vector2i.ONE, Vector2i(3, 3)), Color("f5cd87"))
+			image.fill_rect(Rect2i(cell - Vector2i.ONE, Vector2i(3, 3)), ColonyStyle.color(&"map_start"))
 		elif object.kind == "Food" or object.kind == "AppleTree":
-			image.set_pixelv(cell, Color("f0a386"))
+			image.set_pixelv(cell, ColonyStyle.color(&"map_hostile"))
 		else:
-			image.set_pixelv(cell, Color("cbd6ce"))
+			image.set_pixelv(cell, ColonyStyle.color(&"map_feature"))
 	return ImageTexture.create_from_image(image)
 
 static func _tile_color(tiles: TileSet, key: Vector3i) -> Color:

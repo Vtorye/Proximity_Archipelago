@@ -46,8 +46,8 @@ func _exit_tree() -> void:
 
 func _configure_controls() -> void:
 	ColonyStyle.apply($Interface/UI)
-	%Top.add_theme_stylebox_override("panel", ColonyStyle.dialog_box())
-	%Bottom.add_theme_stylebox_override("panel", ColonyStyle.dialog_box())
+
+
 	%Back.pressed.connect(_back)
 	%Back.pressed.connect(AppSettings.play_click)
 	%NewMap.pressed.connect(_new_map)

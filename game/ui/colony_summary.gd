@@ -20,6 +20,8 @@ func set_expanded(expanded: bool) -> void:
 
 func configure(session: World) -> void:
 	_world = session
+	%PreviewStore.hide()
+	_scroll.hide()
 	_summary.toggled.connect(func(expanded: bool):
 		_scroll.visible = expanded
 		refresh()
@@ -62,7 +64,8 @@ func _rebuild_rows() -> void:
 	refresh()
 
 func refresh() -> void:
-	var types: Array[ResourceType] = _world.inventory.registered_types()
+	var types: Array[ResourceType] = _world.inventory.registered_types().filter(
+		func(type: ResourceType) -> bool: return type.id != WorldInventory.CURRENCY_ID)
 	var nests: Array[House] = _world.logistics.nests()
 	var totals := PackedStringArray()
 	for type in types:

@@ -2,12 +2,13 @@
 
 [ext_resource type="Script" path="res://overlays/construction_menu.gd" id="script"]
 [ext_resource type="StyleBox" path="res://game/ui/dialog_panel.tres" id="dialog_style"]
-[ext_resource type="Texture2D" path="res://game/assets/ui/build_move.svg" id="move_icon"]
 [ext_resource type="Texture2D" path="res://game/assets/ui/build_demolish.svg" id="demolish_icon"]
 [ext_resource type="Texture2D" path="res://game/assets/ui/build_undo.svg" id="undo_icon"]
 [ext_resource type="Texture2D" path="res://game/assets/ui/build_cancel.svg" id="cancel_icon"]
 [ext_resource type="Texture2D" path="res://game/assets/ui/build_apply.svg" id="apply_icon"]
 [ext_resource type="PackedScene" path="res://game/ui/window_header.tscn" id="window_header"]
+
+[ext_resource type="PackedScene" path="res://game/ui/construction_card.tscn" id="preview_card"]
 
 [sub_resource type="ButtonGroup" id="tools"]
 resource_local_to_scene = true
@@ -23,6 +24,12 @@ mouse_filter = 2
 script = ExtResource("script")
 
 [node name="Panel" type="PanelContainer" parent="."]
+offset_bottom = -42.0
+offset_right = 568.0
+offset_top = -188.0
+offset_left = 8.0
+anchor_bottom = 1.0
+anchor_top = 1.0
 unique_name_in_owner = true
 theme_override_styles/panel = ExtResource("dialog_style")
 metadata/ui_manual_layout = true
@@ -35,7 +42,7 @@ unique_name_in_owner = true
 title = "ui.construction.title"
 action = 1
 dock = 1
-panel_width = 624.0
+panel_width = 560.0
 collapsed_width = 210.0
 draggable = false
 inset = Vector2(8, 6)
@@ -49,7 +56,7 @@ theme_override_constants/separation = 4
 theme_override_constants/separation = 6
 
 [node name="Categories" type="ScrollContainer" parent="Panel/WindowContents/Body/Palette"]
-custom_minimum_size = Vector2(112, 146)
+custom_minimum_size = Vector2(100, 76)
 horizontal_scroll_mode = 0
 vertical_scroll_mode = 1
 
@@ -58,9 +65,13 @@ unique_name_in_owner = true
 size_flags_horizontal = 3
 theme_override_constants/separation = 2
 
+[node name="PreviewCategory" type="Button" parent="Panel/WindowContents/Body/Palette/Categories/CategoryList"]
+unique_name_in_owner = true
+text = "ui.construction.category.defense"
+
 [node name="Buildings" type="ScrollContainer" parent="Panel/WindowContents/Body/Palette"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 146)
+custom_minimum_size = Vector2(0, 76)
 size_flags_horizontal = 3
 horizontal_scroll_mode = 0
 vertical_scroll_mode = 1
@@ -72,21 +83,24 @@ columns = 2
 theme_override_constants/h_separation = 4
 theme_override_constants/v_separation = 4
 
+[node name="PreviewCard" parent="Panel/WindowContents/Body/Palette/Buildings/Choices" instance=ExtResource("preview_card")]
+unique_name_in_owner = true
+
 [node name="Readout" type="VBoxContainer" parent="Panel/WindowContents/Body/Palette"]
-custom_minimum_size = Vector2(248, 0)
+custom_minimum_size = Vector2(208, 0)
 theme_override_constants/separation = 3
 
 [node name="BuildingName" type="Label" parent="Panel/WindowContents/Body/Palette/Readout"]
 theme_type_variation = &"Caption"
 unique_name_in_owner = true
 mouse_filter = 2
-text = ""
+text = "ui.defense.wall"
 theme_override_colors/font_color = Color(0.8745, 0.7765, 0.5451, 1)
 text_overrun_behavior = 3
 
 [node name="DescriptionScroll" type="ScrollContainer" parent="Panel/WindowContents/Body/Palette/Readout"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 118)
+custom_minimum_size = Vector2(0, 46)
 horizontal_scroll_mode = 0
 vertical_scroll_mode = 1
 size_flags_vertical = 3
@@ -98,14 +112,14 @@ size_flags_horizontal = 3
 [node name="Description" type="Label" parent="Panel/WindowContents/Body/Palette/Readout/DescriptionScroll/Text"]
 unique_name_in_owner = true
 mouse_filter = 2
-text = "ui.construction.empty"
+text = "ui.construction.description.wall"
 autowrap_mode = 3
 
 [node name="Parameters" type="Label" parent="Panel/WindowContents/Body/Palette/Readout/DescriptionScroll/Text"]
 theme_type_variation = &"Caption"
 unique_name_in_owner = true
 mouse_filter = 2
-text = ""
+text = "Assembly: 8 s\nTiles: 1"
 theme_override_colors/font_color = Color(0.6667, 0.651, 0.6118, 1)
 autowrap_mode = 3
 
@@ -113,26 +127,12 @@ autowrap_mode = 3
 theme_type_variation = &"Caption"
 unique_name_in_owner = true
 mouse_filter = 2
-text = ""
+text = "Cost: Wood ×2 · Stone ×3"
 theme_override_colors/font_color = Color(0.8745, 0.7765, 0.5451, 1)
 autowrap_mode = 3
 
 [node name="Toolbar" type="HBoxContainer" parent="Panel/WindowContents/Body"]
 theme_override_constants/separation = 4
-
-[node name="Move" type="Button" parent="Panel/WindowContents/Body/Toolbar"]
-unique_name_in_owner = true
-mouse_default_cursor_shape = 2
-text = ""
-custom_minimum_size = Vector2(27, 27)
-size_flags_vertical = 4
-icon = ExtResource("move_icon")
-expand_icon = true
-theme_override_constants/icon_max_width = 16
-icon_alignment = 1
-tooltip_text = "ui.construction.move"
-toggle_mode = true
-button_group = SubResource("tools")
 
 [node name="Demolish" type="Button" parent="Panel/WindowContents/Body/Toolbar"]
 unique_name_in_owner = true
@@ -196,7 +196,7 @@ theme_override_constants/separation = 8
 theme_type_variation = &"Caption"
 unique_name_in_owner = true
 mouse_filter = 2
-text = ""
+text = "Plan: 0 · —"
 size_flags_horizontal = 3
 autowrap_mode = 3
 
@@ -205,7 +205,7 @@ max_lines_visible = 1
 theme_type_variation = &"Caption"
 unique_name_in_owner = true
 mouse_filter = 2
-text = ""
+text = "ui.construction.build_hint"
 text_overrun_behavior = 3
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.6667, 0.651, 0.6118, 1)
@@ -214,7 +214,7 @@ theme_override_colors/font_color = Color(0.6667, 0.651, 0.6118, 1)
 theme_type_variation = &"Caption"
 unique_name_in_owner = true
 mouse_filter = 2
-text = ""
+text = "ui.storage.protected"
 theme_override_colors/font_color = Color(0.8471, 0.5451, 0.4745, 1)
 autowrap_mode = 3
 visible = false

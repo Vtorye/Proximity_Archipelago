@@ -51,7 +51,7 @@ func _store() -> void:
 	var error: Error = AppSettings.save()
 	if _saved != null:
 		_saved.text = "ui.settings.saved" if error == OK else "ui.settings.save_error"
-		_saved.add_theme_color_override("font_color", ColonyStyle.MUTED if error == OK else ColonyStyle.DANGER)
+		_saved.add_theme_color_override("font_color", ColonyStyle.color(&"muted") if error == OK else ColonyStyle.color(&"danger"))
 
 func _change_text_size(delta: int) -> void:
 	AppSettings.text_size += delta

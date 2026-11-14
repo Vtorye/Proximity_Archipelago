@@ -59,7 +59,7 @@ theme_override_constants/separation = 8
 theme_type_variation = &"Heading"
 unique_name_in_owner = true
 mouse_filter = 2
-text = ""
+text = "ui.storage.main"
 theme_override_colors/font_color = Color(0.8745, 0.7765, 0.5451, 1)
 size_flags_horizontal = 3
 
@@ -99,7 +99,7 @@ theme_override_constants/separation = 6
 [node name="Capacity" type="Label" parent="Center/Dialog/WindowContents/Margin/Content/InventoryTab"]
 unique_name_in_owner = true
 mouse_filter = 2
-text = ""
+text = "Storage 32 / 100"
 
 [node name="OrdersTab" type="VBoxContainer" parent="Center/Dialog/WindowContents/Margin/Content"]
 unique_name_in_owner = true
@@ -118,7 +118,7 @@ theme_override_constants/separation = 6
 custom_minimum_size = Vector2(114, 0)
 size_flags_horizontal = 3
 mouse_filter = 2
-text = ""
+text = "ui.nest.inventory"
 
 [node name="Minimum" type="Label" parent="Center/Dialog/WindowContents/Margin/Content/OrdersTab/OrderHeader"]
 theme_type_variation = &"Caption"
@@ -161,7 +161,7 @@ visible = false
 [node name="Population" type="Label" parent="Center/Dialog/WindowContents/Margin/Content/ResidentsTab"]
 unique_name_in_owner = true
 mouse_filter = 2
-text = ""
+text = "Residents 12 / 20"
 theme_override_colors/font_color = Color(0.8745, 0.7765, 0.5451, 1)
 
 [node name="Assigned" type="Label" parent="Center/Dialog/WindowContents/Margin/Content/ResidentsTab"]

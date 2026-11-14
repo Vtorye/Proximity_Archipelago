@@ -59,7 +59,7 @@ theme_override_constants/separation = 8
 theme_type_variation = &"Heading"
 unique_name_in_owner = true
 mouse_filter = 2
-text = ""
+text = "ui.tutorial.lesson1.title"
 theme_override_colors/font_color = Color(0.8745, 0.7765, 0.5451, 1)
 
 [node name="LessonScroll" type="ScrollContainer" parent="Center/Dialog/WindowContents/Margin/Content"]
@@ -69,7 +69,7 @@ horizontal_scroll_mode = 0
 [node name="Body" type="Label" parent="Center/Dialog/WindowContents/Margin/Content/LessonScroll"]
 unique_name_in_owner = true
 mouse_filter = 2
-text = ""
+text = "ui.tutorial.lesson1.body"
 size_flags_horizontal = 3
 autowrap_mode = 3
 
@@ -103,6 +103,6 @@ size_flags_horizontal = 3
 theme_type_variation = &"Caption"
 unique_name_in_owner = true
 mouse_filter = 2
-text = ""
+text = "1 / 5"
 theme_override_colors/font_color = Color(0.6667, 0.651, 0.6118, 1)
 horizontal_alignment = 1

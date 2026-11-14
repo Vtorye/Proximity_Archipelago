@@ -78,7 +78,7 @@ step = 1.0
 [node name="VolumeValue" type="Label" parent="Center/Dialog/WindowContents/Margin/Scroll/Content/Volume"]
 unique_name_in_owner = true
 mouse_filter = 2
-text = ""
+text = "80%"
 custom_minimum_size = Vector2(44, 0)
 
 [node name="Scale" type="HBoxContainer" parent="Center/Dialog/WindowContents/Margin/Scroll/Content"]
@@ -98,7 +98,7 @@ custom_minimum_size = Vector2(32, 28)
 [node name="TextValue" type="Label" parent="Center/Dialog/WindowContents/Margin/Scroll/Content/Scale"]
 unique_name_in_owner = true
 mouse_filter = 2
-text = ""
+text = "10 px"
 custom_minimum_size = Vector2(125, 0)
 horizontal_alignment = 1
 
@@ -118,7 +118,7 @@ size_flags_horizontal = 3
 [node name="Fullscreen" type="Button" parent="Center/Dialog/WindowContents/Margin/Scroll/Content/FullscreenRow"]
 unique_name_in_owner = true
 mouse_default_cursor_shape = 2
-text = ""
+text = "[ ]"
 custom_minimum_size = Vector2(48, 28)
 toggle_mode = true
 
@@ -132,7 +132,7 @@ size_flags_horizontal = 3
 [node name="Vsync" type="Button" parent="Center/Dialog/WindowContents/Margin/Scroll/Content/VsyncRow"]
 unique_name_in_owner = true
 mouse_default_cursor_shape = 2
-text = ""
+text = "[X]"
 custom_minimum_size = Vector2(48, 28)
 toggle_mode = true
 
@@ -146,7 +146,7 @@ size_flags_horizontal = 3
 [node name="ShowGrid" type="Button" parent="Center/Dialog/WindowContents/Margin/Scroll/Content/ShowGridRow"]
 unique_name_in_owner = true
 mouse_default_cursor_shape = 2
-text = ""
+text = "[ ]"
 custom_minimum_size = Vector2(48, 28)
 toggle_mode = true
 
@@ -160,7 +160,7 @@ size_flags_horizontal = 3
 [node name="ReducedMotion" type="Button" parent="Center/Dialog/WindowContents/Margin/Scroll/Content/ReducedMotionRow"]
 unique_name_in_owner = true
 mouse_default_cursor_shape = 2
-text = ""
+text = "[ ]"
 custom_minimum_size = Vector2(48, 28)
 toggle_mode = true
 
