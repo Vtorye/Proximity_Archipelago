@@ -2,10 +2,7 @@
 
 [ext_resource type="Script" path="res://overlays/construction_menu.gd" id="script"]
 [ext_resource type="StyleBox" path="res://game/ui/dialog_panel.tres" id="dialog_style"]
-[ext_resource type="Texture2D" path="res://game/assets/ui/build_demolish.svg" id="demolish_icon"]
-[ext_resource type="Texture2D" path="res://game/assets/ui/build_undo.svg" id="undo_icon"]
 [ext_resource type="Texture2D" path="res://game/assets/ui/build_cancel.svg" id="cancel_icon"]
-[ext_resource type="Texture2D" path="res://game/assets/ui/build_apply.svg" id="apply_icon"]
 [ext_resource type="PackedScene" path="res://game/ui/window_header.tscn" id="window_header"]
 
 [ext_resource type="PackedScene" path="res://game/ui/construction_card.tscn" id="preview_card"]
@@ -86,6 +83,7 @@ theme_override_constants/v_separation = 4
 
 [node name="PreviewCard" parent="Panel/WindowContents/Body/Palette/Buildings/Choices" instance=ExtResource("preview_card")]
 unique_name_in_owner = true
+button_group = SubResource("tools")
 
 [node name="Readout" type="VBoxContainer" parent="Panel/WindowContents/Body/Palette"]
 unique_name_in_owner = true
@@ -132,64 +130,6 @@ mouse_filter = 2
 text = "Cost: Wood ×2 · Stone ×3"
 theme_override_colors/font_color = Color(0.8745, 0.7765, 0.5451, 1)
 autowrap_mode = 3
-
-[node name="Toolbar" type="HBoxContainer" parent="Panel/WindowContents/Body"]
-theme_override_constants/separation = 4
-
-[node name="Demolish" type="Button" parent="Panel/WindowContents/Body/Toolbar"]
-unique_name_in_owner = true
-mouse_default_cursor_shape = 2
-text = ""
-custom_minimum_size = Vector2(27, 27)
-size_flags_vertical = 4
-icon = ExtResource("demolish_icon")
-expand_icon = true
-theme_override_constants/icon_max_width = 16
-icon_alignment = 1
-tooltip_text = "ui.construction.demolish"
-toggle_mode = true
-button_group = SubResource("tools")
-
-[node name="Actions" type="HBoxContainer" parent="Panel/WindowContents/Body/Toolbar"]
-size_flags_horizontal = 10
-theme_override_constants/separation = 4
-
-[node name="Undo" type="Button" parent="Panel/WindowContents/Body/Toolbar/Actions"]
-unique_name_in_owner = true
-mouse_default_cursor_shape = 2
-text = ""
-custom_minimum_size = Vector2(27, 27)
-size_flags_vertical = 4
-icon = ExtResource("undo_icon")
-expand_icon = true
-theme_override_constants/icon_max_width = 16
-icon_alignment = 1
-tooltip_text = "ui.construction.undo"
-
-[node name="Cancel" type="Button" parent="Panel/WindowContents/Body/Toolbar/Actions"]
-unique_name_in_owner = true
-mouse_default_cursor_shape = 2
-text = ""
-custom_minimum_size = Vector2(27, 27)
-size_flags_vertical = 4
-icon = ExtResource("cancel_icon")
-expand_icon = true
-theme_override_constants/icon_max_width = 16
-icon_alignment = 1
-tooltip_text = "ui.construction.cancel"
-
-[node name="Apply" type="Button" parent="Panel/WindowContents/Body/Toolbar/Actions"]
-unique_name_in_owner = true
-mouse_default_cursor_shape = 2
-text = ""
-theme_override_colors/font_color = Color(0.8745, 0.7765, 0.5451, 1)
-custom_minimum_size = Vector2(27, 27)
-size_flags_vertical = 4
-icon = ExtResource("apply_icon")
-expand_icon = true
-theme_override_constants/icon_max_width = 16
-icon_alignment = 1
-tooltip_text = "ui.construction.apply"
 
 [node name="Summary" type="HBoxContainer" parent="Panel/WindowContents/Body"]
 theme_override_constants/separation = 8

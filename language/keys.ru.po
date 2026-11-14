@@ -172,7 +172,7 @@ msgid "ui.construction.cancel"
 msgstr "Отменить всё"
 
 msgid "ui.construction.apply"
-msgstr "Применить план"
+msgstr "Начать строительство"
 
 msgid "ui.construction.build_hint"
 msgstr "ЛКМ: строить · ПКМ: убрать слой"

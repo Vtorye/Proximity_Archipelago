@@ -34,8 +34,22 @@ var _category_for: Dictionary[StringName, Button] = {}
 
 var _pricing_cell := Vector2i(2147483647, 2147483647)
 
-func toggle_fold() -> void:
-	_header.set_collapsed(not _header.collapsed)
+func is_palette_open() -> bool:
+	return panel.visible and not _header.collapsed
+
+func set_palette_visible(shown: bool) -> void:
+	_end_stroke()
+	panel.visible = shown
+	if shown:
+		_header.set_collapsed(false)
+		_header.queue_layout()
+
+func detach_actions() -> void:
+	controls[&"undo"].pressed.disconnect(_undo)
+	controls[&"apply"].pressed.disconnect(apply_plan)
+	controls[&"cancel"].pressed.disconnect(_cancel)
+	for action in [&"undo", &"apply", &"cancel"]:
+		controls[action].pressed.disconnect(AppSettings.play_click)
 
 func dock_above(bar_height: float) -> void:
 	_header.inset.y = bar_height + PRESENTATION.dock_clearance
@@ -60,18 +74,12 @@ func _ready() -> void:
 	_preview.art = context.art
 	_preview.z_index = 3
 	context.controller.map.get_parent().add_child(_preview)
-	controls[&"demolish"] = %Demolish
-	%Demolish.pressed.connect(AppSettings.play_click)
-	%Demolish.pressed.connect(_select_tool.bind(&"demolish"))
-	controls[&"undo"] = %Undo
-	%Undo.pressed.connect(AppSettings.play_click)
-	%Undo.pressed.connect(_undo)
-	controls[&"cancel"] = %Cancel
-	%Cancel.pressed.connect(AppSettings.play_click)
-	%Cancel.pressed.connect(_cancel)
-	controls[&"apply"] = %Apply
-	%Apply.pressed.connect(AppSettings.play_click)
-	%Apply.pressed.connect(apply_plan)
+	controls.merge(context.action_buttons)
+	for action in [&"undo", &"apply", &"cancel"]:
+		controls[action].pressed.connect(AppSettings.play_click)
+	controls[&"undo"].pressed.connect(_undo)
+	controls[&"cancel"].pressed.connect(_cancel)
+	controls[&"apply"].pressed.connect(apply_plan)
 	controls[&"confirm_demolish"] = %Confirm
 	%Confirm.pressed.connect(AppSettings.play_click)
 	%Confirm.pressed.connect(_commit)
@@ -81,7 +89,6 @@ func _ready() -> void:
 	if order_option != null:
 		%Categories.hide()
 		%Buildings.hide()
-		%Demolish.hide()
 		_header.dock = WindowHeader.Dock.BOTTOM_RIGHT
 		_header.panel_width = %Readout.custom_minimum_size.x
 
@@ -102,7 +109,7 @@ func _ready() -> void:
 	AppSettings.changed.connect(_queue_refresh)
 	draft.changed.connect(_queue_refresh)
 	_refresh()
-	default_focus = controls.get(_selected.id, %Cancel) if _selected != null else %Cancel
+	default_focus = controls.get(_selected.id) if _selected != null else null
 
 func _populate_categories() -> void:
 	var remaining: Array[BuildOption] = context.controller.options.duplicate()
@@ -137,7 +144,7 @@ func _add_category(title: String, options: Array[BuildOption]) -> void:
 	category_buttons.append(category)
 	for option in options:
 		var entry: ConstructionCard = preload("res://game/ui/construction_card.tscn").instantiate()
-		entry.button_group = %Demolish.button_group
+		entry.button_group = %PreviewCard.button_group
 		entry.pressed.connect(AppSettings.play_click)
 		entry.pressed.connect(_select.bind(option))
 		%Choices.add_child(entry)
@@ -219,13 +226,17 @@ func set_map_drag(enabled: bool) -> void:
 	_preview.demolishing = not enabled and _tool == &"demolish"
 	_refresh()
 
-func _select_tool(tool: StringName) -> void:
+func select_demolition() -> void:
+	if _tool == &"demolish" and _selected != null:
+		_select(_selected)
+		return
 	if _map_drag: map_drag_released.emit()
 	_end_stroke()
-	_tool = tool
-	controls[tool].set_pressed_no_signal(true)
+	_tool = &"demolish"
+	var selected_card: Button = controls.get(_selected.id) if _selected != null else null
+	if selected_card != null: selected_card.set_pressed_no_signal(false)
 	_preview.option = null
-	_preview.demolishing = tool == &"demolish"
+	_preview.demolishing = true
 	_preview.queue_redraw()
 	_refresh()
 
@@ -241,6 +252,7 @@ func _refresh() -> void:
 	var budget: PlacementCheck = draft.budget_check()
 	_cost.text = tr("ui.construction.cost") % [draft.size(), BuildCostText.format(draft.costs())]
 	_cost.add_theme_color_override("font_color", ColonyStyle.color(&"text") if budget.allowed() else ColonyStyle.color(&"danger"))
+	controls[&"demolish"].set_pressed_no_signal(_tool == &"demolish")
 	controls[&"undo"].disabled = not draft.can_undo()
 	controls[&"apply"].disabled = draft.size() == 0 or not budget.allowed()
 	var reason: PlacementCheck = budget if not budget.allowed() else draft.last_result
@@ -269,7 +281,7 @@ func apply_plan() -> void:
 	_end_stroke()
 	var residents: int = draft.residents_to_demolish()
 	if residents > 0:
-		%PaletteHeader.set_collapsed(false)
+		set_palette_visible(true)
 		_confirm_label.text = tr("ui.build.confirm_residents") % residents
 		_confirmation.show()
 		return
@@ -279,7 +291,7 @@ func _commit() -> void:
 	if draft.commit():
 		close_requested.emit(self)
 	else:
-		%PaletteHeader.set_collapsed(false)
+		set_palette_visible(true)
 		_refresh()
 
 func _input(event: InputEvent) -> void:
@@ -293,7 +305,7 @@ func _input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 	elif event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_ESCAPE:
 		if not context.dismiss_map_popup.is_valid() or not context.dismiss_map_popup.call():
-			_header.set_collapsed(true)
+			set_palette_visible(false)
 		get_viewport().set_input_as_handled()
 	elif event is InputEventMouseButton and not event.pressed:
 		if event.button_index == MOUSE_BUTTON_LEFT:

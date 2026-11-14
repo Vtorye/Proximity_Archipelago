@@ -53,6 +53,9 @@ func _ready() -> void:
 	hud.settings_requested.connect(_open_settings)
 	hud.navigation_requested.connect(_toggle_navigation)
 	hud.construction_requested.connect(_select_section.bind(&"build"))
+	var demolish: Button = hud.construction_buttons()[&"demolish"]
+	demolish.pressed.connect(AppSettings.play_click)
+	demolish.pressed.connect(_toggle_demolition)
 	hud.order_requested.connect(_begin_royal_order)
 	hud.map_drag_toggled.connect(_set_map_drag)
 	hud.section_requested.connect(_select_section)
@@ -132,10 +135,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 			return
 	if top == null and event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_B:
-		if _building_active():
-			_construction.toggle_fold()
-		else:
-			_select_section(&"build")
+		hud.construction_requested.emit()
 		get_viewport().set_input_as_handled()
 
 func _process(_delta: float) -> void:
@@ -144,7 +144,9 @@ func _process(_delta: float) -> void:
 	var top: MenuBase = Router.top_overlay()
 	var can_use_map: bool = top == null and not campaign_panel.visible
 	if is_instance_valid(_construction):
-		_construction.visible = can_use_map and (_section == &"build" or (_section == &"tasks" and _construction.order_option != null))
+		_construction.visible = can_use_map
+	var editing := is_instance_valid(_construction)
+	hud.set_construction_mode_available(can_use_map, editing, editing and _construction.order_option != null)
 	camera.enabled_input = can_use_map and not _building_active()
 	if is_instance_valid(nest_popup):
 		nest_popup.visible = (top == null or top is PauseMenu) and not campaign_panel.visible
@@ -216,26 +218,43 @@ func _open_settings() -> void:
 func _select_section(section: StringName) -> void:
 	if Router.has_overlay() or campaign_panel.visible:
 		return
-	var previous_section := _section
-	if is_instance_valid(_construction) and _construction.order_option != null:
-		_close_construction_panel(_construction)
-	_section = &"" if previous_section == section else section
+	if section == &"build" and is_instance_valid(_construction) and _construction.order_option != null:
+		_construction.set_palette_visible(not _construction.is_palette_open())
+		return
+	var already_open := _section == section
+	if section == &"build" and is_instance_valid(_construction):
+		already_open = _construction.is_palette_open()
+	_section = &"" if already_open else section
 	hud.set_section(_section)
 	if _section == &"build":
 		if not is_instance_valid(_construction):
 			_create_construction_panel()
-		_construction.show()
+		_construction.set_palette_visible(true)
 		camera.dragging = false
 		camera.enabled_input = false
 		selection.clear()
 	elif is_instance_valid(_construction):
-		_construction.hide()
+		_construction.set_palette_visible(false)
+
+func _toggle_demolition() -> void:
+	if Router.has_overlay() or campaign_panel.visible:
+		return
+	var started_here := not is_instance_valid(_construction)
+	if started_here:
+		_create_construction_panel()
+		_construction.set_palette_visible(false)
+	elif _construction.order_option != null:
+		return
+	_construction.select_demolition()
+	camera.dragging = false
+	camera.enabled_input = false
 
 func _create_construction_panel(order_option: BuildOption = null) -> void:
 	var context := ConstructionContext.new()
 	context.controller = world.build_controller
 	context.art = world.art
 	context.camera = camera
+	context.action_buttons = hud.construction_buttons()
 	context.obstacles = _construction_obstacles
 	context.dismiss_map_popup = _dismiss_visible_nest_popup
 	_construction = CONSTRUCTION_PANEL.instantiate()
@@ -249,6 +268,9 @@ func _create_construction_panel(order_option: BuildOption = null) -> void:
 	_update_construction_dock()
 
 func _begin_royal_order(index: int, diversion: bool) -> void:
+	if is_instance_valid(_construction) and _construction.draft.size() > 0:
+		_construction.set_palette_visible(true)
+		return
 	var option: BuildOption = world.tasks.start_order(index, diversion)
 	if option == null: return
 	if is_instance_valid(_construction):
@@ -266,6 +288,8 @@ func _close_construction_panel(menu: MenuBase) -> void:
 		return
 	var order := _construction.order_option
 	_construction.hide()
+	_construction.detach_actions()
+	hud.set_construction_mode_available(true, false, false)
 	_construction.queue_free()
 	_construction = null
 	if order != null:

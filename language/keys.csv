@@ -55,7 +55,7 @@ ui.construction.move,Move: LMB pans the map,Перемещение: ЛКМ дв�
 ui.construction.demolish,Demolish: mark a building or road,Снос: отметить здание или дорогу
 ui.construction.undo,Undo stroke (Ctrl+Z),Отменить ход (Ctrl+Z)
 ui.construction.cancel,Cancel all,Отменить всё
-ui.construction.apply,Apply plan,Применить план
+ui.construction.apply,Start construction,Начать строительство
 ui.construction.build_hint,LMB: build · RMB: remove layer,ЛКМ: строить · ПКМ: убрать слой
 ui.construction.move_hint,LMB/MMB: pan · wheel: zoom,ЛКМ/СКМ: камера · колесо: зум
 ui.construction.demolish_hint,LMB: demolish · RMB: unmark,ЛКМ: снос · ПКМ: убрать отметку

@@ -172,7 +172,7 @@ msgid "ui.construction.cancel"
 msgstr "Cancel all"
 
 msgid "ui.construction.apply"
-msgstr "Apply plan"
+msgstr "Start construction"
 
 msgid "ui.construction.build_hint"
 msgstr "LMB: build · RMB: remove layer"

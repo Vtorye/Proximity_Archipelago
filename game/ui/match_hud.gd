@@ -207,6 +207,17 @@ func toast(message: String, danger: bool = false) -> void:
 	_toast_time = PRESENTATION.toast_duration
 	_toast.show()
 
+func construction_buttons() -> Dictionary[StringName, Button]:
+	return {&"demolish": %Demolish, &"undo": %Undo, &"apply": %Apply, &"cancel": %Cancel}
+
+func set_construction_mode_available(available: bool, active: bool, is_order: bool) -> void:
+	%Demolish.disabled = not available or is_order
+	%Cancel.disabled = not available or not active
+	if not active:
+		%Demolish.set_pressed_no_signal(false)
+		%Undo.disabled = true
+		%Apply.disabled = true
+
 func bottom_bar_height() -> float:
 	return _bottom.size.y
 

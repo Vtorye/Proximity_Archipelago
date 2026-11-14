@@ -10,6 +10,11 @@
 
 [ext_resource type="Texture2D" path="res://game/assets/ui/build_move.svg" id="move_icon"]
 
+[ext_resource type="Texture2D" path="res://game/assets/ui/build_demolish.svg" id="demolish_icon"]
+[ext_resource type="Texture2D" path="res://game/assets/ui/build_undo.svg" id="undo_icon"]
+[ext_resource type="Texture2D" path="res://game/assets/ui/build_cancel.svg" id="cancel_icon"]
+[ext_resource type="Texture2D" path="res://game/assets/ui/build_apply.svg" id="apply_icon"]
+
 [node name="Hud" type="Control"]
 script = ExtResource("script")
 anchors_preset = 15
@@ -162,6 +167,50 @@ theme_override_constants/icon_max_width = 16
 icon_alignment = 1
 tooltip_text = "ui.construction.inspect_hint"
 toggle_mode = true
+
+[node name="Demolish" type="Button" parent="Bottom/Actions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(34, 34)
+icon = ExtResource("demolish_icon")
+icon_alignment = 1
+expand_icon = true
+theme_override_constants/icon_max_width = 16
+tooltip_text = "ui.construction.demolish"
+mouse_default_cursor_shape = 2
+toggle_mode = true
+
+[node name="Undo" type="Button" parent="Bottom/Actions"]
+disabled = true
+unique_name_in_owner = true
+custom_minimum_size = Vector2(58, 34)
+icon = ExtResource("undo_icon")
+text = "Ctrl+Z"
+theme_type_variation = &"CompactButton"
+tooltip_text = "ui.construction.undo"
+mouse_default_cursor_shape = 2
+
+[node name="Apply" type="Button" parent="Bottom/Actions"]
+disabled = true
+unique_name_in_owner = true
+custom_minimum_size = Vector2(148, 34)
+icon = ExtResource("apply_icon")
+expand_icon = true
+theme_override_constants/icon_max_width = 16
+icon_alignment = 1
+text = "ui.construction.apply"
+theme_override_colors/font_color = Color(0.8745, 0.7765, 0.5451, 1)
+mouse_default_cursor_shape = 2
+
+[node name="Cancel" type="Button" parent="Bottom/Actions"]
+disabled = true
+unique_name_in_owner = true
+custom_minimum_size = Vector2(34, 34)
+icon = ExtResource("cancel_icon")
+icon_alignment = 1
+expand_icon = true
+theme_override_constants/icon_max_width = 16
+tooltip_text = "ui.construction.cancel"
+mouse_default_cursor_shape = 2
 
 [node name="Spacer" type="Control" parent="Bottom/Actions"]
 mouse_filter = 2

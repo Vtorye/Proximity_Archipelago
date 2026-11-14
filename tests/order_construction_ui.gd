@@ -28,6 +28,14 @@ func _run() -> void:
 	for type in world.inventory.registered_types(): world.inventory.add(type, 200)
 	screen.camera.position = Vector2(400, 464)
 	screen.camera.force_update_scroll()
+	var actions: Dictionary = screen.hud.construction_buttons()
+	for action in [&"demolish", &"undo", &"apply"]:
+		expect(actions[action].is_visible_in_tree() and actions[action].get_parent() == screen.hud.get_node("%Move").get_parent(), "construction button is available on the map toolbar from the start")
+	expect(actions[&"apply"].disabled and actions[&"undo"].disabled, "empty plan disables apply and undo")
+	await click(actions[&"demolish"])
+	var demolition: ConstructionMenu = screen._construction
+	expect(demolition != null and not demolition.is_palette_open() and actions[&"demolish"].button_pressed, "demolition starts directly from the map toolbar")
+	await click(actions[&"cancel"])
 	await click(screen.hud.controls[&"build"])
 	var menu: ConstructionMenu = screen._construction
 	if menu == null or menu.draft.controller == null:
@@ -53,6 +61,21 @@ func _run() -> void:
 	press.position = move.position
 	get_viewport().push_input(press, true)
 	expect(menu.draft.size() == 7, "drag paints all seven road cells")
+	await click(screen.hud.controls[&"build"])
+	expect(not menu.panel.visible and menu.draft.size() == 7, "closing the palette keeps the draft")
+	for key in [&"apply", &"undo", &"demolish"]:
+		expect(screen.hud.is_ancestor_of(menu.controls[key]) and menu.controls[key].is_visible_in_tree(), "construction action stays on the HUD after closing the palette")
+	var undo := InputEventKey.new()
+	undo.physical_keycode = KEY_Z
+	undo.ctrl_pressed = true
+	undo.pressed = true
+	get_viewport().push_input(undo, true)
+	expect(menu.draft.size() == 0, "Ctrl+Z undoes the stroke with the palette closed")
+	await click(menu.controls[&"demolish"])
+	expect(menu.controls[&"demolish"].button_pressed, "demolition can be selected with the palette closed")
+	await click(menu.controls[&"demolish"])
+	await click_at(cell_point(start))
+	expect(menu.draft.size() == 1, "map editing remains active with the palette closed")
 	await click(menu.controls[&"apply"])
 	expect(screen._construction == null, "road plan commits")
 
