@@ -119,12 +119,13 @@ func _run() -> void:
 		stock.type = wood
 		stock.amount = 6
 		world.inventory.deposit(depot, [stock])
+		base.set_order(str(wood.id), "max", 12)
 		courier._decide()
 		for frame in range(150):
 			if courier._shipment: break
 			await frames(1)
-		expect(courier._shipment and WorldInventory.cargo_size(courier.cargo) == 6, "the main carrier loads six units from the small depot")
-		expect(courier._delivery_nest == base, "the carrier takes its shipment toward the nearest base nest")
+		expect(courier._shipment and WorldInventory.cargo_size(courier.cargo) == 6, "an order makes the main carrier load six units from the small depot")
+		expect(courier._order_target == base, "the carrier takes its ordered batch toward the base that asked for it")
 		await key(KEY_N)
 		await capture("07-carrier-with-load")
 		for frame in range(150):

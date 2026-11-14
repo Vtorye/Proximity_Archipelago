@@ -115,10 +115,9 @@ func _check_storage_and_hover() -> void:
 	var depot: House = screen.world.registry.at(cell) as House
 	await click_at(cell_point(cell))
 	var menu := Router.top_overlay() as NestMenu
-	expect(menu != null and menu.house == depot and menu._inventory_tab.visible and menu._dispatch_hint.visible and menu._capacity.text.contains("0 / 100"), "click opens a warehouse window with its inventory and dispatch settings")
-	await click(menu._dispatch)
-	expect(not depot.auto_dispatch, "the depot auto-dispatch toggle updates this nest")
-	expect(menu._dispatch_hint.text == "ui.nest.dispatch_hint", "local inventory explains that carriers collect at any fill level")
+	expect(menu != null and menu.house == depot and menu._inventory_tab.visible and menu._capacity.text.contains("0 / 100"), "click opens a warehouse window with its inventory")
+	await click(menu.controls[&"orders"])
+	expect(menu._orders_tab.visible and not menu._inventory_tab.visible and menu._funds.visible, "the orders tab replaces inventory and barracks also show the construction switch")
 	await capture("02e-small-nest-settings")
 	await click(menu.controls[&"residents"])
 	expect(menu._role_labels[AntAgent.Role.WORKER].text == "Рабочие · 4" and menu._role_labels[AntAgent.Role.CARRIER].text == "Носильщики · 1", "the residents tab counts roles assigned to this small nest")
@@ -129,7 +128,7 @@ func _check_storage_and_hover() -> void:
 	var main: House = screen.world.logistics.main_nest
 	await click_at(cell_point(main.cell))
 	menu = Router.top_overlay() as NestMenu
-	expect(menu != null and menu.house == main and not menu._dispatch.visible and menu._capacity.text.contains("/ %d" % WorldInventory.MAIN_CAPACITY), "the main nest shows its 1000-unit storage limit")
+	expect(menu != null and menu.house == main and menu._funds.visible and menu._capacity.text.contains("/ %d" % WorldInventory.base_capacity()), "the main nest shows its storage limit from nest_defaults.tres")
 	await click(menu.controls[&"residents"])
 	var food: ResourceType = screen.world.inventory.type_by_id(&"food")
 	screen.world.inventory.add(food, 100)
@@ -182,7 +181,7 @@ func _check_new_base(barracks: House) -> void:
 	world.logistics.deposit(base, [_entry(wood, 7)])
 	await click_at(cell_point(cell))
 	var menu := Router.top_overlay() as NestMenu
-	expect(menu != null and menu.house == base and not menu._dispatch.visible and menu._stock_labels[wood.id].text == "Древесина · 7", "the new base window shows its own inventory and hides barracks dispatch controls")
+	expect(menu != null and menu.house == base and menu._funds.visible and menu._stock_labels[wood.id].text == "Древесина · 7", "the new base window shows its own inventory and the construction switch")
 	await capture("02i-built-base-inventory")
 	await click(menu.controls[&"residents"])
 	expect(menu._population.text.contains("5 / 20") and not menu.controls[&"buy_worker"].disabled, "a built base can recruit beyond the barracks limit")

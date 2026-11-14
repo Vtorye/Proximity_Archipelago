@@ -52,7 +52,7 @@ func can_recruit(house: House, role: AntAgent.Role) -> bool:
 		not _recruiting and not _removing and recruitment != null and logistics.owns(house)
 		and role in roles()
 		and house.has_space() and navigation.walkable(planner.accessible_entry(house))
-		and planner.inventory.can_afford_all(recruitment.price(role), true)
+		and planner.inventory.nest_can_pay(logistics.store_of(house), recruitment.price(role))
 	)
 
 func recruit(house: House, role: AntAgent.Role) -> bool:
@@ -63,7 +63,7 @@ func recruit(house: House, role: AntAgent.Role) -> bool:
 		return false
 	_recruiting = true
 	planner.inventory.begin_update()
-	if not planner.inventory.try_spend_all(recruitment.price(role), true):
+	if not planner.inventory.pay_at(logistics.store_of(house), recruitment.price(role)):
 		ant.free()
 		_recruiting = false
 		planner.inventory.end_update()

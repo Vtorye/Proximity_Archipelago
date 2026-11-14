@@ -128,9 +128,21 @@ func _stock_details(house: House) -> String:
 	var is_main: bool = house.is_main_nest
 	var lines := PackedStringArray([tr("ui.storage.main" if is_main else "ui.storage.local")])
 	var used: int = inventory.storage_load(null if overlay.world.logistics.main_nest == house else house) if is_main else inventory.depot_fill(house)
-	var capacity: int = WorldInventory.MAIN_CAPACITY if is_main else house.storage_capacity
+	var capacity: int = WorldInventory.base_capacity() if is_main else house.storage_capacity
 	lines.append(tr("ui.storage.fill") % [used, capacity])
 	for type in inventory.registered_types():
+		if type.id == WorldInventory.CURRENCY_ID:
+			continue
+		var id: String = str(type.id)
 		var count: int = inventory.nest_quantity(house, overlay.world.logistics.main_nest, type)
 		lines.append("%s · %d" % [tr(type.display_name), count])
+		var order: Dictionary = house.order_of(id)
+		if not order.is_empty():
+			lines.append("  " + tr("ui.order.range") % [order.min, order.max])
+		var owed: int = int(house.requests.get(id, 0))
+		if owed > 0:
+			lines.append("  " + tr("ui.order.owed") % owed)
+		var arriving: int = int(house.incoming.get(id, 0))
+		if arriving > 0:
+			lines.append("  " + tr("ui.order.arriving") % arriving)
 	return "\n".join(lines)

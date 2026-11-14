@@ -126,7 +126,14 @@ ui.map.invalid_object_cell,Choose a free land tile,Выберите свобод
 ui.storage.main,Base nest,Базовый муравейник
 ui.storage.local,Barracks,Казарма
 ui.storage.fill,Storage %d / %d,Заполнено %d / %d
-ui.storage.auto,Automatic dispatch,Автоотправка
+ui.nest.orders,Orders,Заказы
+ui.nest.funds_construction,Stock here is used for construction,Ресурсы используются для строительства
+ui.order.min,Min,Мин.
+ui.order.once,Once,Однократно
+ui.order.range,Min %d · Max %d,Мин %d · Макс %d
+ui.order.owed,Requested: %d,Запрошено: %d
+ui.order.arriving,On the way: %d,В пути: %d
+ui.order.max,Max,Макс.
 ui.storage.in_main,In main nest %d,В главном складе %d
 ui.storage.protected,The starter base and nonempty stores cannot be demolished,Стартовый или непустой склад нельзя снести
 ui.terrain.entry,Entry %d ms,Вход %d мс
@@ -144,7 +151,6 @@ ui.nest.unaffordable,Insufficient resources in base nests,В базовых му
 ui.nest.from_main,Paid from base nest inventories,Оплата из базовых муравейников
 ui.nest.kill,Kill,Убить
 ui.nest.kill_hint,Kill one assigned ant of this type. Its cargo is lost.,Убить одного жителя этого типа. Его груз будет потерян.
-ui.nest.dispatch_hint,Carriers collect available resources at any fill level.,Носильщики забирают доступные ресурсы при любом заполнении.
 ui.source.remaining,Supply: %d,Запас: %d
 ui.source.infinite,Supply: unlimited,Запас: бесконечный
 ui.source.finite,Finite source,Конечный источник

@@ -107,7 +107,8 @@ static func capture(world: World) -> Dictionary:
 	for building: Building in buildings:
 		var state := {}
 		if building is House:
-			state = _properties(building, ["auto_dispatch", "storage_capacity"])
+			# incoming is not saved: its carriers lose their order target on load.
+			state = _properties(building, ["funds_construction", "storage_capacity", "orders", "requests"])
 			state["stock"] = world.inventory._depots.get(building, {}).duplicate()
 		if building is Workplace:
 			state = _properties(building, ["_yield_remainder"])
@@ -121,7 +122,7 @@ static func capture(world: World) -> Dictionary:
 		for source in site.crates: crates.append([buildings.find(source), amounts(site.crates[source])])
 		data.sites.append({"option": str(site.option.id), "cell": site.cell, "required": amounts(site.required), "delivered": site.delivered.duplicate(), "transit": site.transit.duplicate(), "progress": site.progress, "crates": crates})
 	for ant in world.population.agents():
-		var state: Dictionary = _properties(ant, ["role", "position", "speed", "work_time", "carry_capacity", "max_health", "health", "attack_damage", "status", "_destination", "_timer", "_carrying", "_shipment", "_main_delivery", "_last_direction", "_waiting_for_work", "_waiting_reason"])
+		var state: Dictionary = _properties(ant, ["role", "position", "speed", "work_time", "carry_capacity", "max_health", "health", "attack_damage", "status", "_destination", "_timer", "_carrying", "_shipment", "_last_direction", "_waiting_for_work", "_waiting_reason"])
 		state["home"] = buildings.find(ant.home)
 		state["satiety"] = ant.needs.satiety
 		state["capacity"] = ant.needs.capacity

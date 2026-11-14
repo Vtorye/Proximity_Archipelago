@@ -12,8 +12,9 @@ var _role_labels: Dictionary[int, Label] = {}
 var _purchase_labels: Dictionary[int, Label] = {}
 var _population: Label
 var _capacity: Label
-var _dispatch: CheckButton
-var _dispatch_hint: Label
+var _orders_tab: VBoxContainer
+var _order_rows: Dictionary[String, Dictionary] = {}
+var _funds: CheckButton
 
 func _ready() -> void:
 	if not payload is Dictionary:
@@ -37,7 +38,7 @@ func _ready() -> void:
 	var tabs := HBoxContainer.new()
 	content.add_child(tabs)
 	var group := ButtonGroup.new()
-	for key in [&"inventory", &"residents"]:
+	for key in [&"inventory", &"orders", &"residents"]:
 		var button: Button = ColonyStyle.button("ui.nest." + str(key))
 		button.toggle_mode = true
 		button.button_group = group
@@ -54,14 +55,53 @@ func _ready() -> void:
 		var line: Label = ColonyStyle.label("")
 		_stock_labels[type.id] = line
 		_inventory_tab.add_child(line)
-	_dispatch = CheckButton.new()
-	_dispatch.text = "ui.storage.auto"
-	_dispatch.toggled.connect(func(enabled: bool):
-		if is_instance_valid(house): house.auto_dispatch = enabled)
-	_inventory_tab.add_child(_dispatch)
-	_dispatch_hint = ColonyStyle.label("ui.nest.dispatch_hint", 4, ColonyStyle.MUTED)
-	_dispatch_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_inventory_tab.add_child(_dispatch_hint)
+	_orders_tab = VBoxContainer.new()
+	_orders_tab.add_theme_constant_override("separation", 6)
+	content.add_child(_orders_tab)
+	_funds = CheckButton.new()
+	_funds.text = "ui.nest.funds_construction"
+	_funds.toggled.connect(func(enabled: bool):
+		if is_instance_valid(house): house.funds_construction = enabled)
+	_orders_tab.add_child(_funds)
+	# One grid for the header and every row keeps the four columns aligned:
+	# name | min | max | owed.
+	var order_grid := GridContainer.new()
+	order_grid.columns = 4
+	order_grid.add_theme_constant_override("h_separation", 6)
+	order_grid.add_theme_constant_override("v_separation", 6)
+	_orders_tab.add_child(order_grid)
+	order_grid.add_child(ColonyStyle.label(""))
+	for key in ["ui.order.min", "ui.order.max", "ui.order.once"]:
+		var caption: Label = ColonyStyle.label(key, 4, ColonyStyle.MUTED)
+		caption.custom_minimum_size.x = 72
+		caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		order_grid.add_child(caption)
+	for type in world.inventory.registered_types():
+		if type.id == WorldInventory.CURRENCY_ID:
+			continue
+		var row := order_grid
+		var name_label: Label = ColonyStyle.label("")
+		name_label.custom_minimum_size.x = 110
+		row.add_child(name_label)
+		var spins: Dictionary = {}
+		for field in ["min", "max"]:
+			var spin := SpinBox.new()
+			spin.min_value = 0
+			spin.max_value = WorldInventory.order_limit()
+			spin.step = 1
+			spin.custom_minimum_size.x = 72
+			spin.value_changed.connect(_set_order.bind(str(type.id), field))
+			row.add_child(spin)
+			spins[field] = spin
+		var once := SpinBox.new()
+		once.min_value = 0
+		once.max_value = WorldInventory.order_limit()
+		once.step = 1
+		once.custom_minimum_size.x = 72
+		once.value_changed.connect(_set_owed.bind(str(type.id)))
+		row.add_child(once)
+		spins["once"] = once
+		_order_rows[str(type.id)] = {"name": name_label, "spins": spins, "type": type}
 	_residents_tab = VBoxContainer.new()
 	_residents_tab.add_theme_constant_override("separation", 8)
 	content.add_child(_residents_tab)
@@ -102,8 +142,20 @@ func _ready() -> void:
 
 func _show_tab(key: StringName) -> void:
 	_inventory_tab.visible = key == &"inventory"
+	_orders_tab.visible = key == &"orders"
 	_residents_tab.visible = key == &"residents"
 	controls[key].set_pressed_no_signal(true)
+
+func _set_order(value: float, id: String, field: String) -> void:
+	if is_instance_valid(house):
+		house.set_order(id, field, roundi(value))
+		refresh()
+
+## The value is saved as soon as it changes; it is the total still owed for this resource.
+func _set_owed(value: float, id: String) -> void:
+	if is_instance_valid(house):
+		house.request(id, roundi(value))
+		refresh()
 
 func _recruit(role: AntAgent.Role) -> void:
 	world.population.recruit(house, role)
@@ -118,14 +170,24 @@ func refresh() -> void:
 		return
 	var main: bool = house.is_main_nest
 	var used: int = world.inventory.storage_load(null if house == world.logistics.main_nest else house) if main else world.inventory.depot_fill(house)
-	var capacity: int = WorldInventory.MAIN_CAPACITY if main else house.storage_capacity
+	var capacity: int = WorldInventory.base_capacity() if main else house.storage_capacity
 	_capacity.text = tr("ui.storage.fill") % [used, capacity]
 	for type in world.inventory.registered_types():
 		var amount: int = world.inventory.nest_quantity(house, world.logistics.main_nest, type)
 		_stock_labels[type.id].text = "%s · %d" % [tr(type.display_name), amount]
-	_dispatch.visible = not main
-	_dispatch_hint.visible = not main
-	_dispatch.set_pressed_no_signal(house.auto_dispatch)
+	_funds.visible = true
+	_funds.set_pressed_no_signal(house.funds_construction)
+	for id in _order_rows:
+		var row: Dictionary = _order_rows[id]
+		var type: ResourceType = row.type
+		var order: Dictionary = house.order_of(id)
+		var stock: int = world.inventory.nest_quantity(house, world.logistics.main_nest, type)
+		(row.name as Label).text = "%s · %d" % [tr(type.display_name), stock]
+		var spins: Dictionary = row.spins
+		for field in ["min", "max"]:
+			(spins[field] as SpinBox).set_value_no_signal(int(order.get(field, 0)))
+		# The owed field mirrors the saved total, which shrinks as carriers deliver.
+		(spins["once"] as SpinBox).set_value_no_signal(int(house.requests.get(id, 0)))
 	_population.text = tr("ui.nest.population") % [house.residents.size(), house.resident_limit()]
 	_population.tooltip_text = tr("ui.terrain.capacity_bonus") % roundi((house.terrain_capacity_multiplier - 1) * 100) if house.terrain_capacity_multiplier > 1 else ""
 	var counts := {}

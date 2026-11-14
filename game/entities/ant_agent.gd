@@ -37,9 +37,12 @@ var departure_delay := 0.0
 var _carrying := false
 var cargo: Array[ResourceAmount] = []
 var _shipment := false
-var _main_delivery := false
 var _delivery_nest: House
 var _pickup_source: Building
+## The order being fetched or carried: target nest, resource, and amount.
+var _order_target: House
+var _order_type: ResourceType
+var _order_amount := 0
 var _angle := 0.0
 var _animation_time := 0.0
 var _last_direction := Vector2.UP
@@ -219,12 +222,18 @@ func _decide() -> void:
 
 func _decide_pickup(foodless: bool) -> void:
 	var cell: Vector2i = route_service.world_to_cell(global_position)
-	var dispatch: Dictionary = logistics.nearest_dispatch(cell, _can_collect_shipment)
-	if not dispatch.is_empty():
-		_pickup_source = dispatch.source
-		_walk(dispatch.route, &"pickup")
+	var order: Dictionary = logistics.nearest_order(cell, carry_capacity, _can_collect_order)
+	if not order.is_empty():
+		_pickup_source = order.source
+		_order_target = order.target
+		_order_type = order.type
+		_order_amount = order.amount
+		_walk(order.pickup, &"pickup")
 		return
 	_pickup_source = null
+	_order_target = null
+	_order_type = null
+	_order_amount = 0
 	if foodless:
 		_wander()
 	elif not needs.can_afford(planner.escape_energy(cell, speed) + 2.0):
@@ -234,9 +243,8 @@ func _decide_pickup(foodless: bool) -> void:
 	else:
 		_wander()
 
-func _can_collect_shipment(pickup: Route) -> bool:
-	var cell: Vector2i = pickup.cells.back()
-	return _can_start_pickup(pickup, logistics.route_to(logistics.closest_base(cell, carry_capacity), cell))
+func _can_collect_order(pickup: Route, delivery: Route) -> bool:
+	return _can_start_pickup(pickup, delivery)
 
 func _can_start_pickup(pickup: Route, delivery: Route) -> bool:
 	if not delivery.is_valid():
@@ -250,20 +258,20 @@ func _can_start_pickup(pickup: Route, delivery: Route) -> bool:
 	return needs.can_afford(energy + planner.escape_energy(delivery.cells.back(), speed))
 
 func _load_pickup() -> void:
-	var source: Building = _pickup_source
+	var source: House = _pickup_source as House
+	var target: House = _order_target
+	var type: ResourceType = _order_type
+	var amount: int = _order_amount
 	_pickup_source = null
-	if is_instance_valid(source) and source.is_inside_tree():
-		if source is House and logistics.ready_to_dispatch(source):
-			var cell: Vector2i = route_service.world_to_cell(global_position)
-			var delivery: Route = logistics.route_to(logistics.closest_base(cell, carry_capacity), cell)
-			if delivery.is_valid() and _can_deliver(delivery, cell):
-				cargo = planner.inventory.dispatch(source, carry_capacity)
-				_shipment = not cargo.is_empty()
-				_main_delivery = _shipment
+	if _order_still_valid(source, target, type, amount):
+		cargo = planner.inventory.take_for_order(logistics.store_of(source), type, amount)
+		_shipment = not cargo.is_empty()
 	if cargo.is_empty():
-		# Stock may have changed while this carrier was en route.
+		# Stock or need changed while this carrier was en route.
+		_order_target = null
 		_decide()
 	else:
+		_set_incoming(WorldInventory.cargo_size(cargo))
 		_deliver()
 
 func _deliver() -> void:
@@ -275,11 +283,14 @@ func _deliver() -> void:
 	_carrying = true
 	var cell: Vector2i = route_service.world_to_cell(global_position)
 	var count: int = WorldInventory.cargo_size(cargo)
-	if role == Role.WORKER:
+	if _shipment:
+		# Orders go to their target; if it filled up meanwhile, to the nearest nest with room.
+		_delivery_nest = _order_target if _order_target_accepts(count) else logistics.closest_depot(cell, count)
+	elif role == Role.WORKER:
 		# Workers return only to the storage of the nest they live in.
 		_delivery_nest = _home_storage(count)
 	else:
-		_delivery_nest = logistics.closest_base(cell, count) if _main_delivery else logistics.closest_depot(cell, count)
+		_delivery_nest = logistics.closest_depot(cell, count)
 	var route: Route = logistics.route_to(_delivery_nest, cell)
 	if route.is_valid() and _can_deliver(route, cell):
 		_set_waiting_reason(WorkPlan.WaitReason.NONE)
@@ -326,15 +337,40 @@ func _delivery_energy(route: Route, from_cell: Vector2i) -> float:
 		energy += planner.escape_energy(route.cells.back(), speed)
 	return energy
 
+func _order_target_accepts(count: int) -> bool:
+	return is_instance_valid(_order_target) and logistics.owns(_order_target) and planner.inventory.can_deposit(logistics.store_of(_order_target), count)
+
+## An order is valid while its source still has surplus and its target still needs the amount.
+func _order_still_valid(source: House, target: House, type: ResourceType, amount: int) -> bool:
+	return (
+		type != null and amount > 0
+		and is_instance_valid(source) and source.is_inside_tree() and logistics.owns(source)
+		and is_instance_valid(target) and logistics.owns(target)
+		and logistics.order_surplus(source, type) >= amount
+		and logistics.order_need(target, type) >= amount
+	)
+
+## Units en route to the order target count toward its minimum, so no second trip is sent for them.
+func _set_incoming(delta: int) -> void:
+	if not is_instance_valid(_order_target) or cargo.is_empty():
+		return
+	var key: String = str(cargo[0].type.id)
+	_order_target.incoming[key] = maxi(0, int(_order_target.incoming.get(key, 0)) + delta)
+
 func _unload() -> void:
-	if _shipment and logistics.owns(_delivery_nest) and _delivery_nest.is_main_nest:
-		if not planner.inventory.close_shipment(cargo, true, null if _delivery_nest == logistics.main_nest else _delivery_nest):
-			# Main storage filled while this load was en route; keep the cargo and retry.
-			_main_delivery = true
-			_deliver()
+	if _shipment:
+		if logistics.owns(_delivery_nest) and planner.inventory.close_shipment(cargo, true, logistics.store_of(_delivery_nest)):
+			if _delivery_nest == _order_target:
+				_order_target.fulfil(str(cargo[0].type.id), WorldInventory.cargo_size(cargo))
+			_set_incoming(-WorldInventory.cargo_size(cargo))
+			_clear_cargo()
+			_set_waiting_reason(WorkPlan.WaitReason.NONE)
+			_go_home()
 			return
-	elif _shipment or not logistics.deposit(_delivery_nest, cargo):
-		_main_delivery = true
+		# Destination lost its room while this load was en route; keep the cargo and retry.
+		_deliver()
+		return
+	if not logistics.deposit(_delivery_nest, cargo):
 		_deliver()
 		return
 	_clear_cargo()
@@ -344,13 +380,14 @@ func _unload() -> void:
 func _clear_cargo() -> void:
 	cargo.clear()
 	_shipment = false
-	_main_delivery = false
+	_order_target = null
 	_delivery_nest = null
 	_carrying = false
 
 func _discard_cargo() -> void:
 	if _shipment:
 		planner.inventory.close_shipment(cargo, false)
+		_set_incoming(-WorldInventory.cargo_size(cargo))
 	_clear_cargo()
 
 func _wander() -> void:

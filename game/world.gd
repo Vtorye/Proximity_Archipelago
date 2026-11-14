@@ -100,6 +100,7 @@ func _ready() -> void:
 		construction.controller = build_controller
 		construction.art = art
 		build_controller.construction = construction
+		logistics.construction = construction
 		add_child(construction)
 		construction.changed.connect(planner._queue_workplace_refresh)
 		population.construction = construction

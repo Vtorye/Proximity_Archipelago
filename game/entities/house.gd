@@ -8,8 +8,16 @@ const BARRACKS_TINT := Color("91b7df")
 @export var human_scene: PackedScene
 @export_range(1.0, 4.0, 0.05) var carrier_speed_multiplier := 1.5
 @export_range(1, 100) var carrier_capacity := 6
-@export_range(1, 10000) var storage_capacity := 100
-@export var auto_dispatch := true
+## Barracks storage in goods. Bases use NestDefaults.base_capacity instead.
+@export_range(1, 10000) var storage_capacity := 120
+## Whether this store's goods are earmarked for construction before stock orders.
+@export var funds_construction := true
+## Explicit orders keyed by resource id: {"min": int, "max": int}. Without one, the nest default applies.
+var orders: Dictionary = {}
+## One-time requests still owed to this nest, keyed by resource id.
+var requests: Dictionary = {}
+## Units en route to this nest under an order or request, keyed by resource id.
+var incoming: Dictionary = {}
 var development_tint := Color.WHITE
 var terrain_capacity_multiplier := 1.0
 
@@ -52,6 +60,42 @@ func remove_resident(human: Node2D) -> void:
 		return
 	_residents.erase(human)
 
+
+## Order in effect for one resource: explicit, else the nest default from nest_defaults.tres.
+func order_of(id: String) -> Dictionary:
+	if orders.has(id):
+		return orders[id]
+	var defaults: NestDefaults = NestDefaults.load_defaults()
+	if is_main_nest:
+		return {"min": defaults.base_min, "max": defaults.base_max}
+	return {"min": defaults.barracks_min, "max": defaults.barracks_max}
+
+## Keeps min <= max. Editing max below min lowers min, and editing min above max raises max.
+func set_order(id: String, field: String, value: int) -> void:
+	var order: Dictionary = order_of(id).duplicate()
+	order[field] = clampi(value, 0, WorldInventory.order_limit())
+	if order.min > order.max:
+		if field == "min":
+			order.max = order.min
+		else:
+			order.min = order.max
+	orders[id] = order
+
+## One-time request: the total still owed to this nest for one resource. It shrinks as carriers deliver.
+func request(id: String, amount: int) -> void:
+	var owed: int = clampi(amount, 0, WorldInventory.order_limit())
+	if owed <= 0:
+		requests.erase(id)
+	else:
+		requests[id] = owed
+
+## Called when a carrier delivers cargo to this nest under an order or request.
+func fulfil(id: String, amount: int) -> void:
+	if not requests.has(id):
+		return
+	requests[id] = maxi(0, int(requests[id]) - amount)
+	if requests[id] == 0:
+		requests.erase(id)
 
 func validate_definition() -> Array[String]:
 	var errors: Array[String] = []

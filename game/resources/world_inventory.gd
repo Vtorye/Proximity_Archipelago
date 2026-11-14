@@ -3,9 +3,15 @@ extends Node
 
 signal changed
 
-## Physical goods held by the main nest. Royal is a crown currency, not carried by ants.
-const MAIN_CAPACITY := 1000
 const CURRENCY_ID := &"royal"
+
+## Goods one base nest can hold; set in nest_defaults.tres. Royal is currency, not counted.
+static func base_capacity() -> int:
+	return NestDefaults.load_defaults().base_capacity
+
+## Upper bound for any order value or request; separate from storage capacity.
+static func order_limit() -> int:
+	return NestDefaults.load_defaults().order_limit
 
 var _types: Dictionary[StringName, ResourceType] = {}
 var _amounts: Dictionary[StringName, int] = {}
@@ -91,6 +97,38 @@ func try_spend_all(costs: Array[ResourceAmount], main_only: bool = false, use_re
 		_notify()
 	return true
 
+
+func _store_stock(store: House) -> Dictionary:
+	return _main_stock if store == null else _depots.get(store, {})
+
+## Physical goods at one store (null is the first base). Meal reservations are ignored on purpose:
+## recruiting may use food that is already promised to meals.
+func nest_can_pay(store: House, costs: Array[ResourceAmount]) -> bool:
+	if store != null and not _depots.has(store):
+		return false
+	var totals: Dictionary[StringName, int] = {}
+	for cost in costs:
+		if cost == null or cost.amount < 0 or not is_registered(cost.type):
+			return false
+		totals[cost.type.id] = totals.get(cost.type.id, 0) + cost.amount
+	var stock: Dictionary = _store_stock(store)
+	for id: StringName in totals:
+		if int(stock.get(id, 0)) < totals[id]:
+			return false
+	return true
+
+## Pay from one store only; the other nests' stock is never touched.
+func pay_at(store: House, costs: Array[ResourceAmount]) -> bool:
+	if not nest_can_pay(store, costs):
+		return false
+	var stock: Dictionary = _store_stock(store)
+	for cost in costs:
+		var id: StringName = cost.type.id
+		stock[id] = int(stock.get(id, 0)) - cost.amount
+		_amounts[id] -= cost.amount
+	if not costs.is_empty():
+		_notify()
+	return true
 
 ## Preview crates without debiting any stock. Orders share a temporary ledger.
 func allocate_build_materials(costs: Array[ResourceAmount], primary: House, sources: Array[House], planned: Dictionary) -> Variant:
@@ -243,16 +281,16 @@ func has_base_room(count: int) -> bool:
 			return true
 	return false
 
-## Each base holds up to MAIN_CAPACITY; barracks use their own storage_capacity.
+## Each base holds up to base_capacity(); barracks use their own storage_capacity.
 func can_deposit(house: House, count: int) -> bool:
 	if count < 0:
 		return false
 	if house == null:
-		return storage_load(null) + count <= MAIN_CAPACITY
+		return storage_load(null) + count <= base_capacity()
 	if not _depots.has(house):
 		return false
 	if house.is_main_nest:
-		return storage_load(house) + count <= MAIN_CAPACITY
+		return storage_load(house) + count <= base_capacity()
 	return count <= house.storage_capacity - depot_fill(house)
 
 ## force skips capacity limits for refunds so paid materials are never lost.
@@ -272,39 +310,42 @@ func deposit(house: House, cargo: Array[ResourceAmount], force := false) -> bool
 		_notify()
 	return true
 
-func has_dispatchable_stock(house: House) -> bool:
-	var stock: Dictionary = _depots.get(house, {})
-	for id: StringName in stock:
-		if stock[id] > 0 and available(_types[id]) > 0:
-			return true
-	return false
+## Goods a nest can still accept. Each base holds base_capacity(); barracks use storage_capacity.
+func free_space(house: House) -> int:
+	if house == null:
+		return base_capacity() - storage_load(null)
+	if not _depots.has(house):
+		return 0
+	if house.is_main_nest:
+		return base_capacity() - storage_load(house)
+	return house.storage_capacity - depot_fill(house)
 
-## Move unreserved stock out of a depot. It stays in colony totals while in transit.
-func dispatch(house: House, limit: int) -> Array[ResourceAmount]:
+func stock_of(house: House, type: ResourceType) -> int:
+	if type == null:
+		return 0
+	if house == null:
+		return int(_main_stock.get(type.id, 0))
+	return int(_depots.get(house, {}).get(type.id, 0))
+
+## Move exactly `amount` of one resource out of a nest for an order. null house is the first base.
+## The goods stay in colony totals while in transit.
+func take_for_order(house: House, type: ResourceType, amount: int) -> Array[ResourceAmount]:
 	var cargo: Array[ResourceAmount] = []
-	var stock: Dictionary = _depots.get(house, {})
-	for id: StringName in stock:
-		var type: ResourceType = _types[id]
-		var amount: int = mini(limit, mini(stock[id], available(type)))
-		if amount <= 0:
-			continue
-		var item := ResourceAmount.new()
-		item.type = type
-		item.amount = amount
-		cargo.append(item)
-		stock[id] -= amount
-		_transit[id] = int(_transit.get(id, 0)) + amount
-		limit -= amount
-		if limit <= 0:
-			break
-	if not cargo.is_empty():
-		_notify()
+	if amount <= 0 or not is_registered(type) or stock_of(house, type) < amount or available(type) < amount:
+		return cargo
+	var stock: Dictionary = _main_stock if house == null else _depots[house]
+	stock[type.id] -= amount
+	_transit[type.id] = int(_transit.get(type.id, 0)) + amount
+	var item := ResourceAmount.new()
+	item.type = type
+	item.amount = amount
+	cargo.append(item)
+	_notify()
 	return cargo
 
+## Delivered cargo goes to any nest with room (null is the first base); otherwise nothing changes.
 func close_shipment(cargo: Array[ResourceAmount], delivered: bool, destination: House = null) -> bool:
-	if delivered and destination != null and (not _depots.has(destination) or not destination.is_main_nest or not can_deposit(destination, cargo_size(cargo))):
-		return false
-	if delivered and destination == null and not can_deposit(null, cargo_size(cargo)):
+	if delivered and not can_deposit(destination, cargo_size(cargo)):
 		return false
 	var stock: Dictionary = _main_stock if destination == null else _depots.get(destination, {})
 	for item in cargo:
