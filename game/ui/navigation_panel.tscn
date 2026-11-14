@@ -3,7 +3,6 @@
 [ext_resource type="Script" path="res://game/ui/navigation_panel.gd" id="script"]
 [ext_resource type="PackedScene" path="res://game/ui/window_header.tscn" id="window_header"]
 
-[ext_resource type="FontFile" path="res://game/assets/fonts/Pixuf.ttf" id="small_font"]
 
 [node name="NavigationPanel" type="PanelContainer"]
 script = ExtResource("script")
@@ -31,71 +30,62 @@ theme_override_constants/separation = 3
 mouse_filter = 2
 
 [node name="Heading" type="Label" parent="WindowContents/Content/Legend"]
+theme_type_variation = &"Caption"
 unique_name_in_owner = true
 mouse_filter = 2
 text = ""
-theme_override_font_sizes/font_size = 8
 theme_override_colors/font_color = Color(0.8745, 0.7765, 0.5451, 1)
-theme_override_fonts/font = ExtResource("small_font")
 
 [node name="Source" type="Label" parent="WindowContents/Content/Legend"]
+theme_type_variation = &"Caption"
 unique_name_in_owner = true
 mouse_filter = 2
 text = ""
-theme_override_font_sizes/font_size = 8
-theme_override_fonts/font = ExtResource("small_font")
 
 [node name="Help" type="Label" parent="WindowContents/Content/Legend"]
+theme_type_variation = &"Caption"
 mouse_filter = 2
-text = "Меньше число — выше приоритет"
-theme_override_font_sizes/font_size = 8
-theme_override_fonts/font = ExtResource("small_font")
+text = "ui.nav.priority_help"
 
 [node name="Formula" type="Label" parent="WindowContents/Content/Legend"]
+theme_type_variation = &"Caption"
 unique_name_in_owner = true
 mouse_filter = 2
 text = ""
-theme_override_font_sizes/font_size = 8
-theme_override_fonts/font = ExtResource("small_font")
 
 [node name="Keys" type="HBoxContainer" parent="WindowContents/Content/Legend"]
 theme_override_constants/separation = 8
 mouse_filter = 2
 
 [node name="Terrain" type="Label" parent="WindowContents/Content/Legend/Keys"]
+theme_type_variation = &"Caption"
 mouse_filter = 2
-text = "Земля"
-theme_override_font_sizes/font_size = 8
+text = "ui.nav.terrain"
 theme_override_colors/font_color = Color(0.725, 0.725, 0.706, 1)
-theme_override_fonts/font = ExtResource("small_font")
 
 [node name="Work" type="Label" parent="WindowContents/Content/Legend/Keys"]
+theme_type_variation = &"Caption"
 mouse_filter = 2
-text = "Работа"
-theme_override_font_sizes/font_size = 8
+text = "ui.nav.work"
 theme_override_colors/font_color = Color(1, 0.569, 0.518, 1)
-theme_override_fonts/font = ExtResource("small_font")
 
 [node name="Home" type="Label" parent="WindowContents/Content/Legend/Keys"]
+theme_type_variation = &"Caption"
 mouse_filter = 2
-text = "Дом"
-theme_override_font_sizes/font_size = 8
+text = "ui.nav.home"
 theme_override_colors/font_color = Color(0.553, 0.741, 1, 1)
-theme_override_fonts/font = ExtResource("small_font")
 
 [node name="Food" type="Label" parent="WindowContents/Content/Legend/Keys"]
+theme_type_variation = &"Caption"
 mouse_filter = 2
-text = "Еда"
-theme_override_font_sizes/font_size = 8
+text = "ui.nav.food"
 theme_override_colors/font_color = Color(0.62, 0.89, 0.627, 1)
-theme_override_fonts/font = ExtResource("small_font")
 
 [node name="Detail" type="Label" parent="WindowContents/Content"]
+theme_type_variation = &"Caption"
 unique_name_in_owner = true
 mouse_filter = 2
-text = "Наведите курсор на предприятие"
-theme_override_font_sizes/font_size = 8
-theme_override_fonts/font = ExtResource("small_font")
+text = "ui.nav.hover"
 custom_minimum_size = Vector2(172, 0)
 autowrap_mode = 3
 

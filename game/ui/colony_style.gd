@@ -56,8 +56,14 @@ static func _scroll_style(color: Color) -> StyleBoxFlat:
 
 static func apply(control: Control) -> void:
 	var theme := Theme.new()
-	theme.default_font = FONT
-	theme.default_font_size = 16
+	theme.default_font = SECONDARY_FONT
+	theme.default_font_size = maxi(AppSettings.minimum_text_size(), AppSettings.TYPOGRAPHY.body_size)
+	theme.set_type_variation("Caption", "Label")
+	theme.set_type_variation("Heading", "Label")
+	theme.set_type_variation("CompactButton", "Button")
+	for type in ["LineEdit", "TextEdit", "Button", "Label", "CheckButton", "OptionButton"]:
+		theme.set_font("font", type, theme.default_font)
+	theme.set_font("normal_font", "RichTextLabel", theme.default_font)
 	theme.set_color("font_color", "Label", TEXT)
 	theme.set_color("font_shadow_color", "Label", Color.BLACK)
 	theme.set_constant("shadow_offset_x", "Label", 0)
@@ -74,7 +80,6 @@ static func apply(control: Control) -> void:
 	theme.set_stylebox("panel", "PanelContainer", box())
 	theme.set_stylebox("panel", "TooltipPanel", box())
 	theme.set_color("font_color", "TooltipLabel", TEXT)
-	theme.set_font_size("font_size", "TooltipLabel", 16)
 	theme.set_stylebox("scroll", "VScrollBar", _scroll_style(Color("1a2020")))
 	theme.set_stylebox("scroll_focus", "VScrollBar", _scroll_style(Color("30352f")))
 	theme.set_stylebox("grabber", "VScrollBar", _scroll_style(Color("8d8b7f")))
@@ -100,39 +105,11 @@ static func apply(control: Control) -> void:
 	theme.set_icon("grabber_highlight", "HSlider", knob_texture)
 	control.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	control.theme = theme
-	if not control.has_node("UiScale"):
-		var binding := UiScaleBinding.new()
-		binding.name = "UiScale"
+	if not control.has_node("UiText"):
+		var binding := UiTextBinding.new()
+		binding.name = "UiText"
 		binding.target = control
 		control.add_child(binding)
-
-static func label(text: String, font_size: int = 8, color: Color = TEXT) -> Label:
-	var result := Label.new()
-	result.text = text
-	# Existing callers can migrate independently from the old high-resolution layout.
-	var pixels: int = font_size * 2
-	result.add_theme_font_size_override("font_size", pixels)
-	result.add_theme_color_override("font_color", color)
-	result.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	return result
-
-## BoldPixels uses a 16px grid; Pixuf provides a complete 8px Cyrillic face for small UI.
-static func pixel_font(base_size: int, factor: float) -> Dictionary:
-	var desired: float = base_size * factor
-	if desired < 16.0 and base_size < 24:
-		return {"font": SECONDARY_FONT, "size": 8}
-	return {"font": FONT, "size": maxi(16, floori(desired / 16.0) * 16)}
-
-static func button(text: String, primary: bool = false, feedback: bool = true) -> Button:
-	var result := Button.new()
-	result.text = text
-	result.custom_minimum_size.y = 28
-	result.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	if primary:
-		result.add_theme_color_override("font_color", ACCENT)
-	if feedback:
-		result.pressed.connect(func(): AppSettings.play_click())
-	return result
 
 static func fill(control: Control) -> void:
 	control.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)

@@ -77,7 +77,7 @@ func submit(index: int, cancel := false) -> bool:
 		world.events.publish(GameEvents.Kind.TASK_COMPLETED, task.id)
 	closed += 1
 	slots[index] = _pool.pop_back() if not _pool.is_empty() else null
-	message = "Отказ: без времени и награды" if cancel else "+%d секунд" % task.reward_seconds
+	message = "ui.task.cancel_notice" if cancel else "ui.task.time_reward:%d" % task.reward_seconds
 	if not unlocked_names.is_empty():
 		message += " · " + ", ".join(unlocked_names)
 	if closed == stage().tasks.size():
@@ -156,7 +156,7 @@ func _next_level() -> void:
 	changed.emit()
 
 func _apply_upgrade() -> void:
-	_upgrade_message = ["Тропинка заменена на быструю", "Строительство дешевле", "Муравьи быстрее"][stage().upgrade]
+	_upgrade_message = ["ui.task.trail_upgrade", "ui.task.cheap_building", "ui.task.faster_ants"][stage().upgrade]
 	match stage().upgrade:
 		0:
 			_unlock_road()
@@ -205,3 +205,8 @@ func restore_state(state: Dictionary) -> void:
 	difficulty_multiplier = state.difficulty_multiplier
 	message = state.message
 	changed.emit()
+
+func display_message() -> String:
+	if message.begins_with("ui.task.time_reward:"):
+		return tr("ui.task.time_reward") % int(message.get_slice(":", 1))
+	return tr(message)

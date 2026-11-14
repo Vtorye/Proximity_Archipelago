@@ -42,6 +42,7 @@ theme_override_constants/separation = 2
 [node name="WindowHeader" parent="Center/Dialog/WindowContents" node_paths=PackedStringArray("panel", "body") instance=ExtResource("window_header")]
 unique_name_in_owner = true
 title = "ui.pause.title"
+action = 2
 dock = 0
 panel_width = 288.0
 inset = Vector2(8, 8)
@@ -59,9 +60,9 @@ unique_name_in_owner = true
 theme_override_constants/separation = 8
 
 [node name="Title" type="Label" parent="Center/Dialog/WindowContents/Margin/Content"]
+theme_type_variation = &"Heading"
 mouse_filter = 2
 text = "ui.pause.title"
-theme_override_font_sizes/font_size = 24
 
 [node name="Resume" type="Button" parent="Center/Dialog/WindowContents/Margin/Content"]
 unique_name_in_owner = true

@@ -2,7 +2,6 @@
 
 [ext_resource type="Script" path="res://game/campaign/campaign_panel.gd" id="script"]
 [ext_resource type="StyleBox" path="res://game/ui/dialog_panel.tres" id="dialog_style"]
-[ext_resource type="FontFile" path="res://game/assets/fonts/Pixuf.ttf" id="small_font"]
 [ext_resource type="PackedScene" path="res://game/ui/window_header.tscn" id="window_header"]
 
 [node name="Campaign" type="Control"]
@@ -66,18 +65,16 @@ visible = false
 unique_name_in_owner = true
 mouse_filter = 2
 text = ""
-theme_override_font_sizes/font_size = 16
 theme_override_colors/font_color = Color(0.8745, 0.7765, 0.5451, 1)
 autowrap_mode = 3
 custom_minimum_size = Vector2(200, 0)
 
 [node name="RewardPrompt" type="Label" parent="Center/Dialog/WindowContents/Margin/Content/Reward"]
+theme_type_variation = &"Caption"
 unique_name_in_owner = true
 mouse_filter = 2
 text = ""
-theme_override_font_sizes/font_size = 8
 theme_override_colors/font_color = Color(0.6667, 0.651, 0.6118, 1)
-theme_override_fonts/font = ExtResource("small_font")
 autowrap_mode = 3
 custom_minimum_size = Vector2(200, 0)
 
@@ -93,27 +90,24 @@ visible = false
 unique_name_in_owner = true
 mouse_filter = 2
 text = ""
-theme_override_font_sizes/font_size = 16
 theme_override_colors/font_color = Color(0.8745, 0.7765, 0.5451, 1)
 autowrap_mode = 3
 custom_minimum_size = Vector2(200, 0)
 
 [node name="Score" type="Label" parent="Center/Dialog/WindowContents/Margin/Content/Departure"]
+theme_type_variation = &"Caption"
 unique_name_in_owner = true
 mouse_filter = 2
 text = ""
-theme_override_font_sizes/font_size = 8
-theme_override_fonts/font = ExtResource("small_font")
 autowrap_mode = 3
 custom_minimum_size = Vector2(200, 0)
 
 [node name="NextIsland" type="Label" parent="Center/Dialog/WindowContents/Margin/Content/Departure"]
+theme_type_variation = &"Caption"
 unique_name_in_owner = true
 mouse_filter = 2
 text = ""
-theme_override_font_sizes/font_size = 8
 theme_override_colors/font_color = Color(0.6667, 0.651, 0.6118, 1)
-theme_override_fonts/font = ExtResource("small_font")
 autowrap_mode = 3
 custom_minimum_size = Vector2(200, 0)
 
@@ -121,11 +115,10 @@ custom_minimum_size = Vector2(200, 0)
 theme_override_constants/separation = 6
 
 [node name="Destination1" type="Button" parent="Center/Dialog/WindowContents/Margin/Content/Departure/Destinations"]
+theme_type_variation = &"CompactButton"
 unique_name_in_owner = true
 mouse_default_cursor_shape = 2
 text = ""
-theme_override_fonts/font = ExtResource("small_font")
-theme_override_font_sizes/font_size = 8
 size_flags_horizontal = 3
 custom_minimum_size = Vector2(91, 101)
 clip_text = true
@@ -136,11 +129,10 @@ theme_override_constants/icon_max_width = 74
 texture_filter = 1
 
 [node name="Destination2" type="Button" parent="Center/Dialog/WindowContents/Margin/Content/Departure/Destinations"]
+theme_type_variation = &"CompactButton"
 unique_name_in_owner = true
 mouse_default_cursor_shape = 2
 text = ""
-theme_override_fonts/font = ExtResource("small_font")
-theme_override_font_sizes/font_size = 8
 size_flags_horizontal = 3
 custom_minimum_size = Vector2(91, 101)
 clip_text = true
@@ -151,11 +143,10 @@ theme_override_constants/icon_max_width = 74
 texture_filter = 1
 
 [node name="Destination3" type="Button" parent="Center/Dialog/WindowContents/Margin/Content/Departure/Destinations"]
+theme_type_variation = &"CompactButton"
 unique_name_in_owner = true
 mouse_default_cursor_shape = 2
 text = ""
-theme_override_fonts/font = ExtResource("small_font")
-theme_override_font_sizes/font_size = 8
 size_flags_horizontal = 3
 custom_minimum_size = Vector2(91, 101)
 clip_text = true
@@ -166,73 +157,65 @@ theme_override_constants/icon_max_width = 74
 texture_filter = 1
 
 [node name="CarryOver" type="Label" parent="Center/Dialog/WindowContents/Margin/Content/Departure"]
+theme_type_variation = &"Caption"
 unique_name_in_owner = true
 mouse_filter = 2
 text = ""
-theme_override_font_sizes/font_size = 8
 theme_override_colors/font_color = Color(0.6667, 0.651, 0.6118, 1)
-theme_override_fonts/font = ExtResource("small_font")
 autowrap_mode = 3
 custom_minimum_size = Vector2(200, 0)
 
 [node name="MainMenu" type="Button" parent="Center/Dialog/WindowContents/Margin/Content/Departure"]
+theme_type_variation = &"CompactButton"
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 28)
 mouse_default_cursor_shape = 2
 text = ""
-theme_override_fonts/font = ExtResource("small_font")
-theme_override_font_sizes/font_size = 8
 
 [node name="Reward1" type="Button" parent="Center/Dialog/WindowContents/Margin/Content/Reward/RewardChoices"]
+theme_type_variation = &"CompactButton"
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 28)
 mouse_default_cursor_shape = 2
 text = ""
-theme_override_fonts/font = ExtResource("small_font")
-theme_override_font_sizes/font_size = 8
 
 [node name="RewardDetail1" type="Label" parent="Center/Dialog/WindowContents/Margin/Content/Reward/RewardChoices"]
+theme_type_variation = &"Caption"
 unique_name_in_owner = true
 mouse_filter = 2
 text = ""
-theme_override_font_sizes/font_size = 8
 theme_override_colors/font_color = Color(0.6667, 0.651, 0.6118, 1)
-theme_override_fonts/font = ExtResource("small_font")
 autowrap_mode = 3
 custom_minimum_size = Vector2(200, 0)
 
 [node name="Reward2" type="Button" parent="Center/Dialog/WindowContents/Margin/Content/Reward/RewardChoices"]
+theme_type_variation = &"CompactButton"
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 28)
 mouse_default_cursor_shape = 2
 text = ""
-theme_override_fonts/font = ExtResource("small_font")
-theme_override_font_sizes/font_size = 8
 
 [node name="RewardDetail2" type="Label" parent="Center/Dialog/WindowContents/Margin/Content/Reward/RewardChoices"]
+theme_type_variation = &"Caption"
 unique_name_in_owner = true
 mouse_filter = 2
 text = ""
-theme_override_font_sizes/font_size = 8
 theme_override_colors/font_color = Color(0.6667, 0.651, 0.6118, 1)
-theme_override_fonts/font = ExtResource("small_font")
 autowrap_mode = 3
 custom_minimum_size = Vector2(200, 0)
 
 [node name="Reward3" type="Button" parent="Center/Dialog/WindowContents/Margin/Content/Reward/RewardChoices"]
+theme_type_variation = &"CompactButton"
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 28)
 mouse_default_cursor_shape = 2
 text = ""
-theme_override_fonts/font = ExtResource("small_font")
-theme_override_font_sizes/font_size = 8
 
 [node name="RewardDetail3" type="Label" parent="Center/Dialog/WindowContents/Margin/Content/Reward/RewardChoices"]
+theme_type_variation = &"Caption"
 unique_name_in_owner = true
 mouse_filter = 2
 text = ""
-theme_override_font_sizes/font_size = 8
 theme_override_colors/font_color = Color(0.6667, 0.651, 0.6118, 1)
-theme_override_fonts/font = ExtResource("small_font")
 autowrap_mode = 3
 custom_minimum_size = Vector2(200, 0)

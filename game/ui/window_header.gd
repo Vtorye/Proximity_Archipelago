@@ -2,13 +2,19 @@ class_name WindowHeader
 extends HBoxContainer
 ## Moves a panel within its viewport and folds its body without destroying its contents.
 signal collapsed_changed(collapsed: bool)
+signal close_requested
+
+enum Action { NONE, FOLD, CLOSE }
 
 enum Dock { CENTER, BOTTOM_LEFT, BOTTOM_RIGHT, TOP_LEFT, TOP_RIGHT, TOP_CENTER }
 
 @export var title: String
+@export var action: Action = Action.NONE
+@export var draggable := true
+@export_range(0.0, 624.0, 1.0) var collapsed_width := 0.0
 @export var dock: Dock = Dock.CENTER
-## Preferred width in logical pixels at 100% UI scale.
-@export_range(64.0, 608.0, 1.0) var panel_width := 260.0
+## Preferred width in logical pixels independent of text size.
+@export_range(64.0, 624.0, 1.0) var panel_width := 260.0
 @export var inset := Vector2(8, 8)
 @export var panel: PanelContainer
 @export var body: Control
@@ -23,9 +29,20 @@ var _layout_pending := false
 
 func _ready() -> void:
 	handle.text = title
-	handle.gui_input.connect(_drag_input)
+	if draggable:
+		handle.gui_input.connect(_drag_input)
+	else:
+		handle.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		handle.mouse_default_cursor_shape = Control.CURSOR_ARROW
 	toggle.pressed.connect(AppSettings.play_click)
-	toggle.pressed.connect(func(): set_collapsed(not collapsed))
+	toggle.visible = action != Action.NONE
+	if action == Action.CLOSE:
+		toggle.icon = preload("res://game/assets/ui/build_cancel.svg")
+		toggle.text = ""
+		toggle.tooltip_text = "ui.window.close"
+		toggle.pressed.connect(close_requested.emit)
+	elif action == Action.FOLD:
+		toggle.pressed.connect(func(): set_collapsed(not collapsed))
 	visibility_changed.connect(func():
 		_dragging = false
 		if is_visible_in_tree():
@@ -43,7 +60,7 @@ func set_title(value: String) -> void:
 		handle.text = value
 
 func set_collapsed(value: bool) -> void:
-	if collapsed == value:
+	if action != Action.FOLD or collapsed == value or body == null:
 		return
 	collapsed = value
 	body.visible = not collapsed
@@ -62,10 +79,10 @@ func _layout() -> void:
 	if not is_instance_valid(panel) or not panel.is_visible_in_tree():
 		return
 	var viewport_size: Vector2 = get_viewport_rect().size
-	var factor: float = AppSettings.ui_scale
-	var area: Vector2 = (inset * factor).round()
+	var area: Vector2 = inset
 	var minimum: Vector2 = panel.get_combined_minimum_size()
-	var width: float = minf(panel_width * factor, viewport_size.x - 2.0 * area.x)
+	var preferred: float = collapsed_width if collapsed and collapsed_width > 0.0 else panel_width
+	var width: float = minf(preferred, viewport_size.x - 2.0 * area.x)
 	panel.size = Vector2(maxf(minimum.x, width), minimum.y).ceil()
 	if not _floating:
 		var mid: Vector2 = (viewport_size - panel.size) * 0.5
@@ -92,7 +109,7 @@ func _drag_input(event: InputEvent) -> void:
 		handle.accept_event()
 
 func _input(event: InputEvent) -> void:
-	if not _dragging or not is_visible_in_tree():
+	if not draggable or not _dragging or not is_visible_in_tree():
 		return
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and not event.pressed:
 		_dragging = false

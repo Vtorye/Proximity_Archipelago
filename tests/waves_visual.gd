@@ -33,7 +33,7 @@ func _run() -> void:
 	var tower := world.registry.at(tower_cell) as DefenseBuilding
 	expect(tower != null and not tower.staffed(), "the finished tower starts disabled until it receives a warrior")
 	await click_at(cell_point(world.logistics.main_nest.cell))
-	var nest := Router.top_overlay() as NestMenu
+	var nest := screen.nest_popup as NestMenu
 	await click(nest.controls[&"residents"])
 	expect(nest.controls.has(&"buy_warrior") and not nest.controls[&"buy_warrior"].disabled, "normal food production funds a warrior without a test resource grant")
 	await capture("05-warrior-recruitment", 20)
@@ -94,7 +94,7 @@ func _run() -> void:
 	screen.camera.position = world.logistics.main_nest.global_position
 	screen.camera.force_update_scroll()
 	await click_at(cell_point(world.logistics.main_nest.cell))
-	expect(Router.top_overlay() is NestMenu, "construction move mode can open the nest inspector")
+	expect(screen.nest_popup is NestMenu, "construction move mode can open the nest inspector")
 	await capture("10-nest-inspector-in-construction", 20)
 	await key(KEY_ESCAPE)
 	expect(Router.top_overlay() == menu, "closing the nest inspector returns to the construction draft")

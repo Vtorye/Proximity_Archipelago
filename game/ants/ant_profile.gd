@@ -1,7 +1,7 @@
 class_name AntProfile
 extends Resource
 ## Shared designer definition. Every resident owns separate needs and health.
-@export var title := "Worker"
+@export var title := "ui.nest.worker"
 @export_range(1, 10000) var satiety_capacity := 120.0
 @export_range(0.05, 0.95) var meal_fraction := 0.5
 @export_range(1, 128) var speed := 24.0

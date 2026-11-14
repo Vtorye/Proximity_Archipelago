@@ -20,7 +20,7 @@ func _refresh() -> void:
 	for child in _requests.get_children():
 		_requests.remove_child(child)
 		child.queue_free()
-	%Heading.text = "Уровень %d · %d/%d" % [director.level, director.closed, director.stage().tasks.size()]
+	%Heading.text = tr("ui.task.level_progress") % [director.level, director.closed, director.stage().tasks.size()]
 	for index in range(director.slots.size()):
 		var task: TaskSpec = director.slots[index]
 		if task == null: continue
@@ -29,7 +29,7 @@ func _refresh() -> void:
 		title.text = task.title
 		var cost: Label = request.get_node("Cost")
 		cost.text = BuildCostText.format(director.price(index))
-		cost.custom_minimum_size.x = 160 * AppSettings.ui_scale
+		cost.custom_minimum_size.x = 160
 		if not task.unlocks.is_empty():
 			var names := PackedStringArray()
 			for option in task.unlocks:
@@ -41,7 +41,7 @@ func _refresh() -> void:
 		for cancel in [false, true]:
 			var button: Button = request.get_node("Actions/Cancel" if cancel else "Actions/Submit")
 			if not cancel:
-				button.text = "+%d c" % task.reward_seconds
+				button.text = tr("ui.task.time_reward_short") % task.reward_seconds
 			button.pressed.connect(AppSettings.play_click)
 			if not cancel and not task.rewards.is_empty():
 				button.text += " +%d" % BuildController.price_amount(task.rewards, task.rewards[0].type)
@@ -49,14 +49,13 @@ func _refresh() -> void:
 				button.expand_icon = true
 				button.icon_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 				button.add_theme_constant_override("icon_max_width", 8)
-			button.custom_minimum_size.y = 22 * AppSettings.ui_scale
 			button.set_meta(&"cancel", cancel)
 			button.set_meta(&"task_index", index)
 			button.disabled = not director.can_pay(index, cancel)
-			button.tooltip_text = "Отказ: %s. Без награды." % BuildCostText.format(director.price(index, true)) if cancel else "Сдать: %s. Награда: %s и %d с." % [BuildCostText.format(director.price(index)), BuildCostText.format(task.rewards), task.reward_seconds]
+			button.tooltip_text = tr("ui.task.cancel_hint") % BuildCostText.format(director.price(index, true)) if cancel else tr("ui.task.submit_hint") % [BuildCostText.format(director.price(index)), BuildCostText.format(task.rewards), task.reward_seconds]
 			button.pressed.connect(func(): director.submit(index, cancel))
 		_requests.add_child(request)
-	%Message.text = director.message
+	%Message.text = director.display_message()
 	_update_availability()
 
 func _update_availability() -> void:
@@ -70,5 +69,5 @@ func _update_availability() -> void:
 		if ant.waiting_reason == WorkPlan.WaitReason.MISSING_INPUTS: missing += 1
 		elif ant.waiting_reason == WorkPlan.WaitReason.SLOTS_FULL: occupied += 1
 	if is_instance_valid(_waiting):
-		_waiting.text = "Ждут мест: %d; сырья: %d" % [occupied, missing]
+		_waiting.text = tr("ui.task.waiting") % [occupied, missing]
 		_waiting.visible = occupied > 0 or missing > 0

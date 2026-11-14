@@ -9,6 +9,12 @@ var world: World
 @onready var selection: TileSelection = $Selection
 @onready var campaign_panel: CampaignPanel = $Interface/Campaign
 @onready var hud: MatchHud = $Interface/Hud
+const CONSTRUCTION_PANEL := preload("res://overlays/construction_menu.tscn")
+const NEST_POPUP := preload("res://overlays/nest_menu.tscn")
+
+var nest_popup: NestMenu
+var _construction: ConstructionMenu
+var _section: StringName
 var _active := false
 var _pointer := Vector2(-1, -1)
 var _camera_moved := false
@@ -41,9 +47,13 @@ func _ready() -> void:
 		if payload is Dictionary and payload.has("journey"): world.voyage.apply(payload.journey)
 	if payload is Dictionary and payload.has("snapshot"): SessionSave.apply(world, payload.snapshot)
 	campaign_panel.configure(world)
+	hud.nest_selected.connect(camera.focus_nest)
 	hud.settings_requested.connect(_open_settings)
 	hud.navigation_requested.connect(_toggle_navigation)
-	hud.construction_requested.connect(_open_construction)
+	hud.construction_requested.connect(_select_section.bind(&"build"))
+	hud.section_requested.connect(_select_section)
+	hud.bottom_bar_resized.connect(_update_construction_dock)
+	hud.pause_requested.connect(PauseController.toggle_manual)
 	hud.zoom_in_requested.connect(func(): camera.set_level(camera.level + 1))
 	hud.zoom_out_requested.connect(func(): camera.set_level(camera.level - 1))
 	camera.zoom_changed.connect(hud.set_zoom)
@@ -56,6 +66,7 @@ func on_focus() -> void:
 		_on_completed(MatchSummary.capture(true, &"target_reached", 83.0, world.inventory))
 
 func on_blur() -> void:
+	_close_nest_popup()
 	_active = false
 	world.stop()
 	selection.clear()
@@ -73,8 +84,11 @@ func _input(event: InputEvent) -> void:
 		return
 	if event is InputEventMouseMotion: _pointer = event.position
 	var top: MenuBase = Router.top_overlay()
-	if top != null:
+	if top != null or _building_active():
 		camera.dragging = false
+	if top == null and event.is_action_pressed(&"ui_cancel") and _dismiss_visible_nest_popup():
+		get_viewport().set_input_as_handled()
+		return
 	if event is InputEventMouseButton and event.button_index in [MOUSE_BUTTON_LEFT, MOUSE_BUTTON_MIDDLE]:
 		if event.pressed:
 			_camera_moved = false
@@ -97,14 +111,14 @@ func _input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		return
 
-	if top == null and event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_SPACE:
-		_open_construction()
-		get_viewport().set_input_as_handled()
-
 func _unhandled_input(event: InputEvent) -> void:
 	if not _active or Router.is_navigating(): return
 	var top: MenuBase = Router.top_overlay()
-	if event is InputEventMouseButton and (top == null or top is PauseMenu):
+	if top == null and event.is_action_pressed(&"ui_cancel") and not _building_active() and not campaign_panel.visible:
+		_open_settings()
+		get_viewport().set_input_as_handled()
+		return
+	if event is InputEventMouseButton and (top is PauseMenu or (top == null and not _building_active())):
 		if event.pressed and event.button_index == MOUSE_BUTTON_RIGHT:
 			_inspect_secondary_cell(_cell_at(event.position))
 			get_viewport().set_input_as_handled()
@@ -114,15 +128,23 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 			return
 	if top == null and event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_B:
-		_open_construction()
+		if _building_active():
+			_construction.toggle_fold()
+		else:
+			_select_section(&"build")
 		get_viewport().set_input_as_handled()
 
 func _process(_delta: float) -> void:
 	if camera == null:
 		return
 	var top: MenuBase = Router.top_overlay()
-	camera.enabled_input = top == null
-	hud.process_mode = Node.PROCESS_MODE_ALWAYS if top is ConstructionMenu else Node.PROCESS_MODE_PAUSABLE
+	var can_use_map: bool = top == null and not campaign_panel.visible
+	if is_instance_valid(_construction):
+		_construction.visible = can_use_map and _section == &"build"
+	camera.enabled_input = can_use_map and not _building_active()
+	if is_instance_valid(nest_popup):
+		nest_popup.visible = (top == null or top is PauseMenu) and not campaign_panel.visible
+		$PopupLayer.layer = 8
 	hud.lock_zoom(top != null)
 	if navigation_overlay.mode == 2 and _navigation_available():
 		if not selection.selected or selection.cell != navigation_overlay.origin: selection.select(navigation_overlay.origin)
@@ -148,10 +170,31 @@ func _inspect_building(cell: Vector2i) -> void:
 		hud.navigation_panel.inspect_cell(null)
 		selection.clear()
 		camera.dragging = false
-		if Router.push_overlay(&"nest", {"world": world, "house": building}) != null:
-			PauseController.acquire(&"menu")
+		if Router.top_overlay() == null:
+			_open_nest_popup(building)
 	else:
 		hud.navigation_panel.inspect_cell(cell)
+
+func _open_nest_popup(house: House) -> void:
+	camera.clear_nest_focus()
+	_close_nest_popup()
+	var popup: NestMenu = NEST_POPUP.instantiate()
+	popup.payload = {"world": world, "house": house}
+	popup.close_requested.connect(func(_menu: MenuBase): _close_nest_popup())
+	nest_popup = popup
+	$PopupLayer/NestPopups.add_child(popup)
+
+func _dismiss_visible_nest_popup() -> bool:
+	if not is_instance_valid(nest_popup) or not nest_popup.is_visible_in_tree():
+		return false
+	_close_nest_popup()
+	return true
+
+func _close_nest_popup() -> void:
+	if is_instance_valid(nest_popup):
+		nest_popup.hide()
+		nest_popup.queue_free()
+	nest_popup = null
 
 func _inspect_secondary_cell(cell: Vector2i) -> void:
 	if navigation_overlay.mode == 2:
@@ -159,36 +202,76 @@ func _inspect_secondary_cell(cell: Vector2i) -> void:
 	_inspect_building(cell)
 
 func _open_settings() -> void:
+	if campaign_panel.visible or Router.has_overlay():
+		return
 	hud.navigation_panel.inspect_cell(null)
 	selection.clear()
 	if Router.push_overlay(&"pause") != null:
 		PauseController.acquire(&"menu")
 
-func _open_construction() -> void:
-	selection.clear()
+func _select_section(section: StringName) -> void:
+	if Router.has_overlay() or campaign_panel.visible:
+		return
+	_section = &"" if _section == section else section
+	hud.set_section(_section)
+	if _section == &"build":
+		if not is_instance_valid(_construction):
+			_create_construction_panel()
+		_construction.show()
+		camera.dragging = false
+		camera.enabled_input = false
+		selection.clear()
+	elif is_instance_valid(_construction):
+		_construction.hide()
+
+func _create_construction_panel() -> void:
 	var context := ConstructionContext.new()
 	context.controller = world.build_controller
 	context.art = world.art
 	context.camera = camera
-	context.obstacles = hud.build_obstacles
-	var menu: ConstructionMenu = Router.push_overlay(&"construction", context) as ConstructionMenu
-	if menu == null: return
-	camera.dragging = false
-	camera.enabled_input = false
-	menu.map_inspection_requested.connect(_inspect_secondary_cell)
-	hud.set_construction_mode(true)
-	menu.tree_exiting.connect(func():
-		if is_instance_valid(hud): hud.set_construction_mode(false)
-		if is_instance_valid(camera): camera.enabled_input = true)
-	PauseController.acquire(&"menu")
+	context.obstacles = _construction_obstacles
+	context.dismiss_map_popup = _dismiss_visible_nest_popup
+	_construction = CONSTRUCTION_PANEL.instantiate()
+	_construction.payload = context
+	_construction.map_inspection_requested.connect(_inspect_secondary_cell)
+	_construction.close_requested.connect(_close_construction_panel)
+	$ConstructionLayer.add_child(_construction)
+	_update_construction_dock()
+
+func _close_construction_panel(menu: MenuBase) -> void:
+	if menu != _construction:
+		return
+	_construction.hide()
+	_construction.queue_free()
+	_construction = null
+	_section = &""
+	hud.set_section(_section)
+
+func _building_active() -> bool:
+	return is_instance_valid(_construction) and _construction.visible
+
+func _update_construction_dock() -> void:
+	if is_instance_valid(_construction):
+		_construction.dock_above(hud.bottom_bar_height())
+
+func _construction_obstacles() -> Array[Rect2]:
+	var obstacles: Array[Rect2] = hud.build_obstacles()
+	if is_instance_valid(nest_popup) and nest_popup.is_visible_in_tree():
+		obstacles.append(nest_popup.panel_bounds())
+	return obstacles
 
 func _navigation_available() -> bool:
 	var top: MenuBase = Router.top_overlay()
-	return _active and not Router.is_navigating() and (top == null or top is ConstructionMenu or top is PauseMenu)
+	return _active and not Router.is_navigating() and (top == null or top is PauseMenu)
 
 func _toggle_navigation() -> void:
 	if not _navigation_available(): return
 	navigation_overlay.cycle()
 	hud.set_navigation_mode(navigation_overlay.mode)
 	if Router.has_overlay(): return
-	hud.toast(["Оценки скрыты", "Время входа в клетку, мс. Скорость: %.1f. Приблизьте карту для чисел." % navigation_overlay.reference_speed, "ПКМ: начало маршрута. ЛКМ и стрелки: камера. Секунды + 0.5 × занятые места. Голод проверяется отдельно."][navigation_overlay.mode])
+	var messages: Array[String] = [
+		tr("ui.nav.hidden"),
+		tr("ui.nav.entry_help") % navigation_overlay.reference_speed,
+		tr("ui.nav.routes_help") % world.planner.load_penalty_seconds,
+	]
+	hud.toast(messages[navigation_overlay.mode])

@@ -2,4 +2,4 @@
 [ext_resource type="Script" path="res://game/ants/ant_profile.gd" id="profile"]
 [resource]
 script = ExtResource("profile")
-title = "Worker"
+title = "ui.nest.worker"

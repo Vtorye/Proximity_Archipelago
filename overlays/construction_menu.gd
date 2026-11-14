@@ -1,12 +1,13 @@
 class_name ConstructionMenu
 extends MenuBase
-## Paused construction editor. The draft owns edits; the controller commits the final plan.
+## Construction editor. The draft owns edits; the controller commits the final plan.
 signal map_inspection_requested(cell: Vector2i)
 
 var context: ConstructionContext
 var draft := BuildDraft.new()
 var controls: Dictionary[StringName, Button] = {}
 @onready var panel: PanelContainer = %Panel
+@onready var _header: WindowHeader = %PaletteHeader
 @onready var _cost: Label = %Cost
 @onready var _status: Label = %Status
 @onready var _hint: Label = %Hint
@@ -28,10 +29,18 @@ var _category_for: Dictionary[StringName, Button] = {}
 
 var _pricing_cell := Vector2i(2147483647, 2147483647)
 
+func toggle_fold() -> void:
+	_header.set_collapsed(not _header.collapsed)
+
+func dock_above(bar_height: float) -> void:
+	_header.inset.y = bar_height + 4.0
+	_header.queue_layout()
+
 func _ready() -> void:
 	%PaletteHeader.collapsed_changed.connect(func(_folded: bool): _end_stroke())
 	_pointer = get_viewport().get_mouse_position()
 	dismissable = false
+	visibility_changed.connect(_on_visibility_changed)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	ColonyStyle.apply(self)
 	context = payload as ConstructionContext
@@ -58,7 +67,7 @@ func _ready() -> void:
 	%Cancel.pressed.connect(_cancel)
 	controls[&"apply"] = %Apply
 	%Apply.pressed.connect(AppSettings.play_click)
-	%Apply.pressed.connect(apply_and_resume)
+	%Apply.pressed.connect(apply_plan)
 	controls[&"confirm_demolish"] = %Confirm
 	%Confirm.pressed.connect(AppSettings.play_click)
 	%Confirm.pressed.connect(_commit)
@@ -74,6 +83,10 @@ func _ready() -> void:
 	if context.controller.prices != null: context.controller.prices.changed.connect(func():
 		draft.last_result = PlacementCheck.new()
 		_queue_refresh())
+	context.controller.inventory.changed.connect(_queue_refresh)
+	context.controller.registry.removed.connect(draft.forget_removal)
+	context.controller.registry.changed.connect(_queue_refresh)
+	AppSettings.changed.connect(_queue_refresh)
 	draft.changed.connect(_queue_refresh)
 	_refresh()
 	default_focus = controls[_selected.id] if _selected != null else controls[&"cancel"]
@@ -110,14 +123,12 @@ func _add_category(title: String, options: Array[BuildOption]) -> void:
 	%CategoryList.add_child(category)
 	category_buttons.append(category)
 	for option in options:
-		var entry: Button = preload("res://game/ui/palette_entry.tscn").instantiate()
-		entry.text = option.display_name
-		entry.tooltip_text = option.display_name
-		entry.toggle_mode = true
+		var entry: ConstructionCard = preload("res://game/ui/construction_card.tscn").instantiate()
 		entry.button_group = %Move.button_group
 		entry.pressed.connect(AppSettings.play_click)
 		entry.pressed.connect(_select.bind(option))
 		%Choices.add_child(entry)
+		entry.configure(option, context.art)
 		controls[option.id] = entry
 		_category_for[option.id] = category
 		entry.hide()
@@ -163,6 +174,15 @@ func _update_details() -> void:
 				parameters.append(tr("ui.construction.speed") % str(terrain.move_cost))
 	%Parameters.text = "\n".join(parameters)
 
+func _on_visibility_changed() -> void:
+	if is_instance_valid(_preview):
+		_preview.visible = visible
+	if not visible and context != null:
+		_end_stroke()
+		_panning = false
+		_preview.hovering = false
+		_preview.queue_redraw()
+
 func _exit_tree() -> void:
 	if is_instance_valid(_preview): _preview.queue_free()
 
@@ -170,6 +190,7 @@ func _select(option: BuildOption) -> void:
 	_end_stroke()
 	_tool = &"build"
 	_selected = option
+	%DescriptionScroll.scroll_vertical = 0
 	_preview.demolishing = false
 	controls[option.id].set_pressed_no_signal(true)
 	_preview.option = option
@@ -220,10 +241,11 @@ func _cancel() -> void:
 	draft.clear()
 	close_requested.emit(self)
 
-func apply_and_resume() -> void:
+func apply_plan() -> void:
 	_end_stroke()
 	var residents: int = draft.residents_to_demolish()
 	if residents > 0:
+		%PaletteHeader.set_collapsed(false)
 		_confirm_label.text = tr("ui.build.confirm_residents") % residents
 		_confirmation.show()
 		return
@@ -232,9 +254,12 @@ func apply_and_resume() -> void:
 func _commit() -> void:
 	if draft.commit():
 		close_requested.emit(self)
+	else:
+		%PaletteHeader.set_collapsed(false)
+		_refresh()
 
 func _input(event: InputEvent) -> void:
-	if not visible: return
+	if not is_visible_in_tree() or context == null: return
 	if event is InputEventMouseMotion or event is InputEventMouseButton: _pointer = event.position
 	if event is InputEventKey and event.physical_keycode in [KEY_LEFT, KEY_RIGHT, KEY_UP, KEY_DOWN]:
 		get_viewport().set_input_as_handled()
@@ -242,8 +267,9 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_Z and event.ctrl_pressed:
 		_undo()
 		get_viewport().set_input_as_handled()
-	elif event is InputEventKey and event.pressed and not event.echo and event.physical_keycode in [KEY_ESCAPE, KEY_B, KEY_SPACE]:
-		apply_and_resume()
+	elif event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_ESCAPE:
+		if not context.dismiss_map_popup.is_valid() or not context.dismiss_map_popup.call():
+			_header.set_collapsed(true)
 		get_viewport().set_input_as_handled()
 	elif event is InputEventMouseButton and not event.pressed:
 		if event.button_index == MOUSE_BUTTON_LEFT:
@@ -307,7 +333,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 
 func _point_allowed(point: Vector2) -> bool:
-	if not get_viewport_rect().has_point(point) or panel.get_global_rect().has_point(point) or %Details.get_global_rect().has_point(point):
+	if not get_viewport_rect().has_point(point) or (panel.is_visible_in_tree() and panel.get_global_rect().has_point(point)):
 		return false
 	for obstacle: Rect2 in context.obstacles.call():
 		if obstacle.has_point(point): return false
@@ -360,7 +386,7 @@ func _update_hover(point: Vector2) -> void:
 		_preview.queue_redraw()
 
 func _process(delta: float) -> void:
-	if not visible or context == null: return
+	if not is_visible_in_tree() or context == null: return
 	if not _painting:
 		var direction: Vector2 = WorldCamera.keyboard_direction()
 		if not direction.is_zero_approx():

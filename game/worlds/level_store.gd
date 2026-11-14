@@ -39,7 +39,7 @@ static func save_level(title: String, layout: Dictionary) -> Error:
 static func saved_levels() -> Array[Dictionary]:
 	var levels: Array[Dictionary] = []
 	for id: String in BUILT_IN_LEVELS:
-		levels.append({"file": id, "title": BUILT_IN_LEVELS[id].title})
+		levels.append({"file": id, "title": TranslationServer.translate(BUILT_IN_LEVELS[id].title)})
 	if not DirAccess.dir_exists_absolute(DIRECTORY):
 		return levels
 	for filename in DirAccess.get_files_at(DIRECTORY):

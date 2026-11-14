@@ -14,12 +14,14 @@ func _ready() -> void:
 		%Reason.text = "ui.result.goal_reached" if won else "ui.result.time_up"
 	if summary != null:
 		for entry in summary.resources:
-			%Resources.add_child(ColonyStyle.label("%s: %d" % [tr(entry.type.display_name), entry.amount]))
+			var line: Label = preload("res://game/ui/nest_stock_label.tscn").instantiate()
+			line.text = tr("ui.colony.amount") % [tr(entry.type.display_name), entry.amount]
+			%Resources.add_child(line)
 		%TimeLeft.text = tr("ui.result.time_left") % [int(summary.time_left) / 60, int(summary.time_left) % 60]
 		%TimeLeft.show()
 		if summary.development_level > 0:
-			%Level.text = "Уровень: %d" % summary.development_level
-			%Completed.text = "Выполнено: %d · отказов: %d" % [summary.tasks_completed, summary.tasks_skipped]
+			%Level.text = tr("ui.result.level") % summary.development_level
+			%Completed.text = tr("ui.result.task_counts") % [summary.tasks_completed, summary.tasks_skipped]
 			%Level.show()
 			%Completed.show()
 	controls[&"again"] = %Again

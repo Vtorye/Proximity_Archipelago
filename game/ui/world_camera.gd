@@ -8,6 +8,7 @@ var level := 2
 @export var enabled_input := true
 var bounds := Rect2(0, 0, 800, 800)
 var dragging := false
+var _focused_nest: House
 
 func _ready() -> void:
 	zoom = Vector2.ONE * ZOOMS[level]
@@ -25,7 +26,28 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 
 func pan(relative: Vector2) -> void:
+	if relative.is_zero_approx():
+		return
+	clear_nest_focus()
 	position -= relative / zoom
+	_clamp()
+	force_update_scroll()
+
+func focus_nest(nest: House) -> void:
+	if not is_instance_valid(nest) or not nest.is_inside_tree():
+		return
+	clear_nest_focus()
+	_focused_nest = nest
+	nest.tree_exiting.connect(clear_nest_focus, CONNECT_ONE_SHOT)
+	_center_on_nest()
+
+func clear_nest_focus() -> void:
+	if is_instance_valid(_focused_nest) and _focused_nest.tree_exiting.is_connected(clear_nest_focus):
+		_focused_nest.tree_exiting.disconnect(clear_nest_focus)
+	_focused_nest = null
+
+func _center_on_nest() -> void:
+	global_position = _focused_nest.global_position
 	_clamp()
 	force_update_scroll()
 
@@ -33,7 +55,10 @@ func _process(delta: float) -> void:
 	if not enabled_input:
 		return
 	var direction: Vector2 = keyboard_direction()
-	if not direction.is_zero_approx(): pan(-direction.normalized() * delta * 100.0)
+	if not direction.is_zero_approx():
+		pan(-direction.normalized() * delta * 100.0)
+	elif is_instance_valid(_focused_nest):
+		_center_on_nest()
 
 static func keyboard_direction() -> Vector2:
 	var right: bool = Input.is_physical_key_pressed(KEY_D) or Input.is_physical_key_pressed(KEY_RIGHT)
@@ -45,8 +70,11 @@ static func keyboard_direction() -> Vector2:
 func set_level(value: int) -> void:
 	level = clampi(value, MIN_LEVEL, MAX_LEVEL)
 	zoom = Vector2.ONE * ZOOMS[level]
-	_clamp()
-	force_update_scroll()
+	if is_instance_valid(_focused_nest):
+		_center_on_nest()
+	else:
+		_clamp()
+		force_update_scroll()
 	zoom_changed.emit(level)
 
 func _clamp() -> void:

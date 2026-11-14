@@ -23,9 +23,9 @@ func _ready() -> void:
 	if option.id == &"house":
 		icon.modulate = House.BARRACKS_TINT
 	%Caption.text = option.display_name
-	%Caption.add_theme_font_size_override("font_size", 12 if compact else 16)
+	%Caption.set("theme_type_variation", &"Caption")
 	cost_label.text = BuildCostText.format(controller.price(option, pricing_cell) if controller != null else option.costs)
-	cost_label.add_theme_font_size_override("font_size", 8 if compact else 12)
+	cost_label.set("theme_type_variation", &"Caption")
 	minimum_size_changed.connect(_fit_content)
 	_body.minimum_size_changed.connect(_fit_content)
 	if controller != null and controller.prices != null: controller.prices.changed.connect(_refresh_price)
@@ -45,5 +45,4 @@ func _process(_delta: float) -> void:
 
 func _fit_content() -> void:
 	if get_child_count() > 0:
-		var factor: float = AppSettings.ui_scale if has_meta(&"ui_scale_bound") else 1.0
-		custom_minimum_size.y = maxf(roundf(_minimum_height * factor), _body.get_combined_minimum_size().y)
+		custom_minimum_size.y = maxf(_minimum_height, _body.get_combined_minimum_size().y)

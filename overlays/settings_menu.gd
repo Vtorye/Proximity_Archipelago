@@ -3,7 +3,7 @@ extends MenuBase
 var controls: Dictionary[StringName, Control] = {}
 @onready var _saved: Label = %Saved
 @onready var _volume_value: Label = %VolumeValue
-@onready var _scale_value: Label = %ScaleValue
+@onready var _text_value: Label = %TextValue
 
 func _ready() -> void:
 	if Router.current_screen_is_pausable():
@@ -18,24 +18,23 @@ func _ready() -> void:
 		_store()
 		AppSettings.play_click())
 	controls[&"volume"] = slider
-	controls[&"ui_scale_minus"] = %ScaleMinus
-	%ScaleMinus.pressed.connect(AppSettings.play_click)
-	%ScaleMinus.pressed.connect(_change_scale.bind(-0.25))
-	controls[&"ui_scale_plus"] = %ScalePlus
-	%ScalePlus.pressed.connect(AppSettings.play_click)
-	%ScalePlus.pressed.connect(_change_scale.bind(0.25))
+	controls[&"text_size_minus"] = %TextMinus
+	%TextMinus.pressed.connect(AppSettings.play_click)
+	%TextMinus.pressed.connect(_change_text_size.bind(-1))
+	controls[&"text_size_plus"] = %TextPlus
+	%TextPlus.pressed.connect(AppSettings.play_click)
+	%TextPlus.pressed.connect(_change_text_size.bind(1))
 	controls[&"reset"] = %Reset
 	%Reset.pressed.connect(AppSettings.play_click)
 	%Reset.pressed.connect(_reset)
-	controls[&"done"] = %Done
-	%Done.pressed.connect(AppSettings.play_click)
-	%Done.pressed.connect(func(): close_requested.emit(self))
-	_refresh_scale()
+	controls[&"done"] = %WindowHeader.toggle
+	%WindowHeader.close_requested.connect(func(): close_requested.emit(self))
+	_refresh_text_size()
 	_bind_toggle(%Fullscreen, &"fullscreen")
 	_bind_toggle(%Vsync, &"vsync")
 	_bind_toggle(%ShowGrid, &"show_grid")
 	_bind_toggle(%ReducedMotion, &"reduced_motion")
-	default_focus = %Done
+	default_focus = controls[&"done"]
 
 func _bind_toggle(toggle: Button, key: StringName) -> void:
 	var enabled: bool = AppSettings.get(key)
@@ -54,21 +53,21 @@ func _store() -> void:
 		_saved.text = "ui.settings.saved" if error == OK else "ui.settings.save_error"
 		_saved.add_theme_color_override("font_color", ColonyStyle.MUTED if error == OK else ColonyStyle.DANGER)
 
-func _change_scale(delta: float) -> void:
-	AppSettings.ui_scale = clampf(AppSettings.ui_scale + delta, AppSettings.MIN_UI_SCALE, AppSettings.MAX_UI_SCALE)
-	_refresh_scale()
+func _change_text_size(delta: int) -> void:
+	AppSettings.text_size += delta
+	_refresh_text_size()
 	_store()
 
-func _refresh_scale() -> void:
-	_scale_value.text = "%d%%" % roundi(AppSettings.ui_scale * 100)
-	controls[&"ui_scale_minus"].disabled = AppSettings.ui_scale <= AppSettings.MIN_UI_SCALE
-	controls[&"ui_scale_plus"].disabled = AppSettings.ui_scale >= AppSettings.MAX_UI_SCALE
+func _refresh_text_size() -> void:
+	_text_value.text = tr("ui.settings.text_pixels") % AppSettings.minimum_text_size()
+	controls[&"text_size_minus"].disabled = AppSettings.text_size == 0
+	controls[&"text_size_plus"].disabled = AppSettings.text_size == AppSettings.TYPOGRAPHY.minimum_sizes.size() - 1
 
 func _reset() -> void:
 	AppSettings.reset_defaults()
 	(controls[&"volume"] as HSlider).set_value_no_signal(AppSettings.master_volume)
 	_volume_value.text = "%d%%" % AppSettings.master_volume
-	_refresh_scale()
+	_refresh_text_size()
 	for key in [&"fullscreen", &"vsync", &"show_grid", &"reduced_motion"]:
 		var button: Button = controls[key] as Button
 		var value: bool = bool(AppSettings.get(key))

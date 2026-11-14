@@ -1,0 +1,16 @@
+[gd_resource type="ShaderMaterial" format=3 uid="uid://csc5fxjlvlky0"]
+
+[ext_resource type="Shader" uid="uid://c1f7g2etegw1c" path="res://shader/gnome_gray.gdshader" id="1_r3vww"]
+
+[sub_resource type="Gradient" id="Gradient_qi8k3"]
+offsets = PackedFloat32Array(1)
+colors = PackedColorArray(0.74229825, 0.34858143, 0.47800618, 1)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_h8kit"]
+gradient = SubResource("Gradient_qi8k3")
+
+[resource]
+shader = ExtResource("1_r3vww")
+shader_parameter/wight_color = Color(0.93466455, 0.74307275, 0.67642224, 1)
+shader_parameter/black_color = Color(0.77453136, 5.0055983e-06, 0.4869066, 1)
+shader_parameter/gray_texture = SubResource("GradientTexture1D_h8kit")

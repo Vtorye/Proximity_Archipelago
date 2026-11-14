@@ -20,7 +20,7 @@ func _run() -> void:
 	await choose_building(menu, &"house")
 	expect((menu.get_node("%Price") as Label).text.trim_prefix(tr("ui.construction.price").get_slice("%s", 0)) == "10 Древесина + 20 Камень", "menu shows the configured composite nest price")
 	await choose_building(menu, &"base_nest")
-	expect(menu.controls.has(&"base_nest") and (menu.get_node("%Price") as Label).text.trim_prefix(tr("ui.construction.price").get_slice("%s", 0)) == "1 Знак колонии", "the palette offers a separate base nest priced in crowns")
+	expect(menu.controls.has(&"base_nest") and (menu.get_node("%Price") as Label).text.trim_prefix(tr("ui.construction.price").get_slice("%s", 0)) == "1 Регалии", "the palette offers a separate base nest priced in crowns")
 	await choose_building(menu, &"house")
 	await capture("03-configured-house-price", 30)
 	var path := "res://game/building/options/house.tres"
@@ -51,7 +51,7 @@ func _run() -> void:
 func _check_paused_navigation() -> void:
 	var routes: Button = screen.hud.controls[&"routes"]
 	var settings: Button = screen.hud.controls[&"settings"]
-	AppSettings.ui_scale = AppSettings.MAX_UI_SCALE
+	AppSettings.text_size = 2
 	AppSettings.apply()
 	await frames(3)
 	for caption_key in ["ui.hud.routes", "ui.hud.routes_cells", "ui.hud.routes_priority"]:
@@ -117,7 +117,7 @@ func _check_storage_and_hover() -> void:
 		await frames(30)
 	var depot: House = screen.world.registry.at(cell) as House
 	await click_at(cell_point(cell))
-	var menu := Router.top_overlay() as NestMenu
+	var menu := screen.nest_popup as NestMenu
 	expect(menu != null and menu.house == depot and menu._inventory_tab.visible and menu._capacity.text.contains("0 / 100"), "click opens a warehouse window with its inventory")
 	await click(menu.controls[&"orders"])
 	expect(menu._orders_tab.visible and not menu._inventory_tab.visible and menu._funds.visible, "the orders tab replaces inventory and barracks also show the construction switch")
@@ -130,7 +130,7 @@ func _check_storage_and_hover() -> void:
 	expect(not Router.has_overlay() and not get_tree().paused, "closing the nest window resumes the match")
 	var main: House = screen.world.logistics.main_nest
 	await click_at(cell_point(main.cell))
-	menu = Router.top_overlay() as NestMenu
+	menu = screen.nest_popup as NestMenu
 	expect(menu != null and menu.house == main and menu._funds.visible and menu._capacity.text.contains("/ %d" % WorldInventory.base_capacity()), "the main nest shows its storage limit from nest_defaults.tres")
 	await click(menu.controls[&"residents"])
 	var food: ResourceType = screen.world.inventory.type_by_id(&"food")
@@ -147,13 +147,13 @@ func _check_storage_and_hover() -> void:
 	expect(menu.controls[&"kill_carrier"].disabled, "the kill button is disabled when this nest has no carriers")
 	await click(menu.controls[&"buy_carrier"])
 	expect(main.residents.size() == 5 and not menu.controls[&"kill_carrier"].disabled, "recruiting reuses the freed resident slot")
-	var prior_scale: float = AppSettings.ui_scale
-	for scale in [AppSettings.MIN_UI_SCALE, AppSettings.MAX_UI_SCALE]:
-		AppSettings.ui_scale = scale
+	var prior_scale: int = AppSettings.text_size
+	for scale in [0, 2]:
+		AppSettings.text_size = scale
 		AppSettings.apply()
 		await frames(3)
 		expect(get_viewport().get_visible_rect().encloses(menu.controls[&"close"].get_global_rect()) and get_viewport().get_visible_rect().encloses(menu.controls[&"kill_carrier"].get_global_rect()), "the nest window fits the supported UI scale")
-	AppSettings.ui_scale = prior_scale
+	AppSettings.text_size = prior_scale
 	AppSettings.apply()
 	await key(KEY_ESCAPE)
 	await _check_new_base(depot)
@@ -183,7 +183,7 @@ func _check_new_base(barracks: House) -> void:
 	var wood: ResourceType = world.inventory.type_by_id(&"wood")
 	world.logistics.deposit(base, [_entry(wood, 7)])
 	await click_at(cell_point(cell))
-	var menu := Router.top_overlay() as NestMenu
+	var menu := screen.nest_popup as NestMenu
 	expect(menu != null and menu.house == base and menu._funds.visible and menu._stock_labels[wood.id].text == "Древесина · 7", "the new base window shows its own inventory and the construction switch")
 	await capture("02i-built-base-inventory")
 	await click(menu.controls[&"residents"])

@@ -7,6 +7,6 @@ extends Resource
 
 func data() -> Dictionary:
 	var result: Dictionary = layout.duplicate(true)
-	result["title"] = title
-	result["description"] = description
+	result["title"] = tr(title)
+	result["description"] = tr(description)
 	return result

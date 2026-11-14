@@ -17,7 +17,8 @@ func _draw() -> void:
 			if not command.is_removal() and (command.option is TileBuildOption) == terrain:
 				_draw_option(command.cell, command.option, Color.WHITE, color)
 	for command in commands:
-		if command.is_removal(): _draw_removal(command.removed_building.footprint())
+		if command.is_removal():
+			_draw_removal(draft.footprint(command))
 	if hovering and demolishing:
 		var building: Building = draft.controller.registry.at(hover)
 		var cells: Array[Vector2i] = [hover]

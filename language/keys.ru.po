@@ -1,0 +1,1063 @@
+msgid ""
+msgstr ""
+"Language: ru\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "ui.menu.play"
+msgstr "Играть"
+
+msgid "ui.menu.settings"
+msgstr "Настройки"
+
+msgid "ui.menu.quit"
+msgstr "Выйти"
+
+msgid "ui.menu.tutorial"
+msgstr "Обучение"
+
+msgid "ui.common.main_menu"
+msgstr "В меню"
+
+msgid "ui.common.back"
+msgstr "Назад"
+
+msgid "ui.common.next"
+msgstr "Далее"
+
+msgid "ui.settings.volume"
+msgstr "Громкость"
+
+msgid "ui.settings.fullscreen"
+msgstr "Полный экран"
+
+msgid "ui.settings.vsync"
+msgstr "Вертикальная синхронизация"
+
+msgid "ui.settings.grid"
+msgstr "Сетка клеток"
+
+msgid "ui.settings.reduced_motion"
+msgstr "Уменьшить анимацию"
+
+msgid "ui.settings.saved"
+msgstr "Сохранено"
+
+msgid "ui.settings.reset"
+msgstr "Сбросить"
+
+msgid "ui.common.done"
+msgstr "Готово"
+
+msgid "ui.settings.save_error"
+msgstr "Ошибка сохранения"
+
+msgid "ui.pause.title"
+msgstr "Пауза"
+
+msgid "ui.pause.resume"
+msgstr "Продолжить"
+
+msgid "ui.pause.restart"
+msgstr "Заново"
+
+msgid "ui.result.victory"
+msgstr "Победа"
+
+msgid "ui.result.defeat"
+msgstr "Поражение"
+
+msgid "ui.result.goal_reached"
+msgstr "Цель достигнута"
+
+msgid "ui.result.time_up"
+msgstr "Время вышло"
+
+msgid "ui.result.time_left"
+msgstr "Осталось %02d:%02d"
+
+msgid "ui.result.new_game"
+msgstr "Новая игра"
+
+msgid "ui.hud.ants"
+msgstr "Муравьи"
+
+msgid "ui.hud.ants_short"
+msgstr "м."
+
+msgid "ui.hud.menu"
+msgstr "Меню (Esc)"
+
+msgid "ui.hud.goal"
+msgstr "Цель: по %d"
+
+msgid "ui.hud.controls"
+msgstr "ЛКМ: камера · Пробел: пауза · B: стройка"
+
+msgid "ui.hud.routes"
+msgstr "Пути [N]"
+
+msgid "ui.hud.routes_cells"
+msgstr "Клетки: мс [N]"
+
+msgid "ui.hud.routes_priority"
+msgstr "Приоритеты [N]"
+
+msgid "ui.hud.workload"
+msgstr "%d+%d / %d · работают + идут"
+
+msgid "ui.hud.build"
+msgstr "Строительство [B]"
+
+msgid "ui.hud.stock"
+msgstr "%s: %d, свободно %d"
+
+msgid "ui.hud.waiting"
+msgstr "Ждут мест: %d"
+
+msgid "ui.hud.no_safe_work"
+msgstr "Нет безопасной работы: %d"
+
+msgid "ui.hud.need_food"
+msgstr "Нужна пища"
+
+msgid "ui.cost.invalid"
+msgstr "Некорректная цена"
+
+msgid "ui.cost.free"
+msgstr "Бесплатно"
+
+msgid "ui.build.demolish"
+msgstr "Снести"
+
+msgid "ui.build.cancel_demolition"
+msgstr "Отменить снос"
+
+msgid "ui.build.title"
+msgstr "Строительство"
+
+msgid "ui.build.workers"
+msgstr "Работают+идут: %d+%d/%d"
+
+msgid "ui.build.water"
+msgstr "Вода"
+
+msgid "ui.build.spawn_help"
+msgstr ". +%d муравьёв; нужно %d порций."
+
+msgid "ui.build.completed"
+msgstr "%s: готово"
+
+msgid "ui.build.confirm_residents"
+msgstr "Жители погибнут: %d. Снести муравейник?"
+
+msgid "ui.build.confirm_demolition"
+msgstr "Снести здание без возврата ресурсов?"
+
+msgid "ui.build.confirm"
+msgstr "Да, снести"
+
+msgid "ui.build.demolished"
+msgstr "Здание снесено"
+
+msgid "ui.construction.move"
+msgstr "Перемещение: ЛКМ двигает карту"
+
+msgid "ui.construction.demolish"
+msgstr "Снос: отметить здание или дорогу"
+
+msgid "ui.construction.undo"
+msgstr "Отменить ход (Ctrl+Z)"
+
+msgid "ui.construction.cancel"
+msgstr "Отменить всё"
+
+msgid "ui.construction.apply"
+msgstr "Применить план"
+
+msgid "ui.construction.build_hint"
+msgstr "ЛКМ: строить · ПКМ: убрать слой"
+
+msgid "ui.construction.move_hint"
+msgstr "ЛКМ/СКМ: камера · колесо: зум"
+
+msgid "ui.construction.demolish_hint"
+msgstr "ЛКМ: снос · ПКМ: убрать отметку"
+
+msgid "ui.construction.cost"
+msgstr "План: %d · %s"
+
+msgid "ui.placement.busy"
+msgstr "Дождитесь завершения строительства"
+
+msgid "ui.placement.invalid_option"
+msgstr "Этот объект недоступен"
+
+msgid "ui.placement.resources"
+msgstr "Не хватает свободных ресурсов"
+
+msgid "ui.placement.invalid_tile"
+msgstr "Недопустимое покрытие"
+
+msgid "ui.placement.already_placed"
+msgstr "Это покрытие уже уложено"
+
+msgid "ui.placement.outside_map"
+msgstr "За пределами карты строить нельзя"
+
+msgid "ui.placement.occupied"
+msgstr "Сначала снесите существующее здание"
+
+msgid "ui.placement.ant_present"
+msgstr "Подождите, пока муравей освободит клетку"
+
+msgid "ui.placement.invalid_building"
+msgstr "Ошибка определения здания"
+
+msgid "ui.placement.no_building"
+msgstr "На клетке нет здания"
+
+msgid "ui.placement.no_escape"
+msgstr "Это лишит муравьёв безопасного пути к еде"
+
+msgid "ui.placement.unavailable"
+msgstr "Действие недоступно"
+
+msgid "ui.resource.wood"
+msgstr "Древесина"
+
+msgid "ui.resource.stone"
+msgstr "Камень"
+
+msgid "ui.resource.food"
+msgstr "Пища"
+
+msgid "ui.building.berries"
+msgstr "Ягодный куст"
+
+msgid "ui.building.nest"
+msgstr "Муравейник"
+
+msgid "ui.building.ground"
+msgstr "Почва"
+
+msgid "ui.building.road"
+msgstr "Тропинка"
+
+msgid "ui.building.generic"
+msgstr "Строение"
+
+msgid "ui.building.timber"
+msgstr "Участок древесины"
+
+msgid "ui.building.stone"
+msgstr "Каменная россыпь"
+
+msgid "ui.building.canteen"
+msgstr "Столовая"
+
+msgid "ui.tutorial.lesson1.title"
+msgstr "Запросы колонии"
+
+msgid "ui.tutorial.lesson1.body"
+msgstr "Одновременно доступны три запроса ресурсов.\nСдавайте ресурсы и получайте дополнительные секунды и регалии.\nЕсли таймер обнулится, партия закончится поражением.\n\nЗапасы нужны и для заданий, и для строительства.\nМуравьи выбирают близкую и свободную работу."
+
+msgid "ui.tutorial.lesson2.title"
+msgstr "Дороги и пища"
+
+msgid "ui.tutorial.lesson2.body"
+msgstr "Тропинки ускоряют дорогу на работу и домой.\nДеревья дают древесину, каменоломни — камень, кусты — пищу.\n\nМуравьям нужны еда и безопасный путь к столовой.\nНовый муравейник даёт пять жителей; им тоже нужна пища.\nНагрузка предприятия показана как работают+идут / места."
+
+msgid "ui.tutorial.lesson3.title"
+msgstr "Стройка на паузе"
+
+msgid "ui.tutorial.lesson3.body"
+msgstr "B открывает стройку. Пробел отдельно ставит игру на паузу или продолжает её.\nВыберите постройку и проведите по клеткам. Дорога и здание помещаются на одной клетке.\nПКМ снимает последнее добавление на клетке. Ctrl+Z отменяет мазок. Крестик отменяет весь план. Треугольник применяет его."
+
+msgid "ui.tutorial.lesson4.title"
+msgstr "Камера и снос"
+
+msgid "ui.tutorial.lesson4.body"
+msgstr "Колесо меняет масштаб, СКМ, стрелки и WASD двигают камеру.\nВ стройке инструмент «Перемещение» включает перенос ЛКМ.\n\nИнструмент «Снос» отмечает здания и дороги для удаления.\nОтметки применяются вместе с планом, без возврата ресурсов.\nСнос муравейника убивает жителей и требует подтверждения.\nМеню вверху содержит настройки, перезапуск и выход."
+
+msgid "ui.menu.language"
+msgstr "Язык: Русский"
+
+msgid "ui.hud.missing_inputs"
+msgstr "Ждут сырья: %d"
+
+msgid "ui.hud.storage_full"
+msgstr "Склады баз полны: %d"
+
+msgid "ui.placement.unbuildable"
+msgstr "Это покрытие запрещает строительство"
+
+msgid "ui.placement.impassable"
+msgstr "Клетка непроходима"
+
+msgid "ui.tutorial.progress.title"
+msgstr "Награды и развитие"
+
+msgid "ui.tutorial.progress.body"
+msgstr "На уровне пять запросов в случайном порядке.\nОтказ обычно стоит треть цены, не даёт награды и закрывает запрос.\nЦена отказа видна в подсказке кнопки.\n\nЗакрытие уровня даёт быструю дорогу, скидку или скорость муравьёв.\nЗа регалии можно строить новые столовые."
+
+msgid "ui.menu.maps"
+msgstr "Карты"
+
+msgid "ui.map.new"
+msgstr "Новая"
+
+msgid "ui.map.name"
+msgstr "Имя карты"
+
+msgid "ui.map.save"
+msgstr "Сохранить"
+
+msgid "ui.map.load"
+msgstr "Загрузить"
+
+msgid "ui.map.move_object"
+msgstr "Перенести объект"
+
+msgid "ui.map.controls"
+msgstr "ЛКМ: правка · ПКМ: стереть · СКМ/стрелки: камера · колесо: зум"
+
+msgid "ui.map.default"
+msgstr "Стартовая карта"
+
+msgid "ui.map.dirty"
+msgstr "Есть несохранённые правки"
+
+msgid "ui.map.discard"
+msgstr "Повторите действие, чтобы отбросить правки"
+
+msgid "ui.map.load_failed"
+msgstr "Не удалось открыть карту"
+
+msgid "ui.map.loaded"
+msgstr "Карта загружена"
+
+msgid "ui.map.bundled"
+msgstr "Встроенная"
+
+msgid "ui.map.name_needed"
+msgstr "Введите имя карты"
+
+msgid "ui.map.save_failed"
+msgstr "Не удалось сохранить: %s"
+
+msgid "ui.map.saved"
+msgstr "Карта сохранена"
+
+msgid "ui.map.save_first"
+msgstr "Сохраните карту перед запуском"
+
+msgid "ui.map.move_target"
+msgstr "Выберите клетку назначения"
+
+msgid "ui.map.invalid_object_cell"
+msgstr "Выберите свободную клетку суши"
+
+msgid "Трава"
+msgstr "Трава"
+
+msgid "Почва"
+msgstr "Почва"
+
+msgid "Дорога"
+msgstr "Дорога"
+
+msgid "Быстрая тропинка"
+msgstr "Быстрая тропинка"
+
+msgid "Вода"
+msgstr "Вода"
+
+msgid "ui.storage.main"
+msgstr "Базовый муравейник"
+
+msgid "ui.storage.local"
+msgstr "Казарма"
+
+msgid "ui.storage.fill"
+msgstr "Заполнено %d / %d"
+
+msgid "ui.nest.orders"
+msgstr "Заказы"
+
+msgid "ui.nest.funds_construction"
+msgstr "Ресурсы используются для строительства"
+
+msgid "ui.order.min"
+msgstr "Мин."
+
+msgid "ui.order.once"
+msgstr "Однократно"
+
+msgid "ui.order.range"
+msgstr "Мин %d · Макс %d"
+
+msgid "ui.order.owed"
+msgstr "Запрошено: %d"
+
+msgid "ui.order.arriving"
+msgstr "В пути: %d"
+
+msgid "ui.order.max"
+msgstr "Макс."
+
+msgid "ui.storage.in_main"
+msgstr "В главном складе %d"
+
+msgid "ui.storage.protected"
+msgstr "Стартовый или непустой склад нельзя снести"
+
+msgid "ui.terrain.entry"
+msgstr "Вход %d мс"
+
+msgid "ui.terrain.impassable"
+msgstr "Непроходимо"
+
+msgid "ui.terrain.coast"
+msgstr "Побережье"
+
+msgid "ui.nest.inventory"
+msgstr "Запасы"
+
+msgid "ui.nest.residents"
+msgstr "Муравьи"
+
+msgid "ui.nest.buy"
+msgstr "Нанять"
+
+msgid "ui.nest.population"
+msgstr "Жители %d / %d"
+
+msgid "ui.nest.worker"
+msgstr "Рабочие"
+
+msgid "ui.nest.carrier"
+msgstr "Носильщики"
+
+msgid "ui.nest.assigned"
+msgstr "Учтены все жители этого муравейника"
+
+msgid "ui.nest.full"
+msgstr "Нет свободных мест"
+
+msgid "ui.nest.unaffordable"
+msgstr "В базовых муравейниках не хватает ресурсов"
+
+msgid "ui.nest.from_main"
+msgstr "Оплата из базовых муравейников"
+
+msgid "ui.nest.kill"
+msgstr "Убить"
+
+msgid "ui.nest.kill_hint"
+msgstr "Убить одного жителя этого типа. Его груз будет потерян."
+
+msgid "ui.source.remaining"
+msgstr "Запас: %d"
+
+msgid "ui.source.infinite"
+msgstr "Запас: бесконечный"
+
+msgid "ui.source.finite"
+msgstr "Конечный источник"
+
+msgid "ui.source.amount"
+msgstr "Запас"
+
+msgid "ui.building.sawmill"
+msgstr "Лесопилка"
+
+msgid "ui.building.quarry"
+msgstr "Каменоломня"
+
+msgid "ui.building.farm"
+msgstr "Ферма"
+
+msgid "ui.placement.resource_site"
+msgstr "Нужен подходящий источник с запасом и без улучшения"
+
+msgid "ui.task.unlocks"
+msgstr "Откроет: %s"
+
+msgid "ui.site.title"
+msgstr "Стройка: %s"
+
+msgid "ui.site.assembly"
+msgstr "Сборка: %d%%"
+
+msgid "ui.site.delivery"
+msgstr "Ожидает доставку материалов"
+
+msgid "ui.menu.waves"
+msgstr "Волны пауков"
+
+msgid "ui.defense.wall"
+msgstr "Стена"
+
+msgid "ui.defense.tower"
+msgstr "Боевая вышка"
+
+msgid "ui.nest.warrior"
+msgstr "Боевые муравьи"
+
+msgid "ui.warrior.hint"
+msgstr "%d HP; %d урон. Ищет пауков или служит на вышке. Ест дома; ресурсы не добывает."
+
+msgid "ui.tower.active"
+msgstr "Работает: один боец на посту"
+
+msgid "ui.tower.inactive"
+msgstr "Отключена: нужен боевой муравей"
+
+msgid "ui.combat.health"
+msgstr "HP: %d / %d"
+
+msgid "ui.trap.title"
+msgstr "Паучья ловушка"
+
+msgid "ui.trap.hint"
+msgstr "Убивает мирных муравьёв. Не исчезает после срабатывания."
+
+msgid "ui.trap.clear"
+msgstr "Убрать: %s"
+
+msgid "ui.waves.next"
+msgstr "Волна %d через %d:%02d"
+
+msgid "ui.waves.enemies"
+msgstr "Пауков: %d"
+
+msgid "ui.waves.hint"
+msgstr "Покупайте бойцов в муравейнике. До волны стройте стены и вышки с бойцами."
+
+msgid "ui.result.colony_destroyed"
+msgstr "Все муравейники уничтожены"
+
+msgid "ui.terrain.grass"
+msgstr "Трава"
+
+msgid "ui.terrain.soil"
+msgstr "Почва"
+
+msgid "ui.terrain.road"
+msgstr "Дорога"
+
+msgid "ui.terrain.road_plus"
+msgstr "Быстрая тропинка"
+
+msgid "ui.terrain.water"
+msgstr "Вода"
+
+msgid "ui.terrain.fertile"
+msgstr "Плодородная почва"
+
+msgid "ui.terrain.rocky"
+msgstr "Каменистая почва"
+
+msgid "ui.terrain.dry"
+msgstr "Сухая почва"
+
+msgid "ui.terrain.wet"
+msgstr "Влажная почва"
+
+msgid "ui.terrain.sand"
+msgstr "Песок"
+
+msgid "ui.placement.soil_restricted"
+msgstr "На этой почве нельзя это строить"
+
+msgid "ui.terrain.generate"
+msgstr "Почвы"
+
+msgid "ui.terrain.generated"
+msgstr "Почвы распределены по %d клеткам. Сохраните карту."
+
+msgid "ui.terrain.allowed"
+msgstr "да"
+
+msgid "ui.terrain.forbidden"
+msgstr "нет"
+
+msgid "ui.terrain.permissions"
+msgstr "Дороги: %s · кусты: %s\nМуравейники: %s"
+
+msgid "ui.terrain.harvest"
+msgstr "Урожай ягод: %d%%"
+
+msgid "ui.terrain.nest_price"
+msgstr "Цена муравейника: %d%%"
+
+msgid "ui.terrain.road_price"
+msgstr "Цена дороги: %d%%"
+
+msgid "ui.terrain.adjacency"
+msgstr "Вместимость рядом: +%d%%\nРадиус: %d; не суммируется"
+
+msgid "ui.terrain.base"
+msgstr "Почва: %s"
+
+msgid "ui.terrain.capacity_bonus"
+msgstr "Влажная почва: +%d%% к вместимости"
+
+msgid "ui.voyage.continue"
+msgstr "Продолжить"
+
+msgid "ui.voyage.save"
+msgstr "Сохранить игру"
+
+msgid "ui.voyage.saved"
+msgstr "Игра сохранена"
+
+msgid "ui.voyage.save_failed"
+msgstr "Не удалось сохранить"
+
+msgid "ui.voyage.ship"
+msgstr "Корабль"
+
+msgid "ui.voyage.ship_unlocked"
+msgstr "Доступен корабль: постройте его для отплытия"
+
+msgid "ui.voyage.level_complete"
+msgstr "Уровень %d завершён"
+
+msgid "ui.voyage.choose_reward"
+msgstr "Выберите одно улучшение. Оно останется на следующих островах."
+
+msgid "ui.voyage.road"
+msgstr "Быстрая тропинка"
+
+msgid "ui.voyage.road_detail"
+msgstr "Заменяет обычную тропинку. Движение быстрее, цена прежняя."
+
+msgid "ui.voyage.discount"
+msgstr "Бережливое строительство"
+
+msgid "ui.voyage.discount_detail"
+msgstr "Все новые постройки на 10% дешевле."
+
+msgid "ui.voyage.speed"
+msgstr "Быстрые лапки"
+
+msgid "ui.voyage.speed_detail"
+msgstr "Все муравьи двигаются на 15% быстрее."
+
+msgid "ui.voyage.satiety"
+msgstr "Большой запас сил"
+
+msgid "ui.voyage.satiety_detail"
+msgstr "Запас сытости всех муравьёв увеличен на 20%."
+
+msgid "ui.voyage.departure"
+msgstr "Корабль готов. Победа!"
+
+msgid "ui.voyage.score"
+msgstr "Счёт: %d"
+
+msgid "ui.voyage.next_island"
+msgstr "Остров %d: выберите берег для новой колонии."
+
+msgid "ui.voyage.fertile_island"
+msgstr "Зелёный берег · больше плодородной земли"
+
+msgid "ui.voyage.dry_island"
+msgstr "Сухое плато · дешёвые муравейники"
+
+msgid "ui.voyage.rocky_island"
+msgstr "Каменные острова · труднее строить дороги"
+
+msgid "ui.voyage.carry_over"
+msgstr "Запасы и улучшения сохранятся. Времени станет меньше, задания — дороже."
+
+msgid "ui.voyage.seed"
+msgstr "Зерно"
+
+msgid "ui.voyage.generate"
+msgstr "Создать острова"
+
+msgid "ui.voyage.generate_confirm"
+msgstr "Есть несохранённые изменения. Сохраните их или нажмите «Создать острова» ещё раз."
+
+msgid "ui.voyage.generated"
+msgstr "Острова созданы. Можно редактировать, сохранить и играть."
+
+msgid "ui.map.starting_maps"
+msgstr "Стартовые карты"
+
+msgid "ui.map.mode_title"
+msgstr "%s · %s"
+
+msgid "ui.map.starting_saved"
+msgstr "Стартовая карта выбрана"
+
+msgid "ui.map.starting_requires_nest"
+msgstr "Добавьте муравейник на стартовую карту"
+
+msgid "ui.placement.water_required"
+msgstr "Корабль строится на воде"
+
+msgid "ui.placement.shore_required"
+msgstr "Выберите воду рядом с проходимым берегом"
+
+msgid "ui.placement.no_build_supply"
+msgstr "На доступных стройке базах не хватает материалов"
+
+msgid "ui.trap.inspect"
+msgstr "ПКМ: выбрать и убрать"
+
+msgid "ui.voyage.fertile_short"
+msgstr "Зелёный берег"
+
+msgid "ui.voyage.dry_short"
+msgstr "Сухое плато"
+
+msgid "ui.voyage.rocky_short"
+msgstr "Каменные острова"
+
+msgid "ui.construction.inspect_hint"
+msgstr "Клик: осмотр · Перетаскивание: камера · Колесо: зум"
+
+msgid "ui.map.normal_mode"
+msgstr "Обычная"
+
+msgid "ui.construction.category.terrain"
+msgstr "Поверхности"
+
+msgid "ui.construction.category.colony"
+msgstr "Колония"
+
+msgid "ui.construction.category.production"
+msgstr "Добыча"
+
+msgid "ui.construction.category.defense"
+msgstr "Оборона"
+
+msgid "ui.construction.category.voyage"
+msgstr "Путешествие"
+
+msgid "ui.construction.category.other"
+msgstr "Прочее"
+
+msgid "ui.construction.title"
+msgstr "Строительство"
+
+msgid "ui.construction.details"
+msgstr "О постройке"
+
+msgid "ui.construction.price"
+msgstr "Цена: %s"
+
+msgid "ui.construction.time"
+msgstr "Сборка: %s с"
+
+msgid "ui.construction.instant"
+msgstr "Мгновенная постройка"
+
+msgid "ui.construction.water"
+msgstr "Требует воды"
+
+msgid "ui.construction.slots"
+msgstr "Рабочие места: +%d"
+
+msgid "ui.construction.footprint"
+msgstr "Клеток: %d"
+
+msgid "ui.construction.speed"
+msgstr "Стоимость перемещения: %s"
+
+msgid "ui.construction.fast_trail"
+msgstr "Быстрая тропинка"
+
+msgid "ui.construction.category_caption"
+msgstr "Категории"
+
+msgid "ui.construction.empty"
+msgstr "Выберите постройку для просмотра."
+
+msgid "ui.construction.description.road"
+msgstr "Тропа ускоряет перемещение муравьёв."
+
+msgid "ui.construction.description.ground"
+msgstr "Убирает тропу и восстанавливает покрытие под ней."
+
+msgid "ui.construction.description.road_plus"
+msgstr "Улучшенная тропа для быстрых переходов."
+
+msgid "ui.construction.description.house"
+msgstr "Казарма размещает жителей и хранит припасы на своём складе."
+
+msgid "ui.construction.description.base_nest"
+msgstr "Дополнительная база с большим складом и местами для найма."
+
+msgid "ui.construction.description.canteen"
+msgstr "Муравьи приходят сюда поесть и восстановить сытость."
+
+msgid "ui.construction.description.building"
+msgstr "Обычная постройка колонии."
+
+msgid "ui.construction.description.apple_tree"
+msgstr "Рабочие собирают здесь пищу."
+
+msgid "ui.construction.description.farm"
+msgstr "Улучшает добычу пищи на подходящем источнике."
+
+msgid "ui.construction.description.sawmill"
+msgstr "Улучшает добычу древесины на подходящем источнике."
+
+msgid "ui.construction.description.quarry"
+msgstr "Улучшает добычу камня на подходящем источнике."
+
+msgid "ui.construction.description.wall"
+msgstr "Перекрывает проход и защищает колонию от пауков."
+
+msgid "ui.construction.description.tower"
+msgstr "Воин на вышке обстреливает ближайших пауков."
+
+msgid "ui.construction.description.ship"
+msgstr "Строится на воде для перехода на следующий остров."
+
+msgid "ui.window.collapse"
+msgstr "Свернуть окно"
+
+msgid "ui.window.expand"
+msgstr "Развернуть окно"
+
+msgid "ui.window.nest"
+msgstr "Муравейник"
+
+msgid "ui.window.result"
+msgstr "Итог матча"
+
+msgid "ui.window.navigation"
+msgstr "Навигация"
+
+msgid "ui.window.tasks"
+msgstr "Запросы"
+
+msgid "ui.window.campaign"
+msgstr "Путешествие"
+
+msgid "ui.window.waves"
+msgstr "Волны"
+
+msgid "ui.settings.text_size"
+msgstr "Размер текста"
+
+msgid "ui.settings.text_normal"
+msgstr "Обычный"
+
+msgid "ui.settings.text_large"
+msgstr "Крупный"
+
+msgid "ui.settings.text_xlarge"
+msgstr "Очень крупный"
+
+msgid "ui.resource.royal"
+msgstr "Регалии"
+
+msgid "ui.hud.match_timer"
+msgstr "Матч %d:%02d"
+
+msgid "ui.hud.wave_timer"
+msgstr "Волна %d:%02d"
+
+msgid "ui.colony.population"
+msgstr "Муравьи: %d"
+
+msgid "ui.colony.store"
+msgstr "%s (%d / %d)"
+
+msgid "ui.colony.amount"
+msgstr "%s: %d"
+
+msgid "ui.colony.summary_hint"
+msgstr "Показать или скрыть склады колонии"
+
+msgid "ui.colony.focus_hint"
+msgstr "Навести камеру на этот муравейник"
+
+msgid "ui.world.generated_title"
+msgstr "Остров %d"
+
+msgid "ui.result.level"
+msgstr "Уровень: %d"
+
+msgid "ui.result.task_counts"
+msgstr "Выполнено: %d · отказов: %d"
+
+msgid "ui.task.cancel"
+msgstr "Отказ"
+
+msgid "ui.task.cancel_notice"
+msgstr "Отказ: без времени и награды"
+
+msgid "ui.task.time_reward"
+msgstr "+%d секунд"
+
+msgid "ui.task.time_reward_short"
+msgstr "+%d с"
+
+msgid "ui.task.level_progress"
+msgstr "Уровень %d · %d/%d"
+
+msgid "ui.task.cancel_hint"
+msgstr "Отказ: %s. Без награды."
+
+msgid "ui.task.submit_hint"
+msgstr "Сдать: %s. Награда: %s и %d с."
+
+msgid "ui.task.waiting"
+msgstr "Ждут мест: %d · сырья: %d"
+
+msgid "ui.task.trail_upgrade"
+msgstr "Тропинка заменена на быструю"
+
+msgid "ui.task.cheap_building"
+msgstr "Строительство дешевле"
+
+msgid "ui.task.faster_ants"
+msgstr "Муравьи быстрее"
+
+msgid "ui.nav.priority_help"
+msgstr "Меньше число — выше приоритет"
+
+msgid "ui.nav.terrain"
+msgstr "Земля"
+
+msgid "ui.nav.work"
+msgstr "Работа"
+
+msgid "ui.nav.home"
+msgstr "Дом"
+
+msgid "ui.nav.food"
+msgstr "Еда"
+
+msgid "ui.nav.hover"
+msgstr "Наведите курсор на предприятие"
+
+msgid "ui.nav.formula"
+msgstr "Путь + %s × (работают + идут)"
+
+msgid "ui.nav.entry"
+msgstr "Вход в клетку · мс"
+
+msgid "ui.nav.priority"
+msgstr "Приоритеты · секунды"
+
+msgid "ui.nav.origin"
+msgstr "От (%d / %d) · скорость %.1f"
+
+msgid "ui.nav.no_path"
+msgstr "Пути нет"
+
+msgid "ui.nav.path"
+msgstr "Путь: %.2f с"
+
+msgid "ui.nav.unreachable"
+msgstr "Из выбранной точки пути нет"
+
+msgid "ui.nav.breakdown"
+msgstr "%.2f с + %s × %d = %.2f%s"
+
+msgid "ui.nav.no_slots"
+msgstr " · мест нет"
+
+msgid "ui.nav.howto"
+msgstr "Клик — нагрузка предприятия\nПКМ — выбрать начало\nЛКМ / стрелки — камера"
+
+msgid "ui.nav.hidden"
+msgstr "Оценки скрыты"
+
+msgid "ui.nav.entry_help"
+msgstr "Время входа в клетку в мс. Скорость: %.1f. Приблизьте карту для чисел."
+
+msgid "ui.nav.routes_help"
+msgstr "ПКМ задаёт начало. ЛКМ и стрелки двигают камеру. За занятое место добавляется %s с."
+
+msgid "ui.task.request_1_1"
+msgstr "Запрос 1.1"
+
+msgid "ui.task.request_1_2"
+msgstr "Запрос 1.2"
+
+msgid "ui.task.request_1_3"
+msgstr "Запрос 1.3"
+
+msgid "ui.task.request_1_4"
+msgstr "Запрос 1.4"
+
+msgid "ui.task.request_1_5"
+msgstr "Запрос 1.5"
+
+msgid "ui.task.request_2_1"
+msgstr "Запрос 2.1"
+
+msgid "ui.task.request_2_2"
+msgstr "Запрос 2.2"
+
+msgid "ui.task.request_2_3"
+msgstr "Запрос 2.3"
+
+msgid "ui.task.request_2_4"
+msgstr "Запрос 2.4"
+
+msgid "ui.task.request_2_5"
+msgstr "Запрос 2.5"
+
+msgid "ui.task.request_3_1"
+msgstr "Запрос 3.1"
+
+msgid "ui.task.request_3_2"
+msgstr "Запрос 3.2"
+
+msgid "ui.task.request_3_3"
+msgstr "Запрос 3.3"
+
+msgid "ui.task.request_3_4"
+msgstr "Запрос 3.4"
+
+msgid "ui.task.request_3_5"
+msgstr "Запрос 3.5"
+
+msgid "ui.world.tidal_shards"
+msgstr "Осколки прилива"
+
+msgid "ui.world.tidal_shards_description"
+msgstr "Соедините тропами центральные острова. Север — камень, запад — лес, восток — пища. Дальним островам нужны базы; северо-западу и восточному карьеру — столовые."
+
+msgid "ui.world.five_soils"
+msgstr "Пять земель"
+
+msgid "ui.world.five_soils_description"
+msgstr "Плодородные долины, сухие возвышенности и каменистые месторождения. Влажные берега расширяют соседние муравейники; песчаные пляжи удорожают дороги. Нарисованные почвы сохраняются вместе с картой."
+
+msgid "ui.window.close"
+msgstr "Закрыть"
+
+msgid "ui.tutorial.previous"
+msgstr "Предыдущая страница"
+
+msgid "ui.hud.pause"
+msgstr "Пауза [Пробел]"
+
+msgid "ui.hud.unpause"
+msgstr "Продолжить [Пробел]"
+
+msgid "ui.hud.tab_build"
+msgstr "Стройка"
+
+msgid "ui.hud.tab_colony"
+msgstr "Колония"
+
+msgid "ui.hud.tab_tasks"
+msgstr "Задачи"
+
+msgid "ui.settings.minimum_text"
+msgstr "Мин. размер текста"
+
+msgid "ui.settings.text_pixels"
+msgstr "%d пкс"

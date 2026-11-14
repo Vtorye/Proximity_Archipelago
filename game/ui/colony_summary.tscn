@@ -1,0 +1,35 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://game/ui/colony_summary.gd" id="summary"]
+
+[node name="ColonySummary" type="PanelContainer"]
+offset_left = 8.0
+offset_top = 64.0
+offset_right = 275.0
+script = ExtResource("summary")
+
+[node name="Content" type="VBoxContainer" parent="."]
+
+[node name="Summary" type="Button" parent="Content"]
+unique_name_in_owner = true
+toggle_mode = true
+alignment = 0
+text_overrun_behavior = 0
+theme_type_variation = &"CompactButton"
+tooltip_text = "ui.colony.summary_hint"
+
+[node name="Totals" type="Label" parent="Content"]
+unique_name_in_owner = true
+mouse_filter = 2
+autowrap_mode = 3
+theme_type_variation = &"Caption"
+
+[node name="Stores" type="ScrollContainer" parent="Content"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(0, 110)
+horizontal_scroll_mode = 0
+
+[node name="Rows" type="VBoxContainer" parent="Content/Stores"]
+unique_name_in_owner = true
+size_flags_horizontal = 3

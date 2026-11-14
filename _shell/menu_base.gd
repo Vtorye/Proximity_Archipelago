@@ -11,7 +11,7 @@ var payload: Variant = null
 ## Set in the Inspector. If null, the first focusable control is used
 @export var default_focus: Control
 
-## When false, ui_cancel (Esc here) and the pause key cannot close this menu.
+## When false, ui_cancel (Esc here) cannot close this menu.
 ## Only the menu itself or a Router navigation removes it.
 var dismissable := true
 

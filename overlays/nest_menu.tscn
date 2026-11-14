@@ -15,14 +15,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("script")
-
-[node name="Shade" type="ColorRect" parent="."]
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-color = Color(0, 0, 0, 0.5)
+mouse_filter = 2
 
 [node name="Center" type="Control" parent="."]
 anchors_preset = 15
@@ -30,6 +23,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 2
 
 [node name="Dialog" type="PanelContainer" parent="Center"]
 unique_name_in_owner = true
@@ -42,9 +36,10 @@ theme_override_constants/separation = 2
 [node name="WindowHeader" parent="Center/Dialog/WindowContents" node_paths=PackedStringArray("panel", "body") instance=ExtResource("window_header")]
 unique_name_in_owner = true
 title = "ui.window.nest"
-dock = 0
-panel_width = 448.0
-inset = Vector2(8, 8)
+action = 2
+dock = 4
+panel_width = 400.0
+inset = Vector2(8, 64)
 panel = NodePath("../..")
 body = NodePath("../Margin")
 
@@ -61,18 +56,12 @@ theme_override_constants/separation = 8
 [node name="Header" type="HBoxContainer" parent="Center/Dialog/WindowContents/Margin/Content"]
 
 [node name="Title" type="Label" parent="Center/Dialog/WindowContents/Margin/Content/Header"]
+theme_type_variation = &"Heading"
 unique_name_in_owner = true
 mouse_filter = 2
 text = ""
-theme_override_font_sizes/font_size = 24
 theme_override_colors/font_color = Color(0.8745, 0.7765, 0.5451, 1)
 size_flags_horizontal = 3
-
-[node name="Close" type="Button" parent="Center/Dialog/WindowContents/Margin/Content/Header"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 28)
-mouse_default_cursor_shape = 2
-text = "ui.common.back"
 
 [node name="Tabs" type="HBoxContainer" parent="Center/Dialog/WindowContents/Margin/Content"]
 
@@ -111,7 +100,6 @@ theme_override_constants/separation = 6
 unique_name_in_owner = true
 mouse_filter = 2
 text = ""
-theme_override_font_sizes/font_size = 16
 
 [node name="OrdersTab" type="VBoxContainer" parent="Center/Dialog/WindowContents/Margin/Content"]
 unique_name_in_owner = true
@@ -122,40 +110,48 @@ visible = false
 unique_name_in_owner = true
 text = "ui.nest.funds_construction"
 
-[node name="OrderGrid" type="GridContainer" parent="Center/Dialog/WindowContents/Margin/Content/OrdersTab"]
+[node name="OrderHeader" type="HBoxContainer" parent="Center/Dialog/WindowContents/Margin/Content/OrdersTab"]
 unique_name_in_owner = true
-columns = 4
-theme_override_constants/h_separation = 6
-theme_override_constants/v_separation = 6
+theme_override_constants/separation = 6
 
-[node name="Resource" type="Label" parent="Center/Dialog/WindowContents/Margin/Content/OrdersTab/OrderGrid"]
+[node name="Resource" type="Label" parent="Center/Dialog/WindowContents/Margin/Content/OrdersTab/OrderHeader"]
+custom_minimum_size = Vector2(114, 0)
+size_flags_horizontal = 3
 mouse_filter = 2
 text = ""
-theme_override_font_sizes/font_size = 16
 
-[node name="Minimum" type="Label" parent="Center/Dialog/WindowContents/Margin/Content/OrdersTab/OrderGrid"]
+[node name="Minimum" type="Label" parent="Center/Dialog/WindowContents/Margin/Content/OrdersTab/OrderHeader"]
+theme_type_variation = &"Caption"
 mouse_filter = 2
 text = "ui.order.min"
-theme_override_font_sizes/font_size = 8
 theme_override_colors/font_color = Color(0.6667, 0.651, 0.6118, 1)
-custom_minimum_size = Vector2(72, 0)
+custom_minimum_size = Vector2(76, 0)
 horizontal_alignment = 1
 
-[node name="Maximum" type="Label" parent="Center/Dialog/WindowContents/Margin/Content/OrdersTab/OrderGrid"]
+[node name="Maximum" type="Label" parent="Center/Dialog/WindowContents/Margin/Content/OrdersTab/OrderHeader"]
+theme_type_variation = &"Caption"
 mouse_filter = 2
 text = "ui.order.max"
-theme_override_font_sizes/font_size = 8
 theme_override_colors/font_color = Color(0.6667, 0.651, 0.6118, 1)
 custom_minimum_size = Vector2(72, 0)
 horizontal_alignment = 1
 
-[node name="Owed" type="Label" parent="Center/Dialog/WindowContents/Margin/Content/OrdersTab/OrderGrid"]
+[node name="Owed" type="Label" parent="Center/Dialog/WindowContents/Margin/Content/OrdersTab/OrderHeader"]
+theme_type_variation = &"Caption"
 mouse_filter = 2
 text = "ui.order.once"
-theme_override_font_sizes/font_size = 8
 theme_override_colors/font_color = Color(0.6667, 0.651, 0.6118, 1)
 custom_minimum_size = Vector2(72, 0)
 horizontal_alignment = 1
+
+[node name="OrderScroll" type="ScrollContainer" parent="Center/Dialog/WindowContents/Margin/Content/OrdersTab"]
+custom_minimum_size = Vector2(0, 100)
+horizontal_scroll_mode = 0
+vertical_scroll_mode = 1
+
+[node name="OrderRows" type="VBoxContainer" parent="Center/Dialog/WindowContents/Margin/Content/OrdersTab/OrderScroll"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
 
 [node name="ResidentsTab" type="VBoxContainer" parent="Center/Dialog/WindowContents/Margin/Content"]
 unique_name_in_owner = true
@@ -166,12 +162,11 @@ visible = false
 unique_name_in_owner = true
 mouse_filter = 2
 text = ""
-theme_override_font_sizes/font_size = 16
 theme_override_colors/font_color = Color(0.8745, 0.7765, 0.5451, 1)
 
 [node name="Assigned" type="Label" parent="Center/Dialog/WindowContents/Margin/Content/ResidentsTab"]
+theme_type_variation = &"Caption"
 unique_name_in_owner = true
 mouse_filter = 2
 text = "ui.nest.assigned"
-theme_override_font_sizes/font_size = 8
 theme_override_colors/font_color = Color(0.6667, 0.651, 0.6118, 1)

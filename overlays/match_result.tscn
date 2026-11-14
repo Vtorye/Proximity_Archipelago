@@ -55,17 +55,16 @@ unique_name_in_owner = true
 theme_override_constants/separation = 8
 
 [node name="Heading" type="Label" parent="Center/Dialog/WindowContents/Margin/Content"]
+theme_type_variation = &"Heading"
 unique_name_in_owner = true
 mouse_filter = 2
 text = ""
-theme_override_font_sizes/font_size = 24
 theme_override_colors/font_color = Color(0.8745, 0.7765, 0.5451, 1)
 
 [node name="Reason" type="Label" parent="Center/Dialog/WindowContents/Margin/Content"]
 unique_name_in_owner = true
 mouse_filter = 2
 text = ""
-theme_override_font_sizes/font_size = 16
 
 [node name="Resources" type="VBoxContainer" parent="Center/Dialog/WindowContents/Margin/Content"]
 unique_name_in_owner = true
@@ -75,7 +74,6 @@ theme_override_constants/separation = 8
 unique_name_in_owner = true
 mouse_filter = 2
 text = ""
-theme_override_font_sizes/font_size = 16
 theme_override_colors/font_color = Color(0.6667, 0.651, 0.6118, 1)
 visible = false
 
@@ -83,14 +81,12 @@ visible = false
 unique_name_in_owner = true
 mouse_filter = 2
 text = ""
-theme_override_font_sizes/font_size = 16
 visible = false
 
 [node name="Completed" type="Label" parent="Center/Dialog/WindowContents/Margin/Content"]
 unique_name_in_owner = true
 mouse_filter = 2
 text = ""
-theme_override_font_sizes/font_size = 16
 visible = false
 
 [node name="Again" type="Button" parent="Center/Dialog/WindowContents/Margin/Content"]

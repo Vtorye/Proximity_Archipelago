@@ -1,8 +1,12 @@
 class_name MatchHud
 extends Control
+signal nest_selected(nest: House)
 signal settings_requested
+signal pause_requested
 signal navigation_requested
 signal construction_requested
+signal section_requested(section: StringName)
+signal bottom_bar_resized
 signal zoom_in_requested
 signal zoom_out_requested
 var world: World
@@ -11,18 +15,18 @@ var stock_labels: Dictionary[StringName, Label] = {}
 var stock_chips: Dictionary[StringName, Control] = {}
 var progress: Dictionary[StringName, ProgressBar] = {}
 @onready var _timer: Label = %Timer
-@onready var _ants: Label = %Ants
+@onready var colony_summary: ColonySummary = %ColonySummary
 @onready var _zoom: Label = %Zoom
 @onready var _toast: Label = %Toast
 var _toast_time := 0.0
 @onready var _warning: Label = %Warning
 @onready var _waiting: Label = %Waiting
 var _zoom_level := 2
+var _active_section: StringName
 @onready var _objectives: PanelContainer = %Objectives
 var navigation: NavigationOverlay
 var navigation_panel: NavigationPanel
 var task_panel: TaskPanel
-var wave_hud: WaveHud
 @onready var _bottom: PanelContainer = %Bottom
 
 func configure(session: World, routes: NavigationOverlay) -> void:
@@ -37,15 +41,18 @@ func _ready() -> void:
 
 func _build_hud() -> void:
 	ColonyStyle.apply(self)
-	var row: HBoxContainer = %Counters
-	for type in world.inventory.registered_types():
+	colony_summary.configure(world)
+	colony_summary.nest_selected.connect(nest_selected.emit)
+	colony_summary.expanded_changed.connect(_on_colony_expanded)
+	var regalia: ResourceType = world.inventory.type_by_id(WorldInventory.CURRENCY_ID)
+	if regalia != null:
 		var chip: HBoxContainer = preload("res://game/ui/hud_resource_chip.tscn").instantiate()
-		var icon: TextureRect = chip.get_node("Icon")
-		icon.texture = _resource_icon(type.id)
-		stock_chips[type.id] = chip
-		stock_labels[type.id] = chip.get_node("Amount")
-		row.add_child(chip)
-		row.move_child(chip, stock_chips.size() - 1)
+		chip.get_node("Icon").texture = regalia.icon
+		stock_chips[regalia.id] = chip
+		stock_labels[regalia.id] = chip.get_node("Amount")
+		%Counters.add_child(chip)
+		%Counters.move_child(chip, 0)
+	%Counters.move_child(%WaveTimer, %Timer.get_index() + 1)
 	var goals: VBoxContainer = %Goals
 	%GoalTitle.text = tr("ui.hud.goal") % world.match_controller.target_amount
 	for type in world.match_controller.tracked_types:
@@ -59,20 +66,26 @@ func _build_hud() -> void:
 		progress[type.id] = bar
 		goals.add_child(line)
 		goals.move_child(line, progress.size())
-	var compact_panel: StyleBoxTexture = ColonyStyle.box()
-	compact_panel.content_margin_top = 2
-	compact_panel.content_margin_bottom = 2
-	_bottom.add_theme_stylebox_override("panel", compact_panel)
 	_toast.add_theme_stylebox_override("normal", ColonyStyle.box())
 	controls[&"routes"] = %Routes
 	%Routes.pressed.connect(AppSettings.play_click)
 	%Routes.pressed.connect(func(): navigation_requested.emit())
+	controls[&"pause"] = %Pause
+	%Pause.pressed.connect(AppSettings.play_click)
+	%Pause.pressed.connect(func(): pause_requested.emit())
+	PauseController.pause_changed.connect(_refresh_pause_indicator)
+	_refresh_pause_indicator(get_tree().paused)
 	controls[&"settings"] = %Settings
 	%Settings.pressed.connect(AppSettings.play_click)
 	%Settings.pressed.connect(func(): settings_requested.emit())
 	controls[&"build"] = %Build
 	%Build.pressed.connect(AppSettings.play_click)
 	%Build.pressed.connect(func(): construction_requested.emit())
+	%ColonyTab.pressed.connect(AppSettings.play_click)
+	%ColonyTab.pressed.connect(func(): section_requested.emit(&"colony"))
+	%TasksTab.pressed.connect(AppSettings.play_click)
+	%TasksTab.pressed.connect(func(): section_requested.emit(&"tasks"))
+	_bottom.resized.connect(bottom_bar_resized.emit)
 	controls[&"zoom_out"] = %ZoomOut
 	%ZoomOut.pressed.connect(AppSettings.play_click)
 	%ZoomOut.pressed.connect(func(): zoom_out_requested.emit())
@@ -93,27 +106,25 @@ func _build_hud() -> void:
 		navigation_panel.overlay = navigation
 		add_child(navigation_panel)
 	if world.combat != null:
-		wave_hud = preload("res://game/combat/wave_hud.tscn").instantiate()
-		wave_hud.director = world.combat
-		add_child(wave_hud)
+		%WaveTimer.show()
+		world.combat.changed.connect(_refresh_wave_timer)
+		_refresh_wave_timer()
+	AppSettings.changed.connect(_refresh_localized_labels)
+	set_section(&"")
 	refresh()
+	_on_time_changed(ceili(world.match_controller.match_duration))
 	set_zoom(2)
 	set_navigation_mode(0)
 
-func _resource_icon(id: StringName) -> Texture2D:
-	var type: ResourceType = world.inventory.type_by_id(id)
-	if type != null and type.icon != null: return type.icon
-	return world.art.berries if id == &"food" else (world.art.timber if id == &"wood" else world.art.stone)
-
 func refresh() -> void:
 	for type in world.inventory.registered_types():
-		stock_labels[type.id].text = "%d(%d)" % [world.inventory.quantity(type), world.inventory.available(type)] if type.id == &"food" else str(world.inventory.quantity(type))
-		var total: String = tr("ui.hud.stock") % [tr(type.display_name), world.inventory.quantity(type), world.inventory.available(type)]
-		stock_chips[type.id].tooltip_text = total + "\n" + (tr("ui.storage.in_main") % world.inventory.main_quantity(type))
+		if stock_labels.has(type.id):
+			var amount: int = world.inventory.quantity(type)
+			stock_labels[type.id].text = str(amount)
+			stock_chips[type.id].tooltip_text = tr(type.display_name)
 		if progress.has(type.id):
 			progress[type.id].value = world.inventory.quantity(type)
 	var agents: Array[AntAgent] = world.population.agents()
-	_ants.text = str(agents.size())
 	var busy := 0
 	var unsafe_work := 0
 	var missing_inputs := 0
@@ -135,8 +146,19 @@ func refresh() -> void:
 	var food: ResourceType = world.inventory.type_by_id(&"food")
 	_warning.text = "ui.hud.need_food" if world.inventory.available(food) < 3 else ""
 
+func _refresh_localized_labels() -> void:
+	%GoalTitle.text = tr("ui.hud.goal") % world.match_controller.target_amount
+	_on_time_changed(ceili(world.match_controller.time_remaining))
+	if world.combat != null:
+		_refresh_wave_timer()
+	refresh()
+
+func _refresh_wave_timer() -> void:
+	var seconds: int = ceili(maxf(0, world.combat.spawner.remaining))
+	%WaveTimer.text = tr("ui.hud.wave_timer") % [seconds / 60, seconds % 60]
+
 func _on_time_changed(seconds: int) -> void:
-	_timer.text = "%d:%02d" % [seconds / 60, seconds % 60]
+	_timer.text = tr("ui.hud.match_timer") % [seconds / 60, seconds % 60]
 	_timer.add_theme_color_override("font_color", ColonyStyle.DANGER if seconds <= 30 else ColonyStyle.ACCENT)
 
 func set_zoom(value: int) -> void:
@@ -145,14 +167,21 @@ func set_zoom(value: int) -> void:
 	controls[&"zoom_in"].disabled = value >= WorldCamera.MAX_LEVEL
 	controls[&"zoom_out"].disabled = value <= WorldCamera.MIN_LEVEL
 
+func _refresh_pause_indicator(paused: bool) -> void:
+	var manual: bool = PauseController.is_manually_paused()
+	%Pause.icon = preload("res://game/assets/ui/build_apply.svg") if manual else preload("res://game/assets/ui/pause.svg")
+	%Pause.tooltip_text = "ui.hud.unpause" if manual else "ui.hud.pause"
+	%Pause.disabled = paused and not manual
+
 func build_obstacles() -> Array[Rect2]:
 	var result: Array[Rect2] = []
 	result.append(%Top.get_global_rect())
+	result.append(_bottom.get_global_rect())
 	var goals_panel: Control = task_panel if task_panel != null else _objectives
 	if goals_panel.is_visible_in_tree():
 		result.append(goals_panel.get_global_rect())
-	if wave_hud != null and wave_hud.is_visible_in_tree():
-		result.append(wave_hud.get_global_rect())
+	if colony_summary.is_visible_in_tree():
+		result.append(colony_summary.get_global_rect())
 	if navigation_panel != null and navigation_panel.is_visible_in_tree() and navigation_panel.mouse_filter == Control.MOUSE_FILTER_STOP:
 		result.append(navigation_panel.get_global_rect())
 	return result
@@ -168,13 +197,22 @@ func toast(message: String, danger: bool = false) -> void:
 	_toast_time = 3.0
 	_toast.show()
 
-func set_construction_mode(active: bool) -> void:
-	_bottom.visible = not active
-	if task_panel != null:
-		task_panel.visible = not active
-	else:
-		_objectives.visible = not active
+func bottom_bar_height() -> float:
+	return _bottom.size.y
+
+func set_section(section: StringName) -> void:
+	_active_section = section
+	%Build.set_pressed_no_signal(section == &"build")
+	%ColonyTab.set_pressed_no_signal(section == &"colony")
+	%TasksTab.set_pressed_no_signal(section == &"tasks")
+	colony_summary.set_expanded(section == &"colony")
+	var goals_panel: Control = task_panel if task_panel != null else _objectives
+	goals_panel.visible = section == &"tasks"
 	_toast.hide()
+
+func _on_colony_expanded(expanded: bool) -> void:
+	if expanded != (_active_section == &"colony"):
+		section_requested.emit(&"colony")
 
 func _process(delta: float) -> void:
 	if _toast_time > 0.0:
@@ -190,5 +228,5 @@ func set_navigation_mode(mode: int) -> void:
 		navigation_panel.refresh()
 	var texture: Texture2D = preload("res://game/assets/ui/opaque_panel.svg") if mode > 0 else preload("res://game/assets/ui/panel.svg")
 	# Keep world labels behind readable HUD surfaces without clipping the map layer.
-	for style in [theme.get_stylebox("panel", "PanelContainer"), theme.get_stylebox("panel", "TooltipPanel"), _bottom.get_theme_stylebox("panel"), _toast.get_theme_stylebox("normal")]:
+	for style in [theme.get_stylebox("panel", "PanelContainer"), theme.get_stylebox("panel", "TooltipPanel"), _toast.get_theme_stylebox("normal")]:
 		(style as StyleBoxTexture).texture = texture

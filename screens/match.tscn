@@ -19,7 +19,7 @@ pausable = true
 process_mode = 3
 
 [node name="ColonyCamera" type="Camera2D" parent="."]
-process_mode = 1
+process_mode = 3
 script = ExtResource("camera")
 
 [node name="Navigation" type="Node2D" parent="."]
@@ -35,3 +35,15 @@ layer = 5
 [node name="Hud" parent="Interface" instance=ExtResource("hud")]
 
 [node name="Campaign" parent="Interface" instance=ExtResource("campaign")]
+
+[node name="ConstructionLayer" type="CanvasLayer" parent="."]
+layer = 6
+
+[node name="PopupLayer" type="CanvasLayer" parent="."]
+layer = 11
+
+[node name="NestPopups" type="Control" parent="PopupLayer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2

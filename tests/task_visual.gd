@@ -54,7 +54,7 @@ func _run() -> void:
 	await _check_resource_facilities()
 	await click(screen.hud.controls[&"settings"])
 	await click(Router.top_overlay().controls[&"settings"])
-	await click(Router.top_overlay().controls[&"ui_scale_plus"])
+	await click(Router.top_overlay().controls[&"text_size_plus"])
 	await click(Router.top_overlay().controls[&"done"])
 	await click(Router.top_overlay().controls[&"resume"])
 	await capture("08-task-panel-scale-100", 30)

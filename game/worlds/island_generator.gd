@@ -87,6 +87,6 @@ static func generate_data(seed_value: int, difficulty := 0, biome := 0, extent :
 	result.seed_value = seed_value
 	result.difficulty = difficulty
 	result.biome = biome
-	result.title = "Остров %d" % seed_value
+	result.title = TranslationServer.translate("ui.world.generated_title") % seed_value
 	world.free()
 	return result

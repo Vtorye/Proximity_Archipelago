@@ -131,7 +131,11 @@ func removals() -> Array[Building]:
 	return _removed.duplicate()
 
 func footprint(command: BuildCommand) -> Array[Vector2i]:
-	return command.removed_building.footprint() if command.is_removal() else controller.footprint_at(command.option, command.cell)
+	if not command.is_removal():
+		return controller.footprint_at(command.option, command.cell)
+	if is_instance_valid(command.removed_building):
+		return command.removed_building.footprint()
+	return [command.cell]
 
 func demolition_check(cell: Vector2i) -> PlacementCheck:
 	var building: Building = controller.demolition_target(cell)
@@ -158,8 +162,24 @@ func demolish(cell: Vector2i) -> bool:
 		if option.id == &"ground": return paint(option, cell)
 	return false
 
+func forget_removal(building: Building) -> void:
+	if not _removed.has(building):
+		return
+	for command in _commands.duplicate():
+		if command.is_removal() and command.removed_building == building:
+			_erase(command)
+	for stroke in _history:
+		for command: BuildCommand in stroke.duplicate():
+			if command.is_removal() and command.removed_building == building:
+				stroke.erase(command)
+	for command in _stroke.duplicate():
+		if command.is_removal() and command.removed_building == building:
+			_stroke.erase(command)
+	changed.emit()
+
 func residents_to_demolish() -> int:
 	var result := 0
 	for building in removals():
-		if building is House: result += building.residents.size()
+		if is_instance_valid(building) and building is House:
+			result += building.residents.size()
 	return result

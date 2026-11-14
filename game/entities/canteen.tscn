@@ -3,6 +3,6 @@
 [ext_resource type="Texture2D" path="res://game/assets/sprites/canteen.png" id="art"]
 [node name="Canteen" type="Node2D"]
 script = ExtResource("script")
-title = "Столовая"
+title = "ui.building.canteen"
 [node name="Sprite" type="Sprite2D" parent="."]
 texture = ExtResource("art")

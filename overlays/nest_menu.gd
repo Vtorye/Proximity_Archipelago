@@ -15,6 +15,7 @@ var _purchase_labels: Dictionary[int, Label] = {}
 @onready var _orders_tab: VBoxContainer = %OrdersTab
 var _order_rows: Dictionary[String, Dictionary] = {}
 @onready var _funds: CheckButton = %Funds
+@onready var _dialog: PanelContainer = %Dialog
 
 func _ready() -> void:
 	if not payload is Dictionary:
@@ -26,12 +27,9 @@ func _ready() -> void:
 		close_requested.emit.call_deferred(self)
 		return
 	ColonyStyle.apply(self)
-	if world.combat != null:
-		%WindowHeader.panel_width = 480.0
 	%Title.text = "ui.storage.main" if house.is_main_nest else "ui.storage.local"
-	controls[&"close"] = %Close
-	%Close.pressed.connect(AppSettings.play_click)
-	%Close.pressed.connect(func(): close_requested.emit(self))
+	controls[&"close"] = %WindowHeader.toggle
+	%WindowHeader.close_requested.connect(func(): close_requested.emit(self))
 	controls[&"inventory"] = %Inventory
 	%Inventory.pressed.connect(AppSettings.play_click)
 	%Inventory.pressed.connect(_show_tab.bind(&"inventory"))
@@ -42,39 +40,29 @@ func _ready() -> void:
 	%Residents.pressed.connect(AppSettings.play_click)
 	%Residents.pressed.connect(_show_tab.bind(&"residents"))
 	for type in world.inventory.registered_types():
-		var line: Label = ColonyStyle.label("")
+		var line: Label = preload("res://game/ui/nest_stock_label.tscn").instantiate()
 		_stock_labels[type.id] = line
 		_inventory_tab.add_child(line)
 	_funds.toggled.connect(func(enabled: bool):
 		if is_instance_valid(house):
 			house.funds_construction = enabled)
-	var order_grid: GridContainer = %OrderGrid
 	for type in world.inventory.registered_types():
 		if type.id == WorldInventory.CURRENCY_ID:
 			continue
-		var row := order_grid
-		var name_label: Label = ColonyStyle.label("")
-		name_label.custom_minimum_size.x = 110
-		row.add_child(name_label)
-		var spins: Dictionary = {}
-		for field in ["min", "max"]:
-			var spin := SpinBox.new()
-			spin.min_value = 0
+		var row: HBoxContainer = preload("res://game/ui/nest_order_row.tscn").instantiate()
+		var minimum: SpinBox = row.get_node("Minimum")
+		var maximum: SpinBox = row.get_node("Maximum")
+		var owed: SpinBox = row.get_node("Owed")
+		for spin in [minimum, maximum, owed]:
 			spin.max_value = WorldInventory.order_limit()
-			spin.step = 1
-			spin.custom_minimum_size.x = 72
-			spin.value_changed.connect(_set_order.bind(str(type.id), field))
-			row.add_child(spin)
-			spins[field] = spin
-		var once := SpinBox.new()
-		once.min_value = 0
-		once.max_value = WorldInventory.order_limit()
-		once.step = 1
-		once.custom_minimum_size.x = 72
-		once.value_changed.connect(_set_owed.bind(str(type.id)))
-		row.add_child(once)
-		spins["once"] = once
-		_order_rows[str(type.id)] = {"name": name_label, "spins": spins, "type": type}
+		minimum.value_changed.connect(_set_order.bind(str(type.id), "min"))
+		maximum.value_changed.connect(_set_order.bind(str(type.id), "max"))
+		owed.value_changed.connect(_set_owed.bind(str(type.id)))
+		%OrderRows.add_child(row)
+		_order_rows[str(type.id)] = {
+			"name": row.get_node("Resource"), "type": type,
+			"spins": {"min": minimum, "max": maximum, "once": owed},
+		}
 	for role in world.population.roles():
 		var row: HBoxContainer = preload("res://game/ui/nest_resident_row.tscn").instantiate()
 		_role_labels[role] = row.get_node("Labels/Count")
@@ -92,9 +80,13 @@ func _ready() -> void:
 	world.inventory.changed.connect(refresh)
 	world.population.changed.connect(refresh)
 	house.tree_exiting.connect(func(): close_requested.emit(self))
+	AppSettings.changed.connect(refresh)
 	_show_tab(&"inventory")
 	refresh()
-	default_focus = %Close
+	default_focus = controls[&"close"]
+
+func panel_bounds() -> Rect2:
+	return _dialog.get_global_rect()
 
 func _show_tab(key: StringName) -> void:
 	_inventory_tab.visible = key == &"inventory"

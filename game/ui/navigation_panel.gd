@@ -11,7 +11,7 @@ var inspected_cell: Variant = null
 var _trap_cell := Vector2i.ZERO
 var _elapsed := 0.0
 func _ready() -> void:
-	%Formula.text = "Путь + %s × (работают + идут)" % str(overlay.world.planner.load_penalty_seconds)
+	%Formula.text = tr("ui.nav.formula") % str(overlay.world.planner.load_penalty_seconds)
 	_clear_trap.pressed.connect(AppSettings.play_click)
 	_clear_trap.pressed.connect(func():
 		if overlay.world.combat != null:
@@ -47,8 +47,8 @@ func refresh() -> void:
 		return
 	_legend.visible = show_routes
 	if show_routes:
-		_heading.text = "Вход в клетку · мс" if overlay.mode == 1 else "Приоритеты · секунды"
-		_source.text = "От (%d, %d) · скорость %.1f" % [overlay.origin.x, overlay.origin.y, overlay.reference_speed]
+		_heading.text = "ui.nav.entry" if overlay.mode == 1 else "ui.nav.priority"
+		_source.text = tr("ui.nav.origin") % [overlay.origin.x, overlay.origin.y, overlay.reference_speed]
 	var value: Dictionary = overlay.sample(cell) if show_routes or terrain != null else {}
 	if has_trap:
 		_detail.text = tr("ui.trap.title") + "\n" + tr("ui.trap.hint")
@@ -70,7 +70,7 @@ func refresh() -> void:
 		if building is DefenseBuilding and building.kind == DefenseBuilding.Kind.TOWER:
 			_detail.text += "\n" + tr("ui.tower.active" if building.staffed() else "ui.tower.inactive")
 		if show_routes:
-			_detail.text += "\n" + ("Пути нет" if not is_finite(value.seconds) else "Путь: %.2f с" % value.seconds)
+			_detail.text += "\n" + (tr("ui.nav.no_path") if not is_finite(value.seconds) else tr("ui.nav.path") % value.seconds)
 	elif terrain != null:
 		var time: float = overlay.world.planner.travel_seconds(overlay.world.route_service.entry_cost(cell), overlay.reference_speed)
 		_detail.text = "%s\n%s" % [tr(terrain.get_custom_data("terrain_name")), (tr("ui.terrain.entry") % roundi(time * 1000)) if is_finite(time) else tr("ui.terrain.impassable")]
@@ -81,7 +81,7 @@ func refresh() -> void:
 				_detail.text = TerrainRules.describe(soil) + "\n" + ((tr("ui.terrain.entry") % roundi(time * 1000)) if is_finite(time) else tr("ui.terrain.impassable"))
 				if surface != null and surface.kind == TerrainType.Kind.ROAD: _detail.text = tr(surface.display_name) + "\n" + _detail.text
 	else:
-		_detail.text = "Клик — нагрузка предприятия\nПКМ — выбрать начало\nЛКМ / стрелки — камера\nГолод проверяется отдельно"
+		_detail.text = tr("ui.nav.howto")
 	if building != null and not building is ConstructionSite and overlay.world.terrain != null:
 		var soil: TerrainType = overlay.world.terrain.map.ground_at(cell)
 		if soil != null:

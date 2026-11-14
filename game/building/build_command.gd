@@ -18,4 +18,4 @@ static func remove(building: Building) -> BuildCommand:
 	return command
 
 func is_removal() -> bool:
-	return option == null and removed_building != null
+	return option == null

@@ -1,0 +1,19 @@
+[gd_scene format=3]
+
+[node name="ColonyStoreRow" type="PanelContainer"]
+size_flags_horizontal = 3
+mouse_default_cursor_shape = 2
+
+[node name="Content" type="VBoxContainer" parent="."]
+mouse_filter = 2
+
+[node name="Focus" type="Button" parent="Content"]
+alignment = 0
+theme_type_variation = &"CompactButton"
+mouse_default_cursor_shape = 2
+tooltip_text = "ui.colony.focus_hint"
+
+[node name="Amounts" type="Label" parent="Content"]
+mouse_filter = 2
+autowrap_mode = 3
+theme_type_variation = &"Caption"

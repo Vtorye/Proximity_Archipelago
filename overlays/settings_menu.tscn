@@ -38,6 +38,7 @@ theme_override_constants/separation = 2
 [node name="WindowHeader" parent="Center/Dialog/WindowContents" node_paths=PackedStringArray("panel", "body") instance=ExtResource("window_header")]
 unique_name_in_owner = true
 title = "ui.menu.settings"
+action = 2
 dock = 0
 panel_width = 512.0
 inset = Vector2(8, 8)
@@ -50,148 +51,131 @@ theme_override_constants/margin_top = 6
 theme_override_constants/margin_right = 6
 theme_override_constants/margin_bottom = 6
 
-[node name="Content" type="VBoxContainer" parent="Center/Dialog/WindowContents/Margin"]
+[node name="Scroll" type="ScrollContainer" parent="Center/Dialog/WindowContents/Margin"]
+custom_minimum_size = Vector2(0, 255)
+horizontal_scroll_mode = 0
+
+[node name="Content" type="VBoxContainer" parent="Center/Dialog/WindowContents/Margin/Scroll"]
+size_flags_horizontal = 3
 unique_name_in_owner = true
-theme_override_constants/separation = 8
+theme_override_constants/separation = 5
 
-[node name="Heading" type="Label" parent="Center/Dialog/WindowContents/Margin/Content"]
-mouse_filter = 2
-text = "ui.menu.settings"
-theme_override_font_sizes/font_size = 24
+[node name="Volume" type="HBoxContainer" parent="Center/Dialog/WindowContents/Margin/Scroll/Content"]
+theme_override_constants/separation = 5
 
-[node name="Volume" type="HBoxContainer" parent="Center/Dialog/WindowContents/Margin/Content"]
-theme_override_constants/separation = 8
-
-[node name="Caption" type="Label" parent="Center/Dialog/WindowContents/Margin/Content/Volume"]
+[node name="Caption" type="Label" parent="Center/Dialog/WindowContents/Margin/Scroll/Content/Volume"]
 mouse_filter = 2
 text = "ui.settings.volume"
-theme_override_font_sizes/font_size = 16
-custom_minimum_size = Vector2(180, 0)
+custom_minimum_size = Vector2(115, 0)
 
-[node name="Slider" type="HSlider" parent="Center/Dialog/WindowContents/Margin/Content/Volume"]
+[node name="Slider" type="HSlider" parent="Center/Dialog/WindowContents/Margin/Scroll/Content/Volume"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(160, 24)
+custom_minimum_size = Vector2(74, 24)
 size_flags_horizontal = 3
 max_value = 100.0
 step = 1.0
 
-[node name="VolumeValue" type="Label" parent="Center/Dialog/WindowContents/Margin/Content/Volume"]
+[node name="VolumeValue" type="Label" parent="Center/Dialog/WindowContents/Margin/Scroll/Content/Volume"]
 unique_name_in_owner = true
 mouse_filter = 2
 text = ""
-theme_override_font_sizes/font_size = 16
 custom_minimum_size = Vector2(44, 0)
 
-[node name="Scale" type="HBoxContainer" parent="Center/Dialog/WindowContents/Margin/Content"]
-theme_override_constants/separation = 8
+[node name="Scale" type="HBoxContainer" parent="Center/Dialog/WindowContents/Margin/Scroll/Content"]
+theme_override_constants/separation = 5
 
-[node name="Caption" type="Label" parent="Center/Dialog/WindowContents/Margin/Content/Scale"]
+[node name="Caption" type="Label" parent="Center/Dialog/WindowContents/Margin/Scroll/Content/Scale"]
 mouse_filter = 2
-text = "ui.settings.ui_scale"
-theme_override_font_sizes/font_size = 16
+text = "ui.settings.minimum_text"
 size_flags_horizontal = 3
 
-[node name="ScaleMinus" type="Button" parent="Center/Dialog/WindowContents/Margin/Content/Scale"]
+[node name="TextMinus" type="Button" parent="Center/Dialog/WindowContents/Margin/Scroll/Content/Scale"]
 unique_name_in_owner = true
 mouse_default_cursor_shape = 2
 text = "-"
 custom_minimum_size = Vector2(32, 28)
 
-[node name="ScaleValue" type="Label" parent="Center/Dialog/WindowContents/Margin/Content/Scale"]
+[node name="TextValue" type="Label" parent="Center/Dialog/WindowContents/Margin/Scroll/Content/Scale"]
 unique_name_in_owner = true
 mouse_filter = 2
 text = ""
-theme_override_font_sizes/font_size = 16
-custom_minimum_size = Vector2(44, 0)
+custom_minimum_size = Vector2(125, 0)
 horizontal_alignment = 1
 
-[node name="ScalePlus" type="Button" parent="Center/Dialog/WindowContents/Margin/Content/Scale"]
+[node name="TextPlus" type="Button" parent="Center/Dialog/WindowContents/Margin/Scroll/Content/Scale"]
 unique_name_in_owner = true
 mouse_default_cursor_shape = 2
 text = "+"
 custom_minimum_size = Vector2(32, 28)
 
-[node name="FullscreenRow" type="HBoxContainer" parent="Center/Dialog/WindowContents/Margin/Content"]
+[node name="FullscreenRow" type="HBoxContainer" parent="Center/Dialog/WindowContents/Margin/Scroll/Content"]
 
-[node name="Caption" type="Label" parent="Center/Dialog/WindowContents/Margin/Content/FullscreenRow"]
+[node name="Caption" type="Label" parent="Center/Dialog/WindowContents/Margin/Scroll/Content/FullscreenRow"]
 mouse_filter = 2
 text = "ui.settings.fullscreen"
-theme_override_font_sizes/font_size = 16
 size_flags_horizontal = 3
 
-[node name="Fullscreen" type="Button" parent="Center/Dialog/WindowContents/Margin/Content/FullscreenRow"]
+[node name="Fullscreen" type="Button" parent="Center/Dialog/WindowContents/Margin/Scroll/Content/FullscreenRow"]
 unique_name_in_owner = true
 mouse_default_cursor_shape = 2
 text = ""
 custom_minimum_size = Vector2(48, 28)
 toggle_mode = true
 
-[node name="VsyncRow" type="HBoxContainer" parent="Center/Dialog/WindowContents/Margin/Content"]
+[node name="VsyncRow" type="HBoxContainer" parent="Center/Dialog/WindowContents/Margin/Scroll/Content"]
 
-[node name="Caption" type="Label" parent="Center/Dialog/WindowContents/Margin/Content/VsyncRow"]
+[node name="Caption" type="Label" parent="Center/Dialog/WindowContents/Margin/Scroll/Content/VsyncRow"]
 mouse_filter = 2
 text = "ui.settings.vsync"
-theme_override_font_sizes/font_size = 16
 size_flags_horizontal = 3
 
-[node name="Vsync" type="Button" parent="Center/Dialog/WindowContents/Margin/Content/VsyncRow"]
+[node name="Vsync" type="Button" parent="Center/Dialog/WindowContents/Margin/Scroll/Content/VsyncRow"]
 unique_name_in_owner = true
 mouse_default_cursor_shape = 2
 text = ""
 custom_minimum_size = Vector2(48, 28)
 toggle_mode = true
 
-[node name="ShowGridRow" type="HBoxContainer" parent="Center/Dialog/WindowContents/Margin/Content"]
+[node name="ShowGridRow" type="HBoxContainer" parent="Center/Dialog/WindowContents/Margin/Scroll/Content"]
 
-[node name="Caption" type="Label" parent="Center/Dialog/WindowContents/Margin/Content/ShowGridRow"]
+[node name="Caption" type="Label" parent="Center/Dialog/WindowContents/Margin/Scroll/Content/ShowGridRow"]
 mouse_filter = 2
 text = "ui.settings.grid"
-theme_override_font_sizes/font_size = 16
 size_flags_horizontal = 3
 
-[node name="ShowGrid" type="Button" parent="Center/Dialog/WindowContents/Margin/Content/ShowGridRow"]
+[node name="ShowGrid" type="Button" parent="Center/Dialog/WindowContents/Margin/Scroll/Content/ShowGridRow"]
 unique_name_in_owner = true
 mouse_default_cursor_shape = 2
 text = ""
 custom_minimum_size = Vector2(48, 28)
 toggle_mode = true
 
-[node name="ReducedMotionRow" type="HBoxContainer" parent="Center/Dialog/WindowContents/Margin/Content"]
+[node name="ReducedMotionRow" type="HBoxContainer" parent="Center/Dialog/WindowContents/Margin/Scroll/Content"]
 
-[node name="Caption" type="Label" parent="Center/Dialog/WindowContents/Margin/Content/ReducedMotionRow"]
+[node name="Caption" type="Label" parent="Center/Dialog/WindowContents/Margin/Scroll/Content/ReducedMotionRow"]
 mouse_filter = 2
 text = "ui.settings.reduced_motion"
-theme_override_font_sizes/font_size = 16
 size_flags_horizontal = 3
 
-[node name="ReducedMotion" type="Button" parent="Center/Dialog/WindowContents/Margin/Content/ReducedMotionRow"]
+[node name="ReducedMotion" type="Button" parent="Center/Dialog/WindowContents/Margin/Scroll/Content/ReducedMotionRow"]
 unique_name_in_owner = true
 mouse_default_cursor_shape = 2
 text = ""
 custom_minimum_size = Vector2(48, 28)
 toggle_mode = true
 
-[node name="Saved" type="Label" parent="Center/Dialog/WindowContents/Margin/Content"]
+[node name="Saved" type="Label" parent="Center/Dialog/WindowContents/Margin/Scroll/Content"]
 unique_name_in_owner = true
 mouse_filter = 2
 text = "ui.settings.saved"
-theme_override_font_sizes/font_size = 16
 theme_override_colors/font_color = Color(0.6667, 0.651, 0.6118, 1)
 
-[node name="Actions" type="HBoxContainer" parent="Center/Dialog/WindowContents/Margin/Content"]
-theme_override_constants/separation = 8
+[node name="Actions" type="HBoxContainer" parent="Center/Dialog/WindowContents/Margin/Scroll/Content"]
+theme_override_constants/separation = 5
 
-[node name="Reset" type="Button" parent="Center/Dialog/WindowContents/Margin/Content/Actions"]
+[node name="Reset" type="Button" parent="Center/Dialog/WindowContents/Margin/Scroll/Content/Actions"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 28)
 mouse_default_cursor_shape = 2
 text = "ui.settings.reset"
-size_flags_horizontal = 3
-
-[node name="Done" type="Button" parent="Center/Dialog/WindowContents/Margin/Content/Actions"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 28)
-mouse_default_cursor_shape = 2
-text = "ui.common.done"
-theme_override_colors/font_color = Color(0.8745, 0.7765, 0.5451, 1)
 size_flags_horizontal = 3

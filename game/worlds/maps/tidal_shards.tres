@@ -4,8 +4,8 @@
 
 [resource]
 script = ExtResource("level")
-title = "Осколки прилива"
-description = "Соедините тропами центральные острова. Север — камень, запад — лес, восток — пища. Дальним островам нужны базы; северо-западу и восточному карьеру — столовые."
+title = "ui.world.tidal_shards"
+description = "ui.world.tidal_shards_description"
 layout = {
 "version": 1,
 "tiles": [

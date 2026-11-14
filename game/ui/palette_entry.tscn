@@ -1,8 +1,8 @@
 [gd_scene format=3]
 
 [node name="PaletteEntry" type="Button"]
+theme_type_variation = &"CompactButton"
 custom_minimum_size = Vector2(0, 23)
 alignment = 0
 mouse_default_cursor_shape = 2
 clip_text = true
-theme_override_font_sizes/font_size = 12

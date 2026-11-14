@@ -263,7 +263,8 @@ func _layout_only() -> void:
 	await click(Router._current.controls[&"settings"])
 	var settings: MenuBase = Router.top_overlay()
 	for factor: float in [0.5, 0.75, 1.0]:
-		AppSettings.ui_scale = factor
+		AppSettings.text_size = clampi(roundi((factor - 0.5) / 0.25), 0, 2)
+		AppSettings.apply()
 		await frames(5)
 		expect(area.encloses(settings.get_node("%Dialog").get_global_rect()), "settings stays in bounds at %d%%" % roundi(factor * 100))
 		expect(area.encloses(settings.controls[&"done"].get_global_rect()), "settings close stays reachable")
@@ -277,10 +278,11 @@ func _layout_only() -> void:
 	expect(menu != null, "layout opens construction")
 	await choose_building(menu, &"house")
 	for factor: float in [0.5, 0.75, 1.0]:
-		AppSettings.ui_scale = factor
+		AppSettings.text_size = clampi(roundi((factor - 0.5) / 0.25), 0, 2)
+		AppSettings.apply()
 		await frames(5)
 		expect(area.encloses(menu.panel.get_global_rect()), "palette fits at %d%%" % roundi(factor * 100))
-		expect(area.encloses(menu.get_node("%Details").get_global_rect()), "inspector fits at %d%%" % roundi(factor * 100))
+		expect(area.encloses(menu.get_node("Panel/WindowContents/Body/Palette/Readout").get_global_rect()), "inspector fits at %d%%" % roundi(factor * 100))
 		expect(area.encloses(screen.hud.controls[&"settings"].get_global_rect()), "HUD settings stays reachable")
 		expect(area.encloses(menu.controls[&"apply"].get_global_rect()), "apply remains reachable")
 		await capture(tag + "build-%d" % roundi(factor * 100), 1)

@@ -15,9 +15,8 @@ var _page := 0
 
 func _ready() -> void:
 	ColonyStyle.apply(self)
-	controls[&"back"] = %Back
-	%Back.pressed.connect(AppSettings.play_click)
-	%Back.pressed.connect(func(): Router.goto(&"main_menu"))
+	controls[&"back"] = %WindowHeader.toggle
+	%WindowHeader.close_requested.connect(func(): Router.goto(&"main_menu"))
 	controls[&"previous"] = %Previous
 	%Previous.pressed.connect(AppSettings.play_click)
 	%Previous.pressed.connect(func(): _show_page(_page - 1))

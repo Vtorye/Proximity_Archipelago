@@ -33,8 +33,11 @@ theme_override_constants/separation = 3
 [node name="PaletteHeader" parent="Panel/WindowContents" node_paths=PackedStringArray("panel", "body") instance=ExtResource("window_header")]
 unique_name_in_owner = true
 title = "ui.construction.title"
+action = 1
 dock = 1
-panel_width = 374.0
+panel_width = 624.0
+collapsed_width = 210.0
+draggable = false
 inset = Vector2(8, 6)
 panel = NodePath("../..")
 body = NodePath("../Body")
@@ -46,7 +49,7 @@ theme_override_constants/separation = 4
 theme_override_constants/separation = 6
 
 [node name="Categories" type="ScrollContainer" parent="Panel/WindowContents/Body/Palette"]
-custom_minimum_size = Vector2(108, 80)
+custom_minimum_size = Vector2(112, 146)
 horizontal_scroll_mode = 0
 vertical_scroll_mode = 1
 
@@ -57,15 +60,62 @@ theme_override_constants/separation = 2
 
 [node name="Buildings" type="ScrollContainer" parent="Panel/WindowContents/Body/Palette"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 80)
+custom_minimum_size = Vector2(0, 146)
 size_flags_horizontal = 3
 horizontal_scroll_mode = 0
 vertical_scroll_mode = 1
 
-[node name="Choices" type="VBoxContainer" parent="Panel/WindowContents/Body/Palette/Buildings"]
+[node name="Choices" type="GridContainer" parent="Panel/WindowContents/Body/Palette/Buildings"]
 unique_name_in_owner = true
 size_flags_horizontal = 3
-theme_override_constants/separation = 2
+columns = 2
+theme_override_constants/h_separation = 4
+theme_override_constants/v_separation = 4
+
+[node name="Readout" type="VBoxContainer" parent="Panel/WindowContents/Body/Palette"]
+custom_minimum_size = Vector2(248, 0)
+theme_override_constants/separation = 3
+
+[node name="BuildingName" type="Label" parent="Panel/WindowContents/Body/Palette/Readout"]
+theme_type_variation = &"Caption"
+unique_name_in_owner = true
+mouse_filter = 2
+text = ""
+theme_override_colors/font_color = Color(0.8745, 0.7765, 0.5451, 1)
+text_overrun_behavior = 3
+
+[node name="DescriptionScroll" type="ScrollContainer" parent="Panel/WindowContents/Body/Palette/Readout"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 118)
+horizontal_scroll_mode = 0
+vertical_scroll_mode = 1
+size_flags_vertical = 3
+
+[node name="Text" type="VBoxContainer" parent="Panel/WindowContents/Body/Palette/Readout/DescriptionScroll"]
+theme_override_constants/separation = 4
+size_flags_horizontal = 3
+
+[node name="Description" type="Label" parent="Panel/WindowContents/Body/Palette/Readout/DescriptionScroll/Text"]
+unique_name_in_owner = true
+mouse_filter = 2
+text = "ui.construction.empty"
+autowrap_mode = 3
+
+[node name="Parameters" type="Label" parent="Panel/WindowContents/Body/Palette/Readout/DescriptionScroll/Text"]
+theme_type_variation = &"Caption"
+unique_name_in_owner = true
+mouse_filter = 2
+text = ""
+theme_override_colors/font_color = Color(0.6667, 0.651, 0.6118, 1)
+autowrap_mode = 3
+
+[node name="Price" type="Label" parent="Panel/WindowContents/Body/Palette/Readout"]
+theme_type_variation = &"Caption"
+unique_name_in_owner = true
+mouse_filter = 2
+text = ""
+theme_override_colors/font_color = Color(0.8745, 0.7765, 0.5451, 1)
+autowrap_mode = 3
 
 [node name="Toolbar" type="HBoxContainer" parent="Panel/WindowContents/Body"]
 theme_override_constants/separation = 4
@@ -74,9 +124,11 @@ theme_override_constants/separation = 4
 unique_name_in_owner = true
 mouse_default_cursor_shape = 2
 text = ""
-custom_minimum_size = Vector2(32, 32)
+custom_minimum_size = Vector2(27, 27)
 size_flags_vertical = 4
 icon = ExtResource("move_icon")
+expand_icon = true
+theme_override_constants/icon_max_width = 16
 icon_alignment = 1
 tooltip_text = "ui.construction.move"
 toggle_mode = true
@@ -86,9 +138,11 @@ button_group = SubResource("tools")
 unique_name_in_owner = true
 mouse_default_cursor_shape = 2
 text = ""
-custom_minimum_size = Vector2(32, 32)
+custom_minimum_size = Vector2(27, 27)
 size_flags_vertical = 4
 icon = ExtResource("demolish_icon")
+expand_icon = true
+theme_override_constants/icon_max_width = 16
 icon_alignment = 1
 tooltip_text = "ui.construction.demolish"
 toggle_mode = true
@@ -102,9 +156,11 @@ theme_override_constants/separation = 4
 unique_name_in_owner = true
 mouse_default_cursor_shape = 2
 text = ""
-custom_minimum_size = Vector2(32, 32)
+custom_minimum_size = Vector2(27, 27)
 size_flags_vertical = 4
 icon = ExtResource("undo_icon")
+expand_icon = true
+theme_override_constants/icon_max_width = 16
 icon_alignment = 1
 tooltip_text = "ui.construction.undo"
 
@@ -112,9 +168,11 @@ tooltip_text = "ui.construction.undo"
 unique_name_in_owner = true
 mouse_default_cursor_shape = 2
 text = ""
-custom_minimum_size = Vector2(32, 32)
+custom_minimum_size = Vector2(27, 27)
 size_flags_vertical = 4
 icon = ExtResource("cancel_icon")
+expand_icon = true
+theme_override_constants/icon_max_width = 16
 icon_alignment = 1
 tooltip_text = "ui.construction.cancel"
 
@@ -123,9 +181,11 @@ unique_name_in_owner = true
 mouse_default_cursor_shape = 2
 text = ""
 theme_override_colors/font_color = Color(0.8745, 0.7765, 0.5451, 1)
-custom_minimum_size = Vector2(32, 32)
+custom_minimum_size = Vector2(27, 27)
 size_flags_vertical = 4
 icon = ExtResource("apply_icon")
+expand_icon = true
+theme_override_constants/icon_max_width = 16
 icon_alignment = 1
 tooltip_text = "ui.construction.apply"
 
@@ -133,27 +193,28 @@ tooltip_text = "ui.construction.apply"
 theme_override_constants/separation = 8
 
 [node name="Cost" type="Label" parent="Panel/WindowContents/Body/Summary"]
+theme_type_variation = &"Caption"
 unique_name_in_owner = true
 mouse_filter = 2
 text = ""
-theme_override_font_sizes/font_size = 12
 size_flags_horizontal = 3
 autowrap_mode = 3
 
 [node name="Hint" type="Label" parent="Panel/WindowContents/Body/Summary"]
+max_lines_visible = 1
+theme_type_variation = &"Caption"
 unique_name_in_owner = true
 mouse_filter = 2
 text = ""
 text_overrun_behavior = 3
 size_flags_horizontal = 3
-theme_override_font_sizes/font_size = 8
 theme_override_colors/font_color = Color(0.6667, 0.651, 0.6118, 1)
 
 [node name="Status" type="Label" parent="Panel/WindowContents/Body"]
+theme_type_variation = &"Caption"
 unique_name_in_owner = true
 mouse_filter = 2
 text = ""
-theme_override_font_sizes/font_size = 12
 theme_override_colors/font_color = Color(0.8471, 0.5451, 0.4745, 1)
 autowrap_mode = 3
 visible = false
@@ -164,82 +225,30 @@ theme_override_constants/separation = 4
 visible = false
 
 [node name="ConfirmLabel" type="Label" parent="Panel/WindowContents/Body/Confirmation"]
+theme_type_variation = &"Caption"
 unique_name_in_owner = true
 mouse_filter = 2
 text = ""
-theme_override_font_sizes/font_size = 12
 theme_override_colors/font_color = Color(0.8471, 0.5451, 0.4745, 1)
 size_flags_horizontal = 3
 autowrap_mode = 3
 
 [node name="Confirm" type="Button" parent="Panel/WindowContents/Body/Confirmation"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 28)
+theme_type_variation = &"CompactButton"
+custom_minimum_size = Vector2(0, 27)
+size_flags_vertical = 4
 mouse_default_cursor_shape = 2
 text = "ui.build.confirm"
 
 [node name="KeepResidents" type="Button" parent="Panel/WindowContents/Body/Confirmation"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 28)
+theme_type_variation = &"CompactButton"
+custom_minimum_size = Vector2(27, 27)
+size_flags_vertical = 4
 mouse_default_cursor_shape = 2
-text = "ui.common.back"
-
-[node name="Details" type="PanelContainer" parent="."]
-unique_name_in_owner = true
-theme_override_styles/panel = ExtResource("dialog_style")
-metadata/ui_manual_layout = true
-
-[node name="WindowContents" type="VBoxContainer" parent="Details"]
-theme_override_constants/separation = 3
-
-[node name="DetailsHeader" parent="Details/WindowContents" node_paths=PackedStringArray("panel", "body") instance=ExtResource("window_header")]
-unique_name_in_owner = true
-title = "ui.construction.details"
-dock = 2
-panel_width = 230.0
-inset = Vector2(8, 6)
-panel = NodePath("../..")
-body = NodePath("../Readout")
-
-[node name="Readout" type="VBoxContainer" parent="Details/WindowContents"]
-theme_override_constants/separation = 3
-
-[node name="BuildingName" type="Label" parent="Details/WindowContents/Readout"]
-unique_name_in_owner = true
-mouse_filter = 2
 text = ""
-theme_override_font_sizes/font_size = 12
-theme_override_colors/font_color = Color(0.8745, 0.7765, 0.5451, 1)
-text_overrun_behavior = 3
-
-[node name="DescriptionScroll" type="ScrollContainer" parent="Details/WindowContents/Readout"]
-custom_minimum_size = Vector2(0, 62)
-horizontal_scroll_mode = 0
-vertical_scroll_mode = 1
-
-[node name="Text" type="VBoxContainer" parent="Details/WindowContents/Readout/DescriptionScroll"]
-theme_override_constants/separation = 4
-size_flags_horizontal = 3
-
-[node name="Description" type="Label" parent="Details/WindowContents/Readout/DescriptionScroll/Text"]
-unique_name_in_owner = true
-mouse_filter = 2
-text = "ui.construction.empty"
-theme_override_font_sizes/font_size = 12
-autowrap_mode = 3
-
-[node name="Parameters" type="Label" parent="Details/WindowContents/Readout/DescriptionScroll/Text"]
-unique_name_in_owner = true
-mouse_filter = 2
-text = ""
-theme_override_font_sizes/font_size = 12
-theme_override_colors/font_color = Color(0.6667, 0.651, 0.6118, 1)
-autowrap_mode = 3
-
-[node name="Price" type="Label" parent="Details/WindowContents/Readout"]
-unique_name_in_owner = true
-mouse_filter = 2
-text = ""
-theme_override_font_sizes/font_size = 12
-theme_override_colors/font_color = Color(0.8745, 0.7765, 0.5451, 1)
-autowrap_mode = 3
+tooltip_text = "ui.window.close"
+icon = ExtResource("cancel_icon")
+expand_icon = true
+theme_override_constants/icon_max_width = 14

@@ -38,6 +38,7 @@ theme_override_constants/separation = 2
 [node name="WindowHeader" parent="Center/Dialog/WindowContents" node_paths=PackedStringArray("panel", "body") instance=ExtResource("window_header")]
 unique_name_in_owner = true
 title = "ui.menu.tutorial"
+action = 2
 dock = 0
 panel_width = 572.0
 inset = Vector2(8, 8)
@@ -55,56 +56,53 @@ unique_name_in_owner = true
 theme_override_constants/separation = 8
 
 [node name="Heading" type="Label" parent="Center/Dialog/WindowContents/Margin/Content"]
+theme_type_variation = &"Heading"
 unique_name_in_owner = true
 mouse_filter = 2
 text = ""
-theme_override_font_sizes/font_size = 24
 theme_override_colors/font_color = Color(0.8745, 0.7765, 0.5451, 1)
 
-[node name="Body" type="Label" parent="Center/Dialog/WindowContents/Margin/Content"]
+[node name="LessonScroll" type="ScrollContainer" parent="Center/Dialog/WindowContents/Margin/Content"]
+custom_minimum_size = Vector2(0, 178)
+horizontal_scroll_mode = 0
+
+[node name="Body" type="Label" parent="Center/Dialog/WindowContents/Margin/Content/LessonScroll"]
 unique_name_in_owner = true
 mouse_filter = 2
 text = ""
-theme_override_font_sizes/font_size = 16
-custom_minimum_size = Vector2(520, 146)
+size_flags_horizontal = 3
 autowrap_mode = 3
 
 [node name="Actions" type="HBoxContainer" parent="Center/Dialog/WindowContents/Margin/Content"]
 theme_override_constants/separation = 8
 
-[node name="Back" type="Button" parent="Center/Dialog/WindowContents/Margin/Content/Actions"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 28)
-mouse_default_cursor_shape = 2
-text = "В меню"
-size_flags_horizontal = 3
-
 [node name="Previous" type="Button" parent="Center/Dialog/WindowContents/Margin/Content/Actions"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 28)
 mouse_default_cursor_shape = 2
-text = "Назад"
+text = "‹"
+tooltip_text = "ui.tutorial.previous"
 size_flags_horizontal = 3
 
 [node name="Next" type="Button" parent="Center/Dialog/WindowContents/Margin/Content/Actions"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 28)
 mouse_default_cursor_shape = 2
-text = "Далее"
+text = "ui.common.next"
 size_flags_horizontal = 3
 
 [node name="Play" type="Button" parent="Center/Dialog/WindowContents/Margin/Content/Actions"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 28)
 mouse_default_cursor_shape = 2
-text = "Играть"
+text = "ui.menu.play"
 theme_override_colors/font_color = Color(0.8745, 0.7765, 0.5451, 1)
 size_flags_horizontal = 3
 
 [node name="Counter" type="Label" parent="Center/Dialog/WindowContents/Margin/Content"]
+theme_type_variation = &"Caption"
 unique_name_in_owner = true
 mouse_filter = 2
 text = ""
-theme_override_font_sizes/font_size = 12
 theme_override_colors/font_color = Color(0.6667, 0.651, 0.6118, 1)
 horizontal_alignment = 1

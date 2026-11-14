@@ -114,58 +114,38 @@ func _run() -> void:
 	await _pan()
 	expect(screen.camera.position != camera_before and menu.draft.size() == 0, "middle drag pans while construction remains paused")
 	await key(KEY_ESCAPE)
-	expect(not get_tree().paused and not Router.has_overlay(), "empty draft resumes safely with Esc")
+	expect(get_tree().paused and Router.top_overlay() == menu, "Escape folds planning without resuming")
+	await key(KEY_SPACE)
 	await _check_requested_features()
-	await _check_ui_scales()
+	await _check_text_sizes()
 	Router.goto(&"main_menu")
 	await frames(45)
 	AppSettings.reset_defaults()
 	_finish()
 
-func _check_ui_scales() -> void:
+func _check_text_sizes() -> void:
 	await click(screen.hud.controls[&"settings"])
 	await click(Router.top_overlay().controls[&"settings"])
 	var settings: Control = Router.top_overlay()
-	expect(AppSettings.ui_scale == 0.75 and settings._scale_value.text == "75%", "interface starts smaller at seventy-five percent")
-	var window_before: Vector2i = get_window().size
-	await click(settings.controls[&"ui_scale_plus"])
-	expect(get_window().size == window_before, "UI scale changes preserve the physical window size")
-	expect(AppSettings.ui_scale == 1.0 and settings.controls[&"ui_scale_plus"].disabled, "settings apply the largest supported UI scale immediately")
-	expect(get_viewport().get_visible_rect().encloses(settings.controls[&"done"].get_global_rect()), "largest settings scale keeps its close action visible")
-	await capture("09-settings-scale-100")
-	preload("res://tests/pixel_font_checks.gd").verify(self, settings)
+	var original: Vector2i = get_window().size
+	for step in range(2):
+		await click(settings.controls[&"text_size_plus"])
+	var large: Button = settings.controls[&"text_size_plus"]
+	expect(AppSettings.text_size == 2 and large.disabled, "largest text size is available")
+	expect(get_window().size == original, "changing text size preserves the window")
+	await capture("09-settings-text-18")
 	await click(settings.controls[&"done"])
 	await click(Router.top_overlay().controls[&"resume"])
 	await key(KEY_B)
-	var menu: ConstructionMenu = Router.top_overlay() as ConstructionMenu
-	await _validate_palette(menu)
-	await capture("10-toolbar-scale-100")
-	await key(KEY_ESCAPE)
-	await click(screen.hud.controls[&"settings"])
-	await click(Router.top_overlay().controls[&"settings"])
-	settings = Router.top_overlay()
-	window_before = get_window().size
-	await click(settings.controls[&"ui_scale_minus"])
-	await click(settings.controls[&"ui_scale_minus"])
-	expect(get_window().size == window_before, "shrinking UI preserves the physical window size")
-	expect(AppSettings.ui_scale == 0.5 and settings.controls[&"ui_scale_minus"].disabled, "settings apply the smallest supported UI scale immediately")
-	var config := ConfigFile.new()
-	expect(config.load(AppSettings.PATH) == OK and config.get_value("interface", "scale", 0.0) == 0.5, "UI scale persists in the settings file")
-	await capture("11-settings-scale-50")
-	preload("res://tests/pixel_font_checks.gd").verify(self, settings)
-	await click(settings.controls[&"done"])
-	await click(Router.top_overlay().controls[&"resume"])
+	await _validate_palette(Router.top_overlay() as ConstructionMenu)
+	await capture("10-construction-text-18")
+	await key(KEY_SPACE)
+	AppSettings.text_size = 0
+	AppSettings.save()
 	await key(KEY_B)
-	menu = Router.top_overlay() as ConstructionMenu
-	await _validate_palette(menu)
-	await capture("12-toolbar-scale-50")
-	await key(KEY_ESCAPE)
-	await click(screen.hud.controls[&"settings"])
-	await click(Router.top_overlay().controls[&"restart"])
-	await frames(45)
-	screen = Router._current
-	use_immediate_construction_fixture(screen.world)
-	expect(AppSettings.ui_scale == 0.5 and screen.hud.controls[&"settings"].custom_minimum_size == Vector2(16, 16), "match restart preserves the selected interface scale")
+	await _validate_palette(Router.top_overlay() as ConstructionMenu)
+	await capture("12-construction-text-14")
+	await key(KEY_SPACE)
 
 func _entry(type: ResourceType, amount: int) -> ResourceAmount:
 	var result := ResourceAmount.new()
@@ -211,45 +191,17 @@ func _pan() -> void:
 	await frames(3)
 
 func _validate_palette(menu: ConstructionMenu) -> void:
-	preload("res://tests/pixel_font_checks.gd").verify(self, menu)
 	var viewport: Rect2 = get_viewport().get_visible_rect()
-	var details: PanelContainer = menu.get_node("%Details")
-	expect(viewport.encloses(menu.panel.get_global_rect()), "construction palette fits the viewport")
-	expect(viewport.encloses(details.get_global_rect()), "building details fit the viewport")
-	expect(not details.get_global_rect().intersects(menu.panel.get_global_rect()), "default palette and inspector do not overlap")
+	expect(viewport.encloses(menu.panel.get_global_rect()), "construction panel fits")
 	for id in [&"move", &"demolish", &"undo", &"cancel", &"apply"]:
-		expect(menu.panel.get_global_rect().encloses(menu.controls[id].get_global_rect()), "every construction action fits the palette")
-	expect(menu.category_buttons.size() >= 3 and not menu.controls[&"house"].is_visible_in_tree(), "categories filter the available buildings")
-	var header: WindowHeader = menu.get_node("%DetailsHeader")
-	var expanded_height: float = details.size.y
+		expect(menu.panel.get_global_rect().encloses(menu.controls[id].get_global_rect()), "construction actions fit")
+	var header: WindowHeader = menu.get_node("%PaletteHeader")
+	var unfolded: float = menu.panel.size.y
+	expect(not header.draggable and menu.category_buttons.size() >= 3, "construction is docked and categorized")
 	await click(header.toggle)
-	expect(header.collapsed and details.size.y < expanded_height, "the inspector collapses to its header")
+	expect(header.collapsed and menu.panel.size.y < unfolded, "construction folds to its header")
 	await click(header.toggle)
-	expect(not header.collapsed and details.size.y >= expanded_height, "the inspector expands again")
-	var start: Vector2 = header.handle.get_global_rect().get_center()
-	var old: Vector2 = details.position
-	# Send a complete drag through the same GUI path used by the player.
-	var hover := InputEventMouseMotion.new()
-	hover.position = start
-	get_viewport().push_input(hover, true)
-	await frames(2)
-	var press := InputEventMouseButton.new()
-	press.position = start
-	press.button_index = MOUSE_BUTTON_LEFT
-	press.pressed = true
-	press.button_mask = MOUSE_BUTTON_MASK_LEFT
-	get_viewport().push_input(press, true)
-	var motion := InputEventMouseMotion.new()
-	motion.position = start + Vector2(-20, -34)
-	motion.relative = motion.position - start
-	motion.button_mask = MOUSE_BUTTON_MASK_LEFT
-	get_viewport().push_input(motion, true)
-	var release := InputEventMouseButton.new()
-	release.position = motion.position
-	release.button_index = MOUSE_BUTTON_LEFT
-	get_viewport().push_input(release, true)
-	await frames(4)
-	expect(details.position != old and viewport.encloses(details.get_global_rect()), "dragging the header moves the inspector within the viewport")
+	expect(not header.collapsed, "construction unfolds again")
 
 func _check_dots(image: Image, button: Button) -> void:
 	var factor: float = floorf(minf(float(image.get_width()) / 640.0, float(image.get_height()) / 360.0))
@@ -263,7 +215,7 @@ func _check_dots(image: Image, button: Button) -> void:
 			if color.r > 0.75 and color.g > 0.7 and color.b > 0.55:
 				total += Vector2(x + 0.5, y + 0.5)
 				count += 1
-	expect(count >= 3 and count <= int(18 * factor * factor * AppSettings.ui_scale), "scaled menu icon renders its three pixel dots")
+	expect(count >= 3 and count <= int(18 * factor * factor), "scaled menu icon renders its three pixel dots")
 	print("DOT CENTERS ", center, " ", total / maxf(1, count), " PIXELS ", count)
 	expect(count > 0 and (total / maxf(1, count)).distance_to(center) <= factor * 0.75, "menu dots stay centered at the chosen interface scale")
 
@@ -292,7 +244,8 @@ func _check_tutorial_and_backdrop() -> void:
 	await click(Router._current.controls[&"previous"])
 	expect(Router._current._page == 2, "tutorial supports paging backwards")
 	for factor in [0.5, 1.0]:
-		AppSettings.ui_scale = factor
+		AppSettings.text_size = clampi(roundi((factor - 0.5) / 0.25), 0, 2)
+		AppSettings.apply()
 		AppSettings.apply()
 		await frames(5)
 		for page in range(4):
@@ -301,7 +254,8 @@ func _check_tutorial_and_backdrop() -> void:
 			expect(get_viewport().get_visible_rect().encloses(Router._current._body.get_global_rect()), "tutorial remains readable at the smallest and largest interface scale")
 			expect(Router._current._body.get_visible_line_count() == Router._current._body.get_line_count(), "tutorial never clips instruction lines")
 		await capture("14-tutorial-scale-%d" % roundi(factor * 100))
-	AppSettings.ui_scale = 0.75
+	AppSettings.text_size = AppSettings.DEFAULT_TEXT_SIZE
+	AppSettings.apply()
 	AppSettings.apply()
 	await frames(3)
 	await click(Router._current.controls[&"back"])

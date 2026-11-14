@@ -69,7 +69,7 @@ func _run() -> void:
 	await capture("08-dry-berry-inspector", 20)
 	_focus(world.logistics.main_nest.cell)
 	await click_at(cell_point(world.logistics.main_nest.cell))
-	var nest := Router.top_overlay() as NestMenu
+	var nest := screen.nest_popup as NestMenu
 	await click(nest.controls[&"residents"])
 	expect(nest._population.text.contains("5 / 25") and nest._population.tooltip_text.contains("25%"), "the nest window explains extra capacity from adjacent wet ground")
 	await capture("09-wet-ground-nest-capacity", 25)

@@ -37,7 +37,7 @@ type = ExtResource("royal")
 [sub_resource type="Resource" id="L1T0"]
 script = ExtResource("task")
 id = &"stage_1_task_0"
-title = "Запрос 1.1"
+title = "ui.task.request_1_1"
 costs = Array[ExtResource("amount")]([SubResource("L1T0_wood"), SubResource("L1T0_stone"), SubResource("L1T0_food")])
 reward_seconds = 25.0
 rewards = Array[ExtResource("amount")]([SubResource("L1T0_royal")])
@@ -65,7 +65,7 @@ type = ExtResource("royal")
 [sub_resource type="Resource" id="L1T1"]
 script = ExtResource("task")
 id = &"stage_1_task_1"
-title = "Запрос 1.2"
+title = "ui.task.request_1_2"
 costs = Array[ExtResource("amount")]([SubResource("L1T1_wood"), SubResource("L1T1_stone"), SubResource("L1T1_food")])
 reward_seconds = 25.0
 rewards = Array[ExtResource("amount")]([SubResource("L1T1_royal")])
@@ -93,7 +93,7 @@ type = ExtResource("royal")
 [sub_resource type="Resource" id="L1T2"]
 script = ExtResource("task")
 id = &"stage_1_task_2"
-title = "Запрос 1.3"
+title = "ui.task.request_1_3"
 costs = Array[ExtResource("amount")]([SubResource("L1T2_wood"), SubResource("L1T2_stone"), SubResource("L1T2_food")])
 reward_seconds = 25.0
 rewards = Array[ExtResource("amount")]([SubResource("L1T2_royal")])
@@ -121,7 +121,7 @@ type = ExtResource("royal")
 [sub_resource type="Resource" id="L1T3"]
 script = ExtResource("task")
 id = &"stage_1_task_3"
-title = "Запрос 1.4"
+title = "ui.task.request_1_4"
 costs = Array[ExtResource("amount")]([SubResource("L1T3_wood"), SubResource("L1T3_stone"), SubResource("L1T3_food")])
 reward_seconds = 25.0
 rewards = Array[ExtResource("amount")]([SubResource("L1T3_royal")])
@@ -149,7 +149,7 @@ type = ExtResource("royal")
 [sub_resource type="Resource" id="L1T4"]
 script = ExtResource("task")
 id = &"stage_1_task_4"
-title = "Запрос 1.5"
+title = "ui.task.request_1_5"
 costs = Array[ExtResource("amount")]([SubResource("L1T4_wood"), SubResource("L1T4_stone"), SubResource("L1T4_food")])
 reward_seconds = 25.0
 rewards = Array[ExtResource("amount")]([SubResource("L1T4_royal")])
@@ -181,7 +181,7 @@ type = ExtResource("royal")
 [sub_resource type="Resource" id="L2T0"]
 script = ExtResource("task")
 id = &"stage_2_task_0"
-title = "Запрос 2.1"
+title = "ui.task.request_2_1"
 costs = Array[ExtResource("amount")]([SubResource("L2T0_wood"), SubResource("L2T0_stone"), SubResource("L2T0_food")])
 reward_seconds = 25.0
 rewards = Array[ExtResource("amount")]([SubResource("L2T0_royal")])
@@ -209,7 +209,7 @@ type = ExtResource("royal")
 [sub_resource type="Resource" id="L2T1"]
 script = ExtResource("task")
 id = &"stage_2_task_1"
-title = "Запрос 2.2"
+title = "ui.task.request_2_2"
 costs = Array[ExtResource("amount")]([SubResource("L2T1_wood"), SubResource("L2T1_stone"), SubResource("L2T1_food")])
 reward_seconds = 25.0
 rewards = Array[ExtResource("amount")]([SubResource("L2T1_royal")])
@@ -237,7 +237,7 @@ type = ExtResource("royal")
 [sub_resource type="Resource" id="L2T2"]
 script = ExtResource("task")
 id = &"stage_2_task_2"
-title = "Запрос 2.3"
+title = "ui.task.request_2_3"
 costs = Array[ExtResource("amount")]([SubResource("L2T2_wood"), SubResource("L2T2_stone"), SubResource("L2T2_food")])
 reward_seconds = 25.0
 rewards = Array[ExtResource("amount")]([SubResource("L2T2_royal")])
@@ -265,7 +265,7 @@ type = ExtResource("royal")
 [sub_resource type="Resource" id="L2T3"]
 script = ExtResource("task")
 id = &"stage_2_task_3"
-title = "Запрос 2.4"
+title = "ui.task.request_2_4"
 costs = Array[ExtResource("amount")]([SubResource("L2T3_wood"), SubResource("L2T3_stone"), SubResource("L2T3_food")])
 reward_seconds = 25.0
 rewards = Array[ExtResource("amount")]([SubResource("L2T3_royal")])
@@ -293,7 +293,7 @@ type = ExtResource("royal")
 [sub_resource type="Resource" id="L2T4"]
 script = ExtResource("task")
 id = &"stage_2_task_4"
-title = "Запрос 2.5"
+title = "ui.task.request_2_5"
 costs = Array[ExtResource("amount")]([SubResource("L2T4_wood"), SubResource("L2T4_stone"), SubResource("L2T4_food")])
 reward_seconds = 25.0
 rewards = Array[ExtResource("amount")]([SubResource("L2T4_royal")])
@@ -326,7 +326,7 @@ type = ExtResource("royal")
 [sub_resource type="Resource" id="L3T0"]
 script = ExtResource("task")
 id = &"stage_3_task_0"
-title = "Запрос 3.1"
+title = "ui.task.request_3_1"
 costs = Array[ExtResource("amount")]([SubResource("L3T0_wood"), SubResource("L3T0_stone"), SubResource("L3T0_food")])
 reward_seconds = 25.0
 rewards = Array[ExtResource("amount")]([SubResource("L3T0_royal")])
@@ -354,7 +354,7 @@ type = ExtResource("royal")
 [sub_resource type="Resource" id="L3T1"]
 script = ExtResource("task")
 id = &"stage_3_task_1"
-title = "Запрос 3.2"
+title = "ui.task.request_3_2"
 costs = Array[ExtResource("amount")]([SubResource("L3T1_wood"), SubResource("L3T1_stone"), SubResource("L3T1_food")])
 reward_seconds = 25.0
 rewards = Array[ExtResource("amount")]([SubResource("L3T1_royal")])
@@ -382,7 +382,7 @@ type = ExtResource("royal")
 [sub_resource type="Resource" id="L3T2"]
 script = ExtResource("task")
 id = &"stage_3_task_2"
-title = "Запрос 3.3"
+title = "ui.task.request_3_3"
 costs = Array[ExtResource("amount")]([SubResource("L3T2_wood"), SubResource("L3T2_stone"), SubResource("L3T2_food")])
 reward_seconds = 25.0
 rewards = Array[ExtResource("amount")]([SubResource("L3T2_royal")])
@@ -410,7 +410,7 @@ type = ExtResource("royal")
 [sub_resource type="Resource" id="L3T3"]
 script = ExtResource("task")
 id = &"stage_3_task_3"
-title = "Запрос 3.4"
+title = "ui.task.request_3_4"
 costs = Array[ExtResource("amount")]([SubResource("L3T3_wood"), SubResource("L3T3_stone"), SubResource("L3T3_food")])
 reward_seconds = 25.0
 rewards = Array[ExtResource("amount")]([SubResource("L3T3_royal")])
@@ -438,7 +438,7 @@ type = ExtResource("royal")
 [sub_resource type="Resource" id="L3T4"]
 script = ExtResource("task")
 id = &"stage_3_task_4"
-title = "Запрос 3.5"
+title = "ui.task.request_3_5"
 costs = Array[ExtResource("amount")]([SubResource("L3T4_wood"), SubResource("L3T4_stone"), SubResource("L3T4_food")])
 reward_seconds = 25.0
 rewards = Array[ExtResource("amount")]([SubResource("L3T4_royal")])

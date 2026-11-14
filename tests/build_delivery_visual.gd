@@ -37,7 +37,7 @@ func _run() -> void:
 	expect(delivered and assembling and world.registry.at(cell) is House and world.population.count() == 10, "physical deliveries precede carrier assembly and resident spawning")
 	await capture("04-completed-barracks", 30)
 	await click_at(cell_point(cell))
-	var nest := Router.top_overlay() as NestMenu
+	var nest := screen.nest_popup as NestMenu
 	expect(nest != null and nest.house == world.registry.at(cell), "only the finished house opens its real inventory and residents")
 	await capture("05-finished-nest-window", 20)
 	await key(KEY_ESCAPE)

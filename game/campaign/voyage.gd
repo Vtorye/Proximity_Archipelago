@@ -20,7 +20,7 @@ func configure(colony: World) -> void:
 func refresh() -> void:
 	if world.tasks.level >= 5 and not world.build_controller.options.has(SHIP):
 		world.build_controller.options.append(SHIP)
-		world.tasks.message = TranslationServer.translate("ui.voyage.ship_unlocked")
+		world.tasks.message = "ui.voyage.ship_unlocked"
 		world.prices.definitions = world.build_controller.options.duplicate()
 		world.prices.changed.emit()
 

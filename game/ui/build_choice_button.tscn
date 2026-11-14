@@ -36,13 +36,12 @@ size_flags_horizontal = 3
 unique_name_in_owner = true
 mouse_filter = 2
 text = ""
-theme_override_font_sizes/font_size = 16
 text_overrun_behavior = 3
 
 [node name="Cost" type="Label" parent="Body/Row/Lines"]
+theme_type_variation = &"Caption"
 unique_name_in_owner = true
 mouse_filter = 2
 text = ""
-theme_override_font_sizes/font_size = 12
 theme_override_colors/font_color = Color(0.6667, 0.651, 0.6118, 1)
 autowrap_mode = 3

@@ -4,6 +4,10 @@
 
 [ext_resource type="Texture2D" path="res://game/assets/ui/menu_dots.svg" id="menu_icon"]
 
+[ext_resource type="PackedScene" path="res://game/ui/colony_summary.tscn" id="summary"]
+
+[ext_resource type="StyleBox" path="res://game/ui/hud_bottom_bar.tres" id="bottom_bar"]
+
 [node name="Hud" type="Control"]
 script = ExtResource("script")
 anchors_preset = 15
@@ -12,7 +16,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-process_mode = 1
+process_mode = 3
 
 [node name="Top" type="PanelContainer" parent="."]
 unique_name_in_owner = true
@@ -27,46 +31,48 @@ grow_horizontal = 2
 unique_name_in_owner = true
 theme_override_constants/separation = 8
 
-[node name="Ants" type="Label" parent="Top/Counters"]
-unique_name_in_owner = true
-mouse_filter = 2
-text = "5"
-theme_override_font_sizes/font_size = 16
-tooltip_text = "ui.hud.ants"
-
-[node name="AntCaption" type="Label" parent="Top/Counters"]
-mouse_filter = 2
-text = "ui.hud.ants_short"
-theme_override_font_sizes/font_size = 16
-theme_override_colors/font_color = Color(0.6667, 0.651, 0.6118, 1)
-
 [node name="Timer" type="Label" parent="Top/Counters"]
+theme_type_variation = &"Caption"
 unique_name_in_owner = true
 mouse_filter = 2
-text = "3:00"
-theme_override_font_sizes/font_size = 16
+text = ""
 theme_override_colors/font_color = Color(0.8745, 0.7765, 0.5451, 1)
 custom_minimum_size = Vector2(48, 0)
 
 [node name="Routes" type="Button" parent="Top/Counters"]
+theme_type_variation = &"CompactButton"
 unique_name_in_owner = true
 mouse_default_cursor_shape = 2
 text = ""
 custom_minimum_size = Vector2(32, 32)
 size_flags_horizontal = 4
 size_flags_vertical = 4
-theme_override_font_sizes/font_size = 16
 process_mode = 3
 toggle_mode = true
 
+[node name="Spacer" type="Control" parent="Top/Counters"]
+size_flags_horizontal = 3
+mouse_filter = 2
+
+[node name="Pause" type="Button" parent="Top/Counters"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(27, 27)
+size_flags_vertical = 4
+theme_type_variation = &"CompactButton"
+expand_icon = true
+theme_override_constants/icon_max_width = 16
+tooltip_text = "ui.hud.pause"
+mouse_default_cursor_shape = 2
+
 [node name="Settings" type="Button" parent="Top/Counters"]
+expand_icon = true
+theme_override_constants/icon_max_width = 16
 unique_name_in_owner = true
 mouse_default_cursor_shape = 2
 text = ""
 custom_minimum_size = Vector2(32, 32)
 size_flags_horizontal = 4
 size_flags_vertical = 4
-theme_override_font_sizes/font_size = 16
 icon = ExtResource("menu_icon")
 icon_alignment = 1
 tooltip_text = "ui.hud.menu"
@@ -75,7 +81,7 @@ tooltip_text = "ui.hud.menu"
 unique_name_in_owner = true
 custom_minimum_size = Vector2(168, 0)
 offset_left = 8.0
-offset_top = 64.0
+offset_top = 147.0
 
 [node name="Goals" type="VBoxContainer" parent="Objectives"]
 unique_name_in_owner = true
@@ -85,14 +91,12 @@ theme_override_constants/separation = 2
 unique_name_in_owner = true
 mouse_filter = 2
 text = ""
-theme_override_font_sizes/font_size = 16
 theme_override_colors/font_color = Color(0.6667, 0.651, 0.6118, 1)
 
 [node name="Warning" type="Label" parent="Objectives/Goals"]
 unique_name_in_owner = true
 mouse_filter = 2
 text = ""
-theme_override_font_sizes/font_size = 16
 theme_override_colors/font_color = Color(0.8471, 0.5451, 0.4745, 1)
 custom_minimum_size = Vector2(144, 0)
 autowrap_mode = 3
@@ -101,7 +105,6 @@ autowrap_mode = 3
 unique_name_in_owner = true
 mouse_filter = 2
 text = ""
-theme_override_font_sizes/font_size = 16
 theme_override_colors/font_color = Color(0.6667, 0.651, 0.6118, 1)
 custom_minimum_size = Vector2(144, 0)
 autowrap_mode = 3
@@ -112,68 +115,88 @@ unique_name_in_owner = true
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 8.0
 offset_top = -34.0
-offset_right = -8.0
-offset_bottom = -6.0
+theme_override_styles/panel = ExtResource("bottom_bar")
 grow_horizontal = 2
 grow_vertical = 0
 
 [node name="Actions" type="HBoxContainer" parent="Bottom"]
 theme_override_constants/separation = 6
 
-[node name="Help" type="Label" parent="Bottom/Actions"]
-mouse_filter = 2
-text = "ui.hud.controls"
-theme_override_font_sizes/font_size = 16
-theme_override_colors/font_color = Color(0.6667, 0.651, 0.6118, 1)
-text_overrun_behavior = 3
-size_flags_horizontal = 3
-
 [node name="Build" type="Button" parent="Bottom/Actions"]
+theme_type_variation = &"CompactButton"
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 28)
 mouse_default_cursor_shape = 2
-text = "ui.hud.build"
+text = "ui.hud.tab_build"
+tooltip_text = "ui.hud.build"
+toggle_mode = true
+
+[node name="ColonyTab" type="Button" parent="Bottom/Actions"]
+unique_name_in_owner = true
+theme_type_variation = &"CompactButton"
+custom_minimum_size = Vector2(0, 28)
+text = "ui.hud.tab_colony"
+toggle_mode = true
+mouse_default_cursor_shape = 2
+
+[node name="TasksTab" type="Button" parent="Bottom/Actions"]
+unique_name_in_owner = true
+theme_type_variation = &"CompactButton"
+custom_minimum_size = Vector2(0, 28)
+text = "ui.hud.tab_tasks"
+toggle_mode = true
+mouse_default_cursor_shape = 2
+
+[node name="Spacer" type="Control" parent="Bottom/Actions"]
+mouse_filter = 2
+size_flags_horizontal = 3
 
 [node name="ZoomOut" type="Button" parent="Bottom/Actions"]
+theme_type_variation = &"CompactButton"
 unique_name_in_owner = true
 mouse_default_cursor_shape = 2
 text = "-"
 custom_minimum_size = Vector2(24, 24)
 size_flags_horizontal = 4
 size_flags_vertical = 4
-theme_override_font_sizes/font_size = 12
 
 [node name="Zoom" type="Label" parent="Bottom/Actions"]
 unique_name_in_owner = true
 mouse_filter = 2
 text = "1x"
-theme_override_font_sizes/font_size = 16
 theme_override_colors/font_color = Color(0.6667, 0.651, 0.6118, 1)
 
 [node name="ZoomIn" type="Button" parent="Bottom/Actions"]
+theme_type_variation = &"CompactButton"
 unique_name_in_owner = true
 mouse_default_cursor_shape = 2
 text = "+"
 custom_minimum_size = Vector2(24, 24)
 size_flags_horizontal = 4
 size_flags_vertical = 4
-theme_override_font_sizes/font_size = 12
 
 [node name="Toast" type="Label" parent="."]
 unique_name_in_owner = true
 mouse_filter = 2
 text = ""
-theme_override_font_sizes/font_size = 16
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = 8.0
-offset_top = -64.0
+offset_top = -73.0
 offset_right = -8.0
-offset_bottom = -34.0
+offset_bottom = -44.0
 grow_horizontal = 2
 grow_vertical = 0
 horizontal_alignment = 1
 visible = false
+
+[node name="ColonySummary" parent="." instance=ExtResource("summary")]
+unique_name_in_owner = true
+
+[node name="WaveTimer" type="Label" parent="Top/Counters"]
+theme_type_variation = &"Caption"
+unique_name_in_owner = true
+visible = false
+mouse_filter = 2

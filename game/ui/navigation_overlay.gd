@@ -91,8 +91,8 @@ func _produces_food(workplace: Workplace) -> bool:
 
 func explanation(workplace: Workplace) -> String:
 	var value: Dictionary = sample(workplace.cell)
-	if not is_finite(value.seconds): return "Из выбранной точки пути нет"
-	return "%.2f с + 0.5 × %d = %.2f%s" % [value.seconds, value.load, value.score, " · мест нет" if not workplace.has_free_slot() else ""]
+	if not is_finite(value.seconds): return tr("ui.nav.unreachable")
+	return tr("ui.nav.breakdown") % [value.seconds, world.planner.load_penalty_seconds, value.load, value.score, tr("ui.nav.no_slots") if not workplace.has_free_slot() else ""]
 
 func _draw() -> void:
 	if mode == 0 or _field == null: return
