@@ -5,6 +5,7 @@ const PRESENTATION: UiPresentation = preload("res://game/ui/ui_presentation.tres
 ## Construction editor. The draft owns edits; the controller commits the final plan.
 signal map_drag_released
 signal map_inspection_requested(cell: Vector2i)
+signal order_placement_finished
 
 var context: ConstructionContext
 var draft := BuildDraft.new()
@@ -32,6 +33,7 @@ var category_buttons: Array[Button] = []
 var _category_for: Dictionary[StringName, Button] = {}
 
 var _pricing_cell := Vector2i(2147483647, 2147483647)
+var order_mode := false
 
 func toggle_fold() -> void:
 	_header.set_collapsed(not _header.collapsed)
@@ -43,6 +45,8 @@ func dock_above(bar_height: float) -> void:
 func _ready() -> void:
 	%PreviewCategory.hide()
 	%PreviewCard.hide()
+	%Toolbar.move_child(%Demolish, %Toolbar.get_child_count() - 1)
+	%Actions.move_child(%Cancel, %Actions.get_child_count() - 1)
 	%PaletteHeader.collapsed_changed.connect(func(_folded: bool): _end_stroke())
 	_pointer = get_viewport().get_mouse_position()
 	dismissable = false
@@ -201,6 +205,22 @@ func _select(option: BuildOption) -> void:
 	_preview.queue_redraw()
 	_refresh()
 
+func select_option(option: BuildOption) -> void:
+	if option == null: return
+	if not controls.has(option.id):
+		context.controller.options.append(option)
+		var entry: ConstructionCard = preload("res://game/ui/construction_card.tscn").instantiate()
+		entry.button_group = %Demolish.button_group
+		entry.pressed.connect(AppSettings.play_click)
+		entry.pressed.connect(_select.bind(option))
+		%Choices.add_child(entry)
+		entry.configure(option, context.art)
+		controls[option.id] = entry
+		_category_for[option.id] = category_buttons[0] if not category_buttons.is_empty() else null
+		entry.show()
+	show_category_for(option.id)
+	_select(option)
+
 func set_map_drag(enabled: bool) -> void:
 	_end_stroke()
 	_panning = false
@@ -266,6 +286,8 @@ func apply_plan() -> void:
 
 func _commit() -> void:
 	if draft.commit():
+		if order_mode:
+			order_mode = false
 		close_requested.emit(self)
 	else:
 		%PaletteHeader.set_collapsed(false)

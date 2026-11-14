@@ -27,6 +27,7 @@ func _ready() -> void:
 		close_requested.emit.call_deferred(self)
 		return
 	ColonyStyle.apply(self)
+	_compact_layout()
 	%Title.text = "ui.storage.main" if house.is_main_nest else "ui.storage.local"
 	controls[&"close"] = %WindowHeader.toggle
 	%WindowHeader.close_requested.connect(func(): close_requested.emit(self))
@@ -41,6 +42,7 @@ func _ready() -> void:
 	%Residents.pressed.connect(_show_tab.bind(&"residents"))
 	for type in world.inventory.registered_types():
 		var line: Label = preload("res://game/ui/nest_stock_label.tscn").instantiate()
+		ColonyStyle.apply(line)
 		_stock_labels[type.id] = line
 		_inventory_tab.add_child(line)
 	_funds.toggled.connect(func(enabled: bool):
@@ -50,6 +52,7 @@ func _ready() -> void:
 		if type.id == WorldInventory.CURRENCY_ID:
 			continue
 		var row: HBoxContainer = preload("res://game/ui/nest_order_row.tscn").instantiate()
+		ColonyStyle.apply(row)
 		var minimum: SpinBox = row.get_node("Minimum")
 		var maximum: SpinBox = row.get_node("Maximum")
 		var owed: SpinBox = row.get_node("Owed")
@@ -65,13 +68,16 @@ func _ready() -> void:
 		}
 	for role in world.population.roles():
 		var row: HBoxContainer = preload("res://game/ui/nest_resident_row.tscn").instantiate()
+		ColonyStyle.apply(row)
 		_role_labels[role] = row.get_node("Labels/Count")
 		_purchase_labels[role] = row.get_node("Labels/Price")
 		var buy: Button = row.get_node("Buy")
+		buy.custom_minimum_size.y = 24.0
 		buy.pressed.connect(AppSettings.play_click)
 		buy.pressed.connect(_recruit.bind(role))
 		controls[_control_key("buy", role)] = buy
 		var kill: Button = row.get_node("Kill")
+		kill.custom_minimum_size.y = 24.0
 		kill.pressed.connect(AppSettings.play_click)
 		kill.pressed.connect(_kill.bind(role))
 		controls[_control_key("kill", role)] = kill
@@ -84,6 +90,27 @@ func _ready() -> void:
 	_show_tab(&"inventory")
 	refresh()
 	default_focus = controls[&"close"]
+
+func _compact_layout() -> void:
+	_dialog.custom_minimum_size.x = 340.0
+	%WindowHeader.panel_width = 340.0
+	%Content.add_theme_constant_override("separation", 5)
+	%Margin.add_theme_constant_override("margin_left", 4)
+	%Margin.add_theme_constant_override("margin_top", 4)
+	%Margin.add_theme_constant_override("margin_right", 4)
+	%Margin.add_theme_constant_override("margin_bottom", 4)
+	%Tabs.add_theme_constant_override("separation", 3)
+	%InventoryTab.add_theme_constant_override("separation", 4)
+	%OrdersTab.add_theme_constant_override("separation", 4)
+	%ResidentsTab.add_theme_constant_override("separation", 5)
+	%OrderRows.add_theme_constant_override("separation", 3)
+	%OrderScroll.custom_minimum_size.y = 84.0
+	for node_path in ["OrdersTab/OrderHeader/Resource", "OrdersTab/OrderRows/OrderRow/Resource"]:
+		var column: Label = _orders_tab.get_node_or_null(node_path) as Label
+		if column != null: column.custom_minimum_size.x = 92.0
+	for field in _order_rows.values():
+		for spin: SpinBox in field.spins.values(): spin.custom_minimum_size.x = 60.0
+	for button in [%Inventory, %Orders, %Residents]: button.custom_minimum_size.y = 24.0
 
 func panel_bounds() -> Rect2:
 	return _dialog.get_global_rect()

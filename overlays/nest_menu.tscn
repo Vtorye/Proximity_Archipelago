@@ -38,20 +38,20 @@ unique_name_in_owner = true
 title = "ui.window.nest"
 action = 2
 dock = 4
-panel_width = 400.0
-inset = Vector2(8, 64)
+panel_width = 340.0
+inset = Vector2(6, 64)
 panel = NodePath("../..")
 body = NodePath("../Margin")
 
 [node name="Margin" type="MarginContainer" parent="Center/Dialog/WindowContents"]
-theme_override_constants/margin_left = 6
-theme_override_constants/margin_top = 6
-theme_override_constants/margin_right = 6
-theme_override_constants/margin_bottom = 6
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 4
+theme_override_constants/margin_bottom = 4
 
 [node name="Content" type="VBoxContainer" parent="Center/Dialog/WindowContents/Margin"]
 unique_name_in_owner = true
-theme_override_constants/separation = 8
+theme_override_constants/separation = 5
 
 [node name="Header" type="HBoxContainer" parent="Center/Dialog/WindowContents/Margin/Content"]
 

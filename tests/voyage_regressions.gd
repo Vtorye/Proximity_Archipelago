@@ -63,8 +63,9 @@ func run(test: Node) -> void:
 		for step in range(5):
 			var index := 0
 			while world.tasks.slots[index] == null: index += 1
-			test.expect(world.tasks.submit(index), "funded task submits")
-		test.expect(world.tasks.pending_reward and not world.tasks.submit(0), "completed stage waits for exactly one upgrade choice")
+			var order: BuildOption = world.tasks.start_order(index)
+			world.build_controller.built.emit(order, home.cell)
+		test.expect(world.tasks.pending_reward and world.tasks.start_order(0) == null, "completed stage waits for exactly one upgrade choice")
 		test.expect(world.tasks.choose_reward(level % 3), "a valid reward advances the task ladder")
 		test.expect(not world.tasks.choose_reward(0), "reward cannot be claimed twice")
 	test.expect(world.tasks.level == 5 and world.build_controller.options.has(Voyage.SHIP), "reaching level five unlocks ship construction")
@@ -132,7 +133,7 @@ func run(test: Node) -> void:
 	next.auto_start = false
 	test.add_child(next)
 	next.voyage.apply(destination.journey)
-	test.expect(next.voyage.island == 2 and next.tasks.buffs == world.tasks.buffs and next.tasks.difficulty_multiplier > 1 and next.match_controller.match_duration < 180, "travel keeps buffs and increases island difficulty")
+	test.expect(next.voyage.island == 2 and next.tasks.buffs == world.tasks.buffs and next.match_controller.match_duration < 180, "travel keeps buffs and increases island difficulty")
 	for type in world.inventory.registered_types():
 		test.expect(next.inventory.quantity(type) == world.inventory.quantity(type), "travel transfers accumulated colony stock without a starter-stock bonus")
 	world.free()

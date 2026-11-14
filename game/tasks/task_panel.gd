@@ -1,9 +1,10 @@
 class_name TaskPanel
 extends PanelContainer
-## Three compact requests. Availability uses the same atomic inventory rules as payment.
+## Three compact royal requests with two construction routes each.
 var director: TaskDirector
 @onready var _requests: VBoxContainer = %Requests
 var _queued := false
+signal order_requested(index: int, diversion: bool)
 @onready var _waiting: Label = %Waiting
 func _ready() -> void:
 	AppSettings.changed.connect(_queue_refresh)
@@ -28,7 +29,11 @@ func _refresh() -> void:
 		var title: Label = request.get_node("Title")
 		title.text = task.title
 		var cost: Label = request.get_node("Cost")
-		cost.text = BuildCostText.format(director.price(index))
+		var crown_reward := ""
+		for reward: ResourceAmount in task.rewards:
+			if reward.type != null and reward.type.id == WorldInventory.CURRENCY_ID:
+				crown_reward = " · +%d %s" % [reward.amount, tr(reward.type.display_name)]
+		cost.text = "%s / %s%s · %s" % [BuildCostText.format(director.world.build_controller.price(task.building)), BuildCostText.format(director.world.build_controller.price(task.diversion)), crown_reward, tr("ui.task.time_reward") % task.reward_seconds]
 		if not task.unlocks.is_empty():
 			var names := PackedStringArray()
 			for option in task.unlocks:
@@ -37,22 +42,16 @@ func _refresh() -> void:
 				title.text += " · " + ", ".join(names)
 				title.tooltip_text = tr("ui.task.unlocks") % ", ".join(names)
 				title.add_theme_color_override("font_color", ColonyStyle.color(&"accent"))
-		for cancel in [false, true]:
-			var button: Button = request.get_node("Actions/Cancel" if cancel else "Actions/Submit")
-			if not cancel:
-				button.text = tr("ui.task.time_reward_short") % task.reward_seconds
+		for diversion in [false, true]:
+			var button: Button = request.get_node("Actions/Diversion" if diversion else "Actions/Build")
+			var option: BuildOption = task.diversion if diversion else task.building
+			var label_key: String = task.diversion_label if diversion else task.building_label
+			button.text = tr(label_key if not label_key.is_empty() else option.display_name) if option != null else tr("ui.task.diversion" if diversion else "ui.task.build")
 			button.pressed.connect(AppSettings.play_click)
-			if not cancel and not task.rewards.is_empty():
-				button.text += " +%d" % BuildController.price_amount(task.rewards, task.rewards[0].type)
-				button.icon = task.rewards[0].type.icon
-				button.expand_icon = true
-				button.icon_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-				button.add_theme_constant_override("icon_max_width", 8)
-			button.set_meta(&"cancel", cancel)
+			button.set_meta(&"diversion", diversion)
 			button.set_meta(&"task_index", index)
-			button.disabled = not director.can_pay(index, cancel)
-			button.tooltip_text = tr("ui.task.cancel_hint") % BuildCostText.format(director.price(index, true)) if cancel else tr("ui.task.submit_hint") % [BuildCostText.format(director.price(index)), BuildCostText.format(task.rewards), task.reward_seconds]
-			button.pressed.connect(func(): director.submit(index, cancel))
+			button.disabled = option == null or director.active_order_id != &""
+			button.pressed.connect(func(): order_requested.emit(index, diversion))
 		_requests.add_child(request)
 	%Message.text = director.display_message()
 	_update_availability()
@@ -60,7 +59,9 @@ func _refresh() -> void:
 func _update_availability() -> void:
 	if _requests == null: return
 	for button in _requests.find_children("*", "Button", true, false):
-		button.disabled = not director.can_pay(button.get_meta(&"task_index"), button.get_meta(&"cancel"))
+		var task: TaskSpec = director.slots[button.get_meta(&"task_index")]
+		var option: BuildOption = task.diversion if button.get_meta(&"diversion") else task.building
+		button.disabled = option == null or director.active_order_id != &""
 	var missing := 0
 	var occupied := 0
 	for ant in director.world.population.agents():

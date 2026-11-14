@@ -1,16 +1,20 @@
 class_name TaskDirector
 extends RefCounted
-## Three offers without replacement; payments, completion and rewards are one transaction.
+## Three royal orders without replacement; completion is tied to finished construction.
 signal changed
 var world: World
 var deck: TaskDeck
 var pending_reward := false
 var buffs: Array[int] = []
-var difficulty_multiplier := 1.0
 var level := 0
 var closed := 0
 var completed_count := 0
 var skipped_count := 0
+var active_order_id: StringName = &""
+var active_order_option: BuildOption
+var active_order_diversion := false
+var active_order_reward_seconds := -1.0
+var active_order_rewards: Array[ResourceAmount] = []
 var slots: Array[TaskSpec] = []
 var _pool: Array[TaskSpec] = []
 var _rng := RandomNumberGenerator.new()
@@ -25,71 +29,80 @@ func configure(colony: World, definitions: TaskDeck, random_seed: int = 0) -> vo
 	_rng.seed = random_seed
 	world.population.spawned.connect(func(ant: AntAgent): apply_ant_buffs(ant))
 	world.registry.added.connect(func(building: Building): _skin(building))
+	world.build_controller.built.connect(_on_building_built)
 	_next_level()
 
 func stage() -> TaskStage:
 	return deck.stages[mini(level - 1, deck.stages.size() - 1)]
 
-func price(index: int, cancel := false) -> Array[ResourceAmount]:
-	var result: Array[ResourceAmount] = []
-	if index < 0 or index >= slots.size() or slots[index] == null: return result
-	if cancel and not slots[index].cancellation_costs.is_empty(): return slots[index].cancellation_costs.duplicate()
-	var scale: float = difficulty_multiplier * pow(deck.repeat_cost_multiplier, maxi(0, level - deck.stages.size()))
-	var totals: Dictionary[StringName, float] = {}
-	var types: Dictionary[StringName, ResourceType] = {}
-	for source in slots[index].costs:
-		totals[source.type.id] = totals.get(source.type.id, 0.0) + source.amount
-		types[source.type.id] = source.type
-	for id in totals:
-		if not is_finite(scale) or totals[id] * scale > 2147483647: return [null]
-		var entry := ResourceAmount.new()
-		entry.type = types[id]
-		var quantity: int = ceili(totals[id] * scale - 0.000001)
-		entry.amount = ceili(quantity * deck.cancellation_fraction - 0.000001) if cancel else quantity
-		result.append(entry)
-	return result
-
-func can_pay(index: int, cancel := false) -> bool:
-	return not _busy and not pending_reward and world.match_controller.is_active() and index >= 0 and index < slots.size() and slots[index] != null and world.inventory.can_afford_all(price(index, cancel))
-
 func submit(index: int, cancel := false) -> bool:
-	if not can_pay(index, cancel): return false
-	_busy = true
+	return false
+
+func start_order(index: int, diversion: bool = false) -> BuildOption:
+	if index < 0 or index >= slots.size() or slots[index] == null or pending_reward or not world.match_controller.is_active(): return null
+	if active_order_id != &"": return null
 	var task: TaskSpec = slots[index]
-	var unlocked_names := PackedStringArray()
-	world.inventory.begin_update()
-	if not world.inventory.try_spend_all(price(index, cancel)):
-		world.inventory.end_update()
-		_busy = false
-		return false
-	if cancel: skipped_count += 1
-	else: completed_count += 1
-	if not cancel:
-		world.match_controller.add_time(task.reward_seconds)
-		for entry in task.rewards: world.inventory.add(entry.type, entry.amount)
-		for option in task.unlocks:
-			if not world.build_controller.options.has(option):
-				world.build_controller.options.append(option)
-				unlocked_names.append(TranslationServer.translate(option.display_name))
-		if not unlocked_names.is_empty():
-			world.prices.definitions = world.build_controller.options.duplicate()
-			world.prices.changed.emit()
-		world.events.publish(GameEvents.Kind.TASK_COMPLETED, task.id)
-	closed += 1
-	slots[index] = _pool.pop_back() if not _pool.is_empty() else null
-	message = "ui.task.cancel_notice" if cancel else "ui.task.time_reward:%d" % task.reward_seconds
-	if not unlocked_names.is_empty():
-		message += " · " + ", ".join(unlocked_names)
-	if closed == stage().tasks.size():
-		if deck.choose_upgrades:
-			pending_reward = true
-		else:
-			_apply_upgrade()
-			advance()
-	_busy = false
-	world.inventory.end_update()
+	var option: BuildOption = task.diversion if diversion else task.building
+	if option == null: return null
+	if not world.build_controller.options.has(option): world.build_controller.options.append(option)
+	if world.prices != null:
+		world.prices.definitions = world.build_controller.options.duplicate()
+		world.prices.changed.emit()
+	active_order_id = task.id
+	active_order_option = option
+	active_order_diversion = diversion
+	active_order_reward_seconds = task.diversion_reward_seconds if diversion else task.building_reward_seconds
+	active_order_rewards = (task.diversion_rewards if diversion else task.building_rewards).duplicate()
 	changed.emit()
-	return true
+	return option
+
+func abandon_order() -> void:
+	active_order_id = &""
+	active_order_option = null
+	active_order_diversion = false
+	active_order_reward_seconds = -1.0
+	active_order_rewards.clear()
+	changed.emit()
+
+func _on_building_built(option: BuildOption, _cell: Vector2i) -> void:
+	if active_order_id == &"" or option != active_order_option: return
+	for index in range(slots.size()):
+		if slots[index] != null and slots[index].id == active_order_id:
+			var task: TaskSpec = slots[index]
+			var reward_seconds := active_order_reward_seconds if active_order_reward_seconds >= 0.0 else task.reward_seconds
+			var variant_rewards: Array[ResourceAmount] = active_order_rewards if not active_order_rewards.is_empty() else task.rewards
+			active_order_id = &""
+			active_order_option = null
+			active_order_diversion = false
+			active_order_reward_seconds = -1.0
+			active_order_rewards.clear()
+			_complete_task(task, reward_seconds, variant_rewards)
+			closed += 1
+			slots[index] = _pool.pop_back() if not _pool.is_empty() else null
+			message = "ui.task.time_reward:%d" % reward_seconds
+			if closed == stage().tasks.size():
+				if deck.choose_upgrades: pending_reward = true
+				else:
+					_apply_upgrade()
+				advance()
+			changed.emit()
+			return
+
+func _complete_task(task: TaskSpec, reward_seconds: float, rewards: Array[ResourceAmount]) -> void:
+	completed_count += 1
+	world.inventory.begin_update()
+	world.match_controller.add_time(reward_seconds)
+	for entry in rewards: world.inventory.add(entry.type, entry.amount)
+	var unlocked_names := PackedStringArray()
+	for option in task.unlocks:
+		if not world.build_controller.options.has(option):
+			world.build_controller.options.append(option)
+			unlocked_names.append(TranslationServer.translate(option.display_name))
+	if not unlocked_names.is_empty():
+		world.prices.definitions = world.build_controller.options.duplicate()
+		world.prices.changed.emit()
+	world.events.publish(GameEvents.Kind.TASK_COMPLETED, task.id)
+	world.inventory.end_update()
 
 func advance() -> void:
 	if level == deck.stages.size() and not deck.loop_last_stage:
@@ -177,14 +190,18 @@ func capture_state() -> Dictionary:
 	return {
 		"level": level, "closed": closed, "completed_count": completed_count,
 		"skipped_count": skipped_count, "pending_reward": pending_reward,
-		"buffs": buffs.duplicate(), "_speed": _speed, "difficulty_multiplier": difficulty_multiplier,
+		"buffs": buffs.duplicate(), "_speed": _speed,
 		"message": message, "rng": _rng.state,
+		"active_order_id": str(active_order_id),
+		"active_order_diversion": active_order_diversion,
+		"active_order_reward_seconds": active_order_reward_seconds,
 		"slots": slots.map(func(task: TaskSpec): return str(task.id) if task != null else ""),
 		"pool": _pool.map(func(task: TaskSpec): return str(task.id)),
 	}
 
 func restore_state(state: Dictionary) -> void:
 	var definitions: Dictionary[String, TaskSpec] = {}
+	for task in deck.requests: definitions[str(task.id)] = task
 	for stage_definition in deck.stages:
 		for task in stage_definition.tasks:
 			definitions[str(task.id)] = task
@@ -202,8 +219,24 @@ func restore_state(state: Dictionary) -> void:
 	pending_reward = state.pending_reward
 	buffs.assign(state.buffs)
 	_speed = state._speed
-	difficulty_multiplier = state.difficulty_multiplier
 	message = state.message
+	active_order_id = StringName(state.get("active_order_id", ""))
+	active_order_diversion = state.get("active_order_diversion", false)
+	active_order_reward_seconds = state.get("active_order_reward_seconds", -1.0)
+	active_order_option = null
+	var found_order := false
+	for task in deck.requests:
+		if task.id == active_order_id:
+			found_order = true
+			active_order_option = task.diversion if active_order_diversion else task.building
+	for stage_definition in deck.stages:
+		for task in stage_definition.tasks:
+			if task.id == active_order_id:
+				found_order = true
+				active_order_option = task.diversion if active_order_diversion else task.building
+	if not found_order:
+		active_order_id = &""
+		active_order_reward_seconds = -1.0
 	changed.emit()
 
 func display_message() -> String:

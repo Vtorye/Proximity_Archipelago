@@ -53,6 +53,7 @@ func _ready() -> void:
 	hud.settings_requested.connect(_open_settings)
 	hud.navigation_requested.connect(_toggle_navigation)
 	hud.construction_requested.connect(_select_section.bind(&"build"))
+	hud.order_requested.connect(_begin_royal_order)
 	hud.map_drag_toggled.connect(_set_map_drag)
 	hud.section_requested.connect(_select_section)
 	hud.bottom_bar_resized.connect(_update_construction_dock)
@@ -242,6 +243,19 @@ func _create_construction_panel() -> void:
 	$ConstructionLayer.add_child(_construction)
 	_construction.set_map_drag(_map_drag)
 	_update_construction_dock()
+
+func _begin_royal_order(index: int, diversion: bool) -> void:
+	var option: BuildOption = world.tasks.start_order(index, diversion)
+	if option == null: return
+	_section = &"build"
+	hud.set_section(_section)
+	if not is_instance_valid(_construction): _create_construction_panel()
+	_construction.show()
+	_construction.order_mode = true
+	_construction.select_option(option)
+	camera.dragging = false
+	camera.enabled_input = false
+	selection.clear()
 
 func _close_construction_panel(menu: MenuBase) -> void:
 	if menu != _construction:

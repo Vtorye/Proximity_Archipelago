@@ -107,6 +107,7 @@ func test_resource_facilities(test: Node) -> void:
 	var quarry: WorkplaceUpgradeOption = load("res://game/building/options/quarry.tres")
 	var farm: WorkplaceUpgradeOption = load("res://game/building/options/farm.tres")
 	var workplace := world.get_node("Workplace") as Workplace
+	var home: House = world.registry.all().filter(func(building: Building) -> bool: return building is House)[0]
 	var stone := world.get_node("Workplace2") as Workplace
 	var berries := world.get_node("AppleTree") as Workplace
 	var wood: ResourceType = world.inventory.type_by_id(&"wood")
@@ -115,10 +116,14 @@ func test_resource_facilities(test: Node) -> void:
 	var task := TaskSpec.new()
 	task.id = &"facility_unlock_fixture"
 	task.unlocks = [sawmill, quarry, farm]
+	task.building = load("res://game/building/options/building.tres")
+	task.diversion = load("res://game/building/options/house.tres")
+	if not world.build_controller.options.has(task.building): world.build_controller.options.append(task.building)
 	world.tasks.slots[0] = task
-	test.expect(world.tasks.submit(0, true) and not world.build_controller.options.has(sawmill), "cancelling an unlocking task grants no facility")
-	world.tasks.slots[0] = task
-	test.expect(world.tasks.submit(0) and world.build_controller.options.has(sawmill) and world.prices.definitions.has(quarry), "completing a task unlocks its configured construction options and prices")
+	var order: BuildOption = world.tasks.start_order(0)
+	test.expect(order == task.building and not world.build_controller.options.has(sawmill), "selecting an order does not grant its unlocks")
+	world.build_controller.built.emit(order, home.cell)
+	test.expect(world.build_controller.options.has(sawmill) and world.prices.definitions.has(quarry), "completed order unlocks its configured construction options")
 	test.expect(not world.build_controller.can_build(sawmill, stone.cell) and not world.build_controller.can_build(quarry, berries.cell) and not world.build_controller.can_build(farm, workplace.cell), "each facility requires the matching raw resource")
 	test.expect(not world.build_controller.can_build(sawmill, Vector2i(26, 25)), "resource facilities cannot be built on empty ground")
 	workplace.finite_supply = true

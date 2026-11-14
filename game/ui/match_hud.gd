@@ -7,6 +7,7 @@ signal settings_requested
 signal pause_requested
 signal navigation_requested
 signal construction_requested
+signal order_requested(index: int, diversion: bool)
 signal map_drag_toggled(enabled: bool)
 signal section_requested(section: StringName)
 signal bottom_bar_resized
@@ -105,6 +106,7 @@ func _build_hud() -> void:
 		task_panel = preload("res://game/tasks/task_panel.tscn").instantiate()
 		task_panel.director = world.tasks
 		add_child(task_panel)
+		task_panel.order_requested.connect(func(index: int, diversion: bool): order_requested.emit(index, diversion))
 	if navigation != null:
 		navigation_panel = preload("res://game/ui/navigation_panel.tscn").instantiate()
 		navigation_panel.process_mode = Node.PROCESS_MODE_ALWAYS

@@ -18,6 +18,7 @@ var logistics: ColonyLogistics
 var map: TileMapLayer
 var buildings: Node2D
 var inventory: WorldInventory
+var world: World
 var route_service: RouteService
 var options: Array[BuildOption] = []
 var _committing := false
@@ -76,6 +77,8 @@ func placement_check(option: BuildOption, cell: Vector2i, removed: Array[Buildin
 			return PlacementCheck.result(PlacementCheck.Code.INVALID_BUILDING)
 		if (option.blocks_movement or option.requires_water) and option.entry_offsets.is_empty():
 			return PlacementCheck.result(PlacementCheck.Code.INVALID_BUILDING)
+		if option.instance_limit > 0 and _instance_count(option, removed) >= option.instance_limit:
+			return PlacementCheck.result(PlacementCheck.Code.OCCUPIED)
 	else:
 		return PlacementCheck.result(PlacementCheck.Code.INVALID_OPTION)
 	var water_site: bool = option is SceneBuildOption and option.requires_water
@@ -103,6 +106,15 @@ func placement_check(option: BuildOption, cell: Vector2i, removed: Array[Buildin
 	if water_site and not option.entries_at(cell).any(route_service.walkable):
 		return PlacementCheck.result(PlacementCheck.Code.SHORE_REQUIRED)
 	return PlacementCheck.new()
+
+func _instance_count(option: SceneBuildOption, removed: Array[Building]) -> int:
+	var count := 0
+	for building in registry.all():
+		if not removed.has(building) and building.option == option: count += 1
+	if construction != null:
+		for site in construction.sites:
+			if not removed.has(site) and site.option == option: count += 1
+	return count
 
 func can_build(option: BuildOption, cell: Vector2i) -> bool:
 	return check(option, cell).allowed()
@@ -184,6 +196,7 @@ func try_build_plan(commands: Array[BuildCommand]) -> bool:
 	for building in removed: cells.append_array(building.footprint())
 	var occupied: Dictionary[Vector2i, bool] = {}
 	var terrain: Dictionary[Vector2i, bool] = {}
+	var planned_instances: Dictionary[SceneBuildOption, int] = {}
 	var candidates: Array[Building] = []
 	for command in placements:
 		var cell: Vector2i = command.cell
@@ -191,6 +204,13 @@ func try_build_plan(commands: Array[BuildCommand]) -> bool:
 		last_result = placement_check(option, cell, removed)
 		if not last_result.allowed():
 			break
+		if option is SceneBuildOption and option.instance_limit > 0:
+			var scene_option := option as SceneBuildOption
+			var already_planned: int = planned_instances.get(scene_option, 0)
+			if _instance_count(scene_option, removed) + already_planned >= scene_option.instance_limit:
+				last_result = PlacementCheck.result(PlacementCheck.Code.OCCUPIED)
+				break
+			planned_instances[scene_option] = already_planned + 1
 		var layer: Dictionary[Vector2i, bool] = terrain if option is TileBuildOption else occupied
 		for target in _footprint(option, cell):
 			if layer.has(target):
@@ -284,10 +304,25 @@ func try_build_plan(commands: Array[BuildCommand]) -> bool:
 		if allocations.has(command): continue
 		if prices != null: prices.record(GameEvents.Kind.TERRAIN_CHANGED if command.option is TileBuildOption else GameEvents.Kind.BUILDING_BUILT, command.option.id)
 		built.emit(command.option, command.cell)
+		if command.option is SceneBuildOption and command.option.lifetime_seconds > 0.0:
+			_start_lifetime(registry.at(command.cell), command.option.lifetime_seconds)
 	if not removed_improvements.is_empty() or placements.any(func(command: BuildCommand) -> bool: return command.option is WorkplaceUpgradeOption):
 		population.planner.queue_workplace_refresh()
 	changed.emit()
 	return true
+
+func _start_lifetime(building: Building, seconds: float) -> void:
+	var timer := get_tree().create_timer(seconds)
+	timer.timeout.connect(func():
+		if not is_instance_valid(building) or building.is_queued_for_deletion(): return
+		var cells: Array[Vector2i] = building.footprint()
+		building.demolish()
+		registry._unregister(building)
+		building.queue_free()
+		if world != null and world.voyage != null: world.voyage.building_removed(building)
+		route_service.update_cells(cells, registry.blocked_cells())
+		changed.emit()
+	)
 
 func finish_construction(site: ConstructionSite) -> bool:
 	return construction.complete(site)

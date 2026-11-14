@@ -13,6 +13,11 @@ extends BuildOption
 ## Population and its travel profile belong to the building definition.
 @export_range(0, 100) var spawn_count := 0
 @export_range(1, 128) var spawn_speed := 24.0
+@export_group("Lifetime")
+## Zero keeps this building permanently; positive values start after construction completes.
+@export_range(0.0, 600.0, 0.5, "suffix:s") var lifetime_seconds := 0.0
+## Maximum simultaneous instances of this option on the map. Zero means unlimited.
+@export_range(0, 1000, 1) var instance_limit := 0
 
 
 func entries_at(cell: Vector2i) -> Array[Vector2i]:

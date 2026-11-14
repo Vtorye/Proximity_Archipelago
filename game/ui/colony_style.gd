@@ -15,6 +15,13 @@ static func apply(control: Control) -> void:
 		binding.name = "UiText"
 		binding.target = control
 		control.add_child(binding)
+	_apply_tree(control)
 
 static func fill(control: Control) -> void:
 	control.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+
+static func _apply_tree(root: Node) -> void:
+	for child in root.get_children():
+		if child is Control:
+			child.theme = root.theme
+		_apply_tree(child)

@@ -71,7 +71,6 @@ func apply(data: Dictionary) -> void:
 			else: world.inventory._withdraw(type.id, -difference)
 	for buff in data.get("buffs", []): world.tasks.grant_buff(int(buff))
 	world.match_controller.match_duration = maxf(90.0, 180.0 - (island - 1) * 10.0)
-	world.tasks.difficulty_multiplier = 1.0 + (island - 1) * 0.2
 	if world.combat != null:
 		world.combat.spawner.interval_seconds = maxf(20.0, 60.0 - (island - 1) * 5.0)
 

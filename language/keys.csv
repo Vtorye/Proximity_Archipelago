@@ -293,7 +293,15 @@ ui.colony.summary_hint,Toggle colony stockpiles,Показать или скры
 ui.colony.focus_hint,Center the camera on this nest,Навести камеру на этот муравейник
 ui.world.generated_title,Island %d,Остров %d
 ui.result.level,Level: %d,Уровень: %d
-ui.result.task_counts,Completed: %d · declined: %d,Выполнено: %d · отказов: %d
+ui.result.task_counts,Completed: %d · declined: %d,Выполнено: %d · пропущено: %d
+ui.building.statue_placeholder,Placeholder statue,Статуя (плейсхолдер)
+ui.building.feast,Royal feast,Королевский пир
+ui.construction.description.statue,"A passive monument that blocks movement. Placeholder art.","Пассивный монумент, преграждающий проход. Графика временная."
+ui.construction.description.feast,"A temporary royal feast. It disappears ten seconds after construction.","Временный королевский пир. Исчезает через 10 секунд после постройки."
+ui.task.request_statue,A royal monument is requested,Король требует установить монумент
+ui.task.request_feast,A royal feast is requested,Король требует устроить пир
+ui.task.build,Build requested,Построить требуемое
+ui.task.diversion,Arrange a diversion,Отвлечь внимание
 ui.task.cancel,Decline,Отказ
 ui.task.cancel_notice,Declined: no time or reward,Отказ: без времени и награды
 ui.task.time_reward,+%d seconds,+%d секунд

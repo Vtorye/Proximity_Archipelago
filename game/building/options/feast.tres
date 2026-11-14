@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="SceneBuildOption" format=3]
+
+[ext_resource type="Script" path="res://game/resources/resource_amount.gd" id="amount"]
+[ext_resource type="Script" path="res://game/building/scene_build_option.gd" id="option"]
+[ext_resource type="PackedScene" path="res://game/entities/feast.tscn" id="scene"]
+[ext_resource type="Resource" path="res://game/resources/dot_treses/wood.tres" id="wood"]
+[ext_resource type="Resource" path="res://game/resources/dot_treses/food.tres" id="food"]
+
+[sub_resource type="Resource" id="wood_cost"]
+script = ExtResource("amount")
+type = ExtResource("wood")
+amount = 4
+
+[sub_resource type="Resource" id="food_cost"]
+script = ExtResource("amount")
+type = ExtResource("food")
+amount = 8
+
+[resource]
+script = ExtResource("option")
+scene = ExtResource("scene")
+blocks_movement = true
+lifetime_seconds = 10.0
+id = &"feast"
+display_name = "ui.building.feast"
+description = "ui.construction.description.feast"
+costs = Array[ExtResource("amount")]([SubResource("wood_cost"), SubResource("food_cost")])

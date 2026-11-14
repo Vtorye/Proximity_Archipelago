@@ -66,6 +66,7 @@ func _ready() -> void:
 	planner.configure(registry, route_service, inventory, inventory.type_by_id(&"food"), logistics)
 	population.configure(units, route_service, planner, registry, logistics)
 	build_controller.prices = prices
+	build_controller.world = self
 	build_controller.route_service = route_service
 	build_controller.configure(map, buildings, inventory, build_options)
 	build_controller.registry = registry

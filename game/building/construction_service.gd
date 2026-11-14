@@ -178,6 +178,8 @@ func complete(site: ConstructionSite) -> bool:
 	controller._committing = false
 	if controller.prices != null: controller.prices.record(GameEvents.Kind.TERRAIN_CHANGED if option is TileBuildOption else GameEvents.Kind.BUILDING_BUILT, option.id)
 	controller.built.emit(option, cell)
+	if option is SceneBuildOption and option.lifetime_seconds > 0.0:
+		controller._start_lifetime(controller.registry.at(cell), option.lifetime_seconds)
 	controller.population.planner.queue_workplace_refresh()
 	controller.changed.emit()
 	return true

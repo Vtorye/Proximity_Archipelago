@@ -255,6 +255,27 @@ msgstr "Stone deposit"
 msgid "ui.building.canteen"
 msgstr "Canteen"
 
+msgid "ui.building.statue_placeholder"
+msgstr "Placeholder statue"
+
+msgid "ui.building.feast"
+msgstr "Royal feast"
+
+msgid "ui.construction.description.statue"
+msgstr "A passive monument that blocks movement. Placeholder art."
+
+msgid "ui.construction.description.feast"
+msgstr "A temporary royal feast. It disappears ten seconds after construction."
+
+msgid "ui.task.request_statue"
+msgstr "A royal monument is requested"
+
+msgid "ui.task.build"
+msgstr "Build requested"
+
+msgid "ui.task.diversion"
+msgstr "Arrange a diversion"
+
 msgid "ui.tutorial.lesson1.title"
 msgstr "Colony requests"
 

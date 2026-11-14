@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="SceneBuildOption" format=3]
+
+[ext_resource type="Script" path="res://game/resources/resource_amount.gd" id="amount"]
+[ext_resource type="Script" path="res://game/building/scene_build_option.gd" id="option"]
+[ext_resource type="PackedScene" path="res://game/entities/statue.tscn" id="scene"]
+[ext_resource type="Resource" path="res://game/resources/dot_treses/wood.tres" id="wood"]
+[ext_resource type="Resource" path="res://game/resources/dot_treses/stone.tres" id="stone"]
+
+[sub_resource type="Resource" id="wood_cost"]
+script = ExtResource("amount")
+type = ExtResource("wood")
+amount = 8
+
+[sub_resource type="Resource" id="stone_cost"]
+script = ExtResource("amount")
+type = ExtResource("stone")
+amount = 12
+
+[resource]
+script = ExtResource("option")
+scene = ExtResource("scene")
+blocks_movement = true
+id = &"statue"
+display_name = "ui.building.statue_placeholder"
+description = "ui.construction.description.statue"
+costs = Array[ExtResource("amount")]([SubResource("wood_cost"), SubResource("stone_cost")])

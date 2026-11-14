@@ -189,6 +189,10 @@ static func _definitions(world: World) -> Dictionary:
 	options.append(Voyage.SHIP)
 	if world.tasks != null:
 		options.append(world.tasks.deck.unlocked_road)
+		for task in world.tasks.deck.requests:
+			options.append(task.building)
+			options.append(task.diversion)
+			options.append_array(task.unlocks)
 		for stage in world.tasks.deck.stages:
 			for task in stage.tasks: options.append_array(task.unlocks)
 	for option in options:

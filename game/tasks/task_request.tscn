@@ -19,18 +19,18 @@ autowrap_mode = 3
 [node name="Actions" type="HBoxContainer" parent="."]
 theme_override_constants/separation = 3
 
-[node name="Submit" type="Button" parent="Actions"]
+[node name="Build" type="Button" parent="Actions"]
 theme_type_variation = &"CompactButton"
 unique_name_in_owner = true
 mouse_default_cursor_shape = 2
-text = "+30 s"
+text = "Build"
 size_flags_horizontal = 3
 custom_minimum_size = Vector2(0, 22)
 
-[node name="Cancel" type="Button" parent="Actions"]
+[node name="Diversion" type="Button" parent="Actions"]
 theme_type_variation = &"CompactButton"
 unique_name_in_owner = true
 mouse_default_cursor_shape = 2
-text = "ui.task.cancel"
+text = "Diversion"
 size_flags_horizontal = 3
 custom_minimum_size = Vector2(0, 22)

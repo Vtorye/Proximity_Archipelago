@@ -255,6 +255,27 @@ msgstr "Каменная россыпь"
 msgid "ui.building.canteen"
 msgstr "Столовая"
 
+msgid "ui.building.statue_placeholder"
+msgstr "Статуя (плейсхолдер)"
+
+msgid "ui.building.feast"
+msgstr "Королевский пир"
+
+msgid "ui.construction.description.statue"
+msgstr "Пассивный монумент, преграждающий проход. Графика временная."
+
+msgid "ui.construction.description.feast"
+msgstr "Временный королевский пир. Исчезает через 10 секунд после постройки."
+
+msgid "ui.task.request_statue"
+msgstr "Король требует установить монумент"
+
+msgid "ui.task.build"
+msgstr "Построить требуемое"
+
+msgid "ui.task.diversion"
+msgstr "Отвлечь внимание"
+
 msgid "ui.tutorial.lesson1.title"
 msgstr "Запросы колонии"
 
@@ -886,7 +907,7 @@ msgid "ui.result.level"
 msgstr "Уровень: %d"
 
 msgid "ui.result.task_counts"
-msgstr "Выполнено: %d · отказов: %d"
+msgstr "Выполнено: %d · пропущено: %d"
 
 msgid "ui.task.cancel"
 msgstr "Отказ"

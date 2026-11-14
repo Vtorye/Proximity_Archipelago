@@ -458,8 +458,12 @@ func _play_authored_map(test: Node, develop: bool) -> Dictionary:
 		world.match_controller._process(1.0 / 60.0)
 		if world.match_controller.is_finished(): break
 		if tick % 60 == 0:
-			for index in range(world.tasks.slots.size()):
-				if world.tasks.can_pay(index): world.tasks.submit(index)
+			if world.tasks.active_order_id == &"":
+				for index in range(world.tasks.slots.size()):
+					if world.tasks.slots[index] != null:
+						var order: BuildOption = world.tasks.start_order(index)
+						world.build_controller.built.emit(order, world.registry.all()[0].cell)
+						break
 			if develop:
 				var farm: BuildOption = load("res://game/building/options/farm.tres")
 				if world.inventory.available(world.inventory.type_by_id(&"food")) >= 10 and world.build_controller.can_build(farm, Vector2i(68, 46)):
