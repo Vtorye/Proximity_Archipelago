@@ -120,5 +120,32 @@ func _run() -> void:
 	expect(not world.build_controller.try_build_plan([first, second]) and world.build_controller.last_result.code == PlacementCheck.Code.INSTANCE_LIMIT, "batch limit includes a previously built instance")
 	expect(world.build_controller.try_build_plan([first]), "one additional instance fits within the configured limit")
 	expect(world.build_controller.placement_check(limited, second.cell).code == PlacementCheck.Code.INSTANCE_LIMIT, "an active construction site counts once toward the limit")
+	await _check_new_nest_popup(world)
 	print("ORDER CONSTRUCTION UI: %d checks, %d failures" % [assertions, failures.size()])
 	get_tree().quit(0 if failures.is_empty() else 1)
+
+func _check_new_nest_popup(world: World) -> void:
+	var controller := world.build_controller
+	var house_option: SceneBuildOption = preload("res://game/building/options/house.tres")
+	var cell := Vector2i(29, 26)
+	var placed := controller.try_build(house_option, cell)
+	var site := controller.construction.at(cell)
+	if site != null:
+		placed = controller.finish_construction(site)
+	var house := world.registry.at(cell) as House
+	expect(placed and house != null and not house.is_main_nest, "build a new nest through the construction controller")
+	if house == null:
+		return
+	await click_at(cell_point(cell), MOUSE_BUTTON_RIGHT)
+	var popup: NestMenu = screen.nest_popup
+	var initialized := popup != null and popup.house == house and popup.controls.has(&"residents")
+	expect(initialized, "right click opens and initializes the new nest popup")
+	if not initialized:
+		return
+	expect(popup.get_node("%InventoryTab").visible, "new nest opens on its inventory")
+	await click(popup.controls[&"orders"])
+	expect(popup.get_node("%OrdersTab").visible and popup.get_node("%OrderRows").get_child_count() > 0, "new nest shows its stock orders")
+	await click(popup.controls[&"residents"])
+	expect(popup.get_node("%ResidentsTab").visible, "new nest shows its residents")
+	await click(popup.controls[&"close"])
+	expect(screen.nest_popup == null, "new nest popup can be closed")

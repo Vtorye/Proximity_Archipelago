@@ -20,13 +20,13 @@ autowrap_mode = 3
 
 [node name="Buy" type="Button" parent="."]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 28)
+custom_minimum_size = Vector2(0, 24)
 mouse_default_cursor_shape = 2
 text = "ui.nest.buy"
 
 [node name="Kill" type="Button" parent="."]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 28)
+custom_minimum_size = Vector2(0, 24)
 mouse_default_cursor_shape = 2
 text = "ui.nest.kill"
 theme_override_colors/font_color = Color(0.8471, 0.5451, 0.4745, 1)
