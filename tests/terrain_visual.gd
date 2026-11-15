@@ -5,6 +5,13 @@ func _run() -> void:
 	AppSettings.reset_defaults()
 	get_viewport().add_child(load("res://boot.tscn").instantiate())
 	await frames(35)
+	if get_viewport() is Window:
+		await RenderingServer.frame_post_draw
+		var window := Vector2(get_window().size)
+		var base := Vector2(get_window().content_scale_size)
+		var fit := minf(window.x / base.x, window.y / base.y)
+		var rendered := Vector2(get_viewport().get_texture().get_image().get_size())
+		expect(rendered.distance_to(base * fit) < 2.0, "the main canvas renders at the fitted window resolution")
 	await click(Router._current.controls[&"maps"])
 	await frames(15)
 	var editor: Control = Router._current
@@ -107,9 +114,42 @@ func _run() -> void:
 	await frames(8)
 	expect(screen.hud.navigation_panel._detail.text.contains(tr("ui.terrain.impassable")), "water still displays impassability rather than an infinite movement time")
 	await capture("13-water-is-impassable", 20)
+	await _check_built_road(world, sand)
 	Router.goto(&"main_menu")
 	await frames(25)
 	_finish()
+
+func _check_built_road(world: World, cell: Vector2i) -> void:
+	var menu := await _open_construction()
+	_focus(cell)
+	await choose_building(menu, &"road")
+	await click_at(cell_point(cell))
+	await click(menu.controls[&"apply"])
+	var map := world.map as TerrainMap
+	expect(world.build_controller.construction.at(cell, true) != null, "the road begins as a physical construction site")
+	for second in range(45):
+		if map.surface_at(cell).kind == TerrainType.Kind.ROAD:
+			break
+		await frames(30)
+	expect(map.surface_at(cell).kind == TerrainType.Kind.ROAD, "the carriers complete the road")
+	_focus(cell)
+	screen.hud.hide()
+	world.units.hide()
+	var rendered := await _surface_pixel(cell)
+	var landscape := map.get_node("TerrainSurface") as Node2D
+	landscape.hide()
+	var native := await _surface_pixel(cell)
+	landscape.show()
+	world.units.show()
+	screen.hud.show()
+	expect(rendered.is_equal_approx(native), "completed road pixels match the TileSet with the terrain shader enabled")
+	await capture("14-built-road-visible", 25)
+
+func _surface_pixel(cell: Vector2i) -> Color:
+	await RenderingServer.frame_post_draw
+	var image := get_viewport().get_texture().get_image()
+	var scale := Vector2(image.get_size()) / get_viewport().get_visible_rect().size
+	return image.get_pixelv(Vector2i(cell_point(cell) * scale))
 
 func _focus(cell: Vector2i) -> void:
 	screen.camera.position = screen.world.route_service.cell_to_world(cell)

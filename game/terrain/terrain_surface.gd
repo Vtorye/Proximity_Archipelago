@@ -19,6 +19,7 @@ func _ready() -> void:
 		return
 	map.changed.connect(_queue_rebuild)
 	map.catalog_updated.connect(_queue_rebuild)
+	map.cells_updated.connect(_queue_rebuild)
 	_queue_rebuild()
 
 func _queue_rebuild() -> void:

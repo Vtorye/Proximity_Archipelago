@@ -57,7 +57,6 @@ func apply() -> void:
 	if DisplayServer.get_name() != "headless":
 		var mode: DisplayServer.WindowMode = DisplayServer.window_get_mode()
 		var was_fullscreen: bool = mode in [DisplayServer.WINDOW_MODE_FULLSCREEN, DisplayServer.WINDOW_MODE_EXCLUSIVE_FULLSCREEN]
-		# Re-entering windowed mode can resize the window by one pixel and halve integer stretch.
 		if fullscreen != was_fullscreen:
 			DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN if fullscreen else DisplayServer.WINDOW_MODE_WINDOWED)
 		DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_ENABLED if vsync else DisplayServer.VSYNC_DISABLED)

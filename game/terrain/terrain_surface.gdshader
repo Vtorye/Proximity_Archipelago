@@ -9,6 +9,7 @@ uniform vec4 peak_color : source_color;
 uniform sampler2D terrain_noise : filter_linear, repeat_enable;
 uniform float noise_period : hint_range(1.0, 256.0) = 50.0;
 uniform float texture_strength : hint_range(0.0, 0.3) = 0.05;
+uniform float terrain_transition_pixels : hint_range(1.0, 8.0, 0.1) = 3.0;
 
 group_uniforms Grass;
 uniform float blade_frequency : hint_range(0.0, 12.0) = 2.5;
@@ -74,48 +75,65 @@ float mountain_relief(vec2 point, float noise_value) {
 	return clamp(relief, 0.0, 1.0);
 }
 
-float wave_opacity(float coverage) {
-	float wave = sin(coverage * wave_scale + sin(TIME * wave_speed) * wave_amplitude);
-	return step(0.5, wave) * pow(min(2.0 * coverage, 1.0), wave_falloff) * wave_color.a;
+vec4 ground_sample(vec4 tile) {
+	// Water and native atlas tiles contribute no color to the land palette.
+	float styled = tile.a * step(1.0 / 255.0, dot(tile.rgb, vec3(1.0)));
+	return vec4(tile.rgb, 1.0) * styled;
 }
 
 void fragment() {
 	vec2 pixel = TEXTURE_PIXEL_SIZE;
 	vec2 map_sample = UV / pixel;
 	vec2 size = 1.0 / pixel;
-	// Each patch includes an apron for linear filtering across its edges.
+	// Keep the palette transition the same screen width as the camera zoom changes.
+	vec2 transition = clamp(0.5 * fwidth(map_sample) * terrain_transition_pixels, vec2(0.00001), vec2(0.5));
+	float coverage = texture(TEXTURE, UV).a;
+	float wave = sin(coverage * wave_scale + sin(TIME * wave_speed) * wave_amplitude);
+	float wave_aa = clamp(0.5 * fwidth(wave), 0.00001, 0.5);
+	float waves = smoothstep(0.5 - wave_aa, 0.5 + wave_aa, wave)
+		* pow(min(2.0 * coverage, 1.0), wave_falloff) * wave_color.a;
+	vec3 water = mix(water_color.rgb, wave_color.rgb, waves);
+	float coast_aa = max(0.5 * fwidth(coverage), 0.00001);
+	float land = smoothstep(coast_rounding - coast_aa, coast_rounding + coast_aa, coverage);
+	// Each patch includes an apron for filtering across its edges.
 	if (any(lessThan(map_sample, vec2(1.0))) || any(greaterThanEqual(map_sample, size - 1.0))) {
 		discard;
 	}
 
 	vec4 cell = texelFetch(TEXTURE, ivec2(map_sample), 0);
-	float coverage = texture(TEXTURE, UV).a;
 	if (cell.a == 0.0) {
-		float waves = wave_opacity(coverage);
-		COLOR = cell.r > 0.0 ? vec4(mix(water_color.rgb, wave_color.rgb, waves), 1.0) : vec4(wave_color.rgb, waves);
+		COLOR = cell.r > 0.0 ? vec4(water, 1.0) : vec4(wave_color.rgb, waves);
 	} else if (dot(cell.rgb, vec3(1.0)) == 0.0) {
 		discard;
-	} else if (coverage < coast_rounding) {
-		COLOR = vec4(mix(water_color.rgb, wave_color.rgb, wave_opacity(coverage)), 1.0);
 	} else {
+		// Blend around cell edges while keeping each soil readable at its center.
+		vec2 texel = map_sample - 0.5;
+		ivec2 corner = ivec2(floor(texel));
+		vec2 factor = smoothstep(0.5 - transition, 0.5 + transition, fract(texel));
+		vec4 upper = mix(ground_sample(texelFetch(TEXTURE, corner, 0)), ground_sample(texelFetch(TEXTURE, corner + ivec2(1, 0), 0)), factor.x);
+		vec4 lower = mix(ground_sample(texelFetch(TEXTURE, corner + ivec2(0, 1), 0)), ground_sample(texelFetch(TEXTURE, corner + ivec2(1, 1), 0)), factor.x);
+		vec4 palette = mix(upper, lower, factor.y);
+		vec3 blend = palette.rgb / max(palette.a, 0.00001);
 		float noise_value = texture(terrain_noise, terrain_pos / noise_period).r;
 		vec3 stone = stone_color.rgb;
-		if (cell.b > max(cell.r, cell.g)) {
-			stone = mix(stone, peak_color.rgb, mountain_relief(terrain_pos, noise_value));
+		float relief = smoothstep(0.25, 0.6, blend.b);
+		if (relief > 0.0) {
+			stone = mix(stone, peak_color.rgb, relief * mountain_relief(terrain_pos, noise_value));
 		}
 
 		vec3 grass = grass_color.rgb;
-		if (cell.g > 0.0 && blade_height > 0.0) {
+		if (blend.g > 0.0 && blade_height > 0.0) {
 			float wind = sin(TIME * blade_speed) * blade_sway;
 			float blade = abs(2.0 * fract((terrain_pos.x + wind) * blade_frequency) - 1.0) * blade_height;
 			float edge = texture(TEXTURE, UV - vec2(0.0, blade) * pixel).g;
-			grass *= 1.0 - blade_contrast * (1.0 - clamp(edge / cell.g, 0.0, 1.0));
+			grass *= 1.0 - blade_contrast * (1.0 - clamp(edge / blend.g, 0.0, 1.0));
 		}
 
-		vec3 color = cell.r * dirt_color.rgb + cell.g * grass + cell.b * stone;
+		vec3 color = blend.r * dirt_color.rgb + blend.g * grass + blend.b * stone;
 		color *= 1.0 + (2.0 * noise_value - 1.0) * texture_strength;
 		float shore = texture(TEXTURE, UV + clamp(coast_offset, vec2(-0.5), vec2(0.5)) * pixel).a;
 		float coast = 1.0 - smoothstep(coast_rounding, coast_rounding + coast_width, shore);
-		COLOR = vec4(mix(color, coast_color.rgb, coast * coast_color.a), 1.0);
+		color = mix(color, coast_color.rgb, coast * coast_color.a);
+		COLOR = vec4(mix(water, color, land), 1.0);
 	}
 }
