@@ -23,8 +23,20 @@ func _run() -> void:
 	await click(_button(editor, "ui.terrain.generate"))
 	expect(editor._dirty and editor._status.text.contains("Почвы распределены"), "the soil generator explicitly edits the map instead of replacing it during play")
 	await capture("02-editor-soil-distribution", 20)
+	await click(_button(editor, "ui.map.save"))
+	await click(_button(editor, "ui.menu.play"))
+	await frames(35)
+	screen = Router._current
+	expect(Router.current_screen_key() == &"match", "the styled map launches from the editor")
+	screen.camera.set_level(WorldCamera.MIN_LEVEL)
+	screen.hud.hide()
+	await capture("02a-five-soils-in-play", 60)
+	screen.hud.show()
+	screen.camera.set_level(1)
+	_focus(Vector2i(68, 43))
+	await capture("02b-starter-bay", 45)
 	Router.goto(&"match", _fixture())
-	await frames(25)
+	await frames(35)
 	screen = Router._current
 	var world: World = screen.world
 	world.units.process_mode = Node.PROCESS_MODE_DISABLED
@@ -32,8 +44,7 @@ func _run() -> void:
 	var dry := Vector2i(8, 3)
 	var rocky := Vector2i(5, 3)
 	var sand := Vector2i(14, 3)
-	await key(KEY_SPACE)
-	var menu := Router.top_overlay() as ConstructionMenu
+	var menu := await _open_construction()
 	_focus(dry)
 	await choose_building(menu, &"house")
 	await hover(dry)
@@ -42,16 +53,14 @@ func _run() -> void:
 	expect(menu._cost.text.contains("7 Древесина + 14 Камень"), "the plan total agrees with the cell-specific palette price")
 	await capture("04-dry-soil-discount", 20)
 	await click(menu.controls[&"cancel"])
-	await key(KEY_SPACE)
-	menu = Router.top_overlay() as ConstructionMenu
+	menu = await _open_construction()
 	_focus(rocky)
 	await choose_building(menu, &"road")
 	await click_at(cell_point(rocky))
 	expect(menu.draft.size() == 0 and menu._status.text == tr("ui.placement.soil_restricted"), "rocky ground rejects roads with visible soil-specific feedback")
 	await capture("05-rocky-soil-restriction", 20)
 	await click(menu.controls[&"cancel"])
-	await key(KEY_SPACE)
-	menu = Router.top_overlay() as ConstructionMenu
+	menu = await _open_construction()
 	_focus(sand)
 	await choose_building(menu, &"road")
 	await hover(sand)
@@ -76,12 +85,11 @@ func _run() -> void:
 	await key(KEY_ESCAPE)
 	world.units.process_mode = Node.PROCESS_MODE_INHERIT
 	var building_cell := Vector2i(10, 4)
+	menu = await _open_construction()
 	_focus(building_cell)
-	await key(KEY_SPACE)
-	menu = Router.top_overlay() as ConstructionMenu
 	await choose_building(menu, &"house")
 	await click_at(cell_point(building_cell))
-	await key(KEY_SPACE)
+	await click(menu.controls[&"apply"])
 	var site: ConstructionSite = world.build_controller.construction.at(building_cell)
 	expect(site != null and world.inventory.quantity(world.inventory.type_by_id(&"wood")) == 53 and world.inventory.quantity(world.inventory.type_by_id(&"stone")) == 26, "applying the dry-soil plan earmarks exactly seven wood and fourteen stone")
 	await capture("10-discounted-material-delivery", 20)
@@ -105,7 +113,14 @@ func _run() -> void:
 
 func _focus(cell: Vector2i) -> void:
 	screen.camera.position = screen.world.route_service.cell_to_world(cell)
+	if is_instance_valid(screen._construction):
+		# Keep the target above the bottom-docked construction palette.
+		screen.camera.position.y += 35.0 / screen.camera.zoom.y
 	screen.camera.force_update_scroll()
+
+func _open_construction() -> ConstructionMenu:
+	await click(screen.hud.controls[&"build"])
+	return screen._construction
 
 func _button(editor: Control, text: String) -> Button:
 	for button in editor.find_children("*", "Button", true, false):

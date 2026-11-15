@@ -7,6 +7,7 @@ script = ExtResource("type")
 id = &"fertile"
 display_name = "ui.terrain.fertile"
 tile = Vector4i(5, 0, 0, 0)
+surface_blend = Color(0, 0.82, 0.08, 1)
 move_cost = 1.6
 texture = ExtResource("texture")
 berry_multiplier = 1.5

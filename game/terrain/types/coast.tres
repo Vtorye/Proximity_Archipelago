@@ -6,4 +6,5 @@ script = ExtResource("type")
 id = &"coast"
 display_name = "ui.terrain.coast"
 tile = Vector4i(4, 0, 0, 0)
+surface_blend = Color(0.8, 0.13, 0, 1)
 move_cost = 1.2

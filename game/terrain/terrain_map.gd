@@ -2,6 +2,8 @@
 class_name TerrainMap
 extends TileMapLayer
 ## Surface tiles remain compatible with old maps. Only road-covered ground needs an underlay entry.
+signal catalog_updated
+
 @export var catalog: TerrainCatalog = preload("res://game/terrain/catalog.tres")
 @export var underlays: Dictionary[Vector2i, Vector4i] = {}
 var _prepared := false
@@ -25,6 +27,7 @@ func _sync_catalog() -> void:
 	catalog.install(tile_set)
 	for type in catalog.types:
 		if type != null and not type.changed.is_connected(_sync_catalog): type.changed.connect(_sync_catalog)
+	catalog_updated.emit()
 
 func key_at(cell: Vector2i) -> Vector4i:
 	var coords: Vector2i = get_cell_atlas_coords(cell)

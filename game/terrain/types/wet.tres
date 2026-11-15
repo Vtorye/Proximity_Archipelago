@@ -7,6 +7,7 @@ script = ExtResource("type")
 id = &"wet"
 display_name = "ui.terrain.wet"
 tile = Vector4i(8, 0, 0, 0)
+surface_blend = Color(0, 0.57, 0.3, 1)
 move_cost = 1.6
 texture = ExtResource("texture")
 nests_allowed = false

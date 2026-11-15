@@ -7,6 +7,7 @@ script = ExtResource("type")
 id = &"sand"
 display_name = "ui.terrain.sand"
 tile = Vector4i(9, 0, 0, 0)
+surface_blend = Color(0.7, 0.38, 0, 1)
 move_cost = 1.6
 texture = ExtResource("texture")
 berries_allowed = false

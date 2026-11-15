@@ -1,0 +1,24 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://game/terrain/terrain_surface.gdshader" id="1_shader"]
+
+[sub_resource type="FastNoiseLite" id="MountainNoise"]
+frequency = 0.0396
+fractal_octaves = 10
+
+[sub_resource type="NoiseTexture2D" id="MountainNoiseTexture"]
+width = 200
+height = 200
+seamless = true
+noise = SubResource("MountainNoise")
+
+[resource]
+shader = ExtResource("1_shader")
+shader_parameter/dirt_color = Color(0.8862745, 0.69803923, 0.6901961, 1)
+shader_parameter/grass_color = Color(0.6123197, 0.71377975, 0.3554366, 1)
+shader_parameter/stone_color = Color(0.6116368, 0.60167825, 0.8443188, 1)
+shader_parameter/peak_color = Color(0.800376, 0.62219876, 0.6970835, 1)
+shader_parameter/terrain_noise = SubResource("MountainNoiseTexture")
+shader_parameter/water_color = Color(0.18906647, 0.28287807, 0.36208087, 1)
+shader_parameter/coast_color = Color(0.1496095, 0.1922862, 0.3134059, 1)
+shader_parameter/wave_color = Color(0.37174377, 0.545062, 0.5969153, 0.88)

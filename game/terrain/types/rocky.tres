@@ -7,6 +7,7 @@ script = ExtResource("type")
 id = &"rocky"
 display_name = "ui.terrain.rocky"
 tile = Vector4i(6, 0, 0, 0)
+surface_blend = Color(0, 0, 1, 1)
 move_cost = 1.6
 texture = ExtResource("texture")
 roads_allowed = false
