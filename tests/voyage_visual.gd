@@ -67,8 +67,8 @@ func _run() -> void:
 		for step in range(5):
 			var index := 0
 			while world.tasks.slots[index] == null: index += 1
-		var order: BuildOption = world.tasks.start_order(index)
-		world.build_controller.built.emit(order, world.registry.all()[0].cell)
+			var order: BuildOption = world.tasks.start_order(index)
+			world.build_controller.built.emit(order, world.registry.all()[0].cell)
 		await frames(4)
 		await click(screen.campaign_panel.controls[stage % 3])
 	expect(world.tasks.level == 5 and world.build_controller.options.has(Voyage.SHIP), "ship appears after reaching development level five")

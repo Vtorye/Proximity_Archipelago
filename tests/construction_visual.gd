@@ -254,7 +254,7 @@ func _check_tutorial_and_backdrop() -> void:
 			expect(get_viewport().get_visible_rect().encloses(Router._current._body.get_global_rect()), "tutorial remains readable at the smallest and largest interface scale")
 			expect(Router._current._body.get_visible_line_count() == Router._current._body.get_line_count(), "tutorial never clips instruction lines")
 		await capture("14-tutorial-scale-%d" % roundi(factor * 100))
-	AppSettings.text_size = AppSettings.DEFAULT_TEXT_SIZE
+	AppSettings.text_size = AppSettings.TYPOGRAPHY.default_index
 	AppSettings.apply()
 	AppSettings.apply()
 	await frames(3)

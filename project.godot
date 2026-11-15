@@ -42,6 +42,10 @@ folder_colors={
 "res://_shell/": "gray"
 }
 
+[gui]
+
+theme/custom="res://game/ui/colony_theme.tres"
+
 [input]
 
 ui_cancel={
@@ -64,10 +68,6 @@ locale/translations=PackedStringArray("res://language/keys.en.po", "res://langua
 [physics]
 
 3d/physics_engine="Jolt Physics"
-
-[gui]
-
-theme/custom="res://game/ui/colony_theme.tres"
 
 [rendering]
 

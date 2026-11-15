@@ -61,9 +61,13 @@ func _run() -> void:
 		await frames(30)
 		# Keep the real task loop active while normal-speed ants build the camps.
 		for index in range(world.tasks.slots.size()):
-\t\t\tif world.tasks.active_order_id == &"": world.tasks.start_order(index)
-\t\t\tworld.build_controller.built.emit(world.tasks.active_order_option, world.registry.all()[0].cell)
-				break
+			if world.tasks.slots[index] == null:
+				continue
+			var order: BuildOption = world.tasks.start_order(index)
+			if order == null:
+				continue
+			world.build_controller.built.emit(order, world.registry.all()[0].cell)
+			break
 	expect(world.population.count() == 15, "delivered and assembled camps expand the colony to fifteen ants")
 	var claimed := false
 	for second in range(45):
