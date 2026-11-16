@@ -1,0 +1,36 @@
+[gd_resource type="Resource" script_class="TaskSpec" format=3 uid="uid://c73wrhw6etgj5"]
+
+[ext_resource type="Script" uid="uid://dohq4yj0b3afb" path="res://game/resources/resource_amount.gd" id="amount"]
+[ext_resource type="Script" uid="uid://cdmimrfnsanfy" path="res://game/building/build_option.gd" id="build_option"]
+[ext_resource type="Resource" uid="uid://c62wo80ihkc7y" path="res://game/building/options/feast.tres" id="feast"]
+[ext_resource type="Resource" path="res://game/resources/dot_treses/royal.tres" id="royal"]
+[ext_resource type="Resource" uid="uid://bhy6cadrn6nk0" path="res://game/building/options/statue.tres" id="statue"]
+[ext_resource type="Script" uid="uid://bmf8btgjq0fm3" path="res://game/tasks/task_spec.gd" id="task"]
+[ext_resource type="Resource" uid="uid://dr0o3v3n5o1dt" path="res://game/building/options/sawmill.tres" id="unlock"]
+[ext_resource type="Script" uid="uid://g6heoamp68cb" path="res://game/tasks/task_variant.gd" id="variant"]
+
+[sub_resource type="Resource" id="reward"]
+script = ExtResource("amount")
+type = ExtResource("royal")
+
+[sub_resource type="Resource" id="variant_build"]
+script = ExtResource("variant")
+id = &"build"
+label = "ui.building.statue_placeholder"
+building = ExtResource("statue")
+
+[sub_resource type="Resource" id="variant_diversion"]
+script = ExtResource("variant")
+id = &"diversion"
+label = "ui.building.feast"
+building = ExtResource("feast")
+reward_seconds = 15.0
+
+[resource]
+script = ExtResource("task")
+id = &"statue_feast_d"
+title = "ui.task.request_statue"
+reward_seconds = 25.0
+rewards = Array[ExtResource("amount")]([SubResource("reward")])
+unlocks = Array[ExtResource("build_option")]([ExtResource("unlock")])
+variants = Array[ExtResource("variant")]([SubResource("variant_build"), SubResource("variant_diversion")])

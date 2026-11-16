@@ -1,0 +1,34 @@
+[gd_scene format=3]
+
+[node name="ResidentRow" type="HBoxContainer"]
+theme_override_constants/separation = 8
+
+[node name="Labels" type="VBoxContainer" parent="."]
+size_flags_horizontal = 3
+
+[node name="Count" type="Label" parent="Labels"]
+mouse_filter = 2
+text = ""
+
+[node name="Price" type="RichTextLabel" parent="Labels"]
+mouse_filter = 2
+text = "Food ×5"
+theme_override_colors/default_color = Color(0.6667, 0.651, 0.6118, 1)
+custom_minimum_size = Vector2(104, 0)
+autowrap_mode = 3
+fit_content = true
+scroll_active = false
+
+[node name="Buy" type="Button" parent="."]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 24)
+mouse_default_cursor_shape = 2
+text = "ui.nest.buy"
+
+[node name="Kill" type="Button" parent="."]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 24)
+mouse_default_cursor_shape = 2
+text = "ui.nest.kill"
+theme_override_colors/font_color = Color(0.8471, 0.5451, 0.4745, 1)
+tooltip_text = "ui.nest.kill_hint"

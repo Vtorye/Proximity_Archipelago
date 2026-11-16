@@ -1,78 +1,122 @@
 class_name TaskPanel
-extends PanelContainer
-## Three compact requests. Availability uses the same atomic inventory rules as payment.
+extends Control
+## Lists the current royal requests independently, with authored variant cards.
+const REQUEST: PackedScene = preload("res://game/tasks/task_request.tscn")
+const PRESENTATION: UiPresentation = preload("res://game/ui/ui_presentation.tres")
+
+signal order_requested(task_id: StringName, variant_id: StringName)
+signal info_requested(option: BuildOption)
+signal strip_closed
+
 var director: TaskDirector
-var _content: VBoxContainer
 var _queued := false
-var _waiting: Label
+var _selection: TaskBuildOrder
+var _bottom_inset := 0.0
+var _pan_mode := false
+@onready var _requests: HBoxContainer = %Requests
+@onready var _waiting: Label = %Waiting
+@onready var _categories: PanelContainer = %Categories
+@onready var _category: Button = %Category
+@onready var _strip: PanelContainer = %TaskStrip
+@onready var _scroll: ScrollContainer = %Scroll
+
 func _ready() -> void:
-	custom_minimum_size.x = 198
-	_content = VBoxContainer.new()
-	_content.add_theme_constant_override("separation", 3)
-	var scroll := ScrollContainer.new()
-	scroll.custom_minimum_size.y = 180
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	add_child(scroll)
-	_content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.add_child(_content)
-	AppSettings.changed.connect(_queue_refresh)
+	_category.pressed.connect(AppSettings.play_click)
+	_category.toggled.connect(func(_pressed: bool): _update_strip_visibility())
+	_categories.minimum_size_changed.connect(_layout_windows.call_deferred)
+	_requests.minimum_size_changed.connect(_layout_windows.call_deferred)
+	AppSettings.language_changed.connect(_queue_refresh)
+	AppSettings.text_size_changed.connect(_queue_refresh)
 	director.changed.connect(_queue_refresh)
-	director.world.inventory.changed.connect(_update_availability)
-	director.world.match_controller.time_changed.connect(func(_seconds: int): _update_availability())
+	director.world.inventory.changed.connect(_refresh_prices)
+	director.world.prices.changed.connect(_refresh_prices)
+	director.world.match_controller.time_changed.connect(_on_time_changed)
 	_refresh()
+
+func dock_above(bottom_bar_height: float) -> void:
+	_bottom_inset = bottom_bar_height
+	_layout_windows()
+
+func visible_bounds() -> Array[Rect2]:
+	var bounds: Array[Rect2] = []
+	for window in [_categories, _strip]:
+		if window.is_visible_in_tree():
+			bounds.append(window.get_global_rect())
+	return bounds
+
+func set_pan_mode(enabled: bool) -> void:
+	_pan_mode = enabled
+	_update_strip_visibility()
+
+func _update_strip_visibility() -> void:
+	var was_open := _strip.visible
+	_strip.visible = _category.button_pressed and not _pan_mode
+	if was_open and not _strip.visible:
+		strip_closed.emit()
+	_layout_windows()
+
+func _layout_windows() -> void:
+	var viewport := get_viewport_rect().size
+	var margin := PRESENTATION.dock_clearance
+	var bottom := viewport.y - _bottom_inset - margin
+	_categories.reset_size()
+	_categories.position = Vector2(margin, bottom - _categories.size.y)
+	var left := _categories.position.x + _categories.size.x + margin
+	var available_width := maxf(0.0, viewport.x - left - margin)
+	var height_limit := floorf(viewport.y * PRESENTATION.task_strip_height_ratio)
+	var content := _requests.get_combined_minimum_size() + _strip.get_theme_stylebox(&"panel").get_minimum_size()
+	if content.x > available_width:
+		content.y += _scroll.get_h_scroll_bar().get_combined_minimum_size().y
+	if content.y > height_limit:
+		content.x += _scroll.get_v_scroll_bar().get_combined_minimum_size().x
+	_strip.size = Vector2(minf(content.x, available_width), minf(content.y, height_limit))
+	_strip.position = Vector2(left, bottom - _strip.size.y)
+
 func _queue_refresh() -> void:
-	if _queued: return
+	if _queued:
+		return
 	_queued = true
 	_refresh.call_deferred()
+
+func set_selection(order: TaskBuildOrder) -> void:
+	_selection = order
+	for request: TaskRequest in _requests.get_children():
+		request.set_selection(order)
+
 func _refresh() -> void:
 	_queued = false
-	for child in _content.get_children():
-		_content.remove_child(child)
+	var scroll_position := _scroll.scroll_horizontal
+	for child in _requests.get_children():
+		_requests.remove_child(child)
 		child.queue_free()
-	_content.add_child(_label("Уровень %d · %d/%d" % [director.level, director.closed, director.stage().tasks.size()], ColonyStyle.ACCENT))
-	for index in range(director.slots.size()):
-		var task: TaskSpec = director.slots[index]
-		if task == null: continue
-		var title: Label = _label(task.title)
-		title.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-		_content.add_child(title)
-		var cost: Label = _label(BuildCostText.format(director.price(index)))
-		cost.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		cost.custom_minimum_size.x = 160 * AppSettings.ui_scale
-		_content.add_child(cost)
-		var row := HBoxContainer.new()
-		row.add_theme_constant_override("separation", 3)
-		for cancel in [false, true]:
-			var button: Button = ColonyStyle.button("Отказ" if cancel else "+%d c" % task.reward_seconds)
-			if not cancel and not task.rewards.is_empty():
-				button.text += " +%d" % BuildController.price_amount(task.rewards, task.rewards[0].type)
-				button.icon = task.rewards[0].type.icon
-				button.expand_icon = true
-				button.icon_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-				button.add_theme_constant_override("icon_max_width", 8)
-			button.custom_minimum_size.y = 22 * AppSettings.ui_scale
-			button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-			button.add_theme_font_override("font", ColonyStyle.SECONDARY_FONT)
-			button.add_theme_font_size_override("font_size", 8)
-			button.set_meta(&"cancel", cancel)
-			button.set_meta(&"task_index", index)
-			button.disabled = not director.can_pay(index, cancel)
-			button.tooltip_text = "Отказ: %s. Без награды." % BuildCostText.format(director.price(index, true)) if cancel else "Сдать: %s. Награда: %s и %d с." % [BuildCostText.format(director.price(index)), BuildCostText.format(task.rewards), task.reward_seconds]
-			button.pressed.connect(func(): director.submit(index, cancel))
-			row.add_child(button)
-		_content.add_child(row)
-	var message: Label = _label(director.message, ColonyStyle.MUTED)
-	message.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_content.add_child(message)
-	_waiting = _label("", ColonyStyle.MUTED)
-	_waiting.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_content.add_child(_waiting)
-	_update_availability()
+	%Heading.text = tr("ui.task.level_progress") % [director.level, director.closed, director.stage().tasks.size()]
+	for index in director.slots.size():
+		var task := director.slots[index]
+		if task == null:
+			continue
+		var request: TaskRequest = REQUEST.instantiate()
+		_requests.add_child(request)
+		request.configure(director, task, index + 1)
+		request.set_selection(_selection)
+		request.order_requested.connect(order_requested.emit)
+		request.info_requested.connect(info_requested.emit)
+	_scroll.set_deferred("scroll_horizontal", scroll_position)
+	%Message.text = director.display_message()
+	%Message.visible = not %Message.text.is_empty()
+	_update_waiting()
+	_layout_windows()
 
-func _update_availability() -> void:
-	if _content == null: return
-	for button in _content.find_children("*", "Button", true, false):
-		button.disabled = not director.can_pay(button.get_meta(&"task_index"), button.get_meta(&"cancel"))
+func _refresh_prices() -> void:
+	for request: TaskRequest in _requests.get_children():
+		request.refresh_prices()
+	_update_waiting()
+
+func _on_time_changed(_seconds: int) -> void:
+	for request: TaskRequest in _requests.get_children():
+		request.refresh_availability(director)
+	_update_waiting()
+
+func _update_waiting() -> void:
 	var missing := 0
 	var occupied := 0
 	for ant in director.world.population.agents():
@@ -80,11 +124,5 @@ func _update_availability() -> void:
 		if ant.waiting_reason == WorkPlan.WaitReason.MISSING_INPUTS: missing += 1
 		elif ant.waiting_reason == WorkPlan.WaitReason.SLOTS_FULL: occupied += 1
 	if is_instance_valid(_waiting):
-		_waiting.text = "Ждут мест: %d; сырья: %d" % [occupied, missing]
+		_waiting.text = tr("ui.task.waiting") % [occupied, missing]
 		_waiting.visible = occupied > 0 or missing > 0
-
-func _label(text: String, color: Color = ColonyStyle.TEXT) -> Label:
-	var label: Label = ColonyStyle.label(text, 4, color)
-	label.add_theme_font_override("font", ColonyStyle.SECONDARY_FONT)
-	label.add_theme_font_size_override("font_size", 8)
-	return label

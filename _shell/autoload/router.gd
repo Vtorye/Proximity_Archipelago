@@ -42,10 +42,6 @@ func boot(
 	goto(manifest.init_key)
 	return true
 
-func init() -> void:
-	if _manifest != null and not _busy and not is_instance_valid(_current):
-		goto(_manifest.init_key)
-
 # Screen navigation
 
 func goto(key: StringName, payload: Variant = null) -> void:

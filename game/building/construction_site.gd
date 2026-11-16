@@ -1,0 +1,74 @@
+class_name ConstructionSite
+extends Building
+## A non-operational reservation. Materials and assembly progress belong to this site.
+var service: ConstructionService
+var order: TaskBuildOrder
+var candidate: Building
+var crates: Dictionary = {}
+var delivered: Dictionary[StringName, int] = {}
+var transit: Dictionary[StringName, int] = {}
+var required: Array[ResourceAmount] = []
+var progress := 0.0
+var builder: AntAgent
+var active := true
+var _field: NavigationField
+var _revision := -1
+
+func material_count() -> int:
+	var count := 0
+	for amount: int in delivered.values(): count += amount
+	return count
+
+func supplied() -> bool:
+	for item in required:
+		if delivered.get(item.type.id, 0) < item.amount: return false
+	return true
+
+func route(from_cell: Vector2i) -> Route:
+	var navigation: RouteService = service.controller.route_service
+	if _revision != navigation.revision:
+		_field = navigation.reverse_field(entry_cells())
+		_revision = navigation.revision
+	return navigation.make_route(_field.path(from_cell))
+
+func display_title() -> String:
+	return TranslationServer.translate("ui.site.title") % TranslationServer.translate(option.display_name)
+
+func assembly_status() -> String:
+	if supplied():
+		return TranslationServer.translate("ui.site.assembly") % roundi(progress / option.construction_seconds * 100)
+	return TranslationServer.translate("ui.site.delivery")
+
+func _on_demolish() -> void:
+	if active: service.cancel(self)
+
+func _exit_tree() -> void:
+	if is_instance_valid(candidate): candidate.free()
+
+func _draw() -> void:
+	if service == null: return
+	var size: float = service.controller.route_service.cell_size()
+	var cells := footprint()
+	var min_cell := cell
+	var max_cell := cell
+	for target in cells:
+		min_cell.x = mini(min_cell.x, target.x)
+		min_cell.y = mini(min_cell.y, target.y)
+		max_cell.x = maxi(max_cell.x, target.x)
+		max_cell.y = maxi(max_cell.y, target.y)
+	var footprint_size := Vector2(max_cell - min_cell + Vector2i.ONE) * size
+	var center_offset := (Vector2(min_cell + max_cell) * 0.5 - Vector2(cell)) * size
+	var rect := Rect2(center_offset - footprint_size * 0.5, footprint_size)
+	var icon: Texture2D = service.art.build_icon(option)
+	if is_instance_valid(candidate):
+		var sprite := candidate.get_node_or_null("Sprite") as Sprite2D
+		if sprite != null and sprite.texture != null:
+			icon = sprite.texture
+	if icon != null: draw_texture_rect(icon, rect, false, Color(1, 1, 1, 0.38))
+	for corner in [Vector2(-1, -1), Vector2(1, -1), Vector2(-1, 1), Vector2(1, 1)]:
+		var point: Vector2 = rect.get_center() + corner * (footprint_size * 0.5 - Vector2.ONE * 2)
+		draw_line(point, point - Vector2(corner.x * 3, 0), Color("d7bc73"), 1)
+		draw_line(point, point - Vector2(0, corner.y * 3), Color("d7bc73"), 1)
+	var fraction: float = progress / option.construction_seconds if supplied() else float(material_count()) / maxi(1, WorldInventory.cargo_size(required)) * 0.5
+	for index in range(3):
+		draw_rect(Rect2(center_offset.x - 4 + index * 3, rect.end.y - 4, 2, 2), Color("d7bc73") if fraction >= float(index + 1) / 3.0 else Color("423d32"))

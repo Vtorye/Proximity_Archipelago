@@ -3,4 +3,6 @@ extends RefCounted
 var controller: BuildController
 var art: ArtCatalog
 var camera: WorldCamera
-var obstacles: Array[Rect2] = []
+var undo_button: Button
+var obstacles: Callable
+var dismiss_map_popup: Callable

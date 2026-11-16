@@ -4,68 +4,43 @@ extends Button
 var option: BuildOption
 var controller: BuildController
 var art: ArtCatalog
-var cost_label: Label
+@onready var cost_label: RichTextLabel = %Cost
 var card_width := 176
 var compact := false
-var _body: MarginContainer
+var pricing_cell := Vector2i(2147483647, 2147483647)
+@onready var _body: MarginContainer = %Body
 var _minimum_height := 44.0
 
 func _ready() -> void:
 	_minimum_height = 28.0 if compact else 44.0
 	custom_minimum_size = Vector2(card_width, _minimum_height)
-	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	pressed.connect(AppSettings.play_click)
-	var margin := MarginContainer.new()
-	_body = margin
-	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	for side in ["left", "right"]:
-		margin.add_theme_constant_override("margin_" + side, 4 if compact else 6)
-	for side in ["top", "bottom"]:
-		margin.add_theme_constant_override("margin_" + side, 4)
-	add_child(margin)
-	var row := HBoxContainer.new()
-	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	row.add_theme_constant_override("separation", 4)
-	margin.add_child(row)
-	var icon_view := TextureRect.new()
-	icon_view.texture = option.icon if option.icon != null else default_icon(option, art)
-	icon_view.custom_minimum_size = Vector2.ONE * (16 if compact else 24)
-	icon_view.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	icon_view.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	icon_view.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	row.add_child(icon_view)
-	var lines := VBoxContainer.new()
-	lines.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	lines.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	lines.add_theme_constant_override("separation", 0)
-	row.add_child(lines)
-	var caption: Label = ColonyStyle.label(option.display_name, 6 if compact else 8)
-	caption.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	lines.add_child(caption)
-	cost_label = ColonyStyle.label(BuildCostText.format(controller.price(option) if controller != null else option.costs), 4 if compact else 6, ColonyStyle.MUTED)
-	cost_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	lines.add_child(cost_label)
+		_body.add_theme_constant_override("margin_" + side, 4 if compact else 6)
+	var icon: TextureRect = %Icon
+	icon.texture = art.build_icon(option)
+	icon.custom_minimum_size = Vector2.ONE * (16 if compact else 24)
+	if option.id == &"house":
+		icon.modulate = House.BARRACKS_TINT
+	%Caption.text = option.display_name
+	tooltip_text = option.display_name
+	_refresh_price()
 	minimum_size_changed.connect(_fit_content)
-	margin.minimum_size_changed.connect(_fit_content)
+	_body.minimum_size_changed.connect(_fit_content)
 	if controller != null and controller.prices != null: controller.prices.changed.connect(_refresh_price)
 	_fit_content()
 
 func _refresh_price() -> void:
-	cost_label.text = BuildCostText.format(controller.price(option))
+	BuildCostText.show_price(cost_label, controller.price(option, pricing_cell) if controller != null else option.costs)
+
+func set_pricing_cell(cell: Vector2i) -> void:
+	if pricing_cell == cell: return
+	pricing_cell = cell
+	if cost_label != null: _refresh_price()
 
 func _process(_delta: float) -> void:
 	_body.modulate.a = 0.35 if disabled else 1.0
 
 func _fit_content() -> void:
 	if get_child_count() > 0:
-		var factor: float = AppSettings.ui_scale if has_meta(&"ui_scale_bound") else 1.0
-		custom_minimum_size.y = maxf(roundf(_minimum_height * factor), get_child(0).get_combined_minimum_size().y)
-
-static func default_icon(definition: BuildOption, catalog: ArtCatalog) -> Texture2D:
-	match definition.id:
-		&"road": return catalog.road
-		&"ground": return catalog.soil
-		&"house": return catalog.nest
-		&"apple_tree": return catalog.berries
-	return catalog.stone
+		custom_minimum_size.y = maxf(_minimum_height, _body.get_combined_minimum_size().y)

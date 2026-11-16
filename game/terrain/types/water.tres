@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="TerrainType" format=3 uid="uid://dpu3dscgvbm7r"]
+
+[ext_resource type="Script" uid="uid://dpryvfum3wfo2" path="res://game/terrain/terrain_type.gd" id="type"]
+
+[resource]
+script = ExtResource("type")
+id = &"water"
+display_name = "ui.terrain.water"
+tile = Vector4i(3, 3, 0, 0)
+kind = 2
+move_cost = 0.0
+roads_allowed = false
+berries_allowed = false
+nests_allowed = false

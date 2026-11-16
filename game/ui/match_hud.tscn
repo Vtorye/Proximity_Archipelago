@@ -1,0 +1,241 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://game/ui/ui_text_binding.gd" id="ui_text_binding"]
+[ext_resource type="Script" path="res://game/ui/match_hud.gd" id="script"]
+
+[ext_resource type="Texture2D" path="res://game/assets/ui/menu_dots.svg" id="menu_icon"]
+
+[ext_resource type="PackedScene" path="res://game/ui/colony_summary.tscn" id="summary"]
+[ext_resource type="PackedScene" path="res://game/ui/build_details_panel.tscn" id="details"]
+
+[ext_resource type="StyleBox" path="res://game/ui/hud_bottom_bar.tres" id="bottom_bar"]
+
+[node name="Hud" type="Control"]
+script = ExtResource("script")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+process_mode = 3
+
+[node name="Top" type="HBoxContainer" parent="."]
+unique_name_in_owner = true
+anchor_right = 1.0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = 8.0
+grow_horizontal = 2
+mouse_filter = 2
+theme_override_constants/separation = 6
+
+[node name="ColonySummary" parent="Top" instance=ExtResource("summary")]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(148, 0)
+size_flags_vertical = 0
+
+[node name="MatchStatus" type="PanelContainer" parent="Top"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+size_flags_vertical = 0
+
+[node name="Counters" type="HBoxContainer" parent="Top/MatchStatus"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 32)
+alignment = 1
+theme_override_constants/separation = 8
+
+[node name="Timers" type="VBoxContainer" parent="Top/MatchStatus/Counters"]
+size_flags_vertical = 4
+theme_override_constants/separation = 0
+
+[node name="Timer" type="Label" parent="Top/MatchStatus/Counters/Timers"]
+theme_type_variation = &"Caption"
+unique_name_in_owner = true
+mouse_filter = 2
+text = "Execution in 5:00"
+theme_override_colors/font_color = Color(0.8745, 0.7765, 0.5451, 1)
+
+[node name="WaveTimer" type="Label" parent="Top/MatchStatus/Counters/Timers"]
+text = "Wave 0:30"
+theme_type_variation = &"Caption"
+unique_name_in_owner = true
+visible = false
+mouse_filter = 2
+
+[node name="MatchControls" type="PanelContainer" parent="Top"]
+unique_name_in_owner = true
+size_flags_vertical = 0
+
+[node name="TopActions" type="HBoxContainer" parent="Top/MatchControls"]
+theme_override_constants/separation = 4
+
+[node name="Routes" type="Button" parent="Top/MatchControls/TopActions"]
+theme_type_variation = &"CompactButton"
+unique_name_in_owner = true
+mouse_default_cursor_shape = 2
+text = ""
+custom_minimum_size = Vector2(32, 32)
+size_flags_horizontal = 4
+process_mode = 3
+toggle_mode = true
+
+[node name="Pause" type="Button" parent="Top/MatchControls/TopActions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(32, 32)
+theme_type_variation = &"CompactButton"
+expand_icon = true
+theme_override_constants/icon_max_width = 16
+tooltip_text = "ui.hud.pause"
+mouse_default_cursor_shape = 2
+
+[node name="Settings" type="Button" parent="Top/MatchControls/TopActions"]
+expand_icon = true
+theme_override_constants/icon_max_width = 16
+unique_name_in_owner = true
+mouse_default_cursor_shape = 2
+text = ""
+custom_minimum_size = Vector2(32, 32)
+size_flags_horizontal = 4
+icon = ExtResource("menu_icon")
+icon_alignment = 1
+tooltip_text = "ui.hud.menu"
+
+[node name="Objectives" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(168, 0)
+offset_left = 8.0
+offset_top = 147.0
+
+[node name="Goals" type="VBoxContainer" parent="Objectives"]
+unique_name_in_owner = true
+theme_override_constants/separation = 2
+
+[node name="GoalTitle" type="Label" parent="Objectives/Goals"]
+unique_name_in_owner = true
+mouse_filter = 2
+text = "Goal: 10 each"
+theme_override_colors/font_color = Color(0.6667, 0.651, 0.6118, 1)
+
+[node name="Warning" type="Label" parent="Objectives/Goals"]
+unique_name_in_owner = true
+mouse_filter = 2
+text = "ui.hud.need_food"
+theme_override_colors/font_color = Color(0.8471, 0.5451, 0.4745, 1)
+custom_minimum_size = Vector2(144, 0)
+autowrap_mode = 3
+
+[node name="Waiting" type="Label" parent="Objectives/Goals"]
+unique_name_in_owner = true
+mouse_filter = 2
+text = "Waiting for slots: 2"
+theme_override_colors/font_color = Color(0.6667, 0.651, 0.6118, 1)
+custom_minimum_size = Vector2(144, 0)
+autowrap_mode = 3
+visible = false
+
+[node name="Bottom" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -34.0
+theme_override_styles/panel = ExtResource("bottom_bar")
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="Actions" type="HBoxContainer" parent="Bottom"]
+theme_override_constants/separation = 6
+
+[node name="Build" type="Button" parent="Bottom/Actions"]
+theme_type_variation = &"CompactButton"
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 28)
+mouse_default_cursor_shape = 2
+text = "ui.hud.tab_build"
+tooltip_text = "ui.hud.build"
+toggle_mode = true
+
+[node name="ColonyTab" type="Button" parent="Bottom/Actions"]
+unique_name_in_owner = true
+theme_type_variation = &"CompactButton"
+custom_minimum_size = Vector2(0, 28)
+text = "ui.hud.tab_colony"
+toggle_mode = true
+mouse_default_cursor_shape = 2
+
+[node name="TasksTab" type="Button" parent="Bottom/Actions"]
+unique_name_in_owner = true
+theme_type_variation = &"CompactButton"
+custom_minimum_size = Vector2(0, 28)
+text = "ui.hud.tab_tasks"
+toggle_mode = true
+mouse_default_cursor_shape = 2
+
+[node name="Undo" type="Button" parent="Bottom/Actions"]
+disabled = true
+unique_name_in_owner = true
+custom_minimum_size = Vector2(58, 34)
+text = "Ctrl+Z"
+theme_type_variation = &"CompactButton"
+tooltip_text = "ui.construction.undo"
+mouse_default_cursor_shape = 2
+
+[node name="Spacer" type="Control" parent="Bottom/Actions"]
+mouse_filter = 2
+size_flags_horizontal = 3
+
+[node name="ZoomOut" type="Button" parent="Bottom/Actions"]
+theme_type_variation = &"CompactButton"
+unique_name_in_owner = true
+mouse_default_cursor_shape = 2
+text = "-"
+custom_minimum_size = Vector2(24, 24)
+size_flags_horizontal = 4
+size_flags_vertical = 4
+
+[node name="Zoom" type="Label" parent="Bottom/Actions"]
+unique_name_in_owner = true
+mouse_filter = 2
+text = "1x"
+theme_override_colors/font_color = Color(0.6667, 0.651, 0.6118, 1)
+
+[node name="ZoomIn" type="Button" parent="Bottom/Actions"]
+theme_type_variation = &"CompactButton"
+unique_name_in_owner = true
+mouse_default_cursor_shape = 2
+text = "+"
+custom_minimum_size = Vector2(24, 24)
+size_flags_horizontal = 4
+size_flags_vertical = 4
+
+[node name="Toast" type="Label" parent="."]
+unique_name_in_owner = true
+mouse_filter = 2
+text = "ui.storage.protected"
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = -73.0
+offset_right = -8.0
+offset_bottom = -44.0
+grow_horizontal = 2
+grow_vertical = 0
+horizontal_alignment = 1
+visible = false
+
+[node name="TaskDetails" parent="." instance=ExtResource("details")]
+unique_name_in_owner = true
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -348.0
+offset_right = -8.0
+offset_top = 78.0
+offset_bottom = 78.0
+
+[node name="UiText" type="Node" parent="." node_paths=PackedStringArray("target")]
+script = ExtResource("ui_text_binding")
+target = NodePath("..")

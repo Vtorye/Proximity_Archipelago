@@ -27,7 +27,10 @@ func index(cell: Vector2i) -> int:
 	var id: int = _grid.index(cell)
 	return node_index(id) if id >= 0 else -1
 func cost(cell: Vector2i) -> float:
-	var id: int = index(cell)
+	return cost_at_node(_grid.index(cell))
+## Reads a node ID from the same grid snapshot as this field.
+func cost_at_node(node_id: int) -> float:
+	var id: int = node_index(node_id) if node_id >= 0 else -1
 	return costs[id] if id >= 0 else INF
 func path(cell: Vector2i) -> Array[Vector2i]:
 	var result: Array[Vector2i] = []

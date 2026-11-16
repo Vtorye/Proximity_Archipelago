@@ -29,26 +29,47 @@ func end_stroke() -> void:
 	_stroke = []
 	_painting = false
 
-func paint(option: BuildOption, cell: Vector2i) -> bool:
-	last_result = controller.placement_check(option, cell, removals())
+func paint(option: BuildOption, cell: Vector2i, order: TaskBuildOrder = null) -> bool:
+	last_result = controller.placement_check(option, cell, removals(), order)
 	var previous: BuildCommand = _terrain.get(cell) if option is TileBuildOption else _occupied.get(cell)
-	if last_result.code == PlacementCheck.Code.ALREADY_PLACED and previous != null:
+	if last_result.code == PlacementCheck.Code.ALREADY_PLACED and previous != null and previous.order == null and order == null:
 		_erase(previous)
 		last_result = PlacementCheck.new()
 		changed.emit()
 		return true
 	if not last_result.allowed(): return false
-	if previous != null and previous.cell == cell and previous.option == option: return true
+	var prior_order: BuildCommand
+	if order != null:
+		for command in _commands:
+			if command.order != null and command.order.task == order.task:
+				prior_order = command
+				break
+		if prior_order != null and prior_order.order.variant == order.variant:
+			if prior_order.cell == cell: return true
+			last_result = PlacementCheck.result(PlacementCheck.Code.INSTANCE_LIMIT)
+			return false
+	if previous != null and previous != prior_order and (previous.order != null or order != null):
+		last_result = PlacementCheck.result(PlacementCheck.Code.OCCUPIED)
+		return false
+	if order == null and previous != null and previous.cell == cell and previous.option == option: return true
 	if option is SceneBuildOption:
+		var planned := 0
+		for command in _commands:
+			if command != previous and command != prior_order and command.option != null and command.option.id == option.id:
+				planned += 1
+		if not controller.allows_another(option, _removed, planned):
+			last_result = PlacementCheck.result(PlacementCheck.Code.INSTANCE_LIMIT)
+			return false
 		for target in controller.footprint_at(option, cell):
-			if _occupied.has(target) and _occupied[target] != previous:
+			if _occupied.has(target) and _occupied[target] != previous and _occupied[target] != prior_order:
 				last_result = PlacementCheck.result(PlacementCheck.Code.OCCUPIED)
 				return false
-		if previous != null and previous.cell != cell:
+		if previous != null and previous != prior_order and previous.cell != cell:
 			last_result = PlacementCheck.result(PlacementCheck.Code.OCCUPIED)
 			return false
 	if previous != null: _erase(previous)
-	var command: BuildCommand = BuildCommand.create(cell, option)
+	if prior_order != null and prior_order != previous: _erase(prior_order)
+	var command: BuildCommand = BuildCommand.create(cell, option, order)
 	_commands.append(command)
 	_index(command)
 	changed.emit()
@@ -90,21 +111,15 @@ func clear() -> void:
 func costs() -> Array[ResourceAmount]:
 	return controller.prices.quote_plan(_commands) if controller.prices != null else controller._base_plan_price(_commands)
 
-func budget_check() -> PlacementCheck:
-	if not controller.inventory.can_afford_all(costs()):
-		return PlacementCheck.result(PlacementCheck.Code.RESOURCES)
-	var food: ResourceType = controller.inventory.type_by_id(&"food")
-	var meals := 0
-	var food_cost := 0
+func task_orders() -> Array[TaskBuildOrder]:
+	var result: Array[TaskBuildOrder] = []
 	for command in _commands:
-		if command.is_removal(): continue
-		var option: BuildOption = command.option
-		pass # Food is calculated from the same sequential quote used for payment.
-		if option is SceneBuildOption: meals += option.spawn_count
-	food_cost = BuildController.price_amount(costs(), food)
-	if controller.inventory.available(food) - food_cost < meals:
-		return PlacementCheck.result(PlacementCheck.Code.SPAWN_FOOD)
-	return PlacementCheck.new()
+		if command.order != null:
+			result.append(command.order)
+	return result
+
+func budget_check() -> PlacementCheck:
+	return controller.funding_check(_commands, _removed)
 
 func commit() -> bool:
 	end_stroke()
@@ -144,20 +159,28 @@ func removals() -> Array[Building]:
 	return _removed.duplicate()
 
 func footprint(command: BuildCommand) -> Array[Vector2i]:
-	return command.removed_building.footprint() if command.is_removal() else controller.footprint_at(command.option, command.cell)
+	if not command.is_removal():
+		return controller.footprint_at(command.option, command.cell)
+	if is_instance_valid(command.removed_building):
+		return command.removed_building.footprint()
+	return [command.cell]
 
 func demolition_check(cell: Vector2i) -> PlacementCheck:
-	var building: Building = controller.registry.at(cell)
+	var building: Building = controller.demolition_target(cell)
 	if building != null:
 		if removals().has(building): return PlacementCheck.result(PlacementCheck.Code.ALREADY_PLACED)
 		return controller.demolition_check(cell)
+	if controller.map is TerrainMap:
+		var surface: TerrainType = controller.map.surface_at(cell)
+		if surface == null or surface.kind != TerrainType.Kind.ROAD:
+			return PlacementCheck.result(PlacementCheck.Code.NO_BUILDING)
 	for option in controller.options:
 		if option.id == &"ground": return controller.placement_check(option, cell)
 	return PlacementCheck.result(PlacementCheck.Code.NO_BUILDING)
 
 func demolish(cell: Vector2i) -> bool:
 	# Repeated brush visits must not peel layers or toggle demolition marks.
-	var building: Building = controller.registry.at(cell)
+	var building: Building = controller.demolition_target(cell)
 	if building != null and removals().has(building): return true
 	last_result = demolition_check(cell)
 	if not last_result.allowed(): return false
@@ -171,8 +194,24 @@ func demolish(cell: Vector2i) -> bool:
 		if option.id == &"ground": return paint(option, cell)
 	return false
 
+func forget_removal(building: Building) -> void:
+	if not _removed.has(building):
+		return
+	for command in _commands.duplicate():
+		if command.is_removal() and command.removed_building == building:
+			_erase(command)
+	for stroke in _history:
+		for command: BuildCommand in stroke.duplicate():
+			if command.is_removal() and command.removed_building == building:
+				stroke.erase(command)
+	for command in _stroke.duplicate():
+		if command.is_removal() and command.removed_building == building:
+			_stroke.erase(command)
+	changed.emit()
+
 func residents_to_demolish() -> int:
 	var result := 0
 	for building in removals():
-		if building is House: result += building.residents.size()
+		if is_instance_valid(building) and building is House:
+			result += building.residents.size()
 	return result

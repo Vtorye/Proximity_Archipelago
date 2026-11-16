@@ -1,0 +1,21 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://game/ui/nest_order_field.tscn" id="field"]
+
+[node name="OrderRow" type="HBoxContainer"]
+theme_override_constants/separation = 6
+
+[node name="Resource" type="RichTextLabel" parent="."]
+text = "Food · 24"
+custom_minimum_size = Vector2(92, 0)
+size_flags_horizontal = 3
+mouse_filter = 2
+fit_content = true
+scroll_active = false
+autowrap_mode = 0
+
+[node name="Minimum" parent="." instance=ExtResource("field")]
+
+[node name="Maximum" parent="." instance=ExtResource("field")]
+
+[node name="Owed" parent="." instance=ExtResource("field")]

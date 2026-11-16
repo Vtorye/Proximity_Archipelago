@@ -56,6 +56,6 @@ func at(cell: Vector2i) -> Building:
 func blocked_cells() -> Array[Vector2i]:
 	var result: Array[Vector2i] = []
 	for building in _buildings:
-		if building.option is SceneBuildOption and building.option.blocks_movement:
+		if not building is ConstructionSite and building.option is SceneBuildOption and building.option.blocks_movement:
 			result.append_array(building.footprint())
 	return result

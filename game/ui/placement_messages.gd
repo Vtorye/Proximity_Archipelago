@@ -4,6 +4,7 @@ extends RefCounted
 static func text(code: PlacementCheck.Code) -> String:
 	match code:
 		PlacementCheck.Code.OK: return ""
+		PlacementCheck.Code.INSTANCE_LIMIT: return TranslationServer.translate("ui.placement.instance_limit")
 		PlacementCheck.Code.BUSY: return TranslationServer.translate("ui.placement.busy")
 		PlacementCheck.Code.INVALID_OPTION: return TranslationServer.translate("ui.placement.invalid_option")
 		PlacementCheck.Code.RESOURCES: return TranslationServer.translate("ui.placement.resources")
@@ -11,11 +12,17 @@ static func text(code: PlacementCheck.Code) -> String:
 		PlacementCheck.Code.ALREADY_PLACED: return TranslationServer.translate("ui.placement.already_placed")
 		PlacementCheck.Code.OUTSIDE_MAP: return TranslationServer.translate("ui.placement.outside_map")
 		PlacementCheck.Code.UNBUILDABLE: return TranslationServer.translate("ui.placement.unbuildable")
+		PlacementCheck.Code.STOCK_DEPOT: return TranslationServer.translate("ui.storage.protected")
+		PlacementCheck.Code.SOIL_RESTRICTED: return TranslationServer.translate("ui.placement.soil_restricted")
+		PlacementCheck.Code.RESOURCE_SITE: return TranslationServer.translate("ui.placement.resource_site")
 		PlacementCheck.Code.IMPASSABLE: return TranslationServer.translate("ui.placement.impassable")
 		PlacementCheck.Code.OCCUPIED: return TranslationServer.translate("ui.placement.occupied")
 		PlacementCheck.Code.ANT_PRESENT: return TranslationServer.translate("ui.placement.ant_present")
 		PlacementCheck.Code.INVALID_BUILDING: return TranslationServer.translate("ui.placement.invalid_building")
 		PlacementCheck.Code.NO_BUILDING: return TranslationServer.translate("ui.placement.no_building")
-		PlacementCheck.Code.SPAWN_FOOD: return TranslationServer.translate("ui.placement.spawn_food")
 		PlacementCheck.Code.NO_ESCAPE: return TranslationServer.translate("ui.placement.no_escape")
+		PlacementCheck.Code.NO_ENTRANCE: return TranslationServer.translate("ui.placement.no_entrance")
+		PlacementCheck.Code.WATER_REQUIRED: return TranslationServer.translate("ui.placement.water_required")
+		PlacementCheck.Code.SHORE_REQUIRED: return TranslationServer.translate("ui.placement.shore_required")
+		PlacementCheck.Code.NO_BUILD_SUPPLY: return TranslationServer.translate("ui.placement.no_build_supply")
 	return TranslationServer.translate("ui.placement.unavailable")

@@ -7,11 +7,8 @@ ui.common.main_menu,Main menu,В меню
 ui.common.back,Back,Назад
 ui.common.next,Next,Далее
 ui.settings.volume,Volume,Громкость
-ui.settings.ui_scale,UI scale,Масштаб интерфейса
 ui.settings.fullscreen,Fullscreen,Полный экран
-ui.settings.vsync,Vertical sync,Вертикальная синхронизация
 ui.settings.grid,Tile grid,Сетка клеток
-ui.settings.reduced_motion,Reduce motion,Уменьшить анимацию
 ui.settings.saved,Saved,Сохранено
 ui.settings.reset,Reset,Сбросить
 ui.common.done,Done,Готово
@@ -29,8 +26,12 @@ ui.hud.ants,Ants,Муравьи
 ui.hud.ants_short,ants,м.
 ui.hud.menu,Menu (Esc),Меню (Esc)
 ui.hud.goal,Goal: %d each,Цель: по %d
-ui.hud.controls,LMB: pan  Space: build,ЛКМ: камера  Пробел: стройка
-ui.hud.build,Pause / build [Space],Пауза / стройка [Пробел]
+ui.hud.controls,LMB: pan · Space: pause · B: build,ЛКМ: камера · Пробел: пауза · B: стройка
+ui.hud.routes,Routes [N],Пути [N]
+ui.hud.routes_cells,Cells: ms [N],Клетки: мс [N]
+ui.hud.routes_priority,Priorities [N],Приоритеты [N]
+ui.hud.workload,%d+%d / %d · working + incoming,%d+%d / %d · работают + идут
+ui.hud.build,Construction [B],Строительство [B]
 ui.hud.stock,"%s: %d, available %d","%s: %d, свободно %d"
 ui.hud.waiting,Waiting for slots: %d,Ждут мест: %d
 ui.hud.no_safe_work,No safe work: %d,Нет безопасной работы: %d
@@ -49,14 +50,16 @@ ui.build.confirm_demolition,Demolish the building without a refund?,Снести
 ui.build.confirm,"Yes, demolish","Да, снести"
 ui.build.demolished,Building demolished,Здание снесено
 ui.construction.move,Move: LMB pans the map,Перемещение: ЛКМ двигает карту
+ui.construction.drag,Pan map,Перетаскивание
 ui.construction.demolish,Demolish: mark a building or road,Снос: отметить здание или дорогу
 ui.construction.undo,Undo stroke (Ctrl+Z),Отменить ход (Ctrl+Z)
 ui.construction.cancel,Cancel all,Отменить всё
-ui.construction.apply,Apply and resume (Space),Применить и продолжить (Пробел)
+ui.construction.apply,Start construction,Начать строительство
 ui.construction.build_hint,LMB: build · RMB: remove layer,ЛКМ: строить · ПКМ: убрать слой
 ui.construction.move_hint,LMB/MMB: pan · wheel: zoom,ЛКМ/СКМ: камера · колесо: зум
 ui.construction.demolish_hint,LMB: demolish · RMB: unmark,ЛКМ: снос · ПКМ: убрать отметку
-ui.construction.cost,Plan: %d · %s,План: %d · %s
+ui.construction.cost,Plan: %d · Cost: %s,План: %d · Цена: %s
+ui.construction.plan_reward,Reward: %s,Награда: %s
 ui.placement.busy,Wait for construction to finish,Дождитесь завершения строительства
 ui.placement.invalid_option,This object is unavailable,Этот объект недоступен
 ui.placement.resources,Not enough available resources,Не хватает свободных ресурсов
@@ -67,8 +70,8 @@ ui.placement.occupied,Demolish the existing building first,Сначала сне
 ui.placement.ant_present,Wait for the ant to leave the tile,"Подождите, пока муравей освободит клетку"
 ui.placement.invalid_building,Invalid building definition,Ошибка определения здания
 ui.placement.no_building,There is no building on this tile,На клетке нет здания
-ui.placement.spawn_food,New residents need available food portions,Нужны свободные порции пищи для новых жителей
 ui.placement.no_escape,This would block the ants' safe route to food,Это лишит муравьёв безопасного пути к еде
+ui.placement.no_entrance,The plan blocks every entrance to one of the buildings,План перекрывает все входы в одну из построек
 ui.placement.unavailable,Action unavailable,Действие недоступно
 ui.resource.wood,Wood,Древесина
 ui.resource.stone,Stone,Камень
@@ -82,19 +85,20 @@ ui.building.timber,Timber grove,Участок древесины
 ui.building.stone,Stone deposit,Каменная россыпь
 ui.building.canteen,Canteen,Столовая
 ui.tutorial.lesson1.title,Colony requests,Запросы колонии
-ui.tutorial.lesson1.body,"Three resource requests are available at a time.\nDeliver resources to gain time and colony marks.\nIf the timer reaches zero, the colony loses.\n\nYou need the same stock for requests and building.\nAnts pick nearby jobs with free slots.","Одновременно доступны три запроса ресурсов.\nСдавайте ресурсы и получайте дополнительные секунды и знаки колонии.\nЕсли таймер обнулится, партия закончится поражением.\n\nЗапасы нужны и для заданий, и для строительства.\nМуравьи выбирают близкую и свободную работу."
+ui.tutorial.lesson1.body,"Three resource requests are available at a time.\nDeliver resources to gain time and regalia.\nIf the timer reaches zero, the colony loses.\n\nYou need the same stock for requests and building.\nAnts pick nearby jobs with free slots.","Одновременно доступны три запроса ресурсов.\nСдавайте ресурсы и получайте дополнительные секунды и регалии.\nЕсли таймер обнулится, партия закончится поражением.\n\nЗапасы нужны и для заданий, и для строительства.\nМуравьи выбирают близкую и свободную работу."
 ui.tutorial.lesson2.title,Paths and food,Дороги и пища
 ui.tutorial.lesson2.body,"Paths speed up trips to work and home.\nTrees provide wood, quarries stone, and bushes food.\n\nAnts need food and a safe route to the canteen.\nA new nest adds five residents; they also need food.\nWorkplace load shows working+en route / slots.","Тропинки ускоряют дорогу на работу и домой.\nДеревья дают древесину, каменоломни — камень, кусты — пищу.\n\nМуравьям нужны еда и безопасный путь к столовой.\nНовый муравейник даёт пять жителей; им тоже нужна пища.\nНагрузка предприятия показана как работают+идут / места."
 ui.tutorial.lesson3.title,Build while paused,Стройка на паузе
-ui.tutorial.lesson3.body,"Space opens construction and pauses time and hunger.\nChoose a building, hold LMB, and drag across tiles.\nA road and a building can share a tile.\n\nRMB removes the latest addition on the selected tile.\nCtrl+Z undoes a stroke. The cross cancels the whole plan.\nSpace or the triangle applies the plan and resumes play.","Пробел включает стройку и останавливает время и голод.\nВыберите постройку, зажмите ЛКМ и проведите по клеткам.\nДорога и здание помещаются на одной клетке.\n\nПКМ снимает последнее добавление на выбранной клетке.\nCtrl+Z отменяет мазок. Крестик отменяет весь план.\nПробел или треугольник применяют план и продолжают игру."
+ui.tutorial.lesson3.body,Press B to open construction. Space pauses or resumes the simulation independently.\nChoose a building and drag across tiles. A road and a building can share a tile.\nRight-click removes the latest addition on the selected tile. Ctrl+Z undoes a stroke. The cross cancels the whole plan. The triangle applies it.,B открывает стройку. Пробел отдельно ставит игру на паузу или продолжает её.\nВыберите постройку и проведите по клеткам. Дорога и здание помещаются на одной клетке.\nПКМ снимает последнее добавление на клетке. Ctrl+Z отменяет мазок. Крестик отменяет весь план. Треугольник применяет его.
 ui.tutorial.lesson4.title,Camera and demolition,Камера и снос
 ui.tutorial.lesson4.body,"Use the wheel to zoom, and MMB, arrows or WASD to pan.\nIn construction, the Move tool lets you pan with LMB.\n\nThe Demolish tool marks buildings and roads for removal.\nRemoval happens when you apply the plan, with no refund.\nDemolishing a nest kills residents and needs confirmation.\nThe top menu offers settings, restart, and exit.","Колесо меняет масштаб, СКМ, стрелки и WASD двигают камеру.\nВ стройке инструмент «Перемещение» включает перенос ЛКМ.\n\nИнструмент «Снос» отмечает здания и дороги для удаления.\nОтметки применяются вместе с планом, без возврата ресурсов.\nСнос муравейника убивает жителей и требует подтверждения.\nМеню вверху содержит настройки, перезапуск и выход."
 ui.menu.language,Language: English,Язык: Русский
 ui.hud.missing_inputs,Waiting for inputs: %d,Ждут сырья: %d
+ui.hud.storage_full,Base storage full: %d,Склады баз полны: %d
 ui.placement.unbuildable,This terrain cannot be built on,Это покрытие запрещает строительство
 ui.placement.impassable,Tile is impassable,Клетка непроходима
 ui.tutorial.progress.title,Rewards and upgrades,Награды и развитие
-ui.tutorial.progress.body,"Each level has five requests in random order.\nSkipping usually costs one third and gives no reward.\nHover over Skip to see its price.\n\nClosing a level grants faster paths, cheaper building or faster ants.\nSpend colony marks on new canteens.","На уровне пять запросов в случайном порядке.\nОтказ обычно стоит треть цены, не даёт награды и закрывает запрос.\nЦена отказа видна в подсказке кнопки.\n\nЗакрытие уровня даёт быструю дорогу, скидку или скорость муравьёв.\nЗа знаки колонии можно строить новые столовые."
+ui.tutorial.progress.body,"Each level has five requests in random order.\nSkipping usually costs one third and gives no reward.\nHover over Skip to see its price.\n\nClosing a level grants faster paths, cheaper building or faster ants.\nSpend regalia on new canteens.","На уровне пять запросов в случайном порядке.\nОтказ обычно стоит треть цены, не даёт награды и закрывает запрос.\nЦена отказа видна в подсказке кнопки.\n\nЗакрытие уровня даёт быструю дорогу, скидку или скорость муравьёв.\nЗа регалии можно строить новые столовые."
 ui.menu.maps,Maps,Карты
 ui.map.new,New,Новая
 ui.map.name,Map name,Имя карты
@@ -107,6 +111,7 @@ ui.map.dirty,Unsaved changes,Есть несохранённые правки
 ui.map.discard,Repeat the action to discard edits,"Повторите действие, чтобы отбросить правки"
 ui.map.load_failed,Could not open the map,Не удалось открыть карту
 ui.map.loaded,Map loaded,Карта загружена
+ui.map.bundled,Bundled,Встроенная
 ui.map.name_needed,Enter a map name,Введите имя карты
 ui.map.save_failed,Could not save: %s,Не удалось сохранить: %s
 ui.map.saved,Map saved,Карта сохранена
@@ -118,3 +123,260 @@ ui.map.invalid_object_cell,Choose a free land tile,Выберите свобод
 Дорога,Path,Дорога
 Быстрая тропинка,Fast path,Быстрая тропинка
 Вода,Water,Вода
+ui.storage.main,Base nest,Базовый муравейник
+ui.storage.local,Barracks,Казарма
+ui.storage.fill,Storage %d / %d,Заполнено %d / %d
+ui.nest.orders,Orders,Заказы
+ui.nest.funds_construction,Stock here is used for construction,Ресурсы используются для строительства
+ui.order.min,Min,Мин.
+ui.order.once,Once,Однократно
+ui.order.range,Min %d · Max %d,Мин %d · Макс %d
+ui.order.owed,Requested: %d,Запрошено: %d
+ui.order.arriving,On the way: %d,В пути: %d
+ui.order.max,Max,Макс.
+ui.storage.in_main,In main nest %d,В главном складе %d
+ui.storage.protected,The starter base and nonempty stores cannot be demolished,Стартовый или непустой склад нельзя снести
+ui.terrain.entry,Entry %d ms,Вход %d мс
+ui.terrain.impassable,Impassable,Непроходимо
+ui.terrain.coast,Coast,Побережье
+ui.nest.inventory,Inventory,Запасы
+ui.nest.residents,Ants,Муравьи
+ui.nest.buy,Recruit,Нанять
+ui.nest.population,Residents %d / %d,Жители %d / %d
+ui.nest.worker,Workers,Рабочие
+ui.nest.carrier,Carriers,Носильщики
+ui.nest.assigned,Assigned residents include ants currently away,Учтены все жители этого муравейника
+ui.nest.full,No free resident slots,Нет свободных мест
+ui.nest.unaffordable,Insufficient resources in base nests,В базовых муравейниках не хватает ресурсов
+ui.nest.from_main,Paid from base nest inventories,Оплата из базовых муравейников
+ui.nest.kill,Kill,Убить
+ui.nest.kill_hint,Kill one assigned ant of this type. Its cargo is lost.,Убить одного жителя этого типа. Его груз будет потерян.
+ui.source.remaining,Supply: %d,Запас: %d
+ui.source.infinite,Supply: unlimited,Запас: бесконечный
+ui.source.finite,Finite source,Конечный источник
+ui.source.amount,Supply,Запас
+ui.building.sawmill,Sawmill,Лесопилка
+ui.building.quarry,Quarry,Каменоломня
+ui.building.farm,Farm,Ферма
+ui.placement.resource_site,Requires a matching unupgraded resource source with remaining supply,Нужен подходящий источник с запасом и без улучшения
+ui.task.unlocks,Unlocks: %s,Откроет: %s
+ui.site.title,Construction: %s,Стройка: %s
+ui.site.assembly,Assembly: %d%%,Сборка: %d%%
+ui.site.delivery,Waiting for material delivery,Ожидает доставку материалов
+ui.menu.waves,Spider waves,Волны пауков
+ui.defense.wall,Wall,Стена
+ui.defense.tower,Battle tower,Боевая вышка
+ui.nest.warrior,Warriors,Боевые муравьи
+ui.warrior.hint,%d HP; %d damage. Hunts spiders or staffs a tower. Eats at its nest; never gathers resources.,%d HP; %d урон. Ищет пауков или служит на вышке. Ест дома; ресурсы не добывает.
+ui.tower.active,Active: one warrior on duty,Работает: один боец на посту
+ui.tower.inactive,Offline: needs a warrior on duty,Отключена: нужен боевой муравей
+ui.combat.health,HP: %d / %d,HP: %d / %d
+ui.trap.title,Spider trap,Паучья ловушка
+ui.trap.hint,Kills civilian ants. Remains after triggering.,Убивает мирных муравьёв. Не исчезает после срабатывания.
+ui.trap.clear,Remove: %s,Убрать: %s
+ui.waves.next,Wave %d in %d:%02d,Волна %d через %d:%02d
+ui.waves.enemies,Spiders: %d,Пауков: %d
+ui.waves.hint,Recruit warriors in a nest. Build staffed towers and walls before the next wave.,Покупайте бойцов в муравейнике. До волны стройте стены и вышки с бойцами.
+ui.result.colony_destroyed,All nests were destroyed,Все муравейники уничтожены
+ui.terrain.grass,Grass,Трава
+ui.terrain.soil,Soil,Почва
+ui.terrain.road,Road,Дорога
+ui.terrain.road_plus,Improved road,Быстрая тропинка
+ui.terrain.water,Water,Вода
+ui.terrain.fertile,Fertile soil,Плодородная почва
+ui.terrain.rocky,Rocky soil,Каменистая почва
+ui.terrain.dry,Dry soil,Сухая почва
+ui.terrain.wet,Wet soil,Влажная почва
+ui.terrain.sand,Sand,Песок
+ui.placement.soil_restricted,This soil forbids this construction,На этой почве нельзя это строить
+ui.terrain.generate,Soils,Почвы
+ui.terrain.generated,Soils distributed over %d cells. Save the map.,Почвы распределены по %d клеткам. Сохраните карту.
+ui.terrain.allowed,yes,да
+ui.terrain.forbidden,no,нет
+ui.terrain.permissions,Roads: %s · berries: %s\nNests: %s,Дороги: %s · кусты: %s\nМуравейники: %s
+ui.terrain.harvest,Berry yield: %d%%,Урожай ягод: %d%%
+ui.terrain.nest_price,Nest price: %d%%,Цена муравейника: %d%%
+ui.terrain.road_price,Road price: %d%%,Цена дороги: %d%%
+ui.terrain.adjacency,Adjacent nest capacity: +%d%%\nRadius: %d; does not stack,Вместимость рядом: +%d%%\nРадиус: %d; не суммируется
+ui.terrain.base,Ground: %s,Почва: %s
+ui.terrain.capacity_bonus,Wet-soil capacity bonus: +%d%%,Влажная почва: +%d%% к вместимости
+ui.voyage.continue,Continue,Продолжить
+ui.voyage.save,Save game,Сохранить игру
+ui.voyage.saved,Game saved,Игра сохранена
+ui.voyage.save_failed,Save failed,Не удалось сохранить
+ui.voyage.ship,Ship,Корабль
+ui.voyage.ship_unlocked,Ship unlocked: build it to set sail,Доступен корабль: постройте его для отплытия
+ui.voyage.level_complete,Level %d complete,Уровень %d завершён
+ui.voyage.choose_reward,Choose one upgrade. Keep it on future islands.,Выберите одно улучшение. Оно останется на следующих островах.
+ui.voyage.road,Fast trail,Быстрая тропинка
+ui.voyage.road_detail,"Replaces the ordinary trail. Faster movement, same price.","Заменяет обычную тропинку. Движение быстрее, цена прежняя."
+ui.voyage.discount,Efficient construction,Бережливое строительство
+ui.voyage.discount_detail,All new buildings cost 10% less.,Все новые постройки на 10% дешевле.
+ui.voyage.speed,Quick feet,Быстрые лапки
+ui.voyage.speed_detail,All ants move 15% faster.,Все муравьи двигаются на 15% быстрее.
+ui.voyage.satiety,Deep reserves,Большой запас сил
+ui.voyage.satiety_detail,All ants gain 20% satiety capacity.,Запас сытости всех муравьёв увеличен на 20%.
+ui.voyage.departure,Ship ready. Victory!,Корабль готов. Победа!
+ui.voyage.score,Score: %d,Счёт: %d
+ui.voyage.next_island,Island %d: choose a shore for your next colony.,Остров %d: выберите берег для новой колонии.
+ui.voyage.fertile_island,Green shore · more fertile ground,Зелёный берег · больше плодородной земли
+ui.voyage.dry_island,Dry plateau · cheaper nests,Сухое плато · дешёвые муравейники
+ui.voyage.rocky_island,Stone islands · harder road building,Каменные острова · труднее строить дороги
+ui.voyage.carry_over,"Keep resources and upgrades. Less time, more costly requests.","Запасы и улучшения сохранятся. Времени станет меньше, задания — дороже."
+ui.voyage.seed,Seed,Зерно
+ui.voyage.generate,Generate islands,Создать острова
+ui.voyage.generate_confirm,Unsaved changes. Save them or press Generate islands again.,Есть несохранённые изменения. Сохраните их или нажмите «Создать острова» ещё раз.
+ui.voyage.generated,"Islands generated. Edit, save and play.","Острова созданы. Можно редактировать, сохранить и играть."
+ui.map.starting_maps,Starting maps,Стартовые карты
+ui.map.mode_title,%s · %s,%s · %s
+ui.map.starting_saved,Starting map selected,Стартовая карта выбрана
+ui.map.starting_requires_nest,Add a nest before using this as a starting map,Добавьте муравейник на стартовую карту
+ui.placement.water_required,Build the ship on water,Корабль строится на воде
+ui.placement.shore_required,Choose water next to a walkable shore,Выберите воду рядом с проходимым берегом
+ui.placement.no_build_supply,Not enough materials at bases connected to this site,На доступных стройке базах не хватает материалов
+ui.trap.inspect,Right-click to select and remove,ПКМ: выбрать и убрать
+ui.voyage.fertile_short,Green shore,Зелёный берег
+ui.voyage.dry_short,Dry plateau,Сухое плато
+ui.voyage.rocky_short,Stone islands,Каменные острова
+ui.construction.inspect_hint,Click: inspect · Drag: pan · Wheel: zoom,Клик: осмотр · Перетаскивание: камера · Колесо: зум
+ui.map.normal_mode,Standard,Обычная
+ui.construction.category.terrain,Terrain,Поверхности
+ui.construction.category.colony,Colony,Колония
+ui.construction.category.production,Production,Добыча
+ui.construction.category.defense,Defense,Оборона
+ui.construction.category.voyage,Voyage,Путешествие
+ui.construction.category.other,Other,Прочее
+ui.construction.title,Construction,Строительство
+ui.construction.details,Building details,О постройке
+ui.construction.price,Cost: %s,Цена: %s
+ui.construction.time,Assembly: %s s,Сборка: %s с
+ui.construction.instant,Instant placement,Мгновенная постройка
+ui.construction.water,Requires water,Требует воды
+ui.construction.slots,Work slots: +%d,Рабочие места: +%d
+ui.construction.footprint,Tiles: %d,Клеток: %d
+ui.construction.speed,Movement cost: %s,Стоимость перемещения: %s
+ui.construction.fast_trail,Fast trail,Быстрая тропинка
+ui.construction.category_caption,Categories,Категории
+ui.construction.empty,Choose a building to see its details.,Выберите постройку для просмотра.
+ui.construction.description.road,A trail speeds up movement for the colony.,Тропа ускоряет перемещение муравьёв.
+ui.construction.description.ground,Remove the trail and restore the underlying terrain.,Убирает тропу и восстанавливает покрытие под ней.
+ui.construction.description.road_plus,An upgraded trail for faster trips.,Улучшенная тропа для быстрых переходов.
+ui.construction.description.house,A barracks houses workers and has its own stockpile.,Казарма размещает жителей и хранит припасы на своём складе.
+ui.construction.description.base_nest,An additional base with a large stockpile and room for recruits.,Дополнительная база с большим складом и местами для найма.
+ui.construction.description.canteen,Ants come here to eat and restore satiety.,Муравьи приходят сюда поесть и восстановить сытость.
+ui.construction.description.building,A general purpose colony structure.,Обычная постройка колонии.
+ui.construction.description.apple_tree,Workers harvest food here.,Рабочие собирают здесь пищу.
+ui.construction.description.farm,Improves food production at a compatible source.,Улучшает добычу пищи на подходящем источнике.
+ui.construction.description.sawmill,Improves timber production at a compatible source.,Улучшает добычу древесины на подходящем источнике.
+ui.construction.description.quarry,Improves stone production at a compatible source.,Улучшает добычу камня на подходящем источнике.
+ui.construction.description.wall,Blocks paths and protects the colony from spiders.,Перекрывает проход и защищает колонию от пауков.
+ui.construction.description.tower,A stationed warrior fires on nearby spiders.,Воин на вышке обстреливает ближайших пауков.
+ui.construction.description.ship,Build at the water to depart for the next island.,Строится на воде для перехода на следующий остров.
+ui.window.collapse,Collapse window,Свернуть окно
+ui.window.expand,Expand window,Развернуть окно
+ui.window.nest,Nest,Муравейник
+ui.window.result,Match result,Итог матча
+ui.window.navigation,Navigation,Навигация
+ui.window.tasks,Requests,Запросы
+ui.window.campaign,Voyage,Путешествие
+ui.window.waves,Waves,Волны
+ui.settings.text_size,Text size,Размер текста
+ui.settings.text_normal,Normal,Обычный
+ui.settings.text_large,Large,Крупный
+ui.settings.text_xlarge,Very large,Очень крупный
+ui.resource.royal,Regalia,Регалии
+ui.hud.match_timer,Execution in %d:%02d,До казни осталось: %d:%02d
+ui.hud.wave_timer,Wave %d:%02d,Волна %d:%02d
+ui.colony.population,Ants: %d,Муравьи: %d
+ui.colony.store,%s (%d / %d),%s (%d / %d)
+ui.colony.amount,%s: %d,%s: %d
+ui.colony.summary_hint,Toggle colony stockpiles,Показать или скрыть склады колонии
+ui.colony.focus_hint,Center the camera on this nest,Навести камеру на этот муравейник
+ui.world.generated_title,Island %d,Остров %d
+ui.result.level,Level: %d,Уровень: %d
+ui.result.task_counts,Completed: %d · declined: %d,Выполнено: %d · пропущено: %d
+ui.building.statue_placeholder,Placeholder statue,Статуя (плейсхолдер)
+ui.building.feast,Royal feast,Королевский пир
+ui.construction.description.statue,"A passive monument that blocks movement. Placeholder art.","Пассивный монумент, преграждающий проход. Графика временная."
+ui.construction.description.feast,"A temporary royal feast. It disappears ten seconds after construction.","Временный королевский пир. Исчезает через 10 секунд после постройки."
+ui.task.request_statue,A royal monument is requested,Король требует установить монумент
+ui.placement.instance_limit,Building limit reached,Достигнут лимит построек
+ui.task.request_feast,A royal feast is requested,Король требует устроить пир
+ui.task.build,Build requested,Построить требуемое
+ui.task.diversion,Arrange a diversion,Отвлечь внимание
+ui.task.cancel,Decline,Отказ
+ui.task.cancel_notice,Declined: no time or reward,Отказ: без времени и награды
+ui.task.time_reward,+%d seconds,+%d секунд
+ui.task.time_reward_short,+%d s,+%d с
+ui.task.level_progress,Level %d · %d/%d,Уровень %d · %d/%d
+ui.task.numbered_title,Lvl %d (%d),Ур.%d (%d)
+ui.task.cancel_hint,Decline: %s. No reward.,Отказ: %s. Без награды.
+ui.task.submit_hint,Submit: %s. Reward: %s and %d s.,Сдать: %s. Награда: %s и %d с.
+ui.task.waiting,Waiting for space: %d · for supplies: %d,Ждут мест: %d · сырья: %d
+ui.task.trail_upgrade,Trails upgraded,Тропинка заменена на быструю
+ui.task.cheap_building,Construction costs less,Строительство дешевле
+ui.task.faster_ants,Ants move faster,Муравьи быстрее
+ui.nav.priority_help,Lower numbers have higher priority,Меньше число — выше приоритет
+ui.nav.terrain,Terrain,Земля
+ui.nav.work,Work,Работа
+ui.nav.home,Home,Дом
+ui.nav.food,Food,Еда
+ui.nav.hover,Point at a workplace,Наведите курсор на предприятие
+ui.nav.formula,Travel + %s × (working + approaching),Путь + %s × (работают + идут)
+ui.nav.entry,Cell entry · ms,Вход в клетку · мс
+ui.nav.priority,Priority · seconds,Приоритеты · секунды
+ui.nav.origin,From (%d / %d) · speed %.1f,От (%d / %d) · скорость %.1f
+ui.nav.no_path,No route,Пути нет
+ui.nav.path,Route: %.2f s,Путь: %.2f с
+ui.nav.unreachable,No route from the selected cell,Из выбранной точки пути нет
+ui.nav.breakdown,%.2f s + %s × %d = %.2f%s,%.2f с + %s × %d = %.2f%s
+ui.nav.no_slots, · no slots, · мест нет
+ui.nav.howto,Click: inspect workplace\nRight click: set origin\nDrag or use arrows to pan,Клик — нагрузка предприятия\nПКМ — выбрать начало\nЛКМ / стрелки — камера
+ui.nav.hidden,Estimates hidden,Оценки скрыты
+ui.nav.entry_help,Cell entry time in ms. Speed: %.1f. Zoom in to see values.,Время входа в клетку в мс. Скорость: %.1f. Приблизьте карту для чисел.
+ui.nav.routes_help,Right click sets origin. Drag or use arrows to pan. Score adds %s s per occupied slot.,ПКМ задаёт начало. ЛКМ и стрелки двигают камеру. За занятое место добавляется %s с.
+ui.task.request_1_1,Request 1.1,Запрос 1.1
+ui.task.request_1_2,Request 1.2,Запрос 1.2
+ui.task.request_1_3,Request 1.3,Запрос 1.3
+ui.task.request_1_4,Request 1.4,Запрос 1.4
+ui.task.request_1_5,Request 1.5,Запрос 1.5
+ui.task.request_2_1,Request 2.1,Запрос 2.1
+ui.task.request_2_2,Request 2.2,Запрос 2.2
+ui.task.request_2_3,Request 2.3,Запрос 2.3
+ui.task.request_2_4,Request 2.4,Запрос 2.4
+ui.task.request_2_5,Request 2.5,Запрос 2.5
+ui.task.request_3_1,Request 3.1,Запрос 3.1
+ui.task.request_3_2,Request 3.2,Запрос 3.2
+ui.task.request_3_3,Request 3.3,Запрос 3.3
+ui.task.request_3_4,Request 3.4,Запрос 3.4
+ui.task.request_3_5,Request 3.5,Запрос 3.5
+ui.world.tidal_shards,Tidal Shards,Осколки прилива
+ui.world.tidal_shards_description,Link the central islands with trails. Stone lies to the north and timber to the west. The eastern islands supply food. Remote islands need bases. Add canteens in the northwest and by the eastern quarry.,"Соедините тропами центральные острова. Север — камень, запад — лес, восток — пища. Дальним островам нужны базы; северо-западу и восточному карьеру — столовые."
+ui.world.five_soils,Five Soils,Пять земель
+ui.world.five_soils_description,Fertile valleys alternate with dry hills and rocky deposits. Wet banks expand nearby nests. Sandy beaches make trails more expensive. Painted terrain is saved with the map.,"Плодородные долины, сухие возвышенности и каменистые месторождения. Влажные берега расширяют соседние муравейники; песчаные пляжи удорожают дороги. Нарисованные почвы сохраняются вместе с картой."
+ui.window.close,Close,Закрыть
+ui.tutorial.previous,Previous page,Предыдущая страница
+ui.hud.pause,Pause [Space],Пауза [Пробел]
+ui.hud.unpause,Resume [Space],Продолжить [Пробел]
+ui.hud.tab_build,Build,Стройка
+ui.hud.tab_colony,Colony,Колония
+ui.hud.tab_tasks,Tasks,Задачи
+ui.settings.minimum_text,Minimum text size,Мин. размер текста
+ui.settings.text_pixels,%d px,%d пкс
+ui.construction.demolish_short,Demolish,Снос
+ui.construction.size,Size: %dx%d,Размер: %dx%d
+ui.construction.residents,Residents: %d,Вместимость: %d муравьёв
+ui.construction.storage,Storage: %d goods,Склад: %d ед.
+ui.construction.price_constant,Building another does not change the price,Цена не меняется с каждой постройкой
+ui.construction.price_multiplier,Price after each build: ×%s,Цена после каждой постройки: ×%s
+ui.construction.price_add,Added to the price after each build: +%s,Прибавка к цене после каждой постройки: +%s
+ui.construction.price_partial_multiplier,Part of the price changes by ×%s after each build,Часть цены умножается на %s после каждой постройки
+ui.construction.price_partial_add,Part of the price increases by %s after each build,Часть цены растёт на %s после каждой постройки
+ui.construction.next_price,Next build: %s,Следующая постройка: %s
+ui.construction.production_resource,Resource:,Ресурс:
+ui.construction.production_slots,Work slots: %d,Рабочие места: %d
+ui.construction.production_rate,Output per work cycle: %s,Добыча за рабочий цикл: %s
+ui.construction.source_target,Hover over a compatible source to see its output and supply.,"Наведите курсор на подходящий источник, чтобы увидеть добычу и запас."
+ui.construction.speed_multiplier,Movement speed: ×%s of base,Скорость движения: ×%s от базовой
+ui.trap.clear_action,Remove trap,Убрать ловушку
+ui.task.building_variant,Under construction: %s,Строится: %s

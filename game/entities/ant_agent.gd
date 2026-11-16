@@ -2,59 +2,94 @@ class_name AntAgent
 extends Node2D
 ## Executes plans; needs, route execution, and assignment policy are separate objects.
 
-enum DeathCause { STARVATION, DEMOLISHED, OTHER }
-enum Status { HOME, WALKING, WORKING, EATING, WAITING_FOR_FOOD, DEAD }
+enum Role { WORKER, CARRIER, WARRIOR }
+enum DeathCause { STARVATION, DEMOLISHED, OTHER, PLAYER, ENEMY, TRAP }
+enum Status { HOME, WALKING, WORKING, EATING, WAITING_FOR_FOOD, DEAD, WANDERING, CONSTRUCTING, GUARDING, FIGHTING }
 signal work_completed(human: Node2D, workplace: Node2D)
 signal died(human: Node2D, cause: DeathCause)
 signal status_changed(status: Status)
 signal cell_changed(old: Vector2i, next: Vector2i)
 signal waiting_changed
 
-@export var speed := 24.0
-@export var work_time := 3.0
+const DEFAULT_PROFILE: AntProfile = preload("res://game/ants/worker.tres")
+
+@export var profile: AntProfile
+var speed: float = DEFAULT_PROFILE.speed
+var work_time: float = DEFAULT_PROFILE.work_seconds
+var carry_capacity: int = DEFAULT_PROFILE.carry_capacity
+var combat: AntCombat
+var max_health := 1
+var health := 1
+var attack_damage := 1
+var construction: AntConstruction
+var role: Role = Role.WORKER
 var home: House
 var planner: TripPlanner
 var route_service: RouteService
+var logistics: ColonyLogistics
 var needs := AntNeeds.new()
 var motion := AntMotion.new()
 var status: Status = Status.HOME
-var current_workplace: Workplace
-var _plan: WorkPlan
+var work := AntWork.new()
+var transport := AntTransport.new()
 var _meal: StockReservation
 var _destination: StringName = &"home"
 var _timer := 0.0
 var departure_delay := 0.0
-var _carrying := false
-var _angle := 0.0
+@onready var _visual: AntVisual = get_node_or_null("Visual") as AntVisual
 var _animation_time := 0.0
 var _last_direction := Vector2.UP
-var _waiting_for_work := false
 var _waiting_reason: WorkPlan.WaitReason = WorkPlan.WaitReason.NONE
 var waiting_reason: WorkPlan.WaitReason:
 	get: return _waiting_reason
 var _reconsider_queued := false
 var _navigation_pending := false
 
-func configure(nest: House, policy: TripPlanner, navigation: RouteService) -> void:
+func apply_profile() -> void:
+	var definition: AntProfile = profile if profile != null else DEFAULT_PROFILE
+	needs.configure(definition.satiety_capacity)
+	speed = definition.speed
+	work_time = definition.work_seconds
+	carry_capacity = definition.carry_capacity
+	max_health = definition.health
+	health = max_health
+	attack_damage = definition.damage
+
+func configure(nest: House, policy: TripPlanner, navigation: RouteService, storage: ColonyLogistics) -> void:
 	home = nest
+	work.ant = self
+	transport.ant = self
 	planner = policy
+	needs.safety_margin = policy.safety_margin
 	route_service = navigation
 	motion.navigation = navigation
+	logistics = storage
 
 func _ready() -> void:
 	assert(home != null and planner != null and route_service != null, "Ant dependencies must be configured before entering the tree")
-	var sprite: Node = get_node_or_null("Sprite")
-	if sprite != null:
-		sprite.queue_free()
 	route_service.navigation_changed.connect(_on_navigation_changed)
 	route_service.food_sources_changed.connect(_on_food_sources_changed)
 	planner.opportunities_changed.connect(_on_work_opportunities_changed)
 	_timer = departure_delay + randf_range(0.3, 0.5)
-	_meal = planner.reserve_meal()
+	refresh_meal_reservation()
+	_refresh_visual()
+
+func refresh_meal_reservation() -> void:
+	if _is_foodless():
+		planner.inventory.release(_meal)
+		_meal = null
+	elif _meal == null or not _meal.active:
+		_meal = planner.reserve_meal()
+
+func _is_foodless() -> bool:
+	return not planner.food_within_range(route_service.world_to_cell(global_position), speed, needs.capacity)
 
 func _exit_tree() -> void:
-	_release_work()
+	if combat != null: combat.leave_tower()
+	if construction != null: construction.release()
+	work.release()
 	if planner != null and is_instance_valid(planner.inventory):
+		transport.discard()
 		planner.inventory.release(_meal)
 	if is_instance_valid(home):
 		home.remove_resident(self)
@@ -65,7 +100,7 @@ func _physics_process(delta: float) -> void:
 	var rate: float = AntNeeds.REST_RATE
 	if status == Status.WALKING:
 		rate = AntNeeds.WALK_RATE
-	elif status == Status.WORKING:
+	elif status in [Status.WORKING, Status.CONSTRUCTING]:
 		rate = AntNeeds.WORK_RATE
 	elif status == Status.EATING:
 		rate = AntNeeds.EAT_RATE
@@ -74,6 +109,9 @@ func _physics_process(delta: float) -> void:
 	if needs.satiety <= 0.0:
 		die(DeathCause.STARVATION)
 		return
+	if combat != null and combat.physics(delta):
+		_refresh_visual()
+		return
 	match status:
 		Status.HOME:
 			_timer -= delta
@@ -81,69 +119,109 @@ func _physics_process(delta: float) -> void:
 				_decide()
 		Status.WALKING:
 			var before: Vector2 = global_position
-			global_position = motion.step(global_position, speed * (TripPlanner.CARRY_SPEED_RATIO if _carrying else 1.0), delta)
+			global_position = motion.step(global_position, movement_speed(), delta)
 			var old_cell: Vector2i = route_service.world_to_cell(before)
 			var next_cell: Vector2i = route_service.world_to_cell(global_position)
 			if old_cell != next_cell:
 				cell_changed.emit(old_cell, next_cell)
+				if status == Status.DEAD: return
 			if before.distance_squared_to(global_position) > 0.0001:
 				_last_direction = (global_position - before).normalized()
 			if motion.finished:
 				_arrive()
 		Status.WORKING:
-			_timer -= delta
-			if not is_instance_valid(current_workplace) or not current_workplace.is_inside_tree():
-				_seek_food()
-			elif _timer <= 0.0:
-				if not current_workplace.complete_cycle(self):
-					# Contended ingredients must not trap the worker in unbudgeted repeat cycles.
-					_seek_food()
-					return
-				work_completed.emit(self, current_workplace)
-				_release_work()
-				_carrying = true
-				_go_home()
+			if not work.tick(delta):
+				return
+		Status.CONSTRUCTING:
+			construction.tick(delta)
 		Status.EATING:
 			_timer -= delta
 			if _timer <= 0.0:
 				if planner.inventory.consume(_meal):
 					needs.eat()
 				_meal = null
-				_carrying = false
-				_go_home()
+				if role == Role.WARRIOR:
+					_set_status(Status.HOME)
+					_timer = 0.3
+				elif transport.cargo.is_empty() and not (construction != null and construction.has_cargo()):
+					transport.carrying = false
+					_go_home()
+				else:
+					resume_delivery()
+		Status.WANDERING:
+			_timer -= delta
+			if _timer <= 0.0:
+				_decide()
 		Status.WAITING_FOR_FOOD:
 			_timer -= delta
 			if _timer <= 0.0:
-				_seek_food()
-	queue_redraw()
+				_decide()
+	_refresh_visual()
 
 func _decide() -> void:
-	if _meal == null or not _meal.active:
-		_meal = planner.reserve_meal()
-	_plan = planner.plan_work(self, home, needs, speed, work_time, _meal, current_workplace)
-	if _plan != null and _plan.waiting_for_slot:
-		_waiting_for_work = true
-		_set_waiting_reason(_plan.waiting_reason)
-		_release_work()
-		if global_position.distance_squared_to(route_service.cell_to_world(planner.accessible_entry(home))) > 0.01:
-			_go_home()
-		else:
-			_set_status(Status.HOME)
-			_timer = 0.75
-	elif _plan != null:
-		_waiting_for_work = false
-		_set_waiting_reason(WorkPlan.WaitReason.NONE)
-		current_workplace = _plan.workplace
-		_walk(_plan.outward, &"work")
+	if combat != null and role == Role.WARRIOR:
+		combat.decide()
+		return
+	if construction != null and construction.has_cargo():
+		resume_delivery()
+		return
+	if not transport.cargo.is_empty():
+		resume_delivery()
+		return
+	var foodless: bool = _is_foodless()
+	refresh_meal_reservation()
+	if construction != null and status in [Status.HOME, Status.WAITING_FOR_FOOD, Status.WANDERING] and construction.decide(): return
+	if role == Role.CARRIER:
+		transport.decide_pickup(foodless)
+		return
+	work.decide(foodless)
+
+## Construction carries reserved materials; transport delivers normal stock.
+func resume_delivery() -> void:
+	if construction != null and construction.has_cargo():
+		if not construction.resume():
+			_set_status(Status.WAITING_FOR_FOOD)
+			_timer = 1.0
+		return
+	transport.deliver()
+
+func _wander() -> void:
+	var cell: Vector2i = route_service.world_to_cell(global_position)
+	var origin: Vector2i = planner.accessible_entry(home) if is_instance_valid(home) else cell
+	var radius: int = maxi(2, absi(cell.x - origin.x) + absi(cell.y - origin.y))
+	var neighbors: Array[Vector2i] = route_service.snapshot().neighbors(cell)
+	var nearby := neighbors.filter(func(next: Vector2i) -> bool:
+		return absi(next.x - origin.x) + absi(next.y - origin.y) <= radius)
+	if not _is_foodless():
+		var approach: float = global_position.distance_to(route_service.cell_to_world(cell)) * route_service.entry_cost(cell) / speed
+		nearby = nearby.filter(func(next: Vector2i) -> bool:
+			var step_energy: float = planner.travel_energy(route_service.entry_cost(next), speed)
+			return needs.can_afford(approach + step_energy + planner.escape_energy(next, speed) + 2.0))
+		if nearby.is_empty() and not neighbors.is_empty():
+			_seek_food()
+			return
+	if nearby.is_empty():
+		_set_status(Status.WANDERING)
+		_timer = 1.0
 	else:
-		_waiting_for_work = false
-		_set_waiting_reason(WorkPlan.WaitReason.NONE)
-		_seek_food()
+		_walk(route_service.make_route([cell, nearby.pick_random()]), &"wander")
+
+func _can_recover() -> bool:
+	if not needs.can_afford(planner.escape_energy(route_service.world_to_cell(global_position), speed)):
+		return false
+	refresh_meal_reservation()
+	return _meal != null and _meal.active
 
 func _seek_food() -> void:
-	_waiting_for_work = false
+	if combat != null and role == Role.WARRIOR:
+		combat.seek_meal()
+		return
+	if transport.cargo.is_empty() and not (construction != null and construction.has_cargo()) and _is_foodless() and is_instance_valid(home):
+		_decide()
+		return
+	work.waiting_for_work = false
 	_set_waiting_reason(WorkPlan.WaitReason.NONE)
-	_release_work()
+	work.release()
 	if _meal == null or not _meal.active:
 		_meal = planner.reserve_meal()
 	if _meal == null:
@@ -163,32 +241,53 @@ func _go_home() -> void:
 		return
 	var entry: Vector2i = planner.accessible_entry(home)
 	var route: Route = planner.home_route(home, route_service.world_to_cell(global_position))
-	if not route.is_valid() or not needs.can_afford(planner.travel_energy(route.cost, speed * TripPlanner.CARRY_SPEED_RATIO) + planner.escape_energy(entry, speed)):
+	if not route.is_valid() or not needs.can_afford(planner.travel_energy(route.cost, speed * planner.carry_speed_ratio) + planner.escape_energy(entry, speed)):
 		_seek_food()
 		return
 	_walk(route, &"home")
 
 func _walk(route: Route, destination: StringName) -> void:
 	_destination = destination
-	motion.follow(route)
+	motion.follow(route, global_position)
 	_set_status(Status.WALKING)
 
 func _arrive() -> void:
+	if _destination == &"flee":
+		_set_status(Status.WANDERING)
+		_timer = 0.2
+		return
+	if _destination in [&"combat_chase", &"combat_tower", &"combat_meal", &"combat_patrol"]:
+		combat.arrive(_destination)
+		return
+	if _destination in [&"site_pickup", &"site_delivery", &"site_assembly"]:
+		construction.arrive(_destination)
+		return
 	match _destination:
 		&"work":
-			var cell: Vector2i = route_service.world_to_cell(global_position)
-			if not is_instance_valid(current_workplace) or not planner.can_finish_work(cell, needs, speed, work_time) or not current_workplace.begin_work(self):
-				_seek_food()
-				return
-			_set_status(Status.WORKING)
-			_timer = work_time
+			work.arrive()
+		&"delivery":
+			transport.unload()
+		&"pickup":
+			transport.load_pickup()
+		&"wander":
+			_set_status(Status.WANDERING)
+			_timer = randf_range(0.2, 0.7)
 		&"food":
 			_set_status(Status.EATING)
 			_timer = AntNeeds.MEAL_SECONDS
 		&"home":
-			_carrying = false
+			transport.carrying = false
 			_set_status(Status.HOME)
 			_timer = 0.5
+
+func movement_speed() -> float:
+	return speed * (planner.carry_speed_ratio if transport.carrying else 1.0)
+
+func step_clear_of_construction(cell: Vector2i) -> void:
+	var previous := route_service.world_to_cell(global_position)
+	global_position = route_service.cell_to_world(cell)
+	_queue_reconsideration(true)
+	cell_changed.emit(previous, cell)
 
 func _on_navigation_changed() -> void:
 	_queue_reconsideration(true)
@@ -200,7 +299,7 @@ func _on_food_sources_changed() -> void:
 		_on_navigation_changed()
 
 func _on_work_opportunities_changed() -> void:
-	if status == Status.HOME and _waiting_for_work:
+	if status == Status.WANDERING or (status == Status.HOME and work.waiting_for_work):
 		_timer = 0.0
 	elif status == Status.WALKING and _destination == &"work":
 		_queue_reconsideration(false)
@@ -219,10 +318,18 @@ func _reconsider_route() -> void:
 	_reconsider_queued = false
 	if status == Status.DEAD:
 		return
-	var cell: Vector2i = route_service.world_to_cell(global_position)
+	if combat != null and role == Role.WARRIOR:
+		combat.navigation_changed()
+		return
+	if construction != null and construction.job != null:
+		if geometry_changed and status != Status.EATING:
+			if not construction.resume():
+				construction.release()
+				_decide()
+		return
 	if status == Status.WORKING:
-		if geometry_changed and not planner.can_finish_work(cell, needs, speed, _timer):
-			_seek_food()
+		if geometry_changed:
+			work.reconsider()
 	elif status == Status.WALKING:
 		if _destination == &"work":
 			_decide()
@@ -230,16 +337,15 @@ func _reconsider_route() -> void:
 			_go_home()
 		elif geometry_changed and _destination == &"food":
 			_seek_food()
+		elif geometry_changed and _destination in [&"wander", &"pickup"]:
+			_decide()
+		elif geometry_changed and _destination == &"delivery":
+			resume_delivery()
 
 func workplace_removed(workplace: Workplace) -> void:
-	if current_workplace == workplace:
-		_release_work()
+	if work.workplace == workplace:
+		work.release()
 		_go_home()
-
-func _release_work() -> void:
-	if is_instance_valid(current_workplace):
-		current_workplace.release_worker(self)
-	current_workplace = null
 
 func _set_waiting_reason(reason: WorkPlan.WaitReason) -> void:
 	if _waiting_reason != reason:
@@ -251,12 +357,21 @@ func _set_status(value: Status) -> void:
 		status = value
 		status_changed.emit(status)
 
+func take_damage(amount: int, cause: DeathCause = DeathCause.ENEMY) -> void:
+	if status == Status.DEAD or amount <= 0: return
+	health = maxi(0, health - amount)
+	_refresh_visual()
+	if health == 0: die(cause)
+
 ## Removes the unit from the game. No further consequences.
 func die(cause: DeathCause = DeathCause.OTHER) -> void:
 	if status == Status.DEAD:
 		return
 	_set_status(Status.DEAD)
-	_release_work()
+	if combat != null: combat.leave_tower()
+	if construction != null: construction.release()
+	work.release()
+	transport.discard()
 	planner.inventory.release(_meal)
 	if is_instance_valid(home):
 		home.remove_resident(self)
@@ -264,27 +379,79 @@ func die(cause: DeathCause = DeathCause.OTHER) -> void:
 	queue_free()
 
 func debug_snapshot() -> Dictionary:
-	return {"status": Status.keys()[status], "satiety": needs.satiety, "destination": _destination, "route_cells": motion.route.cells.size() if motion.route != null else 0}
+	return {"role": Role.keys()[role], "status": Status.keys()[status], "satiety": needs.satiety, "destination": _destination, "route_cells": motion.route.cells.size() if motion.route != null else 0}
 
-func _draw() -> void:
-	# Pixel-native ant art remains crisp at every integer camera zoom.
-	if status == Status.HOME or status == Status.DEAD:
-		return
-	var forward: Vector2 = _last_direction
-	var side := Vector2(-forward.y, forward.x)
-	var leg_phase: float = sin(_animation_time * 22.0) if status == Status.WALKING else 0.0
-	for pair in range(3):
-		var origin: Vector2 = forward * (pair - 1) * 2.0
-		for sign_value in [-1.0, 1.0]:
-			var foot: Vector2 = origin + side * sign_value * 3.5 + forward * leg_phase * sign_value
-			draw_line(origin, foot.round(), Color("222521"), 1.0)
-	draw_circle(-forward * 3.0, 2.0, Color("38271e"))
-	draw_circle(Vector2.ZERO, 1.5, Color("241e19"))
-	draw_circle(forward * 3.0, 1.7, Color("33251d"))
-	for sign_value in [-1.0, 1.0]:
-		draw_line(forward * 4.0, (forward * 6.0 + side * sign_value * 2.0).round(), Color("241e19"), 1.0)
-	if _carrying:
-		draw_rect(Rect2(Vector2(-1, -6), Vector2(3, 3)), Color("d7bc73"))
-	if needs.satiety < 30.0:
-		draw_rect(Rect2(-4, -8, 8, 1), Color("38271e"))
-		draw_rect(Rect2(-4, -8, 8 * needs.satiety / AntNeeds.CAPACITY, 1), Color("edb86c"))
+func authored_sprite() -> Node2D:
+	return get_node_or_null("Sprite") as Node2D
+
+func _refresh_visual() -> void:
+	if _visual != null:
+		_visual.update_pose(self, _last_direction, _animation_time, transport.carrying)
+
+## Preserve the version 1 snapshot fields. Scene references are stored as indices.
+func capture_state(buildings: Array[Building], sites: Array[ConstructionSite]) -> Dictionary:
+	var state := {
+		"role": role, "position": position, "speed": speed,
+		"work_time": work_time, "carry_capacity": carry_capacity, "max_health": max_health,
+		"health": health, "attack_damage": attack_damage, "status": status,
+		"_destination": _destination, "_timer": _timer, "_last_direction": _last_direction,
+		"_waiting_reason": _waiting_reason,
+	}
+	state["home"] = buildings.find(home)
+	state["satiety"] = needs.satiety
+	state["capacity"] = needs.capacity
+	state["meal"] = _meal != null and _meal.active
+	work.capture_state(state, buildings)
+	transport.capture_state(state, buildings)
+	if motion.route != null:
+		state["route"] = motion.route.cells.duplicate()
+		state["route_index"] = motion.route.current_index
+		state["finished"] = motion.finished
+	if construction != null and construction.job != null:
+		var job: ConstructionJob = construction.job
+		state["job"] = {"site": sites.find(job.site), "source": buildings.find(job.source), "materials": ResourceAmount.pack(job.materials), "picked_up": job.picked_up, "assembly": job.assembly}
+	if combat != null:
+		state["tower"] = buildings.find(combat.tower)
+		state["combat_attack"] = combat.attack_cooldown()
+	return state
+
+func restore_state(state: Dictionary, buildings: Array[Building], sites: Array[ConstructionSite]) -> void:
+	planner.inventory.release(_meal)
+	_meal = planner.inventory.reserve(planner.food_type, 1, true) if state.meal else null
+	needs.capacity = state.capacity
+	needs.satiety = state.satiety
+	transport.restore_state(state, buildings)
+	work.restore_state(state, buildings)
+	if state.has("route"):
+		var cells: Array[Vector2i] = []
+		cells.assign(state.route)
+		motion.route = route_service.make_route(cells)
+		motion.route.current_index = state.route_index
+		motion.finished = state.finished
+	if state.has("job"):
+		var job := ConstructionJob.new()
+		job.site = sites[state.job.site] if state.job.site >= 0 else null
+		job.source = buildings[state.job.source] as House if state.job.source >= 0 else null
+		job.materials = ResourceAmount.unpack(state.job.materials, planner.inventory.type_by_id)
+		job.picked_up = state.job.picked_up
+		job.assembly = state.job.assembly
+		construction.job = job
+		if job.assembly and job.live(): job.site.builder = self
+	if combat != null:
+		var occupied_tower: DefenseBuilding
+		if state.get("tower", -1) >= 0:
+			occupied_tower = buildings[state.tower] as DefenseBuilding
+		combat.restore_state(state.get("combat_attack", 0.0), occupied_tower)
+	position = state.position
+	speed = state.speed
+	work_time = state.work_time
+	carry_capacity = state.carry_capacity
+	max_health = state.max_health
+	health = state.health
+	attack_damage = state.attack_damage
+	status = state.status
+	_destination = state._destination
+	_timer = state._timer
+	_last_direction = state._last_direction
+	_waiting_reason = state._waiting_reason
+	_refresh_visual()

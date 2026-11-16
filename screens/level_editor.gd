@@ -4,34 +4,36 @@ extends Screen
 var _template: World
 var _prototypes: Dictionary[String, Building]
 var _map: TileMapLayer
-var _objects: Node2D
-var _camera: WorldCamera
-var _selection: TileSelection
-var _brush: OptionButton
-var _saved: OptionButton
-var _title: LineEdit
-var _status: Label
+@onready var _objects: Node2D = $Objects
+@onready var _camera: WorldCamera = $Camera
+@onready var _selection: TileSelection = $Selection
+@onready var _brush: OptionButton = %Brush
+@onready var _saved: OptionButton = %SavedMaps
+@onready var _starting_maps: Array[OptionButton] = [%StartingStandard, %StartingWaves]
+@onready var _title: LineEdit = %MapTitle
+@onready var _status: Label = %Status
 var _brushes: Array[Variant] = []
 var _dirty := false
 var _discard_action := ""
 var _drag_button := MOUSE_BUTTON_NONE
 var _pending_move: Building
+var _selected_source: Workplace
+@onready var _source_controls: HBoxContainer = %SourceControls
+@onready var _finite: Button = %Finite
+@onready var _supply: SpinBox = %Supply
+@onready var _generator_seed: SpinBox = %Seed
+@onready var _generator_size: OptionButton = %Extent
+@onready var _wood_total: SpinBox = %WoodTotal
+@onready var _stone_total: SpinBox = %StoneTotal
+@onready var _food_total: SpinBox = %FoodTotal
 var _active := false
 
 func _ready() -> void:
-	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_template = LevelLayout.DEFAULT_WORLD.instantiate()
-	_prototypes = LevelLayout.prototypes(_template)
-	_objects = Node2D.new()
-	add_child(_objects)
-	_objects.z_index = 1
-	_camera = WorldCamera.new()
-	add_child(_camera)
-	_camera.enabled_input = false
+	(_template.map as TerrainMap).prepare_terrain()
+	_prototypes = LevelLayout.editor_prototypes(_template)
 	_camera.make_current()
-	_selection = TileSelection.new()
-	add_child(_selection)
-	_make_ui()
+	_configure_controls()
 	_show_world(LevelLayout.DEFAULT_WORLD.instantiate())
 	_refresh_saved()
 
@@ -45,64 +47,50 @@ func _exit_tree() -> void:
 	if is_instance_valid(_template):
 		_template.free()
 
-func _make_ui() -> void:
-	var layer := CanvasLayer.new()
-	layer.layer = 5
-	add_child(layer)
-	var ui := Control.new()
-	ui.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	layer.add_child(ui)
-	ColonyStyle.fill(ui)
-	ColonyStyle.apply(ui)
+func _configure_controls() -> void:
 
-	var top := PanelContainer.new()
-	top.add_theme_stylebox_override("panel", ColonyStyle.dialog_box())
-	ui.add_child(top)
-	top.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
-	top.offset_left = 6
-	top.offset_right = -6
-	top.offset_top = 6
-	var rows := VBoxContainer.new()
-	top.add_child(rows)
-	var actions := HBoxContainer.new()
-	rows.add_child(actions)
-	_button(actions, "ui.common.main_menu", _back)
-	_button(actions, "ui.map.new", _new_map)
-	_title = LineEdit.new()
-	_title.placeholder_text = "ui.map.name"
-	_title.max_length = 64
-	_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+
+	%Back.pressed.connect(_back)
+	%Back.pressed.connect(AppSettings.play_click)
+	%NewMap.pressed.connect(_new_map)
+	%NewMap.pressed.connect(AppSettings.play_click)
+	%SaveMap.pressed.connect(_save_map)
+	%SaveMap.pressed.connect(AppSettings.play_click)
+	%Play.pressed.connect(_play)
+	%Play.pressed.connect(AppSettings.play_click)
+	%PlayWaves.pressed.connect(_play.bind(true))
+	%PlayWaves.pressed.connect(AppSettings.play_click)
+	%LoadMap.pressed.connect(_load_map)
+	%LoadMap.pressed.connect(AppSettings.play_click)
+	%GenerateSoils.pressed.connect(_generate_soils)
+	%GenerateSoils.pressed.connect(AppSettings.play_click)
+	%GenerateMap.pressed.connect(_generate_map)
+	%GenerateMap.pressed.connect(AppSettings.play_click)
 	_title.text_changed.connect(func(_value: String): _mark_dirty())
-	actions.add_child(_title)
-	_button(actions, "ui.map.save", _save_map)
-	_button(actions, "ui.menu.play", _play)
-	var files := HBoxContainer.new()
-	rows.add_child(files)
-	_saved = OptionButton.new()
-	_saved.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_saved.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	_saved.fit_to_longest_item = false
-	files.add_child(_saved)
-	_button(files, "ui.map.load", _load_map)
-	_status = ColonyStyle.label("", 8)
-	_status.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	rows.add_child(_status)
-
-	var bottom := PanelContainer.new()
-	bottom.add_theme_stylebox_override("panel", ColonyStyle.dialog_box())
-	ui.add_child(bottom)
-	bottom.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
-	bottom.grow_vertical = Control.GROW_DIRECTION_BEGIN
-	bottom.offset_left = 6
-	bottom.offset_right = -6
-	bottom.offset_bottom = -6
-	var tools := VBoxContainer.new()
-	bottom.add_child(tools)
-	_brush = OptionButton.new()
-	tools.add_child(_brush)
+	for index in range(_starting_maps.size()):
+		var choice: OptionButton = _starting_maps[index]
+		choice.item_selected.connect(func(item: int): _set_starting_map(index == 1, choice, item))
+	_generator_seed.value = randi_range(1, 1000000)
+	for extent in [50, 80, 120, 160]:
+		_generator_size.add_item("%d × %d" % [extent, extent], extent)
+	_generator_size.select(1)
+	_finite.pressed.connect(AppSettings.play_click)
+	_finite.toggled.connect(func(enabled: bool):
+		if is_instance_valid(_selected_source):
+			_selected_source.finite_supply = enabled
+			_finite.text = "ui.source.finite" if enabled else "ui.source.infinite"
+			_supply.editable = enabled
+			_mark_dirty())
+	_supply.value_changed.connect(func(value: float):
+		if is_instance_valid(_selected_source):
+			_selected_source.remaining_supply = int(value)
+			_mark_dirty())
 	_brush.item_selected.connect(func(_index: int): _pending_move = null)
+	_populate_brushes()
+
+func _populate_brushes() -> void:
 	_add_brush("ui.map.move_object", &"move")
-	var tiles: TileSet = (_template.get_node("Map") as TileMapLayer).tile_set
+	var tiles: TileSet = _template.map.tile_set
 	for index in range(tiles.get_source_count()):
 		var id: int = tiles.get_source_id(index)
 		var atlas := tiles.get_source(id) as TileSetAtlasSource
@@ -121,30 +109,25 @@ func _make_ui() -> void:
 		if not seen.has(label):
 			_add_brush(label, id)
 			seen[label] = true
-	tools.add_child(ColonyStyle.label("ui.map.controls", 8))
 
-func _button(parent: Control, key: String, action: Callable) -> void:
-	var button: Button = ColonyStyle.button(key)
-	button.add_theme_font_override("font", ColonyStyle.SECONDARY_FONT)
-	button.add_theme_font_size_override("font_size", 8)
-	button.pressed.connect(action)
-	parent.add_child(button)
 
 func _add_brush(label: String, brush: Variant) -> void:
 	_brush.add_item(tr(label))
 	_brushes.append(brush)
 
 func _show_world(world: World) -> void:
+	_select_source(null)
 	if is_instance_valid(_map):
 		_map.free()
 	for child in _objects.get_children():
 		child.free()
-	_map = world.get_node("Map")
+	_map = world.map
 	_map.owner = null
 	world.remove_child(_map)
 	add_child(_map)
-	for id in LevelLayout.prototypes(world):
-		var building: Building = world.get_node(id)
+	var placed: Dictionary[String, Building] = LevelLayout.prototypes(world)
+	for id in placed:
+		var building: Building = placed[id]
 		var position_in_map: Vector2 = _map.to_local(building.global_position)
 		building.cell = _map.local_to_map(position_in_map)
 		if not building.has_meta(&"layout_kind"):
@@ -168,12 +151,57 @@ func _show_world(world: World) -> void:
 	_discard_action = ""
 
 func _refresh_saved() -> void:
-	_saved.clear()
-	_saved.add_item(tr("ui.map.default"))
-	_saved.set_item_metadata(0, "")
-	for data in LevelStore.saved_levels():
-		_saved.add_item(data.title)
-		_saved.set_item_metadata(_saved.item_count - 1, data.file)
+	var levels: Array[Dictionary] = LevelStore.saved_levels()
+	_fill_map_choices(_saved, levels)
+	for index in range(_starting_maps.size()):
+		var waves: bool = index == 1
+		var label: String = tr("ui.menu.waves" if waves else "ui.map.normal_mode")
+		_fill_map_choices(_starting_maps[index], levels, LevelStore.starting_level(waves), label)
+
+func _fill_map_choices(menu: OptionButton, levels: Array[Dictionary], selected := "", mode := "") -> void:
+	menu.clear()
+	var starting: bool = not mode.is_empty()
+	var default_title: String = tr("ui.map.default")
+	menu.add_item(tr("ui.map.mode_title") % [mode, default_title] if starting else default_title)
+	menu.set_item_metadata(0, "")
+	for data in levels:
+		var title: String = data.title
+		if starting:
+			title = tr("ui.map.mode_title") % [mode, title]
+		elif LevelStore.BUILT_IN_LEVELS.has(data.file):
+			title += " · " + tr("ui.map.bundled")
+		menu.add_item(title)
+		var index: int = menu.item_count - 1
+		menu.set_item_metadata(index, data.file)
+		if data.file == selected:
+			menu.select(index)
+
+func _set_starting_map(waves: bool, choice: OptionButton, index: int) -> void:
+	var filename: String = choice.get_item_metadata(index)
+	if not filename.is_empty():
+		var data: Dictionary = LevelStore.load_level(filename)
+		var world: World = LevelLayout.create_world(data)
+		if world == null:
+			_status.text = "ui.map.load_failed"
+			_refresh_saved()
+			return
+		world.waves.enabled = waves
+		var errors: Array[String] = LevelValidator.validate_world(world, str(data.title))
+		if not LevelLayout.prototypes(world).values().any(func(building: Building) -> bool: return building is House):
+			errors.append(tr("ui.map.starting_requires_nest"))
+		world.free()
+		if not errors.is_empty():
+			_status.text = errors[0]
+			_status.tooltip_text = "\n".join(errors)
+			_refresh_saved()
+			return
+	var error: Error = LevelStore.set_starting_level(filename, waves)
+	if error != OK:
+		_status.text = tr("ui.map.save_failed") % error_string(error)
+		_refresh_saved()
+		return
+	_status.text = "ui.map.starting_saved"
+	_status.tooltip_text = ""
 
 func _mark_dirty() -> void:
 	_dirty = true
@@ -203,11 +231,13 @@ func _load_map() -> void:
 	if not _confirm_discard("load"):
 		return
 	var filename: String = _saved.get_selected_metadata()
+	var description := ""
 	if filename.is_empty():
 		_show_world(LevelLayout.DEFAULT_WORLD.instantiate())
 		_title.clear()
 	else:
 		var data: Dictionary = LevelStore.load_level(filename)
+		description = data.get("description", "")
 		var world: World = LevelLayout.create_world(data)
 		if world == null:
 			_status.text = "ui.map.load_failed"
@@ -218,6 +248,9 @@ func _load_map() -> void:
 	_discard_action = ""
 	_status.text = "ui.map.loaded"
 	_status.tooltip_text = ""
+	if not description.is_empty():
+		_status.text = description
+		_status.tooltip_text = description.replace(". ", ".\n")
 
 func _save_map() -> void:
 	var title: String = _title.text.strip_edges()
@@ -240,7 +273,7 @@ func _save_map() -> void:
 			_saved.select(index)
 			break
 
-func _play() -> void:
+func _play(waves := false) -> void:
 	if _dirty:
 		_status.text = "ui.map.save_first"
 		return
@@ -249,16 +282,18 @@ func _play() -> void:
 	if world == null:
 		_status.text = "ui.map.load_failed"
 		return
+	world.waves.enabled = waves
 	var errors: Array[String] = LevelValidator.validate_world(world, tr("ui.menu.maps"))
 	world.free()
 	if not errors.is_empty():
 		_status.text = errors[0]
 		_status.tooltip_text = "\n".join(errors)
 		return
+	if waves: layout["wave_mode"] = true
 	Router.goto(&"match", layout)
 
 func _process(delta: float) -> void:
-	if not _active or get_viewport().gui_get_focus_owner() == _title or _saved.get_popup().visible or _brush.get_popup().visible:
+	if not _active or get_viewport().gui_get_focus_owner() is LineEdit or _saved.get_popup().visible or _brush.get_popup().visible:
 		return
 	var direction: Vector2 = WorldCamera.keyboard_direction()
 	if not direction.is_zero_approx():
@@ -306,7 +341,14 @@ func _paint(cell: Vector2i) -> void:
 	if brush is Vector4i:
 		if _map.get_cell_source_id(cell) < 0 and _map.get_used_cells().size() >= LevelLayout.TILE_LIMIT:
 			return
-		_map.set_cell(cell, brush.x, Vector2i(brush.y, brush.z), brush.w)
+		var next_type: TerrainType = (_map as TerrainMap).catalog.for_tile(brush)
+		var underlying: TerrainType = (_map as TerrainMap).ground_at(cell)
+		var object: Building = _object_at(cell)
+		if next_type != null and ((next_type.kind == TerrainType.Kind.ROAD and underlying != null and not underlying.roads_allowed) or (object != null and not TerrainRules.supports(next_type, TerrainRules.building_kind(object)))):
+			_status.text = "ui.placement.soil_restricted"
+			return
+		(_map as TerrainMap).paint_tile(cell, brush, true)
+		TerrainPainter.grow_wet_shore(_map, cell, _objects.get_children())
 		var size := Vector2(_map.tile_set.tile_size)
 		_camera.bounds = _camera.bounds.merge(Rect2(_map.to_global(_map.map_to_local(cell)) - size / 2, size).grow(160.0))
 		_mark_dirty()
@@ -316,6 +358,7 @@ func _paint(cell: Vector2i) -> void:
 				_pending_move = null
 		else:
 			_pending_move = _object_at(cell)
+			_select_source(_pending_move as Workplace)
 			if _pending_move != null:
 				_status.text = "ui.map.move_target"
 	else:
@@ -330,7 +373,7 @@ func _place(building: Building, cell: Vector2i) -> bool:
 	for tile in building.footprint():
 		var data: TileData = _map.get_cell_tile_data(tile)
 		var occupied: Building = _object_at(tile, building)
-		if data == null or not data.get_custom_data("walkable") or occupied != null:
+		if data == null or not data.get_custom_data("walkable") or occupied != null or not _allows_object(building, tile):
 			building.cell = previous
 			_status.text = "ui.map.invalid_object_cell"
 			return false
@@ -340,17 +383,54 @@ func _place(building: Building, cell: Vector2i) -> bool:
 	_mark_dirty()
 	return true
 
+func _generate_map() -> void:
+	if _dirty and _discard_action != "generate":
+		_discard_action = "generate"
+		_status.text = "ui.voyage.generate_confirm"
+		return
+	var totals := {"Workplace": int(_wood_total.value), "Workplace2": int(_stone_total.value), "AppleTree": int(_food_total.value)}
+	var layout: LevelData = IslandGenerator.generate_data(int(_generator_seed.value), 0, 0, _generator_size.get_selected_id(), totals)
+	var generated: World = LevelLayout.instantiate_world(layout) if layout != null else null
+	if generated == null:
+		_status.text = "ui.map.load_failed"
+		return
+	_show_world(generated)
+	_title.text = layout.title
+	_mark_dirty()
+	_discard_action = ""
+	_status.text = "ui.voyage.generated"
+
+func _generate_soils() -> void:
+	var count: int = TerrainPainter.populate(_map, _objects.get_children())
+	_mark_dirty()
+	_status.text = tr("ui.terrain.generated") % count
+
+func _allows_object(building: Building, cell: Vector2i) -> bool:
+	return TerrainRules.supports((_map as TerrainMap).ground_at(cell), TerrainRules.building_kind(building))
+
 func _erase(cell: Vector2i) -> void:
 	var building: Building = _object_at(cell)
 	if building != null:
+		if building == _selected_source:
+			_select_source(null)
 		if _pending_move == building:
 			_pending_move = null
 		building.free()
 	elif _map.get_cell_source_id(cell) != -1:
-		_map.erase_cell(cell)
+		(_map as TerrainMap).erase_terrain(cell)
 	else:
 		return
 	_mark_dirty()
+
+func _select_source(workplace: Workplace) -> void:
+	_selected_source = workplace
+	_source_controls.visible = workplace != null and workplace.recipe == null and workplace.output != null
+	if not _source_controls.visible:
+		return
+	_finite.set_pressed_no_signal(workplace.finite_supply)
+	_finite.text = "ui.source.finite" if workplace.finite_supply else "ui.source.infinite"
+	_supply.set_value_no_signal(workplace.remaining_supply)
+	_supply.editable = workplace.finite_supply
 
 func _object_at(cell: Vector2i, ignored: Building = null) -> Building:
 	for node in _objects.get_children():

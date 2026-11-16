@@ -2,7 +2,12 @@ class_name LevelStore
 extends RefCounted
 
 const DIRECTORY := "user://maps"
+const STARTING_MAPS := "user://starting_maps.cfg"
 const MAX_BYTES := 32 * 1024 * 1024
+const BUILT_IN_LEVELS := {
+	"builtin/tidal_shards": preload("res://game/worlds/maps/tidal_shards.tres"),
+	"builtin/five_soils": preload("res://game/worlds/maps/five_soils.tres"),
+}
 
 static func save_level(title: String, layout: Dictionary) -> Error:
 	title = title.strip_edges()
@@ -33,6 +38,8 @@ static func save_level(title: String, layout: Dictionary) -> Error:
 
 static func saved_levels() -> Array[Dictionary]:
 	var levels: Array[Dictionary] = []
+	for id: String in BUILT_IN_LEVELS:
+		levels.append({"file": id, "title": TranslationServer.translate(BUILT_IN_LEVELS[id].title)})
 	if not DirAccess.dir_exists_absolute(DIRECTORY):
 		return levels
 	for filename in DirAccess.get_files_at(DIRECTORY):
@@ -46,6 +53,8 @@ static func saved_levels() -> Array[Dictionary]:
 	return levels
 
 static func load_level(filename: String) -> Dictionary:
+	if BUILT_IN_LEVELS.has(filename):
+		return BUILT_IN_LEVELS[filename].data()
 	if filename.length() != 69 or filename.get_extension() != "json" or not filename.get_basename().is_valid_hex_number():
 		return {}
 	var file := FileAccess.open(DIRECTORY.path_join(filename), FileAccess.READ)
@@ -61,3 +70,22 @@ static func load_level(filename: String) -> Dictionary:
 	if not title is String or title.strip_edges().is_empty() or title.length() > 64:
 		return {}
 	return data
+
+static func starting_level(waves: bool) -> String:
+	var config := ConfigFile.new()
+	config.load(STARTING_MAPS)
+	return str(config.get_value("maps", "waves" if waves else "standard", ""))
+
+static func set_starting_level(filename: String, waves: bool) -> Error:
+	if not filename.is_empty() and load_level(filename).is_empty():
+		return ERR_INVALID_DATA
+	var config := ConfigFile.new()
+	config.load(STARTING_MAPS)
+	config.set_value("maps", "waves" if waves else "standard", filename)
+	var temporary: String = STARTING_MAPS + ".%d.tmp" % OS.get_process_id()
+	var error: Error = config.save(temporary)
+	if error == OK:
+		error = DirAccess.rename_absolute(temporary, STARTING_MAPS)
+	if error != OK:
+		DirAccess.remove_absolute(temporary)
+	return error

@@ -30,6 +30,7 @@ func _ready() -> void:
 
 func _run() -> void:
 	seed(20261025)
+	await preload("res://tests/voyage_regressions.gd").new().run(self)
 	await _test_translations()
 	await _test_language_toggle()
 	TranslationServer.set_locale("ru")
@@ -37,7 +38,14 @@ func _run() -> void:
 	_test_stock()
 	_test_composite_stock()
 	_test_navigation()
-	preload("res://tests/island_regressions.gd").new().run(self)
+	var islands = preload("res://tests/island_regressions.gd").new()
+	islands.run(self)
+	islands.test_foodless_colonies(self)
+	islands.test_physical_logistics(self)
+	islands.test_multiple_bases(self)
+	islands.test_orders(self)
+	await islands.test_authored_map(self)
+	islands.test_recruitment(self)
 	_test_resident_pruning()
 	await _test_worlds()
 	await preload("res://tests/build_regressions.gd").new().run(self)
@@ -48,6 +56,9 @@ func _run() -> void:
 	await _test_art_resolution()
 	await preload("res://tests/designer_regressions.gd").new().run(self)
 	await preload("res://tests/task_regressions.gd").new().run(self)
+	await preload("res://tests/construction_regressions.gd").new().run(self)
+	await preload("res://tests/combat_regressions.gd").new().run(self)
+	await preload("res://tests/terrain_regressions.gd").new().run(self)
 	await _test_simulation()
 	print("TEST REPORT ", JSON.stringify({"assertions": assertions, "failures": failures, "metrics": metrics}))
 	print("TESTS PASS" if failures.is_empty() else "TESTS FAIL")
@@ -199,8 +210,9 @@ func _test_resident_pruning() -> void:
 
 func make_world() -> World:
 	var world: World = WORLD.instantiate() as World
-	world.task_deck = null
+	world.prices.task_deck = null
 	world.auto_start = false
+	world.build_controller.physical_construction = false
 	add_child(world)
 	return world
 
@@ -241,9 +253,13 @@ func _test_worlds() -> void:
 	if built:
 		var new_home: House = first.registry.at(Vector2i(27, 29)) as House
 		expect(not first.route_service.walkable(new_home.cell), "blocking footprint is closed")
-		for resident in new_home.residents:
+		var carriers := 0
+		for resident: AntAgent in new_home.residents:
+			if resident.role == AntAgent.Role.CARRIER:
+				carriers += 1
 			var cell: Vector2i = first.route_service.world_to_cell(resident.global_position)
 			expect(first.route_service.walkable(cell) and cell != new_home.cell, "residents spawn at an accessible entrance")
+		expect(new_home.residents.size() == 5 and carriers == 1, "a built nest spawns four workers and one carrier")
 	var bad := House.new()
 	var packed := PackedScene.new()
 	packed.pack(bad)
@@ -257,17 +273,17 @@ func _test_worlds() -> void:
 	expect(not first.build_controller.try_build(invalid, Vector2i(28, 29)), "invalid nest setup fails")
 	expect(first.inventory.quantity(wood) == stock_before and first.registry.at(Vector2i(28, 29)) == null, "invalid setup leaves stock and world unchanged")
 	var far: BuildOption = load("res://game/building/options/house.tres")
-	expect(first.build_controller.check(far, Vector2i(9, 10)).code == PlacementCheck.Code.NO_ESCAPE, "nest with unreachable feeding rejected")
+	expect(first.build_controller.check(far, Vector2i(9, 10)).allowed(), "nest with unreachable feeding can be placed")
 	var slow: SceneBuildOption = far.duplicate(true) as SceneBuildOption
 	slow.spawn_speed = 1.0
 	options.append(slow)
-	expect(first.build_controller.check(slow, Vector2i(39, 25)).code == PlacementCheck.Code.NO_ESCAPE, "nest outside its movement profile budget rejected")
+	expect(first.build_controller.check(slow, Vector2i(39, 25)).allowed(), "slow nest outside its feeding budget can be placed")
 	# A slower tile must not consume a hungry ant's last safe escape budget.
 	map.set_cell(Vector2i(28, 26), 3, Vector2i(2, 0))
 	first.route_service.rebuild(first.registry.blocked_cells())
 	var from_cell: Vector2i = first.route_service.world_to_cell(ant.global_position)
 	var current_escape: float = first.route_service.food_field().cost(from_cell)
-	ant.needs.satiety = current_escape * first.route_service.cell_size() / (ant.speed * TripPlanner.CARRY_SPEED_RATIO) + AntNeeds.MEAL_SECONDS + AntNeeds.SAFETY_MARGIN + 0.1
+	ant.needs.satiety = ant.planner.travel_energy(current_escape, ant.movement_speed()) + AntNeeds.MEAL_SECONDS * AntNeeds.EAT_RATE + ant.needs.safety_margin + 0.1
 	var ground: BuildOption = load("res://game/building/options/ground.tres")
 	var before_terrain: Vector2i = (first.get_node("Map") as TileMapLayer).get_cell_atlas_coords(Vector2i(28, 26))
 	expect(not first.build_controller.try_build(ground, Vector2i(28, 26)) and first.build_controller.last_result.code == PlacementCheck.Code.NO_ESCAPE, "terrain change cannot strand a hungry ant")
@@ -275,12 +291,13 @@ func _test_worlds() -> void:
 	ant.needs.eat()
 	var saved_available: int = first.inventory.available(food)
 	first.inventory.try_spend(entry(food, saved_available))
-	expect(first.build_controller.check(far, Vector2i(26, 28)).code == PlacementCheck.Code.SPAWN_FOOD, "nest needs food for its residents")
+	expect(first.build_controller.check(far, Vector2i(26, 28)).allowed(), "nest can be placed without free food portions")
 	first.free()
 	second.free()
 	await get_tree().process_frame
 	var nested: World = WORLD.instantiate() as World
 	nested.auto_start = false
+	nested.build_controller.physical_construction = false
 	var nest_node: Node = nested.get_node("Home")
 	nest_node.owner = null
 	nested.remove_child(nest_node)
@@ -294,7 +311,6 @@ func _test_worlds() -> void:
 
 func _test_assignment_load() -> void:
 	var world: World = make_world()
-	var added := 0
 	for y in range(11, 31, 2):
 		for x in range(11, 31, 2):
 			var cell := Vector2i(x, y)
@@ -306,21 +322,32 @@ func _test_assignment_load() -> void:
 			workplace.setup(cell, null)
 			world.buildings.add_child(workplace)
 			world.registry.register(workplace)
-			added += 1
+	var preparation_started: int = Time.get_ticks_usec()
+	world.planner.prepare_workplaces()
+	var preparation_ms: float = (Time.get_ticks_usec() - preparation_started) / 1000.0
 	await get_tree().process_frame
 	var ant: AntAgent = world.population.agents()[0]
+	var origins: Array[Vector2i] = []
+	for y in range(22, 27):
+		for x in range(22, 27):
+			var cell := Vector2i(x, y)
+			if world.route_service.snapshot().connected(ant.home.cell, cell):
+				origins.append(cell)
+	expect(origins.size() > RouteService.MAX_CACHED_FIELDS, "assignment load fixture exceeds the manual overlay's origin cache")
 	var searches_before: int = world.route_service.search_count
 	var started: int = Time.get_ticks_usec()
 	var assigned := 0
 	for request in range(1000):
+		var origin: Vector2i = origins[request % origins.size()]
+		ant.global_position = world.route_service.cell_to_world(origin)
 		var plan: WorkPlan = world.planner.plan_work(ant, ant.home, ant.needs, ant.speed, ant.work_time, ant._meal)
-		if plan != null:
+		if plan != null and plan.workplace != null:
 			assigned += 1
 			plan.workplace.release_worker(ant)
 	var elapsed_ms: float = (Time.get_ticks_usec() - started) / 1000.0
-	expect(assigned == 1000, "one thousand assignments remain feasible with many POIs")
-	expect(world.route_service.search_count == searches_before, "repeated assignments do not start new searches")
-	metrics["assignment_load"] = {"requests": 1000, "workplaces": world.registry.workplaces().size(), "wall_ms": elapsed_ms, "new_searches": world.route_service.search_count - searches_before}
+	expect(assigned == 1000, "one thousand assignments remain feasible with many POIs and starting cells")
+	expect(world.route_service.search_count == searches_before and world.route_service._fields.is_empty(), "assignments from different cells never build origin fields")
+	metrics["assignment_load"] = {"requests": 1000, "origins": origins.size(), "workplaces": world.registry.workplaces().size(), "work_fields": world.planner._work_fields.size(), "preparation_ms": preparation_ms, "wall_ms": elapsed_ms, "new_searches": world.route_service.search_count - searches_before}
 	world.free()
 	await get_tree().process_frame
 
@@ -371,6 +398,7 @@ func _test_art_resolution() -> void:
 	replacement.grass = ImageTexture.create_from_image(image)
 	var world: World = WORLD.instantiate() as World
 	world.auto_start = false
+	world.build_controller.physical_construction = false
 	world.art = replacement
 	add_child(world)
 	expect(world.ready_for_play and world.art.tile_resolution() == 32 and (world.get_node("Map") as TileMapLayer).tile_set.tile_size == Vector2i(16, 16), "sprite catalog replacement preserves the authored map tile geometry")
@@ -389,8 +417,8 @@ func _test_simulation() -> void:
 		if roads:
 			var road: BuildOption = load("res://game/building/options/road.tres")
 			var network: Array[Vector2i] = []
-			for x in range(21, 31): network.append(Vector2i(x, 25))
-			for item in [Vector3i(21, 22, 24), Vector3i(24, 21, 24), Vector3i(29, 21, 24), Vector3i(28, 26, 26), Vector3i(30, 26, 27)]:
+			for x in range(21, 30): network.append(Vector2i(x, 25))
+			for item in [Vector3i(21, 22, 24), Vector3i(24, 21, 24), Vector3i(29, 21, 24), Vector3i(28, 26, 26)]:
 				for y in range(item.y, item.z + 1): network.append(Vector2i(item.x, y))
 			for cell in network:
 				expect(world.build_controller.try_build(road, cell), "safe road network can be built from starting stock")
@@ -425,15 +453,15 @@ func _test_assignment_lifecycle() -> void:
 	var food: ResourceType = world.inventory.type_by_id(&"food")
 	var before: int = world.inventory.quantity(food)
 	ant._decide()
-	expect(ant.status == AntAgent.Status.HOME and ant._plan.waiting_for_slot, "busy work slots leave a healthy ant waiting at home")
+	expect(ant.status == AntAgent.Status.HOME and ant.work.plan.waiting_for_slot, "busy work slots leave a healthy ant waiting at home")
 	expect(ant._meal.active and world.inventory.quantity(food) == before, "waiting preserves the next reserved meal")
 	for workplace in world.registry.workplaces(): workplace.work_slots = 4
 	ant._decide()
-	var job: Workplace = ant.current_workplace
+	var job: Workplace = ant.work.workplace
 	expect(job != null and ant.status == AntAgent.Status.WALKING, "released work slots allow a new assignment")
 	job.demolish()
 	job.free()
-	expect(ant.current_workplace == null and ant._destination != &"work", "removed workplace immediately cancels the walking assignment")
+	expect(ant.work.workplace == null and ant._destination != &"work", "removed workplace immediately cancels the walking assignment")
 	world.free()
 	await get_tree().process_frame
 

@@ -88,6 +88,31 @@ func cell_point(cell: Vector2i) -> Vector2:
 	var map: TileMapLayer = screen.world.get_node("Map") as TileMapLayer
 	return map.get_global_transform_with_canvas() * map.map_to_local(cell)
 
+## Legacy palette/assignment scenarios isolate immediate transaction feedback.
+## build_delivery_visual exercises the shipping delivery/assembly pipeline through actual input.
+func open_fixed_match(waves := false) -> void:
+	var template: World = LevelLayout.DEFAULT_WORLD.instantiate()
+	var map: TerrainMap = template.map as TerrainMap
+	map.prepare_terrain()
+	var buildings: Array[Node] = []
+	buildings.assign(template.placed_buildings())
+	for building in buildings:
+		building.set_meta(&"layout_kind", str(template.get_path_to(building)))
+	var layout: Dictionary = LevelLayout.capture(map, buildings)
+	template.free()
+	layout["wave_mode"] = waves
+	Router.goto(&"match", layout)
+
+func choose_building(menu: ConstructionMenu, id: StringName) -> void:
+	menu.show_category_for(id)
+	await frames(2)
+	await click(menu.controls[id])
+
+func use_immediate_construction_fixture(world: World) -> void:
+	world.build_controller.construction = null
+	world.population.construction = null
+	for ant in world.population.agents(): ant.construction = null
+
 func _run() -> void:
 	seed(20261025)
 	AppSettings.reset_defaults()
@@ -109,20 +134,27 @@ func _run() -> void:
 	expect(settings != null and not get_tree().paused, "main-menu settings open without pausing a session")
 	await capture("03-main-settings")
 	preload("res://tests/pixel_font_checks.gd").verify(self, settings)
+	var original_theme: Theme = settings.theme
+	await click(settings.controls[&"text_size_plus"])
+	expect(settings.theme != original_theme and settings.controls[&"done"].get_theme_font_size(&"font_size") == AppSettings.minimum_text_size(), "text size switches the active theme and reaches child controls")
+	await click(settings.controls[&"text_size_minus"])
+	expect(settings.theme == original_theme, "returning to a size reuses its theme")
+	var theme_notifications := [0]
+	settings.controls[&"done"].theme_changed.connect(func(): theme_notifications[0] += 1)
 	await click(settings.controls[&"volume"])
-	await click(settings.controls[&"vsync"])
 	await click(settings.controls[&"show_grid"])
-	await click(settings.controls[&"reduced_motion"])
-	expect(AppSettings.master_volume < 65 and not AppSettings.vsync and AppSettings.show_grid and AppSettings.reduced_motion, "settings controls apply real values")
+	AppSettings.apply()
+	expect(theme_notifications[0] == 0, "volume, grid, and unchanged settings do not notify the theme")
+	expect(AppSettings.master_volume < 65 and AppSettings.show_grid, "settings controls apply real values")
 	await capture("04-settings-modified")
 	var config := ConfigFile.new()
 	expect(config.load(AppSettings.PATH) == OK and config.get_value("interface", "grid", false), "settings persist to disk")
 	await click(settings.controls[&"reset"])
-	expect(AppSettings.master_volume == 70 and AppSettings.vsync and not AppSettings.show_grid and not AppSettings.reduced_motion, "reset restores defaults")
+	expect(AppSettings.master_volume == 70 and not AppSettings.show_grid, "reset restores defaults")
 	await capture("05-settings-reset")
 	await key(KEY_ESCAPE)
 	expect(not Router.has_overlay(), "escape returns from main settings")
-	await click(Router._current.controls[&"play"])
+	open_fixed_match()
 	await frames(60)
 	screen = Router._current
 	# Legacy UI regression retains the fixed-goal fixture; task behavior has its own runner.
@@ -160,7 +192,6 @@ func _run() -> void:
 	await capture("19-nested-settings")
 	settings = Router.top_overlay()
 	await click(settings.controls[&"show_grid"])
-	await click(settings.controls[&"reduced_motion"])
 	await capture("20-grid-setting")
 	await key(KEY_ESCAPE)
 	expect(get_tree().paused and Router.top_overlay() != null, "closing nested settings keeps pause ownership")
@@ -176,7 +207,7 @@ func _run() -> void:
 	if screen.world != null: screen.world.match_controller.task_mode = false
 	expect(not is_instance_valid(old_world) and not get_tree().paused and not Router.has_overlay(), "pause restart retires the old world and clears pause ownership")
 	expect(screen.world.population.count() == 5 and screen.world.match_controller.time_remaining > 178.0, "pause restart resets the population and match timer")
-	expect(AppSettings.show_grid and AppSettings.reduced_motion, "pause restart preserves player settings")
+	expect(AppSettings.show_grid, "pause restart preserves player settings")
 	await capture("20a-pause-restart")
 	# A real camera drag must move the map, not activate a cell.
 	var old_position: Vector2 = screen.camera.position
@@ -233,19 +264,34 @@ func _run() -> void:
 func _layout_only() -> void:
 	var dimensions: Vector2i = display_size if display_size != Vector2i.ZERO else get_window().size
 	var tag: String = "layout-%dx%d-" % [dimensions.x, dimensions.y]
+	var area: Rect2 = get_viewport().get_visible_rect()
 	await capture(tag + "main")
 	await click(Router._current.controls[&"settings"])
-	await frames(10)
-	await capture(tag + "settings")
+	var settings: MenuBase = Router.top_overlay()
+	for factor: float in [0.5, 0.75, 1.0]:
+		AppSettings.text_size = clampi(roundi((factor - 0.5) / 0.25), 0, 2)
+		AppSettings.apply()
+		await frames(5)
+		expect(area.encloses(settings.get_node("%Dialog").get_global_rect()), "settings stays in bounds at %d%%" % roundi(factor * 100))
+		expect(area.encloses(settings.controls[&"done"].get_global_rect()), "settings close stays reachable")
+		await capture(tag + "settings-%d" % roundi(factor * 100), 1)
 	await key(KEY_ESCAPE)
-	await click(Router._current.controls[&"play"])
+	open_fixed_match()
 	await frames(50)
 	screen = Router._current
-	# Legacy UI regression retains the fixed-goal fixture; task behavior has its own runner.
-	if screen.world != null: screen.world.match_controller.task_mode = false
 	await key(KEY_SPACE)
-	expect(Router.top_overlay() is ConstructionMenu, "layout uses the single supported construction editor")
-	await capture(tag + "build")
+	var menu := Router.top_overlay() as ConstructionMenu
+	expect(menu != null, "layout opens construction")
+	await choose_building(menu, &"house")
+	for factor: float in [0.5, 0.75, 1.0]:
+		AppSettings.text_size = clampi(roundi((factor - 0.5) / 0.25), 0, 2)
+		AppSettings.apply()
+		await frames(5)
+		expect(area.encloses(menu.panel.get_global_rect()), "palette fits at %d%%" % roundi(factor * 100))
+		expect(area.encloses(menu.get_node("Panel/WindowContents/Body/Palette/Readout").get_global_rect()), "inspector fits at %d%%" % roundi(factor * 100))
+		expect(area.encloses(screen.hud.controls[&"settings"].get_global_rect()), "HUD settings stays reachable")
+		expect(area.encloses(menu.controls[&"apply"].get_global_rect()), "apply remains reachable")
+		await capture(tag + "build-%d" % roundi(factor * 100), 1)
 	await key(KEY_SPACE)
 	await click(screen.hud.controls[&"settings"])
 	await frames(8)

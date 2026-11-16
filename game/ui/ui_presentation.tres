@@ -1,0 +1,34 @@
+[gd_resource type="Resource" script_class="UiPresentation" format=3]
+
+[ext_resource type="Script" path="res://game/ui/ui_presentation.gd" id="script"]
+
+[resource]
+script = ExtResource("script")
+dock_clearance = 4.0
+toast_duration = 3.0
+low_food_threshold = 3
+timer_warning_seconds = 30
+ghost_hover_opacity = 0.5
+ghost_opacity = 0.65
+outline_inset = 1.0
+outline_width = 1.0
+removal_fill = Color(0.6, 0.1, 0.1, 0.4)
+navigation_refresh = 0.25
+navigation_fallback_speed = 24.0
+navigation_cell_brightness = 0.45
+navigation_cell_opacity = 0.82
+navigation_min_label_width = 26.0
+navigation_font_size = 8
+navigation_baseline = 3.0
+grid_color = Color(1, 1, 1, 0.1)
+grid_width = 0.3
+selection_pulse_seconds = 1.2
+selection_min_opacity = 0.3
+selection_arm_pixels = 3.0
+selection_max_arm = 7.0
+backdrop_tile_size = 32.0
+backdrop_shore_radius_squared = 130.0
+backdrop_shore_variation = 8.0
+backdrop_ant_count = 28
+backdrop_ant_speed = 0.035
+backdrop_ant_stride_frequency = 16.0

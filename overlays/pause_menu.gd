@@ -1,26 +1,31 @@
+class_name PauseMenu
 extends MenuBase
 var controls: Dictionary[StringName, Button] = {}
 
 func _ready() -> void:
-	var content: VBoxContainer = ColonyStyle.modal(self, 144)
-	content.add_child(ColonyStyle.label("ui.pause.title", 12))
-	var resume: Button = ColonyStyle.button("ui.pause.resume", true)
-	resume.pressed.connect(PauseController.resume)
-	content.add_child(resume)
-	controls[&"resume"] = resume
-	var restart: Button = ColonyStyle.button("ui.pause.restart")
-	restart.pressed.connect(_restart)
-	content.add_child(restart)
-	controls[&"restart"] = restart
-	var settings: Button = ColonyStyle.button("ui.menu.settings")
-	settings.pressed.connect(_open_settings)
-	content.add_child(settings)
-	controls[&"settings"] = settings
-	var main: Button = ColonyStyle.button("ui.common.main_menu")
-	main.pressed.connect(_quit_to_menu)
-	content.add_child(main)
-	controls[&"main"] = main
-	default_focus = resume
+	%WindowHeader.close_requested.connect(func(): close_requested.emit(self))
+	controls[&"resume"] = %Resume
+	%Resume.pressed.connect(AppSettings.play_click)
+	%Resume.pressed.connect(PauseController.resume)
+	controls[&"save"] = %Save
+	%Save.pressed.connect(AppSettings.play_click)
+	%Save.pressed.connect(_save)
+	controls[&"restart"] = %Restart
+	%Restart.pressed.connect(AppSettings.play_click)
+	%Restart.pressed.connect(_restart)
+	controls[&"settings"] = %Settings
+	%Settings.pressed.connect(AppSettings.play_click)
+	%Settings.pressed.connect(_open_settings)
+	controls[&"main"] = %MainMenu
+	%MainMenu.pressed.connect(AppSettings.play_click)
+	%MainMenu.pressed.connect(_quit_to_menu)
+	default_focus = %Resume
+
+func _save() -> void:
+	var current: Node = Router._current
+	if current != null and current.get("world") is World:
+		var error: Error = SessionSave.write(current.world)
+		%Save.text = "ui.voyage.saved" if error == OK else "ui.voyage.save_failed"
 
 func _open_settings() -> void:
 	# Nested overlay: sits on top of the pause menu

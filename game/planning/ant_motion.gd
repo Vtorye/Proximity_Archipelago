@@ -5,9 +5,19 @@ var navigation: RouteService
 var route: Route
 var finished := true
 
-func follow(next_route: Route) -> void:
+func follow(next_route: Route, position := Vector2(INF, INF)) -> void:
 	route = next_route
 	finished = route == null or not route.is_valid()
+	if finished or navigation == null or not position.is_finite() or route.is_finished(): return
+	# Replanning mid-step must not turn the unit back toward a centre it already passed.
+	# Finish a centre before a perpendicular turn, so wall corners cannot be cut.
+	var center: Vector2 = navigation.cell_to_world(route.current_cell())
+	var next: Vector2 = navigation.cell_to_world(route.cells[route.current_index + 1])
+	if (position - center).dot(next - center) > 0:
+		route.advance()
+
+static func speed_multiplier(move_cost: float) -> float:
+	return 1.0 / maxf(0.05, move_cost)
 
 func step(position: Vector2, speed: float, delta: float) -> Vector2:
 	if finished:
@@ -15,8 +25,7 @@ func step(position: Vector2, speed: float, delta: float) -> Vector2:
 	var budget: float = delta
 	for iteration in range(32):
 		var target: Vector2 = navigation.cell_to_world(route.current_cell())
-		var terrain: float = maxf(0.05, navigation.entry_cost(route.current_cell()))
-		var velocity: float = speed / terrain
+		var velocity: float = speed * speed_multiplier(navigation.entry_cost(route.current_cell()))
 		var distance: float = position.distance_to(target)
 		if distance > velocity * budget:
 			return position.move_toward(target, velocity * budget)

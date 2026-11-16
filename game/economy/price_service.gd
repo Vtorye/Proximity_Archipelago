@@ -2,15 +2,17 @@ class_name PriceService
 extends Node
 ## Prices derive from immutable base definitions and event history, never from prior quotes.
 signal changed
+
+@export var starting_resources: Array[ResourceAmount] = []
+@export var task_deck: TaskDeck
 var events := WorldEvents.new()
 var global_multiplier := 1.0
+var terrain_multiplier: Callable
 var definitions: Array[BuildOption] = []
 var _stamps: Dictionary[String, String] = {}
 var _elapsed := 0.0
 var errors: Array[String] = []
-
-func _ready() -> void:
-	_process(1.0)
+var _orders: Dictionary[String, int] = {}
 
 func _init() -> void:
 	events.occurred.connect(func(_event: int, _subject: StringName, _amount: int): changed.emit())
@@ -21,7 +23,7 @@ func record(event: GameEvents.Kind, subject: StringName, amount: int = 1) -> voi
 static func key(event: int, subject: StringName) -> String:
 	return GameEvents.key(event, subject)
 
-func quote(option: BuildOption, pending: Dictionary[String, int] = {}) -> Array[ResourceAmount]:
+func quote(option: BuildOption, pending: Dictionary[String, int] = {}, local_multiplier: float = 1.0) -> Array[ResourceAmount]:
 	if option == null or not valid(option): return [null]
 	var totals: Dictionary[StringName, float] = {}
 	var types: Dictionary[StringName, ResourceType] = {}
@@ -32,7 +34,7 @@ func quote(option: BuildOption, pending: Dictionary[String, int] = {}) -> Array[
 	for rule in option.price_rules:
 		if rule == null or rule.value < 0 or not is_finite(rule.value): return [null]
 		var id: String = key(rule.event, rule.subject)
-		var count: int = events.count(rule.event, rule.subject) + pending.get(id, 0)
+		var count: int = events.count(rule.event, rule.subject) + _orders.get(id, 0) + pending.get(id, 0)
 		for type in totals:
 			if rule.resource == null or rule.resource.id == type:
 				totals[type] = totals[type] * pow(rule.value, count) if rule.operation == 0 else totals[type] + rule.value * count
@@ -41,33 +43,51 @@ func quote(option: BuildOption, pending: Dictionary[String, int] = {}) -> Array[
 		if totals[type] < 0 or not is_finite(totals[type]) or totals[type] > 2147483647: return [null]
 		var entry := ResourceAmount.new()
 		entry.type = types[type]
-		entry.amount = ceili(totals[type] * global_multiplier - 0.000001)
+		entry.amount = ceili(totals[type] * global_multiplier * local_multiplier - 0.000001)
 		result.append(entry)
 	return result
 
 func quote_plan(commands: Array[BuildCommand]) -> Array[ResourceAmount]:
 	var result: Array[ResourceAmount] = []
+	for entries: Array in quote_commands(commands).values(): result.append_array(entries)
+	return result
+
+## A single sequential quote funds each individual site as well as the complete plan.
+func quote_commands(commands: Array[BuildCommand]) -> Dictionary:
+	var result: Dictionary = {}
 	var pending: Dictionary[String, int] = {}
 	# Demolition commits before construction, regardless of brush insertion order.
 	for command in commands:
-		if command == null: return [null]
+		if command == null: return {null: [null]}
 		if not command.is_removal(): continue
 		var building: Building = command.removed_building
-		if not is_instance_valid(building): return [null]
-		var subject: StringName = building.option.id if building.option != null else &"initial"
+		if not is_instance_valid(building): return {null: [null]}
+		if building is ConstructionSite:
+			var reserved_event: GameEvents.Kind = GameEvents.Kind.TERRAIN_CHANGED if building.option is TileBuildOption else GameEvents.Kind.BUILDING_BUILT
+			for filter in [building.option.id, &""]:
+				var reserved_key: String = key(reserved_event, filter)
+				pending[reserved_key] = pending.get(reserved_key, 0) - 1
+			continue
+		var subject: StringName = building.improvement.id if building is Workplace and building.improvement != null else (building.option.id if building.option != null else &"initial")
 		for filter in [subject, &""]:
 			var id: String = key(GameEvents.Kind.BUILDING_DEMOLISHED, filter)
 			pending[id] = pending.get(id, 0) + 1
 	for command in commands:
-		if command == null: return [null]
+		if command == null: return {null: [null]}
 		if command.is_removal(): continue
-		if command.option == null: return [null]
-		result.append_array(quote(command.option, pending))
+		if command.option == null: return {null: [null]}
+		result[command] = quote(command.option, pending, terrain_multiplier.call(command.option, command.cell) if terrain_multiplier.is_valid() else 1.0)
 		for subject in [command.option.id, &""]:
-			var event: GameEvents.Kind = GameEvents.Kind.BUILDING_BUILT if command.option is SceneBuildOption else GameEvents.Kind.TERRAIN_CHANGED
+			var event: GameEvents.Kind = GameEvents.Kind.TERRAIN_CHANGED if command.option is TileBuildOption else GameEvents.Kind.BUILDING_BUILT
 			var id: String = key(event, subject)
 			pending[id] = pending.get(id, 0) + 1
 	return result
+
+func queue_order(option: BuildOption, delta: int) -> void:
+	var event: GameEvents.Kind = GameEvents.Kind.TERRAIN_CHANGED if option is TileBuildOption else GameEvents.Kind.BUILDING_BUILT
+	for subject in [option.id, &""]:
+		var id: String = key(event, subject)
+		_orders[id] = maxi(0, _orders.get(id, 0) + delta)
 
 func _process(delta: float) -> void:
 	_elapsed += delta

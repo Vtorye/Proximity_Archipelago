@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="NestBuildOption" format=3 uid="uid://cwg6he5xyq7c7"]
+
+[ext_resource type="Script" uid="uid://dohq4yj0b3afb" path="res://game/resources/resource_amount.gd" id="amount"]
+[ext_resource type="Script" uid="uid://bdsukqwfreh8j" path="res://game/building/nest_build_option.gd" id="option"]
+[ext_resource type="Script" uid="uid://clwif6xxyitqt" path="res://game/economy/price_rule.gd" id="price_rule"]
+[ext_resource type="Resource" path="res://game/resources/dot_treses/royal.tres" id="royal"]
+[ext_resource type="PackedScene" path="res://game/entities/base_nest.tscn" id="scene"]
+
+[sub_resource type="Resource" id="cost"]
+script = ExtResource("amount")
+type = ExtResource("royal")
+
+[sub_resource type="Resource" id="growth"]
+script = ExtResource("price_rule")
+subject = &"base_nest"
+value = 6.0
+
+[resource]
+script = ExtResource("option")
+resident_capacity = 20
+scene = ExtResource("scene")
+occupied_cells = Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1)])
+blocks_movement = false
+spawn_count = 5
+placement_kind = 3
+id = &"base_nest"
+display_name = "ui.storage.main"
+description = "ui.construction.description.base_nest"
+costs = Array[ExtResource("amount")]([SubResource("cost")])
+price_rules = Array[ExtResource("price_rule")]([SubResource("growth")])

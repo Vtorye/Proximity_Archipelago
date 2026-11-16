@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="TerrainType" format=3]
+[ext_resource type="Script" path="res://game/terrain/terrain_type.gd" id="type"]
+
+[resource]
+script = ExtResource("type")
+id = &"road"
+display_name = "ui.terrain.road"
+tile = Vector4i(3, 2, 0, 0)
+move_cost = 0.35
+kind = 1

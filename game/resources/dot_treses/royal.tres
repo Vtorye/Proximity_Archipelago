@@ -4,5 +4,5 @@
 [resource]
 script = ExtResource("type")
 id = &"royal"
-display_name = "Знак колонии"
+display_name = "ui.resource.royal"
 icon = ExtResource("icon")

@@ -1,17 +1,22 @@
 class_name TaskDeck
 extends Resource
+@export var requests: Array[TaskSpec] = []
 @export var stages: Array[TaskStage] = []
-@export_range(0.0, 1.0) var cancellation_fraction := 0.3333333333
+@export var choose_upgrades := false
 @export var loop_last_stage := true
-@export var repeat_cost_multiplier := 1.25
 @export var unlocked_road: TileBuildOption
 @export var replaced_road: TileBuildOption
+## IDs from older saves mapped to their replacement task IDs.
+@export var legacy_task_ids: Dictionary[String, String] = {}
 
 func validate(stock: WorldInventory) -> Array[String]:
 	var errors: Array[String] = []
+	var prices := PriceService.new()
 	if stages.is_empty(): errors.append(resource_path + ": empty stages")
-	if cancellation_fraction < 0 or cancellation_fraction > 1 or repeat_cost_multiplier < 1 or not is_finite(repeat_cost_multiplier): errors.append(resource_path + ": invalid cancellation or difficulty factor")
 	var ids: Dictionary[StringName, bool] = {}
+	for request in requests:
+		if request == null: errors.append(resource_path + ": missing request")
+		else: _validate_request(request, stock, prices, ids, errors)
 	for stage in stages:
 		if stage == null or stage.tasks.is_empty():
 			errors.append(resource_path + ": empty stage")
@@ -25,12 +30,34 @@ func validate(stock: WorldInventory) -> Array[String]:
 		if stage.upgrade == 1 and stage.upgrade_factor > 1: errors.append(resource_path + ": discount factor must not exceed one")
 		if stage.upgrade == 2 and stage.upgrade_factor < 1: errors.append(resource_path + ": speed upgrade must not slow ants")
 		for task in stage.tasks:
-			if task == null:
-				errors.append(resource_path + ": missing task")
-				continue
-			if task.id == &"" or ids.has(task.id): errors.append(resource_path + ": duplicate or missing task ID")
-			ids[task.id] = true
-			if task.reward_seconds < 0 or not is_finite(task.reward_seconds): errors.append(resource_path + ": invalid time reward")
-			for entry in task.costs + task.rewards + task.cancellation_costs:
-				if entry == null or entry.amount < 0 or entry.type == null or not stock.is_registered(entry.type): errors.append(resource_path + ": invalid task resource")
+			if task == null: errors.append(resource_path + ": missing task")
+			elif not ids.has(task.id): _validate_request(task, stock, prices, ids, errors)
+	prices.free()
 	return errors
+
+func _validate_request(task: TaskSpec, stock: WorldInventory, prices: PriceService, ids: Dictionary[StringName, bool], errors: Array[String]) -> void:
+	if task.id == &"" or ids.has(task.id): errors.append(resource_path + ": duplicate or missing task ID")
+	ids[task.id] = true
+	if task.reward_seconds < 0 or not is_finite(task.reward_seconds): errors.append(resource_path + ": invalid time reward")
+	if task.variants.is_empty(): errors.append(resource_path + ": request needs at least one variant")
+	var variant_ids: Dictionary[StringName, bool] = {}
+	var rewards := task.rewards.duplicate()
+	for variant in task.variants:
+		if variant == null or variant.id == &"" or variant_ids.has(variant.id):
+			errors.append(resource_path + ": invalid or duplicate variant ID")
+			continue
+		variant_ids[variant.id] = true
+		var option := variant.building
+		if option == null or option.id == &"" or not prices.valid(option):
+			errors.append(resource_path + ": invalid request option")
+		else:
+			for cost in option.costs:
+				if cost == null or not stock.is_registered(cost.type): errors.append(resource_path + ": unknown request cost resource")
+		if not is_finite(variant.reward_seconds) or (variant.reward_seconds != -1.0 and variant.reward_seconds < 0.0):
+			errors.append(resource_path + ": invalid variant time reward")
+		rewards.append_array(variant.rewards)
+	for reward in rewards:
+		if reward == null or reward.type == null or not stock.is_registered(reward.type): errors.append(resource_path + ": invalid request reward")
+	for option in task.unlocks:
+		if option == null or option.id == &"" or not prices.valid(option): errors.append(resource_path + ": invalid building unlock")
+		elif option is WorkplaceUpgradeOption and (not option.valid() or not stock.is_registered(option.source_type)): errors.append(resource_path + ": invalid resource facility")

@@ -27,3 +27,19 @@ func tile_resolution() -> int:
 		if texture != null:
 			pixels = maxi(pixels, texture.get_width())
 	return pixels
+
+
+func build_icon(option: BuildOption) -> Texture2D:
+	if option.icon != null:
+		return option.icon
+	match option.id:
+		&"road": return road
+		&"ground": return soil
+		&"house", &"base_nest": return nest
+		&"apple_tree", &"farm": return berries
+		&"canteen": return canteen
+		&"road_plus": return road
+		&"sawmill": return timber
+		&"quarry": return stone
+		&"building": return nest
+	return stone

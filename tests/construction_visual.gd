@@ -7,9 +7,10 @@ func _run() -> void:
 	get_viewport().add_child(load("res://boot.tscn").instantiate())
 	await frames(35)
 	await _check_tutorial_and_backdrop()
-	await click(Router._current.controls[&"play"])
+	open_fixed_match()
 	await frames(45)
 	screen = Router._current
+	use_immediate_construction_fixture(screen.world)
 	for id in screen.hud.stock_chips:
 		var icon: TextureRect = screen.hud.stock_chips[id].get_child(0)
 		print("RESOURCE ICON ", id, " ", icon.get_global_rect(), " MIN ", icon.custom_minimum_size, " SCALE ", icon.scale)
@@ -30,6 +31,7 @@ func _run() -> void:
 	await click(Router.top_overlay().controls[&"restart"])
 	await frames(45)
 	screen = Router._current
+	use_immediate_construction_fixture(screen.world)
 	expect(not is_instance_valid(retired) and not get_tree().paused and not Router.has_overlay(), "pause restart removes the previous world and every pause reason")
 	expect(screen.world.population.count() == 5 and screen.world.match_controller.time_remaining > 178.0, "pause restart begins a fresh three-minute colony")
 	var world: World = screen.world
@@ -49,9 +51,11 @@ func _run() -> void:
 	await click(screen.hud.controls[&"build"])
 	var menu: ConstructionMenu = Router.top_overlay() as ConstructionMenu
 	expect(menu != null and get_tree().paused, "construction mode pauses the simulation")
-	_validate_palette(menu)
-	expect((menu.controls[&"house"] as BuildChoiceButton).cost_label.text == ("5 %s + 20 %s" % [TranslationServer.translate("ui.resource.stone"), TranslationServer.translate("ui.resource.food")]), "palette shows both components of an editable price")
+	await _validate_palette(menu)
+	await choose_building(menu, &"house")
+	expect((menu.get_node("%Price") as Label).text.contains("5 %s + 20 %s" % [TranslationServer.translate("ui.resource.stone"), TranslationServer.translate("ui.resource.food")]), "details show both components of an editable price")
 	await capture("03-bottom-palette-and-composite-price")
+	await choose_building(menu, &"road")
 	var time: float = world.match_controller.time_remaining
 	var satiety: float = world.population.agents()[0].needs.satiety
 	await _stroke(Vector2i(23, 28), Vector2i(29, 28))
@@ -68,7 +72,7 @@ func _run() -> void:
 	menu = Router.top_overlay() as ConstructionMenu
 	expect(menu != null and get_tree().paused, "B opens the same construction editor")
 	await _stroke(Vector2i(23, 28), Vector2i(29, 28))
-	await click(menu.controls[&"house"])
+	await choose_building(menu, &"house")
 	await click_at(cell_point(Vector2i(29, 27)))
 	expect(menu.draft.size() == 8 and not menu.controls[&"apply"].disabled, "road and nest share an affordable plan")
 	expect(menu._cost.text.contains(("7 %s" % TranslationServer.translate("ui.resource.wood"))) and menu._cost.text.contains(("5 %s" % TranslationServer.translate("ui.resource.stone"))) and menu._cost.text.contains(("20 %s" % TranslationServer.translate("ui.resource.food"))), "plan total includes every resource across all placements")
@@ -102,7 +106,7 @@ func _run() -> void:
 	await click(menu.controls[&"cancel"])
 	await key(KEY_B)
 	menu = Router.top_overlay() as ConstructionMenu
-	await click(menu.controls[&"apple_tree"])
+	await choose_building(menu, &"apple_tree")
 	await click_at(cell_point(Vector2i(29, 27)))
 	expect(menu.draft.size() == 0 and menu._status.text == (TranslationServer.translate("ui.placement.occupied")), "occupied cells explain why the brush cannot paint")
 	await capture("08-occupied-cell-feedback")
@@ -110,57 +114,38 @@ func _run() -> void:
 	await _pan()
 	expect(screen.camera.position != camera_before and menu.draft.size() == 0, "middle drag pans while construction remains paused")
 	await key(KEY_ESCAPE)
-	expect(not get_tree().paused and not Router.has_overlay(), "empty draft resumes safely with Esc")
+	expect(get_tree().paused and Router.top_overlay() == menu, "Escape folds planning without resuming")
+	await key(KEY_SPACE)
 	await _check_requested_features()
-	await _check_ui_scales()
+	await _check_text_sizes()
 	Router.goto(&"main_menu")
 	await frames(45)
 	AppSettings.reset_defaults()
 	_finish()
 
-func _check_ui_scales() -> void:
+func _check_text_sizes() -> void:
 	await click(screen.hud.controls[&"settings"])
 	await click(Router.top_overlay().controls[&"settings"])
 	var settings: Control = Router.top_overlay()
-	expect(AppSettings.ui_scale == 0.75 and settings._scale_value.text == "75%", "interface starts smaller at seventy-five percent")
-	var window_before: Vector2i = get_window().size
-	await click(settings.controls[&"ui_scale_plus"])
-	expect(get_window().size == window_before, "UI scale changes preserve the physical window size")
-	expect(AppSettings.ui_scale == 1.0 and settings.controls[&"ui_scale_plus"].disabled, "settings apply the largest supported UI scale immediately")
-	expect(get_viewport().get_visible_rect().encloses(settings.controls[&"done"].get_global_rect()), "largest settings scale keeps its close action visible")
-	await capture("09-settings-scale-100")
-	preload("res://tests/pixel_font_checks.gd").verify(self, settings)
+	var original: Vector2i = get_window().size
+	for step in range(2):
+		await click(settings.controls[&"text_size_plus"])
+	var large: Button = settings.controls[&"text_size_plus"]
+	expect(AppSettings.text_size == 2 and large.disabled, "largest text size is available")
+	expect(get_window().size == original, "changing text size preserves the window")
+	await capture("09-settings-text-18")
 	await click(settings.controls[&"done"])
 	await click(Router.top_overlay().controls[&"resume"])
 	await key(KEY_B)
-	var menu: ConstructionMenu = Router.top_overlay() as ConstructionMenu
-	_validate_palette(menu)
-	await capture("10-toolbar-scale-100")
-	await key(KEY_ESCAPE)
-	await click(screen.hud.controls[&"settings"])
-	await click(Router.top_overlay().controls[&"settings"])
-	settings = Router.top_overlay()
-	window_before = get_window().size
-	await click(settings.controls[&"ui_scale_minus"])
-	await click(settings.controls[&"ui_scale_minus"])
-	expect(get_window().size == window_before, "shrinking UI preserves the physical window size")
-	expect(AppSettings.ui_scale == 0.5 and settings.controls[&"ui_scale_minus"].disabled, "settings apply the smallest supported UI scale immediately")
-	var config := ConfigFile.new()
-	expect(config.load(AppSettings.PATH) == OK and config.get_value("interface", "scale", 0.0) == 0.5, "UI scale persists in the settings file")
-	await capture("11-settings-scale-50")
-	preload("res://tests/pixel_font_checks.gd").verify(self, settings)
-	await click(settings.controls[&"done"])
-	await click(Router.top_overlay().controls[&"resume"])
+	await _validate_palette(Router.top_overlay() as ConstructionMenu)
+	await capture("10-construction-text-18")
+	await key(KEY_SPACE)
+	AppSettings.text_size = 0
+	AppSettings.save()
 	await key(KEY_B)
-	menu = Router.top_overlay() as ConstructionMenu
-	_validate_palette(menu)
-	await capture("12-toolbar-scale-50")
-	await key(KEY_ESCAPE)
-	await click(screen.hud.controls[&"settings"])
-	await click(Router.top_overlay().controls[&"restart"])
-	await frames(45)
-	screen = Router._current
-	expect(AppSettings.ui_scale == 0.5 and screen.hud.controls[&"settings"].custom_minimum_size == Vector2(16, 16), "match restart preserves the selected interface scale")
+	await _validate_palette(Router.top_overlay() as ConstructionMenu)
+	await capture("12-construction-text-14")
+	await key(KEY_SPACE)
 
 func _entry(type: ResourceType, amount: int) -> ResourceAmount:
 	var result := ResourceAmount.new()
@@ -206,12 +191,17 @@ func _pan() -> void:
 	await frames(3)
 
 func _validate_palette(menu: ConstructionMenu) -> void:
-	preload("res://tests/pixel_font_checks.gd").verify(self, menu)
-	print("PALETTE ", menu.panel.get_global_rect(), " MIN ", menu.panel.get_combined_minimum_size())
-	expect(get_viewport().get_visible_rect().encloses(menu.panel.get_global_rect()), "construction palette fits the viewport")
-	expect(menu.panel.get_global_rect().size.y <= get_viewport().get_visible_rect().size.y * 0.22, "compact palette occupies less than a quarter of the screen height")
-	for id in [&"road", &"ground", &"house", &"apple_tree", &"move", &"demolish", &"undo", &"cancel", &"apply"]:
-		expect(menu.panel.get_global_rect().encloses(menu.controls[id].get_global_rect()), "every construction action fits the bottom palette")
+	var viewport: Rect2 = get_viewport().get_visible_rect()
+	expect(viewport.encloses(menu.panel.get_global_rect()), "construction panel fits")
+	for id in [&"move", &"demolish", &"undo", &"cancel", &"apply"]:
+		expect(menu.panel.get_global_rect().encloses(menu.controls[id].get_global_rect()), "construction actions fit")
+	var header: WindowHeader = menu.get_node("%PaletteHeader")
+	var unfolded: float = menu.panel.size.y
+	expect(not header.draggable and menu.category_buttons.size() >= 3, "construction is docked and categorized")
+	await click(header.toggle)
+	expect(header.collapsed and menu.panel.size.y < unfolded, "construction folds to its header")
+	await click(header.toggle)
+	expect(not header.collapsed, "construction unfolds again")
 
 func _check_dots(image: Image, button: Button) -> void:
 	var factor: float = floorf(minf(float(image.get_width()) / 640.0, float(image.get_height()) / 360.0))
@@ -225,7 +215,7 @@ func _check_dots(image: Image, button: Button) -> void:
 			if color.r > 0.75 and color.g > 0.7 and color.b > 0.55:
 				total += Vector2(x + 0.5, y + 0.5)
 				count += 1
-	expect(count >= 3 and count <= int(18 * factor * factor * AppSettings.ui_scale), "scaled menu icon renders its three pixel dots")
+	expect(count >= 3 and count <= int(18 * factor * factor), "scaled menu icon renders its three pixel dots")
 	print("DOT CENTERS ", center, " ", total / maxf(1, count), " PIXELS ", count)
 	expect(count > 0 and (total / maxf(1, count)).distance_to(center) <= factor * 0.75, "menu dots stay centered at the chosen interface scale")
 
@@ -254,7 +244,8 @@ func _check_tutorial_and_backdrop() -> void:
 	await click(Router._current.controls[&"previous"])
 	expect(Router._current._page == 2, "tutorial supports paging backwards")
 	for factor in [0.5, 1.0]:
-		AppSettings.ui_scale = factor
+		AppSettings.text_size = clampi(roundi((factor - 0.5) / 0.25), 0, 2)
+		AppSettings.apply()
 		AppSettings.apply()
 		await frames(5)
 		for page in range(4):
@@ -263,7 +254,8 @@ func _check_tutorial_and_backdrop() -> void:
 			expect(get_viewport().get_visible_rect().encloses(Router._current._body.get_global_rect()), "tutorial remains readable at the smallest and largest interface scale")
 			expect(Router._current._body.get_visible_line_count() == Router._current._body.get_line_count(), "tutorial never clips instruction lines")
 		await capture("14-tutorial-scale-%d" % roundi(factor * 100))
-	AppSettings.ui_scale = 0.75
+	AppSettings.text_size = AppSettings.TYPOGRAPHY.default_index
+	AppSettings.apply()
 	AppSettings.apply()
 	await frames(3)
 	await click(Router._current.controls[&"back"])
@@ -291,7 +283,7 @@ func _check_requested_features() -> void:
 	expect(menu != null and get_tree().paused and not screen.hud.controls.has(&"pause"), "Space opens construction without a separate HUD pause button")
 	var cell := Vector2i(30, 28)
 	await click_at(cell_point(cell))
-	await click(menu.controls[&"house"])
+	await choose_building(menu, &"house")
 	await click_at(cell_point(cell))
 	expect(menu.draft.size() == 2, "real clicks stack a road and nest on one cell")
 	await capture("15-layered-road-and-nest")

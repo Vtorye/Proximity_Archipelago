@@ -1,11 +1,49 @@
-[gd_resource type="Resource" script_class="BuildCatalog" format=3]
-[ext_resource type="Script" path="res://game/building/build_catalog.gd" id="catalog"]
-[ext_resource type="Script" path="res://game/building/build_option.gd" id="option"]
-[ext_resource type="Resource" path="res://game/building/options/road.tres" id="road"]
-[ext_resource type="Resource" path="res://game/building/options/ground.tres" id="ground"]
-[ext_resource type="Resource" path="res://game/building/options/house.tres" id="house"]
-[ext_resource type="Resource" path="res://game/building/options/apple_tree.tres" id="berry"]
-[ext_resource type="Resource" path="res://game/building/options/canteen.tres" id="canteen"]
+[gd_resource type="Resource" script_class="BuildCatalog" format=3 uid="uid://bmrmfp1u0lwkg"]
+
+[ext_resource type="Resource" uid="uid://cwg6he5xyq7c7" path="res://game/building/options/base_nest.tres" id="base"]
+[ext_resource type="Resource" uid="uid://buu6g5wpbtgif" path="res://game/building/options/apple_tree.tres" id="berry"]
+[ext_resource type="Resource" uid="uid://de5f1e5g5jyvs" path="res://game/building/options/building.tres" id="building"]
+[ext_resource type="Resource" uid="uid://dt2pn38ld5j7f" path="res://game/building/options/canteen.tres" id="canteen"]
+[ext_resource type="Script" uid="uid://bkn08q1pnkgd3" path="res://game/building/build_catalog.gd" id="catalog"]
+[ext_resource type="Script" uid="uid://dkmgwa8fkucbp" path="res://game/building/build_category.gd" id="category"]
+[ext_resource type="Resource" uid="uid://0byesl65qnvb" path="res://game/building/options/farm.tres" id="farm"]
+[ext_resource type="Resource" uid="uid://bwanb45ketron" path="res://game/building/options/ground.tres" id="ground"]
+[ext_resource type="Resource" uid="uid://bi3bebyyyf4kk" path="res://game/building/options/house.tres" id="house"]
+[ext_resource type="Script" uid="uid://cdmimrfnsanfy" path="res://game/building/build_option.gd" id="option"]
+[ext_resource type="Resource" uid="uid://bkba8o70hl54c" path="res://game/building/options/quarry.tres" id="quarry"]
+[ext_resource type="Resource" uid="uid://b3bspiavx16wa" path="res://game/building/options/road.tres" id="road"]
+[ext_resource type="Resource" uid="uid://cv3ygwvsnayd2" path="res://game/building/options/road_plus.tres" id="road_plus"]
+[ext_resource type="Resource" uid="uid://dr0o3v3n5o1dt" path="res://game/building/options/sawmill.tres" id="sawmill"]
+[ext_resource type="Resource" uid="uid://copapubq0gp67" path="res://game/campaign/ship.tres" id="ship"]
+[ext_resource type="Resource" uid="uid://l1rbk6khhowj" path="res://game/combat/tower.tres" id="tower"]
+[ext_resource type="Resource" uid="uid://b1cb1yi67d0ms" path="res://game/combat/wall.tres" id="wall"]
+
+[sub_resource type="Resource" id="terrain"]
+script = ExtResource("category")
+title = "ui.construction.category.terrain"
+options = Array[ExtResource("option")]([ExtResource("road"), ExtResource("road_plus")])
+
+[sub_resource type="Resource" id="colony"]
+script = ExtResource("category")
+title = "ui.construction.category.colony"
+options = Array[ExtResource("option")]([ExtResource("house"), ExtResource("base"), ExtResource("canteen"), ExtResource("building")])
+
+[sub_resource type="Resource" id="production"]
+script = ExtResource("category")
+title = "ui.construction.category.production"
+options = Array[ExtResource("option")]([ExtResource("berry"), ExtResource("farm"), ExtResource("sawmill"), ExtResource("quarry")])
+
+[sub_resource type="Resource" id="defense"]
+script = ExtResource("category")
+title = "ui.construction.category.defense"
+options = Array[ExtResource("option")]([ExtResource("wall"), ExtResource("tower")])
+
+[sub_resource type="Resource" id="voyage"]
+script = ExtResource("category")
+title = "ui.construction.category.voyage"
+options = Array[ExtResource("option")]([ExtResource("ship")])
+
 [resource]
 script = ExtResource("catalog")
-options = Array[ExtResource("option")]([ExtResource("road"), ExtResource("ground"), ExtResource("house"), ExtResource("berry"), ExtResource("canteen")])
+options = Array[ExtResource("option")]([ExtResource("road"), ExtResource("ground"), ExtResource("house"), ExtResource("berry"), ExtResource("canteen"), ExtResource("base")])
+categories = Array[ExtResource("category")]([SubResource("terrain"), SubResource("colony"), SubResource("production"), SubResource("defense"), SubResource("voyage")])

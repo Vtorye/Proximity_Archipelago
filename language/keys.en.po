@@ -1,0 +1,1147 @@
+msgid ""
+msgstr ""
+"Language: en\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "ui.menu.play"
+msgstr "Play"
+
+msgid "ui.menu.settings"
+msgstr "Settings"
+
+msgid "ui.menu.quit"
+msgstr "Quit"
+
+msgid "ui.menu.tutorial"
+msgstr "Tutorial"
+
+msgid "ui.common.main_menu"
+msgstr "Main menu"
+
+msgid "ui.common.back"
+msgstr "Back"
+
+msgid "ui.common.next"
+msgstr "Next"
+
+msgid "ui.settings.volume"
+msgstr "Volume"
+
+msgid "ui.settings.fullscreen"
+msgstr "Fullscreen"
+
+msgid "ui.settings.grid"
+msgstr "Tile grid"
+
+msgid "ui.settings.saved"
+msgstr "Saved"
+
+msgid "ui.settings.reset"
+msgstr "Reset"
+
+msgid "ui.common.done"
+msgstr "Done"
+
+msgid "ui.settings.save_error"
+msgstr "Save failed"
+
+msgid "ui.pause.title"
+msgstr "Paused"
+
+msgid "ui.pause.resume"
+msgstr "Resume"
+
+msgid "ui.pause.restart"
+msgstr "Restart"
+
+msgid "ui.result.victory"
+msgstr "Victory"
+
+msgid "ui.result.defeat"
+msgstr "Defeat"
+
+msgid "ui.result.goal_reached"
+msgstr "Goal reached"
+
+msgid "ui.result.time_up"
+msgstr "Time is up"
+
+msgid "ui.result.time_left"
+msgstr "Time left: %02d:%02d"
+
+msgid "ui.result.new_game"
+msgstr "New game"
+
+msgid "ui.hud.ants"
+msgstr "Ants"
+
+msgid "ui.hud.ants_short"
+msgstr "ants"
+
+msgid "ui.hud.menu"
+msgstr "Menu (Esc)"
+
+msgid "ui.hud.goal"
+msgstr "Goal: %d each"
+
+msgid "ui.hud.controls"
+msgstr "LMB: pan · Space: pause · B: build"
+
+msgid "ui.hud.routes"
+msgstr "Routes [N]"
+
+msgid "ui.hud.routes_cells"
+msgstr "Cells: ms [N]"
+
+msgid "ui.hud.routes_priority"
+msgstr "Priorities [N]"
+
+msgid "ui.hud.workload"
+msgstr "%d+%d / %d · working + incoming"
+
+msgid "ui.hud.build"
+msgstr "Construction [B]"
+
+msgid "ui.hud.stock"
+msgstr "%s: %d, available %d"
+
+msgid "ui.hud.waiting"
+msgstr "Waiting for slots: %d"
+
+msgid "ui.hud.no_safe_work"
+msgstr "No safe work: %d"
+
+msgid "ui.hud.need_food"
+msgstr "Food needed"
+
+msgid "ui.cost.invalid"
+msgstr "Invalid cost"
+
+msgid "ui.cost.free"
+msgstr "Free"
+
+msgid "ui.build.demolish"
+msgstr "Demolish"
+
+msgid "ui.build.cancel_demolition"
+msgstr "Cancel demolition"
+
+msgid "ui.build.title"
+msgstr "Construction"
+
+msgid "ui.build.workers"
+msgstr "Working+en route: %d+%d/%d"
+
+msgid "ui.build.water"
+msgstr "Water"
+
+msgid "ui.build.spawn_help"
+msgstr ". +%d ants; requires %d food portions."
+
+msgid "ui.build.completed"
+msgstr "%s: complete"
+
+msgid "ui.build.confirm_residents"
+msgstr "Residents will die: %d. Demolish the nest?"
+
+msgid "ui.build.confirm_demolition"
+msgstr "Demolish the building without a refund?"
+
+msgid "ui.build.confirm"
+msgstr "Yes, demolish"
+
+msgid "ui.build.demolished"
+msgstr "Building demolished"
+
+msgid "ui.construction.move"
+msgstr "Move: LMB pans the map"
+
+msgid "ui.construction.demolish"
+msgstr "Demolish: mark a building or road"
+
+msgid "ui.construction.undo"
+msgstr "Undo stroke (Ctrl+Z)"
+
+msgid "ui.construction.drag"
+msgstr "Pan map"
+
+msgid "ui.construction.cancel"
+msgstr "Cancel all"
+
+msgid "ui.construction.apply"
+msgstr "Start construction"
+
+msgid "ui.construction.build_hint"
+msgstr "LMB: build · RMB: remove layer"
+
+msgid "ui.construction.move_hint"
+msgstr "LMB/MMB: pan · wheel: zoom"
+
+msgid "ui.construction.demolish_hint"
+msgstr "LMB: demolish · RMB: unmark"
+
+msgid "ui.construction.cost"
+msgstr "Plan: %d · Cost: %s"
+
+msgid "ui.construction.plan_reward"
+msgstr "Reward: %s"
+
+msgid "ui.placement.busy"
+msgstr "Wait for construction to finish"
+
+msgid "ui.placement.invalid_option"
+msgstr "This object is unavailable"
+
+msgid "ui.placement.resources"
+msgstr "Not enough available resources"
+
+msgid "ui.placement.invalid_tile"
+msgstr "Invalid terrain"
+
+msgid "ui.placement.already_placed"
+msgstr "This terrain is already placed"
+
+msgid "ui.placement.outside_map"
+msgstr "Cannot build outside the map"
+
+msgid "ui.placement.occupied"
+msgstr "Demolish the existing building first"
+
+msgid "ui.placement.ant_present"
+msgstr "Wait for the ant to leave the tile"
+
+msgid "ui.placement.invalid_building"
+msgstr "Invalid building definition"
+
+msgid "ui.placement.no_building"
+msgstr "There is no building on this tile"
+
+msgid "ui.placement.no_escape"
+msgstr "This would block the ants' safe route to food"
+
+msgid "ui.placement.no_entrance"
+msgstr "The plan blocks every entrance to one of the buildings"
+
+msgid "ui.placement.unavailable"
+msgstr "Action unavailable"
+
+msgid "ui.resource.wood"
+msgstr "Wood"
+
+msgid "ui.resource.stone"
+msgstr "Stone"
+
+msgid "ui.resource.food"
+msgstr "Food"
+
+msgid "ui.building.berries"
+msgstr "Berry bush"
+
+msgid "ui.building.nest"
+msgstr "Ant nest"
+
+msgid "ui.building.ground"
+msgstr "Soil"
+
+msgid "ui.building.road"
+msgstr "Path"
+
+msgid "ui.building.generic"
+msgstr "Building"
+
+msgid "ui.building.timber"
+msgstr "Timber grove"
+
+msgid "ui.building.stone"
+msgstr "Stone deposit"
+
+msgid "ui.building.canteen"
+msgstr "Canteen"
+
+msgid "ui.building.statue_placeholder"
+msgstr "Placeholder statue"
+
+msgid "ui.building.feast"
+msgstr "Royal feast"
+
+msgid "ui.construction.description.statue"
+msgstr "A passive monument that blocks movement. Placeholder art."
+
+msgid "ui.construction.description.feast"
+msgstr "A temporary royal feast. It disappears ten seconds after construction."
+
+msgid "ui.placement.instance_limit"
+msgstr "Building limit reached"
+
+msgid "ui.task.request_feast"
+msgstr "A royal feast is requested"
+
+msgid "ui.task.request_statue"
+msgstr "A royal monument is requested"
+
+msgid "ui.task.build"
+msgstr "Build requested"
+
+msgid "ui.task.diversion"
+msgstr "Arrange a diversion"
+
+msgid "ui.tutorial.lesson1.title"
+msgstr "Colony requests"
+
+msgid "ui.tutorial.lesson1.body"
+msgstr "Three resource requests are available at a time.\nDeliver resources to gain time and regalia.\nIf the timer reaches zero, the colony loses.\n\nYou need the same stock for requests and building.\nAnts pick nearby jobs with free slots."
+
+msgid "ui.tutorial.lesson2.title"
+msgstr "Paths and food"
+
+msgid "ui.tutorial.lesson2.body"
+msgstr "Paths speed up trips to work and home.\nTrees provide wood, quarries stone, and bushes food.\n\nAnts need food and a safe route to the canteen.\nA new nest adds five residents; they also need food.\nWorkplace load shows working+en route / slots."
+
+msgid "ui.tutorial.lesson3.title"
+msgstr "Build while paused"
+
+msgid "ui.tutorial.lesson3.body"
+msgstr "Press B to open construction. Space pauses or resumes the simulation independently.\nChoose a building and drag across tiles. A road and a building can share a tile.\nRight-click removes the latest addition on the selected tile. Ctrl+Z undoes a stroke. The cross cancels the whole plan. The triangle applies it."
+
+msgid "ui.tutorial.lesson4.title"
+msgstr "Camera and demolition"
+
+msgid "ui.tutorial.lesson4.body"
+msgstr "Use the wheel to zoom, and MMB, arrows or WASD to pan.\nIn construction, the Move tool lets you pan with LMB.\n\nThe Demolish tool marks buildings and roads for removal.\nRemoval happens when you apply the plan, with no refund.\nDemolishing a nest kills residents and needs confirmation.\nThe top menu offers settings, restart, and exit."
+
+msgid "ui.menu.language"
+msgstr "Language: English"
+
+msgid "ui.hud.missing_inputs"
+msgstr "Waiting for inputs: %d"
+
+msgid "ui.hud.storage_full"
+msgstr "Base storage full: %d"
+
+msgid "ui.placement.unbuildable"
+msgstr "This terrain cannot be built on"
+
+msgid "ui.placement.impassable"
+msgstr "Tile is impassable"
+
+msgid "ui.tutorial.progress.title"
+msgstr "Rewards and upgrades"
+
+msgid "ui.tutorial.progress.body"
+msgstr "Each level has five requests in random order.\nSkipping usually costs one third and gives no reward.\nHover over Skip to see its price.\n\nClosing a level grants faster paths, cheaper building or faster ants.\nSpend regalia on new canteens."
+
+msgid "ui.menu.maps"
+msgstr "Maps"
+
+msgid "ui.map.new"
+msgstr "New"
+
+msgid "ui.map.name"
+msgstr "Map name"
+
+msgid "ui.map.save"
+msgstr "Save"
+
+msgid "ui.map.load"
+msgstr "Load"
+
+msgid "ui.map.move_object"
+msgstr "Move object"
+
+msgid "ui.map.controls"
+msgstr "LMB: edit · RMB: erase · MMB/arrows: pan · wheel: zoom"
+
+msgid "ui.map.default"
+msgstr "Starter map"
+
+msgid "ui.map.dirty"
+msgstr "Unsaved changes"
+
+msgid "ui.map.discard"
+msgstr "Repeat the action to discard edits"
+
+msgid "ui.map.load_failed"
+msgstr "Could not open the map"
+
+msgid "ui.map.loaded"
+msgstr "Map loaded"
+
+msgid "ui.map.bundled"
+msgstr "Bundled"
+
+msgid "ui.map.name_needed"
+msgstr "Enter a map name"
+
+msgid "ui.map.save_failed"
+msgstr "Could not save: %s"
+
+msgid "ui.map.saved"
+msgstr "Map saved"
+
+msgid "ui.map.save_first"
+msgstr "Save the map before playing"
+
+msgid "ui.map.move_target"
+msgstr "Choose the destination tile"
+
+msgid "ui.map.invalid_object_cell"
+msgstr "Choose a free land tile"
+
+msgid "Трава"
+msgstr "Grass"
+
+msgid "Почва"
+msgstr "Soil"
+
+msgid "Дорога"
+msgstr "Path"
+
+msgid "Быстрая тропинка"
+msgstr "Fast path"
+
+msgid "Вода"
+msgstr "Water"
+
+msgid "ui.storage.main"
+msgstr "Base nest"
+
+msgid "ui.storage.local"
+msgstr "Barracks"
+
+msgid "ui.storage.fill"
+msgstr "Storage %d / %d"
+
+msgid "ui.nest.orders"
+msgstr "Orders"
+
+msgid "ui.nest.funds_construction"
+msgstr "Stock here is used for construction"
+
+msgid "ui.order.min"
+msgstr "Min"
+
+msgid "ui.order.once"
+msgstr "Once"
+
+msgid "ui.order.range"
+msgstr "Min %d · Max %d"
+
+msgid "ui.order.owed"
+msgstr "Requested: %d"
+
+msgid "ui.order.arriving"
+msgstr "On the way: %d"
+
+msgid "ui.order.max"
+msgstr "Max"
+
+msgid "ui.storage.in_main"
+msgstr "In main nest %d"
+
+msgid "ui.storage.protected"
+msgstr "The starter base and nonempty stores cannot be demolished"
+
+msgid "ui.terrain.entry"
+msgstr "Entry %d ms"
+
+msgid "ui.terrain.impassable"
+msgstr "Impassable"
+
+msgid "ui.terrain.coast"
+msgstr "Coast"
+
+msgid "ui.nest.inventory"
+msgstr "Inventory"
+
+msgid "ui.nest.residents"
+msgstr "Ants"
+
+msgid "ui.nest.buy"
+msgstr "Recruit"
+
+msgid "ui.nest.population"
+msgstr "Residents %d / %d"
+
+msgid "ui.nest.worker"
+msgstr "Workers"
+
+msgid "ui.nest.carrier"
+msgstr "Carriers"
+
+msgid "ui.nest.assigned"
+msgstr "Assigned residents include ants currently away"
+
+msgid "ui.nest.full"
+msgstr "No free resident slots"
+
+msgid "ui.nest.unaffordable"
+msgstr "Insufficient resources in base nests"
+
+msgid "ui.nest.from_main"
+msgstr "Paid from base nest inventories"
+
+msgid "ui.nest.kill"
+msgstr "Kill"
+
+msgid "ui.nest.kill_hint"
+msgstr "Kill one assigned ant of this type. Its cargo is lost."
+
+msgid "ui.source.remaining"
+msgstr "Supply: %d"
+
+msgid "ui.source.infinite"
+msgstr "Supply: unlimited"
+
+msgid "ui.source.finite"
+msgstr "Finite source"
+
+msgid "ui.source.amount"
+msgstr "Supply"
+
+msgid "ui.building.sawmill"
+msgstr "Sawmill"
+
+msgid "ui.building.quarry"
+msgstr "Quarry"
+
+msgid "ui.building.farm"
+msgstr "Farm"
+
+msgid "ui.placement.resource_site"
+msgstr "Requires a matching unupgraded resource source with remaining supply"
+
+msgid "ui.task.unlocks"
+msgstr "Unlocks: %s"
+
+msgid "ui.site.title"
+msgstr "Construction: %s"
+
+msgid "ui.site.assembly"
+msgstr "Assembly: %d%%"
+
+msgid "ui.site.delivery"
+msgstr "Waiting for material delivery"
+
+msgid "ui.menu.waves"
+msgstr "Spider waves"
+
+msgid "ui.defense.wall"
+msgstr "Wall"
+
+msgid "ui.defense.tower"
+msgstr "Battle tower"
+
+msgid "ui.nest.warrior"
+msgstr "Warriors"
+
+msgid "ui.warrior.hint"
+msgstr "%d HP; %d damage. Hunts spiders or staffs a tower. Eats at its nest; never gathers resources."
+
+msgid "ui.tower.active"
+msgstr "Active: one warrior on duty"
+
+msgid "ui.tower.inactive"
+msgstr "Offline: needs a warrior on duty"
+
+msgid "ui.combat.health"
+msgstr "HP: %d / %d"
+
+msgid "ui.trap.title"
+msgstr "Spider trap"
+
+msgid "ui.trap.hint"
+msgstr "Kills civilian ants. Remains after triggering."
+
+msgid "ui.trap.clear"
+msgstr "Remove: %s"
+
+msgid "ui.waves.next"
+msgstr "Wave %d in %d:%02d"
+
+msgid "ui.waves.enemies"
+msgstr "Spiders: %d"
+
+msgid "ui.waves.hint"
+msgstr "Recruit warriors in a nest. Build staffed towers and walls before the next wave."
+
+msgid "ui.result.colony_destroyed"
+msgstr "All nests were destroyed"
+
+msgid "ui.terrain.grass"
+msgstr "Grass"
+
+msgid "ui.terrain.soil"
+msgstr "Soil"
+
+msgid "ui.terrain.road"
+msgstr "Road"
+
+msgid "ui.terrain.road_plus"
+msgstr "Improved road"
+
+msgid "ui.terrain.water"
+msgstr "Water"
+
+msgid "ui.terrain.fertile"
+msgstr "Fertile soil"
+
+msgid "ui.terrain.rocky"
+msgstr "Rocky soil"
+
+msgid "ui.terrain.dry"
+msgstr "Dry soil"
+
+msgid "ui.terrain.wet"
+msgstr "Wet soil"
+
+msgid "ui.terrain.sand"
+msgstr "Sand"
+
+msgid "ui.placement.soil_restricted"
+msgstr "This soil forbids this construction"
+
+msgid "ui.terrain.generate"
+msgstr "Soils"
+
+msgid "ui.terrain.generated"
+msgstr "Soils distributed over %d cells. Save the map."
+
+msgid "ui.terrain.allowed"
+msgstr "yes"
+
+msgid "ui.terrain.forbidden"
+msgstr "no"
+
+msgid "ui.terrain.permissions"
+msgstr "Roads: %s · berries: %s\nNests: %s"
+
+msgid "ui.terrain.harvest"
+msgstr "Berry yield: %d%%"
+
+msgid "ui.terrain.nest_price"
+msgstr "Nest price: %d%%"
+
+msgid "ui.terrain.road_price"
+msgstr "Road price: %d%%"
+
+msgid "ui.terrain.adjacency"
+msgstr "Adjacent nest capacity: +%d%%\nRadius: %d; does not stack"
+
+msgid "ui.terrain.base"
+msgstr "Ground: %s"
+
+msgid "ui.terrain.capacity_bonus"
+msgstr "Wet-soil capacity bonus: +%d%%"
+
+msgid "ui.voyage.continue"
+msgstr "Continue"
+
+msgid "ui.voyage.save"
+msgstr "Save game"
+
+msgid "ui.voyage.saved"
+msgstr "Game saved"
+
+msgid "ui.voyage.save_failed"
+msgstr "Save failed"
+
+msgid "ui.voyage.ship"
+msgstr "Ship"
+
+msgid "ui.voyage.ship_unlocked"
+msgstr "Ship unlocked: build it to set sail"
+
+msgid "ui.voyage.level_complete"
+msgstr "Level %d complete"
+
+msgid "ui.voyage.choose_reward"
+msgstr "Choose one upgrade. Keep it on future islands."
+
+msgid "ui.voyage.road"
+msgstr "Fast trail"
+
+msgid "ui.voyage.road_detail"
+msgstr "Replaces the ordinary trail. Faster movement, same price."
+
+msgid "ui.voyage.discount"
+msgstr "Efficient construction"
+
+msgid "ui.voyage.discount_detail"
+msgstr "All new buildings cost 10% less."
+
+msgid "ui.voyage.speed"
+msgstr "Quick feet"
+
+msgid "ui.voyage.speed_detail"
+msgstr "All ants move 15% faster."
+
+msgid "ui.voyage.satiety"
+msgstr "Deep reserves"
+
+msgid "ui.voyage.satiety_detail"
+msgstr "All ants gain 20% satiety capacity."
+
+msgid "ui.voyage.departure"
+msgstr "Ship ready. Victory!"
+
+msgid "ui.voyage.score"
+msgstr "Score: %d"
+
+msgid "ui.voyage.next_island"
+msgstr "Island %d: choose a shore for your next colony."
+
+msgid "ui.voyage.fertile_island"
+msgstr "Green shore · more fertile ground"
+
+msgid "ui.voyage.dry_island"
+msgstr "Dry plateau · cheaper nests"
+
+msgid "ui.voyage.rocky_island"
+msgstr "Stone islands · harder road building"
+
+msgid "ui.voyage.carry_over"
+msgstr "Keep resources and upgrades. Less time, more costly requests."
+
+msgid "ui.voyage.seed"
+msgstr "Seed"
+
+msgid "ui.voyage.generate"
+msgstr "Generate islands"
+
+msgid "ui.voyage.generate_confirm"
+msgstr "Unsaved changes. Save them or press Generate islands again."
+
+msgid "ui.voyage.generated"
+msgstr "Islands generated. Edit, save and play."
+
+msgid "ui.map.starting_maps"
+msgstr "Starting maps"
+
+msgid "ui.map.mode_title"
+msgstr "%s · %s"
+
+msgid "ui.map.starting_saved"
+msgstr "Starting map selected"
+
+msgid "ui.map.starting_requires_nest"
+msgstr "Add a nest before using this as a starting map"
+
+msgid "ui.placement.water_required"
+msgstr "Build the ship on water"
+
+msgid "ui.placement.shore_required"
+msgstr "Choose water next to a walkable shore"
+
+msgid "ui.placement.no_build_supply"
+msgstr "Not enough materials at bases connected to this site"
+
+msgid "ui.trap.inspect"
+msgstr "Right-click to select and remove"
+
+msgid "ui.voyage.fertile_short"
+msgstr "Green shore"
+
+msgid "ui.voyage.dry_short"
+msgstr "Dry plateau"
+
+msgid "ui.voyage.rocky_short"
+msgstr "Stone islands"
+
+msgid "ui.construction.inspect_hint"
+msgstr "Click: inspect · Drag: pan · Wheel: zoom"
+
+msgid "ui.map.normal_mode"
+msgstr "Standard"
+
+msgid "ui.construction.category.terrain"
+msgstr "Terrain"
+
+msgid "ui.construction.category.colony"
+msgstr "Colony"
+
+msgid "ui.construction.category.production"
+msgstr "Production"
+
+msgid "ui.construction.category.defense"
+msgstr "Defense"
+
+msgid "ui.construction.category.voyage"
+msgstr "Voyage"
+
+msgid "ui.construction.category.other"
+msgstr "Other"
+
+msgid "ui.construction.title"
+msgstr "Construction"
+
+msgid "ui.construction.details"
+msgstr "Building details"
+
+msgid "ui.construction.price"
+msgstr "Cost: %s"
+
+msgid "ui.construction.time"
+msgstr "Assembly: %s s"
+
+msgid "ui.construction.instant"
+msgstr "Instant placement"
+
+msgid "ui.construction.water"
+msgstr "Requires water"
+
+msgid "ui.construction.slots"
+msgstr "Work slots: +%d"
+
+msgid "ui.construction.footprint"
+msgstr "Tiles: %d"
+
+msgid "ui.construction.speed"
+msgstr "Movement cost: %s"
+
+msgid "ui.construction.fast_trail"
+msgstr "Fast trail"
+
+msgid "ui.construction.category_caption"
+msgstr "Categories"
+
+msgid "ui.construction.empty"
+msgstr "Choose a building to see its details."
+
+msgid "ui.construction.description.road"
+msgstr "A trail speeds up movement for the colony."
+
+msgid "ui.construction.description.ground"
+msgstr "Remove the trail and restore the underlying terrain."
+
+msgid "ui.construction.description.road_plus"
+msgstr "An upgraded trail for faster trips."
+
+msgid "ui.construction.description.house"
+msgstr "A barracks houses workers and has its own stockpile."
+
+msgid "ui.construction.description.base_nest"
+msgstr "An additional base with a large stockpile and room for recruits."
+
+msgid "ui.construction.description.canteen"
+msgstr "Ants come here to eat and restore satiety."
+
+msgid "ui.construction.description.building"
+msgstr "A general purpose colony structure."
+
+msgid "ui.construction.description.apple_tree"
+msgstr "Workers harvest food here."
+
+msgid "ui.construction.description.farm"
+msgstr "Improves food production at a compatible source."
+
+msgid "ui.construction.description.sawmill"
+msgstr "Improves timber production at a compatible source."
+
+msgid "ui.construction.description.quarry"
+msgstr "Improves stone production at a compatible source."
+
+msgid "ui.construction.description.wall"
+msgstr "Blocks paths and protects the colony from spiders."
+
+msgid "ui.construction.description.tower"
+msgstr "A stationed warrior fires on nearby spiders."
+
+msgid "ui.construction.description.ship"
+msgstr "Build at the water to depart for the next island."
+
+msgid "ui.window.collapse"
+msgstr "Collapse window"
+
+msgid "ui.window.expand"
+msgstr "Expand window"
+
+msgid "ui.window.nest"
+msgstr "Nest"
+
+msgid "ui.window.result"
+msgstr "Match result"
+
+msgid "ui.window.navigation"
+msgstr "Navigation"
+
+msgid "ui.window.tasks"
+msgstr "Requests"
+
+msgid "ui.window.campaign"
+msgstr "Voyage"
+
+msgid "ui.window.waves"
+msgstr "Waves"
+
+msgid "ui.settings.text_size"
+msgstr "Text size"
+
+msgid "ui.settings.text_normal"
+msgstr "Normal"
+
+msgid "ui.settings.text_large"
+msgstr "Large"
+
+msgid "ui.settings.text_xlarge"
+msgstr "Very large"
+
+msgid "ui.resource.royal"
+msgstr "Regalia"
+
+msgid "ui.hud.match_timer"
+msgstr "Execution in %d:%02d"
+
+msgid "ui.hud.wave_timer"
+msgstr "Wave %d:%02d"
+
+msgid "ui.colony.population"
+msgstr "Ants: %d"
+
+msgid "ui.colony.store"
+msgstr "%s (%d / %d)"
+
+msgid "ui.colony.amount"
+msgstr "%s: %d"
+
+msgid "ui.colony.summary_hint"
+msgstr "Toggle colony stockpiles"
+
+msgid "ui.colony.focus_hint"
+msgstr "Center the camera on this nest"
+
+msgid "ui.world.generated_title"
+msgstr "Island %d"
+
+msgid "ui.result.level"
+msgstr "Level: %d"
+
+msgid "ui.result.task_counts"
+msgstr "Completed: %d · declined: %d"
+
+msgid "ui.task.cancel"
+msgstr "Decline"
+
+msgid "ui.task.cancel_notice"
+msgstr "Declined: no time or reward"
+
+msgid "ui.task.time_reward"
+msgstr "+%d seconds"
+
+msgid "ui.task.time_reward_short"
+msgstr "+%d s"
+
+msgid "ui.task.level_progress"
+msgstr "Level %d · %d/%d"
+
+msgid "ui.task.numbered_title"
+msgstr "Lvl %d (%d)"
+
+msgid "ui.task.cancel_hint"
+msgstr "Decline: %s. No reward."
+
+msgid "ui.task.submit_hint"
+msgstr "Submit: %s. Reward: %s and %d s."
+
+msgid "ui.task.waiting"
+msgstr "Waiting for space: %d · for supplies: %d"
+
+msgid "ui.task.trail_upgrade"
+msgstr "Trails upgraded"
+
+msgid "ui.task.cheap_building"
+msgstr "Construction costs less"
+
+msgid "ui.task.faster_ants"
+msgstr "Ants move faster"
+
+msgid "ui.nav.priority_help"
+msgstr "Lower numbers have higher priority"
+
+msgid "ui.nav.terrain"
+msgstr "Terrain"
+
+msgid "ui.nav.work"
+msgstr "Work"
+
+msgid "ui.nav.home"
+msgstr "Home"
+
+msgid "ui.nav.food"
+msgstr "Food"
+
+msgid "ui.nav.hover"
+msgstr "Point at a workplace"
+
+msgid "ui.nav.formula"
+msgstr "Travel + %s × (working + approaching)"
+
+msgid "ui.nav.entry"
+msgstr "Cell entry · ms"
+
+msgid "ui.nav.priority"
+msgstr "Priority · seconds"
+
+msgid "ui.nav.origin"
+msgstr "From (%d / %d) · speed %.1f"
+
+msgid "ui.nav.no_path"
+msgstr "No route"
+
+msgid "ui.nav.path"
+msgstr "Route: %.2f s"
+
+msgid "ui.nav.unreachable"
+msgstr "No route from the selected cell"
+
+msgid "ui.nav.breakdown"
+msgstr "%.2f s + %s × %d = %.2f%s"
+
+msgid "ui.nav.no_slots"
+msgstr " · no slots"
+
+msgid "ui.nav.howto"
+msgstr "Click: inspect workplace\nRight click: set origin\nDrag or use arrows to pan"
+
+msgid "ui.nav.hidden"
+msgstr "Estimates hidden"
+
+msgid "ui.nav.entry_help"
+msgstr "Cell entry time in ms. Speed: %.1f. Zoom in to see values."
+
+msgid "ui.nav.routes_help"
+msgstr "Right click sets origin. Drag or use arrows to pan. Score adds %s s per occupied slot."
+
+msgid "ui.task.request_1_1"
+msgstr "Request 1.1"
+
+msgid "ui.task.request_1_2"
+msgstr "Request 1.2"
+
+msgid "ui.task.request_1_3"
+msgstr "Request 1.3"
+
+msgid "ui.task.request_1_4"
+msgstr "Request 1.4"
+
+msgid "ui.task.request_1_5"
+msgstr "Request 1.5"
+
+msgid "ui.task.request_2_1"
+msgstr "Request 2.1"
+
+msgid "ui.task.request_2_2"
+msgstr "Request 2.2"
+
+msgid "ui.task.request_2_3"
+msgstr "Request 2.3"
+
+msgid "ui.task.request_2_4"
+msgstr "Request 2.4"
+
+msgid "ui.task.request_2_5"
+msgstr "Request 2.5"
+
+msgid "ui.task.request_3_1"
+msgstr "Request 3.1"
+
+msgid "ui.task.request_3_2"
+msgstr "Request 3.2"
+
+msgid "ui.task.request_3_3"
+msgstr "Request 3.3"
+
+msgid "ui.task.request_3_4"
+msgstr "Request 3.4"
+
+msgid "ui.task.request_3_5"
+msgstr "Request 3.5"
+
+msgid "ui.world.tidal_shards"
+msgstr "Tidal Shards"
+
+msgid "ui.world.tidal_shards_description"
+msgstr "Link the central islands with trails. Stone lies to the north and timber to the west. The eastern islands supply food. Remote islands need bases. Add canteens in the northwest and by the eastern quarry."
+
+msgid "ui.world.five_soils"
+msgstr "Five Soils"
+
+msgid "ui.world.five_soils_description"
+msgstr "Fertile valleys alternate with dry hills and rocky deposits. Wet banks expand nearby nests. Sandy beaches make trails more expensive. Painted terrain is saved with the map."
+
+msgid "ui.window.close"
+msgstr "Close"
+
+msgid "ui.tutorial.previous"
+msgstr "Previous page"
+
+msgid "ui.hud.pause"
+msgstr "Pause [Space]"
+
+msgid "ui.hud.unpause"
+msgstr "Resume [Space]"
+
+msgid "ui.hud.tab_build"
+msgstr "Build"
+
+msgid "ui.hud.tab_colony"
+msgstr "Colony"
+
+msgid "ui.hud.tab_tasks"
+msgstr "Tasks"
+
+msgid "ui.settings.minimum_text"
+msgstr "Minimum text size"
+
+msgid "ui.settings.text_pixels"
+msgstr "%d px"
+
+msgid "ui.construction.demolish_short"
+msgstr "Demolish"
+
+msgid "ui.construction.size"
+msgstr "Size: %dx%d"
+
+msgid "ui.construction.residents"
+msgstr "Residents: %d"
+
+msgid "ui.construction.storage"
+msgstr "Storage: %d goods"
+
+msgid "ui.construction.price_constant"
+msgstr "Building another does not change the price"
+
+msgid "ui.construction.price_multiplier"
+msgstr "Price after each build: ×%s"
+
+msgid "ui.construction.price_add"
+msgstr "Added to the price after each build: +%s"
+
+msgid "ui.construction.price_partial_multiplier"
+msgstr "Part of the price changes by ×%s after each build"
+
+msgid "ui.construction.price_partial_add"
+msgstr "Part of the price increases by %s after each build"
+
+msgid "ui.construction.next_price"
+msgstr "Next build: %s"
+
+msgid "ui.construction.production_resource"
+msgstr "Resource:"
+
+msgid "ui.construction.production_slots"
+msgstr "Work slots: %d"
+
+msgid "ui.construction.production_rate"
+msgstr "Output per work cycle: %s"
+
+msgid "ui.construction.source_target"
+msgstr "Hover over a compatible source to see its output and supply."
+
+msgid "ui.construction.speed_multiplier"
+msgstr "Movement speed: ×%s of base"
+
+msgid "ui.trap.clear_action"
+msgstr "Remove trap"
+
+msgid "ui.task.building_variant"
+msgstr "Under construction: %s"

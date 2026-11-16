@@ -1,0 +1,7 @@
+[gd_scene load_steps=3 format=3]
+[ext_resource type="Script" path="res://game/combat/defense_building.gd" id="script"]
+[ext_resource type="Texture2D" path="res://game/assets/sprites/wall.svg" id="art"]
+[node name="Wall" type="Node2D"]
+script = ExtResource("script")
+[node name="Sprite" type="Sprite2D" parent="."]
+texture = ExtResource("art")

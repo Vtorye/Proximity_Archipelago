@@ -2,9 +2,13 @@ class_name LevelValidator
 extends RefCounted
 ## Runs on saved authored data without entering the world or creating agents.
 static func validate(path: String) -> Array[String]:
-	var scene: PackedScene = load(path) as PackedScene
-	if scene == null: return [path + ": cannot load level"]
-	var root: Node = scene.instantiate()
+	var definition: Resource = load(path)
+	var root: Node
+	if definition is AuthoredLevel:
+		root = LevelLayout.create_world(definition.data())
+	elif definition is PackedScene:
+		root = definition.instantiate()
+	if root == null: return [path + ": cannot load level"]
 	var world: World = root as World
 	if world == null:
 		root.free()
@@ -15,10 +19,28 @@ static func validate(path: String) -> Array[String]:
 
 static func validate_world(world: World, path: String) -> Array[String]:
 	var errors: Array[String] = []
-	var map: TileMapLayer = world.get_node_or_null("Map") as TileMapLayer
+	if world.waves.enabled:
+		for error in world.waves.validate(): errors.append(path + ":Waves: " + error)
+	for scene: PackedScene in [world.population.worker_scene, world.population.carrier_scene, world.population.warrior_scene]:
+		if scene == null:
+			errors.append(path + ": missing ant scene")
+			continue
+		var ant: Node = scene.instantiate()
+		if not ant is AntAgent or ant.profile == null: errors.append(scene.resource_path + ": ant scene requires AntAgent and AntProfile")
+		else: errors.append_array(ant.profile.validate())
+		ant.free()
+	var map: TileMapLayer = world.map
 	if map == null or map.tile_set == null or map.get_used_cells().is_empty():
 		errors.append(path + ": missing painted TileMap/TileSet")
 	else:
+		if map is TerrainMap:
+			map.prepare_terrain()
+			errors.append_array(map.catalog.validate())
+			for cell in map.underlays:
+				var surface: TerrainType = map.surface_at(cell)
+				var ground: TerrainType = map.catalog.for_tile(map.underlays[cell])
+				if surface == null or surface.kind != TerrainType.Kind.ROAD or ground == null or ground.kind != TerrainType.Kind.LAND or not ground.roads_allowed:
+					errors.append(path + ":Map: invalid hidden terrain at " + str(cell))
 		for cell in map.get_used_cells():
 			var data: TileData = map.get_cell_tile_data(cell)
 			if data == null:
@@ -31,43 +53,29 @@ static func validate_world(world: World, path: String) -> Array[String]:
 				errors.append(path + ": walkable tile has no positive movement cost at " + str(cell))
 		var grid := TileGrid.new()
 		grid.setup(map, [])
-		var buildings: Array[Building] = []
-		world._collect_buildings(world, buildings)
-		var food: Array[Vector2i] = []
+		var buildings: Array[Building] = world.placed_buildings()
 		for building in buildings:
 			building.cell = map.local_to_map(map.to_local(building.global_position))
+			if map is TerrainMap:
+				var soil: TerrainType = map.ground_at(building.cell)
+				var kind: int = TerrainRules.building_kind(building)
+				if soil != null and ((kind == BuildOption.PlacementKind.NEST and not soil.nests_allowed) or (kind == BuildOption.PlacementKind.BERRY and not soil.berries_allowed)):
+					errors.append(path + ":" + str(world.get_path_to(building)) + ": terrain forbids this building")
 			for error in building.validate_definition(): errors.append(path + ":" + str(world.get_path_to(building)) + ": " + error)
-			if building is Canteen: food.append_array(building.entry_cells())
 			if building.option is SceneBuildOption and building.option.blocks_movement:
 				var changes: Dictionary[Vector2i, float] = {}
 				for cell in building.footprint(): changes[cell] = 0.0
 				grid = grid.with_costs(changes)
-		var field: NavigationField = GridSearch.build(grid, food, true)
 		for building in buildings:
 			var prefix: String = path + ":" + str(world.get_path_to(building))
-			var reachable := false
-			for entry in building.entry_cells(): reachable = reachable or is_finite(field.cost(entry))
-			if not reachable: errors.append(prefix + ": no accessible entry or route to food")
-			if building is House and reachable:
-				var nearest := INF
-				for entry in building.entry_cells(): nearest = minf(nearest, field.cost(entry))
-				var speed: float = building.option.spawn_speed if building.option is SceneBuildOption else 24.0
-				if nearest * map.tile_set.tile_size.x / speed * 2.25 + AntNeeds.MEAL_SECONDS + AntNeeds.SAFETY_MARGIN > AntNeeds.CAPACITY:
-					errors.append(prefix + ": food is beyond a resident's energy budget")
+			if not building.entry_cells().any(grid.walkable):
+				errors.append(prefix + ": no accessible entry")
 		var stock := WorldInventory.new()
 		var types: Dictionary[StringName, bool] = {}
-		for entry in world.starting_resources:
+		for entry in world.prices.starting_resources:
 			if entry == null or entry.type == null or entry.type.id == &"" or entry.amount < 0: errors.append(path + ": invalid starting resource")
 			elif types.has(entry.type.id): errors.append(path + ": duplicate resource " + str(entry.type.id))
 			else: types[entry.type.id] = true
-		var residents := 0
-		for building in buildings:
-			if building is House:
-				residents += building.option.spawn_count if building.option is SceneBuildOption and building.option.spawn_count > 0 else building.capacity
-		var portions := 0
-		for entry in world.starting_resources:
-			if entry != null and entry.type != null and entry.type.id == &"food": portions += entry.amount
-		if residents > portions: errors.append(path + ": starting residents need a registered food resource and at least one reserved portion each")
 		for building in buildings:
 			if building is Workplace:
 				var ingredients: Array[ResourceAmount] = []
@@ -78,7 +86,15 @@ static func validate_world(world: World, path: String) -> Array[String]:
 					ingredients.append(product)
 				for entry in ingredients:
 					if entry == null or entry.type == null or not types.has(entry.type.id): errors.append(path + ":" + str(world.get_path_to(building)) + ": unknown recipe resource")
-		var options: Array[BuildOption] = world.build_catalog.options if world.build_catalog != null else world.build_options
+		if world.population.recruitment == null:
+			errors.append(path + ": missing recruitment catalog")
+		else:
+			for costs in [world.population.recruitment.worker_costs, world.population.recruitment.carrier_costs] + ([world.population.recruitment.warrior_costs, world.waves.rules.trap_removal_costs] if world.waves.enabled and world.waves.rules != null else []):
+				for cost in costs:
+					if cost == null or cost.type == null or cost.amount < 0 or not types.has(cost.type.id):
+						errors.append(path + ": invalid recruitment price")
+		var options: Array[BuildOption] = world.build_controller.initial_options()
+		if world.waves.enabled and world.waves.rules != null and world.waves.rules.defenses != null: options.append_array(world.waves.rules.defenses.options)
 		var ids: Dictionary[StringName, bool] = {}
 		var prices := PriceService.new()
 		for option in options:
@@ -88,13 +104,15 @@ static func validate_world(world: World, path: String) -> Array[String]:
 			var prefix: String = option.resource_path if not option.resource_path.is_empty() else path
 			if option.id == &"" or ids.has(option.id): errors.append(prefix + ": missing or duplicate build ID")
 			ids[option.id] = true
+			if not option.has_presentation():
+				errors.append(prefix + ": building requires a name and description")
 			if not prices.valid(option): errors.append(prefix + ": invalid price or event rule")
 			for rule in option.price_rules:
 				if rule != null and rule.resource != null and not types.has(rule.resource.id): errors.append(prefix + ": unknown rule resource " + str(rule.resource.id))
 			for cost in option.costs:
 				if cost != null and cost.type != null and not types.has(cost.type.id): errors.append(prefix + ": unknown resource " + str(cost.type.id))
 			if option is SceneBuildOption:
-				if option.blocks_movement and option.entry_offsets.is_empty(): errors.append(prefix + ": blocking building has no entrance")
+				if (option.blocks_movement or option.requires_water) and option.entry_offsets.is_empty(): errors.append(prefix + ": building has no entrance")
 				if option.scene == null: errors.append(prefix + ": missing building scene")
 				else:
 					var candidate: Node = option.scene.instantiate()
@@ -102,9 +120,9 @@ static func validate_world(world: World, path: String) -> Array[String]:
 						for error in candidate.validate_definition(): errors.append(prefix + ": " + error)
 					else: errors.append(prefix + ": scene root is not a Building")
 					candidate.free()
-		if world.task_deck != null and errors.is_empty():
-			stock.configure(world.starting_resources)
-			errors.append_array(world.task_deck.validate(stock))
+		if world.prices.task_deck != null and errors.is_empty():
+			stock.configure(world.prices.starting_resources)
+			errors.append_array(world.prices.task_deck.validate(stock))
 		prices.free()
 		stock.free()
 	return errors

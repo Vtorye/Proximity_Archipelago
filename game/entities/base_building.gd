@@ -8,6 +8,7 @@ var cell: Vector2i
 @export var option: BuildOption
 var _is_setup := false
 var _is_demolished := false
+var _appearance_texture: Texture2D
 @export var title := "ui.building.generic"
 
 func display_title() -> String:
@@ -59,6 +60,10 @@ func validate_definition() -> Array[String]:
 
 func footprint() -> Array[Vector2i]:
 	var cells: Array[Vector2i] = []
+	if not option is SceneBuildOption and self is House and (self as House).is_main_nest:
+		return [cell, cell + Vector2i.RIGHT, cell + Vector2i.DOWN, cell + Vector2i(1, 1)]
+	if self is Workplace and (self as Workplace).finite_supply and (self as Workplace).remaining_supply > 200 and (self as Workplace).output != null and (self as Workplace).output.id == &"stone":
+		return [cell, cell + Vector2i.RIGHT]
 	if option is SceneBuildOption:
 		for offset in option.occupied_cells:
 			if not cells.has(cell + offset):
@@ -68,10 +73,39 @@ func footprint() -> Array[Vector2i]:
 	return cells
 
 func entry_cells() -> Array[Vector2i]:
-	var cells: Array[Vector2i] = []
-	if option is SceneBuildOption and option.blocks_movement:
-		for offset in option.entry_offsets:
-			cells.append(cell + offset)
+	if option is SceneBuildOption:
+		return option.entries_at(cell)
+	return [cell]
+
+func configure_appearance(art: ArtCatalog, tile_size: float) -> void:
+	var sprite: Sprite2D = get_node_or_null("Sprite") as Sprite2D
+	if sprite == null:
+		return
+	if option is SceneBuildOption and option.appearance_variants != null and not option.appearance_variants.textures.is_empty():
+		if _appearance_texture == null:
+			_appearance_texture = option.appearance_variants.textures.pick_random()
+		sprite.texture = _appearance_texture
+	elif option != null and option.icon != null:
+		sprite.texture = option.icon
 	else:
-		cells.append(cell)
-	return cells
+		_apply_default_appearance(sprite, art)
+	if sprite.texture != null:
+		_finalize_appearance(sprite)
+	var cells := footprint()
+	var min_cell := cell
+	var max_cell := cell
+	for occupied_cell in cells:
+		min_cell.x = mini(min_cell.x, occupied_cell.x)
+		min_cell.y = mini(min_cell.y, occupied_cell.y)
+		max_cell.x = maxi(max_cell.x, occupied_cell.x)
+		max_cell.y = maxi(max_cell.y, occupied_cell.y)
+	var size := max_cell - min_cell + Vector2i.ONE
+	if sprite.texture != null:
+		sprite.position = Vector2((size.x - 1) * tile_size, (size.y - 1) * tile_size) * 0.5
+		sprite.scale = Vector2(tile_size * size.x, tile_size * size.y) / Vector2(sprite.texture.get_width(), sprite.texture.get_height())
+
+func _apply_default_appearance(_sprite: Sprite2D, _art: ArtCatalog) -> void:
+	pass
+
+func _finalize_appearance(_sprite: Sprite2D) -> void:
+	pass

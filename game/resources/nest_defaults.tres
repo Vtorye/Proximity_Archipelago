@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="NestDefaults" format=3]
+
+[ext_resource type="Script" path="res://game/resources/nest_defaults.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+base_capacity = 1200
+base_min = 400
+base_max = 1200
+order_limit = 10000
+barracks_min = 0
+barracks_max = 0

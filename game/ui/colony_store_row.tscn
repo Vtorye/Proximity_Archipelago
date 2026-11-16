@@ -1,0 +1,22 @@
+[gd_scene format=3]
+
+[node name="ColonyStoreRow" type="PanelContainer"]
+size_flags_horizontal = 3
+mouse_default_cursor_shape = 2
+
+[node name="Content" type="VBoxContainer" parent="."]
+mouse_filter = 2
+
+[node name="Focus" type="Button" parent="Content"]
+text = "Base nest (8 / 12)"
+alignment = 0
+theme_type_variation = &"CompactButton"
+mouse_default_cursor_shape = 2
+tooltip_text = "ui.colony.focus_hint"
+
+[node name="Amounts" type="RichTextLabel" parent="Content"]
+text = "Food: 24 · Wood: 8 · Stone: 0"
+mouse_filter = 2
+autowrap_mode = 3
+fit_content = true
+scroll_active = false

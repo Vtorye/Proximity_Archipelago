@@ -11,12 +11,12 @@ var payload: Variant = null
 ## Set in the Inspector. If null, the first focusable control is used
 @export var default_focus: Control
 
-## When false, ui_cancel (Esc here) and the pause key cannot close this menu.
+## When false, ui_cancel (Esc here) cannot close this menu.
 ## Only the menu itself or a Router navigation removes it.
 var dismissable := true
 
 func grab_focus_default() -> void:
-	if is_instance_valid(default_focus):
+	if is_instance_valid(default_focus) and default_focus.is_visible_in_tree():
 		default_focus.grab_focus()
 		return
 	# Fallback: first focusable Control in tree order

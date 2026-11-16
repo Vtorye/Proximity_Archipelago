@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://tests/order_construction_ui.gd" id="script"]
+
+[node name="OrderConstructionUI" type="Node"]
+script = ExtResource("script")
