@@ -105,6 +105,7 @@ func _build_hud() -> void:
 		add_child(task_panel)
 		task_panel.order_requested.connect(_request_task_order)
 		task_panel.info_requested.connect(_show_task_details)
+		task_panel.strip_closed.connect(_task_details.hide)
 		construction_bounds_changed.connect(_layout_task_panel)
 		get_viewport().size_changed.connect(_layout_task_panel)
 		_layout_task_panel.call_deferred()
@@ -184,9 +185,10 @@ func build_obstacles() -> Array[Rect2]:
 	result.append(%MatchStatus.get_global_rect())
 	result.append(%MatchControls.get_global_rect())
 	result.append(_bottom.get_global_rect())
-	var goals_panel: Control = task_panel if task_panel != null else _objectives
-	if goals_panel.is_visible_in_tree():
-		result.append(goals_panel.get_global_rect())
+	if task_panel != null:
+		result.append_array(task_panel.visible_bounds())
+	elif _objectives.is_visible_in_tree():
+		result.append(_objectives.get_global_rect())
 	if _task_details.is_visible_in_tree():
 		result.append(_task_details.get_global_rect())
 	if colony_summary.is_visible_in_tree():
@@ -225,10 +227,19 @@ func set_section(section: StringName) -> void:
 	goals_panel.visible = section == &"tasks"
 	if section != &"tasks":
 		_task_details.hide()
+		set_task_selection(null)
 	_toast.hide()
 
+func set_task_selection(order: TaskBuildOrder) -> void:
+	if task_panel != null:
+		task_panel.set_selection(order)
+
+func set_task_pan_mode(enabled: bool) -> void:
+	if task_panel != null:
+		task_panel.set_pan_mode(enabled)
+
 func _layout_task_panel() -> void:
-	task_panel.dock_below(colony_panel_bottom(), bottom_bar_height())
+	task_panel.dock_above(bottom_bar_height())
 
 func _show_task_details(option: BuildOption) -> void:
 	_task_details.toggle(option, world.build_controller, Vector2i(2147483647, 2147483647))

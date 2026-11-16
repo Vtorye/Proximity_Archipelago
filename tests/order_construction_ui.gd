@@ -41,6 +41,7 @@ func _run() -> void:
 	await click(menu.controls[&"demolish"])
 	expect(menu.controls[&"demolish"].button_pressed, "demolition starts from the palette")
 	await choose_building(menu, &"road")
+	var build_strip_bottom := menu.buildings_panel.get_global_rect().end.y
 	var start := Vector2i(23, 27)
 	var end := Vector2i(29, 27)
 	var press := InputEventMouseButton.new()
@@ -79,14 +80,32 @@ func _run() -> void:
 	world.build_controller.construction = construction
 	await click(screen.hud.get_node("%TasksTab"))
 	var panel: TaskPanel = screen.hud.task_panel
+	var categories: PanelContainer = panel.get_node("%Categories")
+	var task_strip: PanelContainer = panel.get_node("%TaskStrip")
+	var task_scroll: ScrollContainer = panel.get_node("%Scroll")
+	expect(categories.find_children("*", "Button", true, false).size() == 1 and not task_strip.visible, "tasks open with a single construction category")
+	await click(panel.get_node("%Category"))
+	var strip_rect := task_strip.get_global_rect()
+	var categories_rect := categories.get_global_rect()
+	expect(task_strip.visible and is_equal_approx(strip_rect.end.y, build_strip_bottom) and is_equal_approx(categories_rect.end.y, strip_rect.end.y), "the task strip uses the ordinary construction strip's bottom alignment")
+	expect(strip_rect.position.x > categories_rect.end.x and strip_rect.size.y <= get_viewport().get_visible_rect().size.y / 5.0, "the separated task strip is beside the category and at most one fifth of the screen")
 	var task: TaskSpec = world.tasks.slots[0]
 	var choice: TaskVariant = task.variant_by_id(&"diversion")
+	for index in range(world.tasks.slots.size()):
+		var request := _request(panel, index)
+		var title: Label = request.get_node("%Title")
+		var first_card := _offer_card(panel, index, 0)
+		expect(title.text == "Ур.1 (%d)" % (index + 1) and title.tooltip_text.is_empty(), "each task has a short numbered title without a tooltip")
+		expect(first_card.is_visible_in_tree() and title.get_global_rect().end.y <= first_card.global_position.y, "task cards sit below the numbered title")
+		if index > 0:
+			expect(request.global_position.x >= _request(panel, index - 1).get_global_rect().end.x, "task groups share one horizontal strip")
 	AppSettings.text_size = AppSettings.TYPOGRAPHY.minimum_sizes.size() - 1
 	AppSettings.apply()
 	await frames(7)
 	var large_card := _offer_card(panel, 0, 1)
-	expect(get_viewport().get_visible_rect().encloses(panel.get_global_rect()), "task panel fits at maximum text size")
-	expect(large_card.get_global_rect().encloses(large_card._cost.get_global_rect()) and large_card.get_global_rect().encloses(large_card._reward.get_global_rect()), "price and reward both fit the large card")
+	expect(get_viewport().get_visible_rect().encloses(task_strip.get_global_rect()) and task_strip.size.y <= get_viewport().get_visible_rect().size.y / 5.0, "the task strip keeps its height limit at maximum text size")
+	expect(large_card.get_global_rect().encloses(large_card._cost.get_global_rect()), "the price fits inside the card at maximum text size")
+	expect(large_card._cost.get_theme_font_size(&"normal_font_size") == AppSettings.minimum_text_size(), "compact task prices respect the larger text setting")
 	AppSettings.text_size = AppSettings.TYPOGRAPHY.default_index
 	AppSettings.apply()
 	await frames(6)
@@ -96,12 +115,22 @@ func _run() -> void:
 	task.variants.append(extra)
 	panel._queue_refresh()
 	await frames(4)
-	expect(_offer_card(panel, 0, 2).option == extra.building, "an order can show more than two authored variants")
+	var extra_card := _offer_card(panel, 0, 2)
+	expect(extra_card.option == extra.building and is_equal_approx(extra_card.global_position.y, _offer_card(panel, 0, 0).global_position.y), "an order can show more than two cards in one row")
 	task.variants.erase(extra)
 	panel._queue_refresh()
 	await frames(4)
 	var card := _offer_card(panel, 0, 1)
-	expect(card._image.texture != null and card._reward.visible, "task variant uses a construction card with an inline reward")
+	var offer := _offer(panel, 0, 1)
+	expect(card.scene_file_path == "res://game/ui/construction_card.tscn" and card._image.texture != null and card._image.get_global_rect().end.y <= card._cost.global_position.y, "task uses the palette construction card with its image above its price")
+	var card_rect := card.get_global_rect()
+	var reward_rect := offer.reward.get_global_rect()
+	expect(card_rect.end.y <= reward_rect.position.y and not card.is_ancestor_of(offer.reward) and absf(card_rect.get_center().x - reward_rect.get_center().x) <= 1.0, "the reward sits centered below its construction card")
+	var horizontal_bar := task_scroll.get_h_scroll_bar()
+	var scroll_bottom := horizontal_bar.global_position.y if horizontal_bar.visible else task_scroll.get_global_rect().end.y
+	expect(not task_scroll.get_v_scroll_bar().visible and reward_rect.end.y <= scroll_bottom, "rewards remain fully visible at default text size")
+	expect(card_rect.encloses(card._info.get_global_rect()) and card._info.global_position.x > card._image.global_position.x and card._info.global_position.y < card._cost.global_position.y, "info sits inside the upper-right corner of the card")
+	expect(is_equal_approx(_offer_card(panel, 0, 0).get_global_rect().position.y, card.get_global_rect().position.y), "variants are arranged horizontally")
 	await click(card._info)
 	expect(screen.hud._task_details.visible and screen._construction == null, "the card info opens shared details without selecting the variant")
 	await click(card)
@@ -115,7 +144,17 @@ func _run() -> void:
 		expect(false, "task card opens the selected order")
 		get_tree().quit(1)
 		return
-	expect(panel.visible and menu.panel.position.x > panel.position.x, "order details open on the right of the task list")
+	expect(panel.visible and not menu.panel.get_global_rect().intersects(task_strip.get_global_rect()), "plan controls leave the task strip unobstructed")
+	expect(not menu.buildings_panel.visible, "task placement only opens plan controls beside the task blocks")
+	var selected_style := card.get_theme_stylebox(&"pressed") as StyleBoxFlat
+	expect(card.button_pressed and selected_style != null and selected_style.border_width_top >= 3 and not _offer_card(panel, 0, 0).button_pressed, "active variant has a thick frame")
+	await click(_offer_card(panel, 0, 0)._info)
+	expect(card.button_pressed and menu.order.variant == choice, "using info leaves the active variant selected")
+	await click(_offer_card(panel, 0, 0)._info)
+	await click(menu.controls[&"move"])
+	expect(not task_strip.visible and categories.visible, "pan mode collapses only the strip")
+	await click(menu.controls[&"move"])
+	expect(task_strip.visible, "leaving pan mode restores the selected task category")
 	expect(not world.build_controller.options.has(choice.building), "order stays outside the construction catalog")
 	await click_at(cell_point(Vector2i(25, 27)))
 	await click_at(cell_point(Vector2i(26, 27)))
@@ -127,7 +166,10 @@ func _run() -> void:
 	if other_index < 0:
 		get_tree().quit(1)
 		return
+	task_scroll.ensure_control_visible(_offer_card(panel, 1, other_index))
+	await frames(2)
 	await click(_offer_card(panel, 1, other_index))
+	expect(_offer_card(panel, 1, other_index).button_pressed and not card.button_pressed, "the frame follows the current variant")
 	expect(screen._construction == menu and menu.order.task == other and menu.draft.size() == 1, "selecting the second task keeps the first placement in the same map preview")
 	await click_at(cell_point(Vector2i(25, 27)))
 	expect(menu.draft.task_orders().size() == 1 and menu.draft.task_orders()[0].task == task, "another task cannot overwrite an occupied draft cell")
@@ -153,6 +195,8 @@ func _run() -> void:
 	var other_site := construction.at(other_cell)
 	expect(site != null and other_site != null and other_site.option == site.option and other_site.order.task == other, "one confirmation commits two orders for the same building")
 	expect(world.tasks.completed_count == 0 and _offer_card(panel, 0, 0).disabled and _offer_card(panel, 1, 0).disabled and not _offer_card(panel, 2, 0).disabled, "only submitted tasks lock and no reward is paid before completion")
+	var submitted := _offer_card(panel, 0, 1)
+	expect(submitted.disabled and submitted.button_pressed and submitted.get_theme_stylebox(&"disabled") == submitted.get_theme_stylebox(&"pressed"), "a submitted variant keeps its frame after the order is locked")
 	expect(world.tasks.placed_order(task) == site.order, "placing a second task cannot replace the first order")
 	var snapshot := SessionSave.capture(world)
 	snapshot.options.append(str(choice.building.id))
@@ -244,4 +288,10 @@ func _check_new_nest_popup(world: World) -> void:
 	expect(screen.nest_popup == null, "new nest popup can be closed")
 
 func _offer_card(panel: TaskPanel, task_index: int, choice_index: int) -> ConstructionCard:
-	return panel.get_node("%Requests").get_child(task_index).get_node("%Offers").get_child(choice_index) as ConstructionCard
+	return _offer(panel, task_index, choice_index).placement
+
+func _request(panel: TaskPanel, index: int) -> TaskRequest:
+	return panel.get_node("%Requests").get_child(index) as TaskRequest
+
+func _offer(panel: TaskPanel, task_index: int, choice_index: int) -> TaskOffer:
+	return _request(panel, task_index).get_node("%Offers").get_child(choice_index) as TaskOffer

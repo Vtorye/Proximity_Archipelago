@@ -225,6 +225,7 @@ func _select_section(section: StringName) -> void:
 		selection.clear()
 	elif _section == &"tasks" and is_instance_valid(_construction):
 		_construction.select_order()
+		hud.set_task_selection(null)
 	elif is_instance_valid(_construction):
 		_construction.set_palette_visible(false)
 
@@ -239,6 +240,7 @@ func _create_construction_panel() -> void:
 	_construction = CONSTRUCTION_PANEL.instantiate()
 	_construction.payload = context
 	_construction.map_inspection_requested.connect(_inspect_secondary_cell)
+	_construction.pan_mode_changed.connect(hud.set_task_pan_mode)
 	_construction.close_requested.connect(_close_construction_panel)
 	$ConstructionLayer.add_child(_construction)
 	_update_construction_dock()
@@ -252,6 +254,7 @@ func _begin_royal_order(task_id: StringName, variant_id: StringName) -> void:
 	_section = &"tasks"
 	hud.set_section(_section)
 	_construction.select_order(order)
+	hud.set_task_selection(order)
 	camera.dragging = false
 	camera.enabled_input = false
 	selection.clear()
@@ -263,6 +266,8 @@ func _close_construction_panel(menu: MenuBase) -> void:
 	_construction.detach_undo()
 	_construction.queue_free()
 	_construction = null
+	hud.set_task_selection(null)
+	hud.set_task_pan_mode(false)
 	if _section != &"tasks":
 		_section = &""
 	hud.set_section(_section)

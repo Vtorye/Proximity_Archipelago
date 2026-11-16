@@ -3,7 +3,7 @@
 [ext_resource type="Script" uid="uid://clwif6xxyitqt" path="res://game/economy/price_rule.gd" id="3_jv0kj"]
 [ext_resource type="Script" uid="uid://dohq4yj0b3afb" path="res://game/resources/resource_amount.gd" id="amount"]
 [ext_resource type="Script" uid="uid://d5tyd72woa2w" path="res://game/building/tile_build_option.gd" id="option"]
-[ext_resource type="Resource" path="res://game/resources/dot_treses/wood.tres" id="wood"]
+[ext_resource type="Resource" uid="uid://btsdqgmh3ee22" path="res://game/resources/dot_treses/wood.tres" id="wood"]
 
 [sub_resource type="Resource" id="cost"]
 script = ExtResource("amount")

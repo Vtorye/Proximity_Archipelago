@@ -6,6 +6,7 @@ const CARD: PackedScene = preload("res://game/ui/construction_card.tscn")
 
 ## Construction editor. The draft owns edits; the controller commits the final plan.
 signal map_inspection_requested(cell: Vector2i)
+signal pan_mode_changed(enabled: bool)
 var order: TaskBuildOrder
 
 var context: ConstructionContext
@@ -20,7 +21,6 @@ var controls: Dictionary[StringName, Button] = {}
 @onready var _category_list: VBoxContainer = %CategoryList
 @onready var _cost: RichTextLabel = %Cost
 @onready var _reward: RichTextLabel = %PlanReward
-@onready var _order_card: ConstructionCard = %OrderCard
 @onready var _status: Label = %Status
 var _preview: BuildPreview
 var _selected: BuildOption
@@ -59,8 +59,7 @@ func set_palette_visible(shown: bool) -> void:
 		_layout_windows()
 
 func _update_buildings_visibility() -> void:
-	var has_choices := order != null if _task_mode else _active_category != null
-	buildings_panel.visible = panel.visible and not _map_drag and has_choices
+	buildings_panel.visible = panel.visible and not _map_drag and not _task_mode and _active_category != null
 
 func show_catalog() -> void:
 	if _task_mode:
@@ -72,9 +71,6 @@ func show_catalog() -> void:
 func select_order(task_order: TaskBuildOrder = null) -> void:
 	_task_mode = true
 	_select(task_order.variant.building if task_order != null else null, task_order)
-	if order != null:
-		_order_card.configure(_selected, context.art)
-		_order_card.set_pressed_no_signal(true)
 	_update_mode()
 	set_palette_visible(true)
 
@@ -83,7 +79,6 @@ func _update_mode() -> void:
 		button.visible = not _task_mode
 	for id in _category_for:
 		controls[id].visible = not _task_mode and _category_for[id] == _active_category
-	_order_card.visible = _task_mode and order != null
 	%Demolish.disabled = _task_mode
 	description_panel.hide()
 	_update_buildings_visibility()
@@ -103,6 +98,8 @@ func _layout_windows() -> void:
 	var viewport: Vector2 = get_viewport_rect().size
 	var margin: float = PRESENTATION.dock_clearance
 	var bottom: float = viewport.y - _bottom_inset
+	if _task_mode:
+		bottom -= floorf(viewport.y * PRESENTATION.task_strip_height_ratio) + margin
 	var fixed_height: float = panel.get_combined_minimum_size().y - _category_scroll.get_combined_minimum_size().y
 	var available_height: float = maxf(0.0, bottom - _top_edge - fixed_height)
 	_category_scroll.custom_minimum_size.y = minf(available_height, _category_list.get_combined_minimum_size().y)
@@ -111,7 +108,7 @@ func _layout_windows() -> void:
 	var content: Vector2 = _choices.get_combined_minimum_size() + frame
 	var left := margin
 	if _task_mode:
-		left = maxf(margin, viewport.x - panel.size.x - content.x - 2.0 * margin)
+		left = maxf(margin, viewport.x - panel.size.x - margin)
 	panel.position = Vector2(left, bottom - panel.size.y)
 	var strip_left: float = panel.position.x + panel.size.x + margin
 	var available_width: float = maxf(0.0, viewport.x - strip_left - margin)
@@ -160,8 +157,6 @@ func _ready() -> void:
 	%KeepResidents.pressed.connect(_cancel_confirmation)
 	_populate_categories()
 	buildings_panel.hide()
-	_order_card.info_requested.connect(_toggle_description)
-	_order_card.pressed.connect(func(): _order_card.set_pressed_no_signal(true))
 	_layout_windows()
 	get_viewport().size_changed.connect(_layout_windows)
 	panel.minimum_size_changed.connect(_layout_windows.call_deferred)
@@ -289,6 +284,7 @@ func _set_map_drag(enabled: bool) -> void:
 	_panning = false
 	context.camera.dragging = false
 	_map_drag = enabled
+	pan_mode_changed.emit(enabled)
 	%Move.set_pressed_no_signal(enabled)
 	_update_buildings_visibility()
 	if enabled:
@@ -325,8 +321,6 @@ func _refresh() -> void:
 		var card := control as ConstructionCard
 		if card != null and card.option != null:
 			card.set_price(context.controller.price(card.option, _pricing_cell))
-	if order != null and _order_card.option != null:
-		_order_card.set_price(context.controller.price(order.variant.building, _pricing_cell))
 	var budget: PlacementCheck = draft.budget_check()
 	BuildCostText.show_price(_cost, draft.costs(), tr("ui.construction.cost") % [draft.size(), "%s"])
 	var orders := draft.task_orders()

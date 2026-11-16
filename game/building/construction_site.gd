@@ -60,6 +60,10 @@ func _draw() -> void:
 	var center_offset := (Vector2(min_cell + max_cell) * 0.5 - Vector2(cell)) * size
 	var rect := Rect2(center_offset - footprint_size * 0.5, footprint_size)
 	var icon: Texture2D = service.art.build_icon(option)
+	if is_instance_valid(candidate):
+		var sprite := candidate.get_node_or_null("Sprite") as Sprite2D
+		if sprite != null and sprite.texture != null:
+			icon = sprite.texture
 	if icon != null: draw_texture_rect(icon, rect, false, Color(1, 1, 1, 0.38))
 	for corner in [Vector2(-1, -1), Vector2(1, -1), Vector2(-1, 1), Vector2(1, 1)]:
 		var point: Vector2 = rect.get_center() + corner * (footprint_size * 0.5 - Vector2.ONE * 2)

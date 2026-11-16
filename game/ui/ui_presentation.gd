@@ -2,6 +2,7 @@ class_name UiPresentation
 extends Resource
 
 @export var dock_clearance: float
+@export_range(0.05, 0.2, 0.01) var task_strip_height_ratio := 0.2
 @export var toast_duration: float
 @export var low_food_threshold: int
 @export var timer_warning_seconds: int

@@ -5,8 +5,8 @@
 [ext_resource type="Texture2D" uid="uid://bir1mjanntsr3" path="res://game/assets/sprites/wall.svg" id="icon"]
 [ext_resource type="Script" uid="uid://ctb7np3cfufgu" path="res://game/building/scene_build_option.gd" id="option"]
 [ext_resource type="PackedScene" path="res://game/combat/wall.tscn" id="scene"]
-[ext_resource type="Resource" path="res://game/resources/dot_treses/stone.tres" id="stone"]
-[ext_resource type="Resource" path="res://game/resources/dot_treses/wood.tres" id="wood"]
+[ext_resource type="Resource" uid="uid://dnvvlsc4kjs1t" path="res://game/resources/dot_treses/stone.tres" id="stone"]
+[ext_resource type="Resource" uid="uid://btsdqgmh3ee22" path="res://game/resources/dot_treses/wood.tres" id="wood"]
 
 [sub_resource type="Resource" id="wood_cost"]
 script = ExtResource("amount")

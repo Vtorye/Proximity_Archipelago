@@ -1,20 +1,30 @@
 class_name TaskPanel
-extends PanelContainer
+extends Control
 ## Lists the current royal requests independently, with authored variant cards.
 const REQUEST: PackedScene = preload("res://game/tasks/task_request.tscn")
 const PRESENTATION: UiPresentation = preload("res://game/ui/ui_presentation.tres")
 
 signal order_requested(task_id: StringName, variant_id: StringName)
 signal info_requested(option: BuildOption)
+signal strip_closed
 
 var director: TaskDirector
 var _queued := false
-@onready var _requests: VBoxContainer = %Requests
+var _selection: TaskBuildOrder
+var _bottom_inset := 0.0
+var _pan_mode := false
+@onready var _requests: HBoxContainer = %Requests
 @onready var _waiting: Label = %Waiting
-@onready var _header: WindowHeader = %WindowHeader
+@onready var _categories: PanelContainer = %Categories
+@onready var _category: Button = %Category
+@onready var _strip: PanelContainer = %TaskStrip
 @onready var _scroll: ScrollContainer = %Scroll
 
 func _ready() -> void:
+	_category.pressed.connect(AppSettings.play_click)
+	_category.toggled.connect(func(_pressed: bool): _update_strip_visibility())
+	_categories.minimum_size_changed.connect(_layout_windows.call_deferred)
+	_requests.minimum_size_changed.connect(_layout_windows.call_deferred)
 	AppSettings.language_changed.connect(_queue_refresh)
 	AppSettings.text_size_changed.connect(_queue_refresh)
 	director.changed.connect(_queue_refresh)
@@ -23,13 +33,44 @@ func _ready() -> void:
 	director.world.match_controller.time_changed.connect(_on_time_changed)
 	_refresh()
 
-func dock_below(top_edge: float, bottom_bar_height: float) -> void:
-	_header.inset.y = top_edge + PRESENTATION.dock_clearance
-	if not _header.collapsed:
-		var header_height: float = get_combined_minimum_size().y - _scroll.get_combined_minimum_size().y
-		var lower_edge: float = get_viewport_rect().size.y - bottom_bar_height - PRESENTATION.dock_clearance
-		_scroll.custom_minimum_size.y = maxf(0.0, lower_edge - _header.inset.y - header_height)
-	_header.queue_layout()
+func dock_above(bottom_bar_height: float) -> void:
+	_bottom_inset = bottom_bar_height
+	_layout_windows()
+
+func visible_bounds() -> Array[Rect2]:
+	var bounds: Array[Rect2] = []
+	for window in [_categories, _strip]:
+		if window.is_visible_in_tree():
+			bounds.append(window.get_global_rect())
+	return bounds
+
+func set_pan_mode(enabled: bool) -> void:
+	_pan_mode = enabled
+	_update_strip_visibility()
+
+func _update_strip_visibility() -> void:
+	var was_open := _strip.visible
+	_strip.visible = _category.button_pressed and not _pan_mode
+	if was_open and not _strip.visible:
+		strip_closed.emit()
+	_layout_windows()
+
+func _layout_windows() -> void:
+	var viewport := get_viewport_rect().size
+	var margin := PRESENTATION.dock_clearance
+	var bottom := viewport.y - _bottom_inset - margin
+	_categories.reset_size()
+	_categories.position = Vector2(margin, bottom - _categories.size.y)
+	var left := _categories.position.x + _categories.size.x + margin
+	var available_width := maxf(0.0, viewport.x - left - margin)
+	var height_limit := floorf(viewport.y * PRESENTATION.task_strip_height_ratio)
+	var content := _requests.get_combined_minimum_size() + _strip.get_theme_stylebox(&"panel").get_minimum_size()
+	if content.x > available_width:
+		content.y += _scroll.get_h_scroll_bar().get_combined_minimum_size().y
+	if content.y > height_limit:
+		content.x += _scroll.get_v_scroll_bar().get_combined_minimum_size().x
+	_strip.size = Vector2(minf(content.x, available_width), minf(content.y, height_limit))
+	_strip.position = Vector2(left, bottom - _strip.size.y)
 
 func _queue_refresh() -> void:
 	if _queued:
@@ -37,24 +78,33 @@ func _queue_refresh() -> void:
 	_queued = true
 	_refresh.call_deferred()
 
+func set_selection(order: TaskBuildOrder) -> void:
+	_selection = order
+	for request: TaskRequest in _requests.get_children():
+		request.set_selection(order)
+
 func _refresh() -> void:
 	_queued = false
-	var scroll_position: int = _scroll.scroll_vertical
+	var scroll_position := _scroll.scroll_horizontal
 	for child in _requests.get_children():
 		_requests.remove_child(child)
 		child.queue_free()
 	%Heading.text = tr("ui.task.level_progress") % [director.level, director.closed, director.stage().tasks.size()]
-	for task in director.slots:
+	for index in director.slots.size():
+		var task := director.slots[index]
 		if task == null:
 			continue
 		var request: TaskRequest = REQUEST.instantiate()
 		_requests.add_child(request)
-		request.configure(director, task)
+		request.configure(director, task, index + 1)
+		request.set_selection(_selection)
 		request.order_requested.connect(order_requested.emit)
 		request.info_requested.connect(info_requested.emit)
-	_scroll.set_deferred("scroll_vertical", scroll_position)
+	_scroll.set_deferred("scroll_horizontal", scroll_position)
 	%Message.text = director.display_message()
+	%Message.visible = not %Message.text.is_empty()
 	_update_waiting()
+	_layout_windows()
 
 func _refresh_prices() -> void:
 	for request: TaskRequest in _requests.get_children():

@@ -309,6 +309,7 @@ ui.task.cancel_notice,Declined: no time or reward,Отказ: без време�
 ui.task.time_reward,+%d seconds,+%d секунд
 ui.task.time_reward_short,+%d s,+%d с
 ui.task.level_progress,Level %d · %d/%d,Уровень %d · %d/%d
+ui.task.numbered_title,Lvl %d (%d),Ур.%d (%d)
 ui.task.cancel_hint,Decline: %s. No reward.,Отказ: %s. Без награды.
 ui.task.submit_hint,Submit: %s. Reward: %s and %d s.,Сдать: %s. Награда: %s и %d с.
 ui.task.waiting,Waiting for space: %d · for supplies: %d,Ждут мест: %d · сырья: %d

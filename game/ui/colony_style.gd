@@ -21,6 +21,7 @@ static func theme_for_text_size(index: int) -> Theme:
 	theme.set_font_size(&"normal_font_size", &"RichTextLabel", body)
 	var caption := maxi(minimum, typography.caption_size)
 	theme.set_font_size(&"font_size", &"Caption", caption)
+	theme.set_font_size(&"normal_font_size", &"PriceCaption", caption)
 	theme.set_font_size(&"font_size", &"TooltipLabel", caption)
 	theme.set_font_size(&"font_size", &"Heading", maxi(minimum, typography.heading_size))
 	theme.set_font_size(&"font_size", &"CompactButton", maxi(minimum, typography.compact_button_size))

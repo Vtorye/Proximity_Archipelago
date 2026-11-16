@@ -933,6 +933,9 @@ msgstr "+%d s"
 msgid "ui.task.level_progress"
 msgstr "Level %d · %d/%d"
 
+msgid "ui.task.numbered_title"
+msgstr "Lvl %d (%d)"
+
 msgid "ui.task.cancel_hint"
 msgstr "Decline: %s. No reward."
 

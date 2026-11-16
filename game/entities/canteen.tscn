@@ -1,8 +1,11 @@
-[gd_scene load_steps=3 format=3]
-[ext_resource type="Script" path="res://game/entities/canteen.gd" id="script"]
-[ext_resource type="Texture2D" path="res://game/assets/sprites/canteen.svg" id="art"]
-[node name="Canteen" type="Node2D"]
+[gd_scene format=3 uid="uid://brf42b54ugjtv"]
+
+[ext_resource type="Texture2D" path="res://game/assets/sprites/canteen2.png" id="art"]
+[ext_resource type="Script" uid="uid://61u1015oq8mh" path="res://game/entities/canteen.gd" id="script"]
+
+[node name="Canteen" type="Node2D" unique_id=1819773372]
 script = ExtResource("script")
 title = "ui.building.canteen"
-[node name="Sprite" type="Sprite2D" parent="."]
+
+[node name="Sprite" type="Sprite2D" parent="." unique_id=2081162632]
 texture = ExtResource("art")

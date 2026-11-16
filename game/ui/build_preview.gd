@@ -10,6 +10,7 @@ var hovering := false
 var option: BuildOption
 var order: TaskBuildOrder
 var demolishing := false
+var _preview_textures: Dictionary = {}
 
 func _draw() -> void:
 	if draft == null: return
@@ -47,7 +48,7 @@ func _draw_option(cell: Vector2i, definition: BuildOption, tint: Color, border: 
 	var center_cell := (Vector2(min_cell + max_cell) + Vector2.ONE) * 0.5
 	var center: Vector2 = to_local(navigation.cell_to_world(cell)) + (center_cell - Vector2(cell) - Vector2.ONE * 0.5) * size
 	var rect := Rect2(center - footprint_size / 2.0, footprint_size)
-	var texture: Texture2D = art.build_icon(definition)
+	var texture := _preview_texture(definition, cell)
 	if definition.id == &"house":
 		tint *= House.BARRACKS_TINT
 	if texture != null:
@@ -55,6 +56,17 @@ func _draw_option(cell: Vector2i, definition: BuildOption, tint: Color, border: 
 	for target in occupied:
 		var point: Vector2 = to_local(navigation.cell_to_world(target))
 		draw_rect(Rect2(point - size / 2.0 + Vector2.ONE * PRESENTATION.outline_inset, size - Vector2.ONE * PRESENTATION.outline_inset * 2), border, false, PRESENTATION.outline_width)
+
+func _preview_texture(definition: BuildOption, cell: Vector2i) -> Texture2D:
+	var key := "%d:%d:%d" % [definition.get_instance_id(), cell.x, cell.y]
+	if not _preview_textures.has(key):
+		var texture: Texture2D = art.build_icon(definition)
+		if definition is SceneBuildOption:
+			var variants := (definition as SceneBuildOption).appearance_variants
+			if variants != null and not variants.textures.is_empty():
+				texture = variants.textures.pick_random()
+		_preview_textures[key] = texture
+	return _preview_textures[key]
 
 func _draw_removal(cells: Array[Vector2i]) -> void:
 	var navigation: RouteService = draft.controller.route_service

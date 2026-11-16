@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://d0rq676kfwqxw"
-path="res://.godot/imported/canteen.svg-b19d105f2f78b8d686ede681cc006548.ctex"
+uid="uid://btmqgkuso43kx"
+path="res://.godot/imported/queen_statue_seated.svg-19d48a38e3e21812c1a43cb690e7a1d7.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://game/assets/sprites/canteen.svg"
-dest_files=["res://.godot/imported/canteen.svg-b19d105f2f78b8d686ede681cc006548.ctex"]
+source_file="res://game/assets/sprites/statues/queen_statue_seated.svg"
+dest_files=["res://.godot/imported/queen_statue_seated.svg-19d48a38e3e21812c1a43cb690e7a1d7.ctex"]
 
 [params]
 

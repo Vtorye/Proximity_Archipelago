@@ -5,57 +5,43 @@ extends PanelContainer
 signal order_requested(task_id: StringName, variant_id: StringName)
 signal info_requested(option: BuildOption)
 
-const CARD: PackedScene = preload("res://game/ui/construction_card.tscn")
-const UNLOCK: Texture2D = preload("res://game/assets/ui/task_unlock.svg")
+const OFFER: PackedScene = preload("res://game/tasks/task_offer.tscn")
+var task: TaskSpec
 var _controller: BuildController
-var _cards: Dictionary[ConstructionCard, TaskBuildOrder] = {}
+var _offers: Array[TaskOffer] = []
+var _placed: TaskBuildOrder
 
-func configure(director: TaskDirector, task: TaskSpec) -> void:
+func configure(director: TaskDirector, definition: TaskSpec, number: int) -> void:
+	task = definition
 	_controller = director.world.build_controller
-	%Title.text = task.title
-	var unlocks := PackedStringArray()
-	var unlock_row: RichTextLabel = %Unlocks
-	var icon_size := unlock_row.get_theme_font_size(&"normal_font_size")
-	for option in task.unlocks:
-		if not _controller.options.has(option):
-			if unlocks.is_empty():
-				unlock_row.add_image(UNLOCK, icon_size, icon_size)
-			unlocks.append(tr(option.display_name))
-			var icon: Texture2D = director.world.art.build_icon(option)
-			unlock_row.add_text(" ")
-			if icon != null:
-				unlock_row.add_image(icon, icon_size, icon_size)
-	if not unlocks.is_empty():
-		unlock_row.tooltip_text = tr("ui.task.unlocks") % ", ".join(unlocks)
-		unlock_row.show()
-	var placed := director.placed_order(task)
-	if placed != null:
-		var choice := placed.variant
-		%Status.text = tr("ui.task.building_variant") % tr(choice.label if not choice.label.is_empty() else choice.building.display_name)
-		%Status.show()
+	%Title.text = tr("ui.task.numbered_title") % [director.level, number]
+	_placed = director.placed_order(task)
 	for variant in task.variants:
 		if variant == null or variant.building == null:
 			continue
-		var order := TaskBuildOrder.new(task, variant)
-		var card: ConstructionCard = CARD.instantiate()
-		%Offers.add_child(card)
-		card.configure(variant.building, director.world.art)
-		card.show_offer(order, _controller.price(variant.building))
-		card.disabled = not director.can_place(order)
-		var chosen := placed != null and placed.variant == variant
-		card.toggle_mode = chosen
-		card.set_pressed_no_signal(chosen)
-		if placed != null and placed.variant != variant:
-			card.modulate.a = 0.55
-		card.pressed.connect(AppSettings.play_click)
-		card.pressed.connect(order_requested.emit.bind(task.id, variant.id))
-		card.info_requested.connect(info_requested.emit)
-		_cards[card] = order
+		var offer: TaskOffer = OFFER.instantiate()
+		%Offers.add_child(offer)
+		offer.configure(TaskBuildOrder.new(task, variant), director.world.art)
+		offer.refresh_price(_controller)
+		offer.set_available(director.can_place(offer.order))
+		if _placed != null:
+			if _placed.variant == variant:
+				offer.placement.tooltip_text = tr("ui.task.building_variant") % tr(offer.placement.tooltip_text)
+			else:
+				offer.modulate.a = 0.55
+		offer.order_requested.connect(order_requested.emit)
+		offer.info_requested.connect(info_requested.emit)
+		_offers.append(offer)
+
+func set_selection(selection: TaskBuildOrder) -> void:
+	var selected := _placed if _placed != null else selection
+	for offer in _offers:
+		offer.set_selected(selected != null and selected.task == task and selected.variant == offer.order.variant)
 
 func refresh_prices() -> void:
-	for card in _cards:
-		card.set_price(_controller.price(card.option))
+	for offer in _offers:
+		offer.refresh_price(_controller)
 
 func refresh_availability(director: TaskDirector) -> void:
-	for card in _cards:
-		card.disabled = not director.can_place(_cards[card])
+	for offer in _offers:
+		offer.set_available(director.can_place(offer.order))

@@ -933,6 +933,9 @@ msgstr "+%d с"
 msgid "ui.task.level_progress"
 msgstr "Уровень %d · %d/%d"
 
+msgid "ui.task.numbered_title"
+msgstr "Ур.%d (%d)"
+
 msgid "ui.task.cancel_hint"
 msgstr "Отказ: %s. Без награды."
 

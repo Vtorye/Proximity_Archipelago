@@ -2,6 +2,7 @@ class_name SceneBuildOption
 extends BuildOption
 
 @export var scene: PackedScene
+@export var appearance_variants: SpriteVariantSet
 ## Maximum simultaneous instances of this option on the map. Zero means unlimited.
 @export_range(0, 1000, 1, "or_greater") var instance_limit := 0
 ## Offsets relative to the selected cell. Include the origin.

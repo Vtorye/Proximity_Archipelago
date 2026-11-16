@@ -8,6 +8,7 @@ var cell: Vector2i
 @export var option: BuildOption
 var _is_setup := false
 var _is_demolished := false
+var _appearance_texture: Texture2D
 @export var title := "ui.building.generic"
 
 func display_title() -> String:
@@ -80,7 +81,11 @@ func configure_appearance(art: ArtCatalog, tile_size: float) -> void:
 	var sprite: Sprite2D = get_node_or_null("Sprite") as Sprite2D
 	if sprite == null:
 		return
-	if option != null and option.icon != null:
+	if option is SceneBuildOption and option.appearance_variants != null and not option.appearance_variants.textures.is_empty():
+		if _appearance_texture == null:
+			_appearance_texture = option.appearance_variants.textures.pick_random()
+		sprite.texture = _appearance_texture
+	elif option != null and option.icon != null:
 		sprite.texture = option.icon
 	else:
 		_apply_default_appearance(sprite, art)

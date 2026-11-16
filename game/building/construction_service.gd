@@ -34,6 +34,8 @@ func at(cell: Vector2i, terrain: bool = false) -> ConstructionSite:
 	return null
 
 func enqueue(command: BuildCommand, candidate: Building, quote: Array[ResourceAmount], crates: Dictionary) -> ConstructionSite:
+	if candidate != null:
+		candidate.configure_appearance(art, controller.route_service.cell_size())
 	var site: ConstructionSite = instantiate_site()
 	site.order = command.order
 	site.candidate = candidate
