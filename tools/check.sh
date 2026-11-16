@@ -12,6 +12,7 @@ project = destination / 'project.godot'
 project.write_text(project.read_text().replace('config/name="archipelago"', 'config/name="archipelago-tests"'))
 PY
 godot_binary="${GODOT_BIN:-godot}"
+if ! "$godot_binary" --headless --path "$check_root/project" --editor --quit > "$check_root/bootstrap-import.log" 2>&1; then cat "$check_root/bootstrap-import.log"; exit 1; fi
 if ! "$godot_binary" --headless --path "$check_root/project" --editor --quit > "$check_root/import.log" 2>&1; then cat "$check_root/import.log"; exit 1; fi
 if rg -q 'SCRIPT ERROR|Failed to load|Parse Error' "$check_root/import.log"; then
   cat "$check_root/import.log"
