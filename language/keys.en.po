@@ -30,14 +30,8 @@ msgstr "Volume"
 msgid "ui.settings.fullscreen"
 msgstr "Fullscreen"
 
-msgid "ui.settings.vsync"
-msgstr "Vertical sync"
-
 msgid "ui.settings.grid"
 msgstr "Tile grid"
-
-msgid "ui.settings.reduced_motion"
-msgstr "Reduce motion"
 
 msgid "ui.settings.saved"
 msgstr "Saved"

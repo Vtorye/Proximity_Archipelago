@@ -9,7 +9,7 @@ func _run() -> void:
 	screen = Router._current
 	for size in range(AppSettings.TYPOGRAPHY.minimum_sizes.size()):
 		AppSettings.text_size = size
-		AppSettings.changed.emit()
+		AppSettings.apply()
 		await click(screen.hud.controls[&"settings"])
 		var pause := Router.top_overlay() as PauseMenu
 		if pause == null:
@@ -21,7 +21,7 @@ func _run() -> void:
 		expect(pause.controls[&"resume"].get_theme_font_size("font_size") == AppSettings.minimum_text_size(), "pause buttons use the selected compact font size")
 		await click(pause.controls[&"resume"])
 	AppSettings.text_size = AppSettings.TYPOGRAPHY.default_index
-	AppSettings.changed.emit()
+	AppSettings.apply()
 	var world: World = screen.world
 	var construction := world.build_controller.construction
 	world.build_controller.construction = null

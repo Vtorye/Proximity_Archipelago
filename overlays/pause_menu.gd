@@ -3,7 +3,6 @@ extends MenuBase
 var controls: Dictionary[StringName, Button] = {}
 
 func _ready() -> void:
-	ColonyStyle.apply(self)
 	%WindowHeader.close_requested.connect(func(): close_requested.emit(self))
 	controls[&"resume"] = %Resume
 	%Resume.pressed.connect(AppSettings.play_click)

@@ -26,7 +26,6 @@ func _ready() -> void:
 	if not is_instance_valid(world) or not world.logistics.owns(house):
 		close_requested.emit.call_deferred(self)
 		return
-	ColonyStyle.apply(self)
 	%Title.text = "ui.storage.main" if house.is_main_nest else "ui.storage.local"
 	controls[&"close"] = %WindowHeader.toggle
 	%WindowHeader.close_requested.connect(func(): close_requested.emit(self))
@@ -41,7 +40,6 @@ func _ready() -> void:
 	%Residents.pressed.connect(_show_tab.bind(&"residents"))
 	for type in world.inventory.registered_types():
 		var line: Label = preload("res://game/ui/nest_stock_label.tscn").instantiate()
-		ColonyStyle.apply(line)
 		_stock_labels[type.id] = line
 		_inventory_tab.add_child(line)
 	_funds.toggled.connect(func(enabled: bool):
@@ -51,7 +49,6 @@ func _ready() -> void:
 		if type.id == WorldInventory.CURRENCY_ID:
 			continue
 		var row: HBoxContainer = preload("res://game/ui/nest_order_row.tscn").instantiate()
-		ColonyStyle.apply(row)
 		var minimum: SpinBox = row.get_node("Minimum")
 		var maximum: SpinBox = row.get_node("Maximum")
 		var owed: SpinBox = row.get_node("Owed")
@@ -67,7 +64,6 @@ func _ready() -> void:
 		}
 	for role in world.population.roles():
 		var row: HBoxContainer = preload("res://game/ui/nest_resident_row.tscn").instantiate()
-		ColonyStyle.apply(row)
 		_role_labels[role] = row.get_node("Labels/Count")
 		_purchase_labels[role] = row.get_node("Labels/Price")
 		var buy: Button = row.get_node("Buy")
@@ -83,7 +79,7 @@ func _ready() -> void:
 	world.inventory.changed.connect(refresh)
 	world.population.changed.connect(refresh)
 	house.tree_exiting.connect(func(): close_requested.emit(self))
-	AppSettings.changed.connect(refresh)
+	AppSettings.language_changed.connect(refresh)
 	_show_tab(&"inventory")
 	refresh()
 	default_focus = controls[&"close"]

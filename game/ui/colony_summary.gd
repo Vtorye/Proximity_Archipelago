@@ -31,7 +31,7 @@ func configure(session: World) -> void:
 	session.population.changed.connect(refresh)
 	session.registry.added.connect(_on_nest_changed)
 	session.registry.removed.connect(_on_nest_changed)
-	AppSettings.changed.connect(refresh)
+	AppSettings.language_changed.connect(refresh)
 	_rebuild_rows()
 
 func _on_nest_changed(building: Building) -> void:

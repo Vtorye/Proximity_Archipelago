@@ -50,7 +50,6 @@ func _ready() -> void:
 	if panel == null or body == null:
 		return
 	get_viewport().size_changed.connect(queue_layout)
-	AppSettings.changed.connect(queue_layout)
 	panel.minimum_size_changed.connect(queue_layout)
 	queue_layout()
 

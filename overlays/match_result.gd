@@ -4,7 +4,6 @@ var controls: Dictionary[StringName, Button] = {}
 
 func _ready() -> void:
 	dismissable = false
-	ColonyStyle.apply(self)
 	var summary: MatchSummary = payload as MatchSummary
 	var won: bool = summary != null and summary.won
 	%Heading.text = "ui.result.victory" if won else "ui.result.defeat"

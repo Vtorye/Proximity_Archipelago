@@ -10,9 +10,8 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 func _process(delta: float) -> void:
-	if not AppSettings.reduced_motion:
-		_time += delta
-		queue_redraw()
+	_time += delta
+	queue_redraw()
 
 func _draw() -> void:
 	var tile: float = PRESENTATION.backdrop_tile_size

@@ -63,7 +63,6 @@ func _ready() -> void:
 	dismissable = false
 	visibility_changed.connect(_on_visibility_changed)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	ColonyStyle.apply(self)
 	context = payload as ConstructionContext
 	if context == null or not is_instance_valid(context.controller):
 		close_requested.emit.call_deferred(self)
@@ -106,7 +105,7 @@ func _ready() -> void:
 	context.controller.inventory.changed.connect(_queue_refresh)
 	context.controller.registry.removed.connect(draft.forget_removal)
 	context.controller.registry.changed.connect(_queue_refresh)
-	AppSettings.changed.connect(_queue_refresh)
+	AppSettings.language_changed.connect(_queue_refresh)
 	draft.changed.connect(_queue_refresh)
 	_refresh()
 	default_focus = controls.get(_selected.id) if _selected != null else null

@@ -1,5 +1,6 @@
 [gd_scene format=3]
 
+[ext_resource type="Script" path="res://game/ui/ui_text_binding.gd" id="ui_text_binding"]
 [ext_resource type="Script" path="res://overlays/construction_menu.gd" id="script"]
 [ext_resource type="StyleBox" path="res://game/ui/dialog_panel.tres" id="dialog_style"]
 [ext_resource type="Texture2D" path="res://game/assets/ui/build_cancel.svg" id="cancel_icon"]
@@ -194,3 +195,7 @@ tooltip_text = "ui.window.close"
 icon = ExtResource("cancel_icon")
 expand_icon = true
 theme_override_constants/icon_max_width = 14
+
+[node name="UiText" type="Node" parent="." node_paths=PackedStringArray("target")]
+script = ExtResource("ui_text_binding")
+target = NodePath("..")

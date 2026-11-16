@@ -45,7 +45,6 @@ func _exit_tree() -> void:
 		_template.free()
 
 func _configure_controls() -> void:
-	ColonyStyle.apply($Interface/UI)
 
 
 	%Back.pressed.connect(_back)

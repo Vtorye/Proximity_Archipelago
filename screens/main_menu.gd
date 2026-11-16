@@ -3,7 +3,6 @@ extends Screen
 var controls: Dictionary[StringName, Button] = {}
 
 func _ready() -> void:
-	ColonyStyle.apply(self)
 	var has_save: bool = not SessionSave.read().is_empty()
 	%Continue.visible = has_save
 	controls[&"play"] = %Play

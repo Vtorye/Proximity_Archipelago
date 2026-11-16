@@ -1,4 +1,5 @@
 [gd_scene format=3]
+[ext_resource type="Script" path="res://game/ui/ui_text_binding.gd" id="ui_text_binding"]
 [ext_resource type="Script" path="res://overlays/settings_menu.gd" id="script"]
 [ext_resource type="StyleBox" path="res://game/ui/dialog_panel.tres" id="dialog_style"]
 [ext_resource type="PackedScene" path="res://game/ui/window_header.tscn" id="window_header"]
@@ -52,7 +53,7 @@ theme_override_constants/margin_right = 6
 theme_override_constants/margin_bottom = 6
 
 [node name="Scroll" type="ScrollContainer" parent="Center/Dialog/WindowContents/Margin"]
-custom_minimum_size = Vector2(0, 255)
+custom_minimum_size = Vector2(0, 189)
 horizontal_scroll_mode = 0
 
 [node name="Content" type="VBoxContainer" parent="Center/Dialog/WindowContents/Margin/Scroll"]
@@ -122,20 +123,6 @@ text = "[ ]"
 custom_minimum_size = Vector2(48, 28)
 toggle_mode = true
 
-[node name="VsyncRow" type="HBoxContainer" parent="Center/Dialog/WindowContents/Margin/Scroll/Content"]
-
-[node name="Caption" type="Label" parent="Center/Dialog/WindowContents/Margin/Scroll/Content/VsyncRow"]
-mouse_filter = 2
-text = "ui.settings.vsync"
-size_flags_horizontal = 3
-
-[node name="Vsync" type="Button" parent="Center/Dialog/WindowContents/Margin/Scroll/Content/VsyncRow"]
-unique_name_in_owner = true
-mouse_default_cursor_shape = 2
-text = "[X]"
-custom_minimum_size = Vector2(48, 28)
-toggle_mode = true
-
 [node name="ShowGridRow" type="HBoxContainer" parent="Center/Dialog/WindowContents/Margin/Scroll/Content"]
 
 [node name="Caption" type="Label" parent="Center/Dialog/WindowContents/Margin/Scroll/Content/ShowGridRow"]
@@ -144,20 +131,6 @@ text = "ui.settings.grid"
 size_flags_horizontal = 3
 
 [node name="ShowGrid" type="Button" parent="Center/Dialog/WindowContents/Margin/Scroll/Content/ShowGridRow"]
-unique_name_in_owner = true
-mouse_default_cursor_shape = 2
-text = "[ ]"
-custom_minimum_size = Vector2(48, 28)
-toggle_mode = true
-
-[node name="ReducedMotionRow" type="HBoxContainer" parent="Center/Dialog/WindowContents/Margin/Scroll/Content"]
-
-[node name="Caption" type="Label" parent="Center/Dialog/WindowContents/Margin/Scroll/Content/ReducedMotionRow"]
-mouse_filter = 2
-text = "ui.settings.reduced_motion"
-size_flags_horizontal = 3
-
-[node name="ReducedMotion" type="Button" parent="Center/Dialog/WindowContents/Margin/Scroll/Content/ReducedMotionRow"]
 unique_name_in_owner = true
 mouse_default_cursor_shape = 2
 text = "[ ]"
@@ -179,3 +152,12 @@ custom_minimum_size = Vector2(0, 28)
 mouse_default_cursor_shape = 2
 text = "ui.settings.reset"
 size_flags_horizontal = 3
+
+[node name="VolumeSaveTimer" type="Timer" parent="."]
+wait_time = 0.2
+one_shot = true
+ignore_time_scale = true
+
+[node name="UiText" type="Node" parent="." node_paths=PackedStringArray("target")]
+script = ExtResource("ui_text_binding")
+target = NodePath("..")

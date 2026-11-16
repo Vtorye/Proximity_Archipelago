@@ -1,5 +1,6 @@
 [gd_scene format=3]
 
+[ext_resource type="Script" path="res://game/ui/ui_text_binding.gd" id="ui_text_binding"]
 [ext_resource type="Script" path="res://game/ui/match_hud.gd" id="script"]
 
 [ext_resource type="Texture2D" path="res://game/assets/ui/menu_dots.svg" id="menu_icon"]
@@ -265,3 +266,7 @@ theme_type_variation = &"Caption"
 unique_name_in_owner = true
 visible = false
 mouse_filter = 2
+
+[node name="UiText" type="Node" parent="." node_paths=PackedStringArray("target")]
+script = ExtResource("ui_text_binding")
+target = NodePath("..")

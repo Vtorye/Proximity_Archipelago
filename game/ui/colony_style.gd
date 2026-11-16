@@ -2,26 +2,30 @@ class_name ColonyStyle
 extends RefCounted
 
 const THEME: Theme = preload("res://game/ui/colony_theme.tres")
+static var _text_themes: Dictionary[int, Theme] = {}
 
 static func color(role: StringName) -> Color:
 	return THEME.get_color(role, &"UiPalette")
 
-static func apply(control: Control) -> void:
-	# The text preference and map contrast are local to this UI root.
-	var source: Theme = control.theme if control.theme != null else THEME
-	control.theme = source.duplicate(true)
-	if not control.has_node("UiText"):
-		var binding := UiTextBinding.new()
-		binding.name = "UiText"
-		binding.target = control
-		control.add_child(binding)
-	_apply_tree(control)
+static func theme_for_text_size(index: int) -> Theme:
+	if _text_themes.has(index):
+		return _text_themes[index]
+	var typography: UiTypography = AppSettings.TYPOGRAPHY
+	var minimum := typography.minimum_sizes[index]
+	# Configure the variant before any Control observes it. Fonts and styles are shared.
+	var theme := THEME.duplicate() as Theme
+	var body := maxi(minimum, typography.body_size)
+	theme.default_font_size = body
+	for type in [&"Label", &"Button", &"CheckButton", &"OptionButton", &"LineEdit", &"TextEdit"]:
+		theme.set_font_size(&"font_size", type, body)
+	theme.set_font_size(&"normal_font_size", &"RichTextLabel", body)
+	var caption := maxi(minimum, typography.caption_size)
+	theme.set_font_size(&"font_size", &"Caption", caption)
+	theme.set_font_size(&"font_size", &"TooltipLabel", caption)
+	theme.set_font_size(&"font_size", &"Heading", maxi(minimum, typography.heading_size))
+	theme.set_font_size(&"font_size", &"CompactButton", maxi(minimum, typography.compact_button_size))
+	_text_themes[index] = theme
+	return theme
 
 static func fill(control: Control) -> void:
 	control.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-
-static func _apply_tree(root: Node) -> void:
-	for child in root.get_children():
-		if child is Control:
-			child.theme = root.theme
-		_apply_tree(child)

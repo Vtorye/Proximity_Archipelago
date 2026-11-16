@@ -17,7 +17,6 @@ var _signature := ""
 
 func configure(session: World) -> void:
 	world = session
-	ColonyStyle.apply(self)
 	for index in range(_rewards.size()):
 		_rewards[index].pressed.connect(AppSettings.play_click)
 		_rewards[index].pressed.connect(_choose_reward.bind(index))

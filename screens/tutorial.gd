@@ -14,7 +14,6 @@ var _page := 0
 @onready var _counter: Label = %Counter
 
 func _ready() -> void:
-	ColonyStyle.apply(self)
 	controls[&"back"] = %WindowHeader.toggle
 	%WindowHeader.close_requested.connect(func(): Router.goto(&"main_menu"))
 	controls[&"previous"] = %Previous

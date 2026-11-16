@@ -8,9 +8,7 @@ ui.common.back,Back,Назад
 ui.common.next,Next,Далее
 ui.settings.volume,Volume,Громкость
 ui.settings.fullscreen,Fullscreen,Полный экран
-ui.settings.vsync,Vertical sync,Вертикальная синхронизация
 ui.settings.grid,Tile grid,Сетка клеток
-ui.settings.reduced_motion,Reduce motion,Уменьшить анимацию
 ui.settings.saved,Saved,Сохранено
 ui.settings.reset,Reset,Сбросить
 ui.common.done,Done,Готово

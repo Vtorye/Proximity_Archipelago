@@ -1,4 +1,5 @@
 [gd_scene format=3]
+[ext_resource type="Script" path="res://game/ui/ui_text_binding.gd" id="ui_text_binding"]
 [ext_resource type="Script" path="res://overlays/match_result.gd" id="script"]
 [ext_resource type="StyleBox" path="res://game/ui/dialog_panel.tres" id="dialog_style"]
 [ext_resource type="PackedScene" path="res://game/ui/window_header.tscn" id="window_header"]
@@ -101,3 +102,7 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 28)
 mouse_default_cursor_shape = 2
 text = "ui.common.main_menu"
+
+[node name="UiText" type="Node" parent="." node_paths=PackedStringArray("target")]
+script = ExtResource("ui_text_binding")
+target = NodePath("..")

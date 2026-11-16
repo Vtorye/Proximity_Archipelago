@@ -10,7 +10,7 @@ var _time := 0.0
 
 func _ready() -> void:
 	z_index = 20
-	AppSettings.changed.connect(queue_redraw)
+	AppSettings.grid_visibility_changed.connect(queue_redraw)
 
 func select(target: Vector2i) -> void:
 	cell = target
@@ -40,7 +40,7 @@ func _draw() -> void:
 			draw_line(_corner_at(Vector2i(region.position.x, y), Vector2(-0.5, -0.5)), _corner_at(Vector2i(region.end.x, y), Vector2(-0.5, -0.5)), PRESENTATION.grid_color, PRESENTATION.grid_width)
 	if not selected:
 		return
-	var alpha: float = 1.0 if AppSettings.reduced_motion else lerpf(PRESENTATION.selection_min_opacity, 1.0, (1.0 + sin(_time * TAU / PRESENTATION.selection_pulse_seconds)) / 2.0)
+	var alpha: float = lerpf(PRESENTATION.selection_min_opacity, 1.0, (1.0 + sin(_time * TAU / PRESENTATION.selection_pulse_seconds)) / 2.0)
 	var white := Color(1, 1, 1, alpha)
 	var pixel: float = 1.0 / maxf(get_global_transform_with_canvas().get_scale().x, 0.01)
 	var arm: float = minf(PRESENTATION.selection_arm_pixels * pixel, PRESENTATION.selection_max_arm)

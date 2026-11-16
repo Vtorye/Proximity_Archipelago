@@ -7,7 +7,7 @@ var _queued := false
 signal order_requested(index: int, diversion: bool)
 @onready var _waiting: Label = %Waiting
 func _ready() -> void:
-	AppSettings.changed.connect(_queue_refresh)
+	AppSettings.language_changed.connect(_queue_refresh)
 	director.changed.connect(_queue_refresh)
 	director.world.inventory.changed.connect(_update_availability)
 	director.world.match_controller.time_changed.connect(func(_seconds: int): _update_availability())

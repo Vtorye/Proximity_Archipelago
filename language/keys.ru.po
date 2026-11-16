@@ -30,14 +30,8 @@ msgstr "Громкость"
 msgid "ui.settings.fullscreen"
 msgstr "Полный экран"
 
-msgid "ui.settings.vsync"
-msgstr "Вертикальная синхронизация"
-
 msgid "ui.settings.grid"
 msgstr "Сетка клеток"
-
-msgid "ui.settings.reduced_motion"
-msgstr "Уменьшить анимацию"
 
 msgid "ui.settings.saved"
 msgstr "Сохранено"

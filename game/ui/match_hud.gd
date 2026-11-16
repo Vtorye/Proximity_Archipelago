@@ -44,7 +44,6 @@ func _ready() -> void:
 		_build_hud()
 
 func _build_hud() -> void:
-	ColonyStyle.apply(self)
 	colony_summary.configure(world)
 	colony_summary.nest_selected.connect(nest_selected.emit)
 	colony_summary.expanded_changed.connect(_on_colony_expanded)
@@ -116,7 +115,7 @@ func _build_hud() -> void:
 		%WaveTimer.show()
 		world.combat.changed.connect(_refresh_wave_timer)
 		_refresh_wave_timer()
-	AppSettings.changed.connect(_refresh_localized_labels)
+	AppSettings.language_changed.connect(_refresh_localized_labels)
 	set_section(&"")
 	refresh()
 	_on_time_changed(ceili(world.match_controller.match_duration))
