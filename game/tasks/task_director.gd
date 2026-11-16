@@ -10,9 +10,6 @@ var level := 0
 var closed := 0
 var completed_count := 0
 var skipped_count := 0
-var active_order_id: StringName = &""
-var active_order_option: BuildOption
-var active_order_diversion := false
 var slots: Array[TaskSpec] = []
 var _pool: Array[TaskSpec] = []
 var _rng := RandomNumberGenerator.new()
@@ -27,9 +24,11 @@ func configure(colony: World, definitions: TaskDeck, random_seed: int = 0) -> vo
 	_rng.seed = random_seed
 	world.population.spawned.connect(func(ant: AntAgent): apply_ant_buffs(ant))
 	world.registry.added.connect(func(building: Building): _skin(building))
-	world.build_controller.built.connect(_on_building_built)
+	world.build_controller.can_place_order = can_place
+	world.build_controller.order_placed.connect(changed.emit)
+	world.build_controller.order_completed.connect(_on_order_completed)
 	if world.build_controller.construction != null:
-		world.build_controller.construction.cancelled.connect(cancel_unplaced_order)
+		world.build_controller.construction.order_cancelled.connect(changed.emit)
 	_next_level()
 
 func stage() -> TaskStage:
@@ -38,52 +37,49 @@ func stage() -> TaskStage:
 func submit(index: int, cancel := false) -> bool:
 	return false
 
-func start_order(index: int, diversion: bool = false) -> BuildOption:
-	if index < 0 or index >= slots.size() or slots[index] == null or pending_reward or not world.match_controller.is_active(): return null
-	if active_order_id != &"": return null
-	var task: TaskSpec = slots[index]
-	var option: BuildOption = task.diversion if diversion else task.building
-	if option == null: return null
-	world.build_controller.order_option = option
-	active_order_id = task.id
-	active_order_option = option
-	active_order_diversion = diversion
-	changed.emit()
-	return option
-
-func cancel_unplaced_order(option: BuildOption) -> void:
-	if option != active_order_option: return
+func placed_order(task: TaskSpec) -> TaskBuildOrder:
 	var construction := world.build_controller.construction
-	if construction != null and construction.sites.any(func(site: ConstructionSite) -> bool: return site.option == option):
+	if construction == null:
+		return null
+	for site in construction.sites:
+		if site.active and site.order != null and site.order.task == task:
+			return site.order
+	return null
+
+func can_place(order: TaskBuildOrder) -> bool:
+	return order != null and order.task != null and slots.has(order.task) and order.variant != null \
+		and order.task.variants.has(order.variant) and order.variant.building != null \
+		and not pending_reward and world.match_controller.is_active() and placed_order(order.task) == null
+
+## Selecting an offer only prepares placement. A committed site locks its task.
+func start_order(task_id: StringName, variant_id: StringName) -> TaskBuildOrder:
+	var order := order_from_ids(task_id, variant_id)
+	return order if can_place(order) else null
+
+func order_from_ids(task_id: StringName, variant_id: StringName) -> TaskBuildOrder:
+	for task in slots:
+		if task != null and task.id == task_id:
+			var variant := task.variant_by_id(variant_id)
+			if variant != null and variant.building != null:
+				return TaskBuildOrder.new(task, variant)
+	return null
+
+func _on_order_completed(order: TaskBuildOrder) -> void:
+	var index := slots.find(order.task)
+	if index < 0:
 		return
-	_clear_order()
+	var reward_seconds := order.time_reward()
+	slots[index] = _pool.pop_back() if not _pool.is_empty() else null
+	closed += 1
+	_complete_task(order.task, reward_seconds, order.resources())
+	message = "ui.task.time_reward:%d" % reward_seconds
+	if closed == stage().tasks.size():
+		if deck.choose_upgrades:
+			pending_reward = true
+		else:
+			_apply_upgrade()
+			advance()
 	changed.emit()
-
-func _clear_order() -> void:
-	active_order_id = &""
-	active_order_option = null
-	active_order_diversion = false
-	world.build_controller.order_option = null
-
-func _on_building_built(option: BuildOption, _cell: Vector2i) -> void:
-	if active_order_id == &"" or option != active_order_option: return
-	for index in range(slots.size()):
-		if slots[index] != null and slots[index].id == active_order_id:
-			var task: TaskSpec = slots[index]
-			var reward_seconds := task.time_reward_for(active_order_diversion)
-			var variant_rewards := task.resources_for(active_order_diversion)
-			_clear_order()
-			_complete_task(task, reward_seconds, variant_rewards)
-			closed += 1
-			slots[index] = _pool.pop_back() if not _pool.is_empty() else null
-			message = "ui.task.time_reward:%d" % reward_seconds
-			if closed == stage().tasks.size():
-				if deck.choose_upgrades: pending_reward = true
-				else:
-					_apply_upgrade()
-					advance()
-			changed.emit()
-			return
 
 func _complete_task(task: TaskSpec, reward_seconds: float, rewards: Array[ResourceAmount]) -> void:
 	completed_count += 1
@@ -189,8 +185,6 @@ func capture_state() -> Dictionary:
 		"skipped_count": skipped_count, "pending_reward": pending_reward,
 		"buffs": buffs.duplicate(), "_speed": _speed,
 		"message": message, "rng": _rng.state,
-		"active_order_id": str(active_order_id),
-		"active_order_diversion": active_order_diversion,
 		"slots": slots.map(func(task: TaskSpec): return str(task.id) if task != null else ""),
 		"pool": _pool.map(func(task: TaskSpec): return str(task.id)),
 	}
@@ -219,19 +213,6 @@ func restore_state(state: Dictionary) -> void:
 	buffs.assign(state.buffs)
 	_speed = state._speed
 	message = state.message
-	var saved_order_id: String = state.get("active_order_id", "")
-	active_order_id = StringName(deck.legacy_task_ids.get(saved_order_id, saved_order_id))
-	active_order_diversion = state.get("active_order_diversion", false)
-	active_order_option = null
-	for task in slots:
-		if task != null and task.id == active_order_id:
-			active_order_option = task.diversion if active_order_diversion else task.building
-			break
-	if active_order_option == null:
-		active_order_id = &""
-	world.build_controller.order_option = active_order_option
-	if active_order_option != null:
-		cancel_unplaced_order(active_order_option)
 	changed.emit()
 
 ## If a task was removed without a replacement, keep the saved progress and

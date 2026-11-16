@@ -56,8 +56,8 @@ func _run() -> void:
 	for step in range(5):
 		var index := 0
 		while world.tasks.slots[index] == null: index += 1
-		var order: BuildOption = world.tasks.start_order(index)
-		world.build_controller.built.emit(order, world.registry.all()[0].cell)
+		var order := world.tasks.start_order(world.tasks.slots[index].id, &"build")
+		world.build_controller.order_completed.emit(order)
 	await frames(5)
 	expect(get_tree().paused and screen.campaign_panel.visible, "three reward choices pause the simulation")
 	await capture("04-choose-one-reward", 50)
@@ -67,8 +67,8 @@ func _run() -> void:
 		for step in range(5):
 			var index := 0
 			while world.tasks.slots[index] == null: index += 1
-			var order: BuildOption = world.tasks.start_order(index)
-			world.build_controller.built.emit(order, world.registry.all()[0].cell)
+			var order := world.tasks.start_order(world.tasks.slots[index].id, &"build")
+			world.build_controller.order_completed.emit(order)
 		await frames(4)
 		await click(screen.campaign_panel.controls[stage % 3])
 	expect(world.tasks.level == 5 and world.build_controller.options.has(Voyage.SHIP), "ship appears after reaching development level five")

@@ -3,24 +3,39 @@ extends RefCounted
 ## Shared wording for individual options and the total construction budget.
 
 const RESOURCE_GAP := "   "
+const TIME_ICON: Texture2D = preload("res://game/assets/ui/task_time.svg")
 
 ## The template can add a localized title around the price.
-static func show_price(label: RichTextLabel, costs: Array[ResourceAmount], template := "%s") -> void:
+static func show_price(label: RichTextLabel, costs: Array[ResourceAmount], template := "%s", free_text := "") -> void:
 	label.clear()
 	label.add_text(template.get_slice("%s", 0))
+	_append_totals(label, costs, TranslationServer.translate("ui.cost.free") if free_text.is_empty() else free_text)
+	label.add_text(template.get_slice("%s", 1))
+
+static func show_reward(label: RichTextLabel, rewards: Array[ResourceAmount], seconds: float, template := "+ %s") -> void:
+	label.clear()
+	label.add_text(template.get_slice("%s", 0))
+	var has_time := seconds > 0.0
+	if has_time:
+		var icon_size := label.get_theme_font_size(&"normal_font_size")
+		label.add_image(TIME_ICON, icon_size, icon_size)
+		label.add_text(" " + String.num(seconds, 2).trim_suffix(".0"))
+	_append_totals(label, rewards, "" if has_time else "—", has_time)
+	label.add_text(template.get_slice("%s", 1))
+
+static func _append_totals(label: RichTextLabel, costs: Array[ResourceAmount], empty_text: String, has_prefix := false) -> void:
 	var totals: Variant = _positive_totals(costs)
 	if totals == null:
 		label.add_text(TranslationServer.translate("ui.cost.invalid"))
 	elif totals.is_empty():
-		label.add_text(TranslationServer.translate("ui.cost.free"))
+		label.add_text(empty_text)
 	else:
-		var first := true
+		var first := not has_prefix
 		for type: ResourceType in totals:
 			if not first:
 				label.add_text(RESOURCE_GAP)
 			first = false
 			append_resource(label, type, str(totals[type]))
-	label.add_text(template.get_slice("%s", 1))
 
 static func append_resource(label: RichTextLabel, type: ResourceType, amount := "") -> void:
 	if type.icon != null:

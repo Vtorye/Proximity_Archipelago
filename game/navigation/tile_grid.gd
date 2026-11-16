@@ -20,7 +20,7 @@ func setup(map: TileMapLayer, blocked_cells: Array[Vector2i]) -> void:
 	for cell in blocked_cells: blocked[cell] = true
 	if is_instance_valid(map) and map.tile_set != null:
 		for cell in map.get_used_cells():
-			var value: float = _map_cost(map, cell) if not blocked.has(cell) else 0.0
+			var value: float = terrain_cost_at(map, cell) if not blocked.has(cell) else 0.0
 			if value > 0.0: values[cell] = value
 	configure_sparse(map.get_used_rect() if is_instance_valid(map) else Rect2i(), values)
 
@@ -69,7 +69,7 @@ func configure_sparse(region: Rect2i, values: Dictionary[Vector2i, float]) -> vo
 static func _valid(value: float) -> bool:
 	return value > 0.0 and is_finite(value)
 
-static func _map_cost(map: TileMapLayer, cell: Vector2i) -> float:
+static func terrain_cost_at(map: TileMapLayer, cell: Vector2i) -> float:
 	var data: TileData = map.get_cell_tile_data(cell)
 	if data == null: return 0.0
 	if map.tile_set.get_custom_data_layer_by_name("walkable") >= 0 and not data.get_custom_data("walkable"): return 0.0
@@ -146,5 +146,5 @@ func with_map_cells(map: TileMapLayer, cells: Array[Vector2i], blocked: Array[Ve
 		result.setup(map, blocked)
 		return result
 	var values: Dictionary[Vector2i, float] = {}
-	for cell in cells: values[cell] = 0.0 if blocked.has(cell) else _map_cost(map, cell)
+	for cell in cells: values[cell] = 0.0 if blocked.has(cell) else terrain_cost_at(map, cell)
 	return with_costs(values)

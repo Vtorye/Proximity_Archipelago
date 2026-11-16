@@ -39,16 +39,24 @@ func _validate_request(task: TaskSpec, stock: WorldInventory, prices: PriceServi
 	if task.id == &"" or ids.has(task.id): errors.append(resource_path + ": duplicate or missing task ID")
 	ids[task.id] = true
 	if task.reward_seconds < 0 or not is_finite(task.reward_seconds): errors.append(resource_path + ": invalid time reward")
-	if task.building == null or task.diversion == null: errors.append(resource_path + ": request needs building and diversion options")
-	for option in [task.building, task.diversion]:
-		if option != null:
-			if option.id == &"" or not prices.valid(option): errors.append(resource_path + ": invalid request option")
+	if task.variants.is_empty(): errors.append(resource_path + ": request needs at least one variant")
+	var variant_ids: Dictionary[StringName, bool] = {}
+	var rewards := task.rewards.duplicate()
+	for variant in task.variants:
+		if variant == null or variant.id == &"" or variant_ids.has(variant.id):
+			errors.append(resource_path + ": invalid or duplicate variant ID")
+			continue
+		variant_ids[variant.id] = true
+		var option := variant.building
+		if option == null or option.id == &"" or not prices.valid(option):
+			errors.append(resource_path + ": invalid request option")
+		else:
 			for cost in option.costs:
 				if cost == null or not stock.is_registered(cost.type): errors.append(resource_path + ": unknown request cost resource")
-	for seconds in [task.building_reward_seconds, task.diversion_reward_seconds]:
-		if not is_finite(seconds) or (seconds != -1.0 and seconds < 0.0):
+		if not is_finite(variant.reward_seconds) or (variant.reward_seconds != -1.0 and variant.reward_seconds < 0.0):
 			errors.append(resource_path + ": invalid variant time reward")
-	for reward in task.rewards + task.building_rewards + task.diversion_rewards:
+		rewards.append_array(variant.rewards)
+	for reward in rewards:
 		if reward == null or reward.type == null or not stock.is_registered(reward.type): errors.append(resource_path + ": invalid request reward")
 	for option in task.unlocks:
 		if option == null or option.id == &"" or not prices.valid(option): errors.append(resource_path + ": invalid building unlock")

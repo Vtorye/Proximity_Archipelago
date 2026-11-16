@@ -7,10 +7,24 @@
 [ext_resource type="Resource" uid="uid://bhy6cadrn6nk0" path="res://game/building/options/statue.tres" id="statue"]
 [ext_resource type="Script" uid="uid://bmf8btgjq0fm3" path="res://game/tasks/task_spec.gd" id="task"]
 [ext_resource type="Resource" uid="uid://dr0o3v3n5o1dt" path="res://game/building/options/sawmill.tres" id="unlock"]
+[ext_resource type="Script" path="res://game/tasks/task_variant.gd" id="variant"]
 
 [sub_resource type="Resource" id="reward"]
 script = ExtResource("amount")
 type = ExtResource("royal")
+
+[sub_resource type="Resource" id="variant_build"]
+script = ExtResource("variant")
+id = &"build"
+building = ExtResource("statue")
+label = "ui.building.statue_placeholder"
+
+[sub_resource type="Resource" id="variant_diversion"]
+script = ExtResource("variant")
+id = &"diversion"
+building = ExtResource("feast")
+label = "ui.building.feast"
+reward_seconds = 15.0
 
 [resource]
 script = ExtResource("task")
@@ -19,8 +33,4 @@ title = "ui.task.request_statue"
 reward_seconds = 25.0
 rewards = Array[ExtResource("amount")]([SubResource("reward")])
 unlocks = Array[ExtResource("build_option")]([ExtResource("unlock")])
-building = ExtResource("statue")
-diversion = ExtResource("feast")
-building_label = "ui.building.statue_placeholder"
-diversion_label = "ui.building.feast"
-diversion_reward_seconds = 15.0
+variants = Array[ExtResource("variant")]([SubResource("variant_build"), SubResource("variant_diversion")])

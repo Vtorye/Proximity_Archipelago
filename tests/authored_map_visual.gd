@@ -63,10 +63,10 @@ func _run() -> void:
 		for index in range(world.tasks.slots.size()):
 			if world.tasks.slots[index] == null:
 				continue
-			var order: BuildOption = world.tasks.start_order(index)
+			var order := world.tasks.start_order(world.tasks.slots[index].id, &"build")
 			if order == null:
 				continue
-			world.build_controller.built.emit(order, world.registry.all()[0].cell)
+			world.build_controller.order_completed.emit(order)
 			break
 	expect(world.population.count() == 15, "delivered and assembled camps expand the colony to fifteen ants")
 	var claimed := false

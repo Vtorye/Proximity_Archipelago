@@ -5,6 +5,7 @@ func run(test: Node) -> void:
 	await _composite_price(test)
 	await _draft_and_commit(test)
 	await _invalid_batches(test)
+	await _construction_egress(test)
 	await _layered_plan(test)
 	await _planned_demolition(test)
 
@@ -30,7 +31,11 @@ func _composite_price(test: Node) -> void:
 	test.expect(world.inventory.quantity(stone) == stone_before - 5 and world.inventory.quantity(food) == 0, "composite nest charges every price component exactly once")
 	test.expect(world.inventory.available(food) == -5 and world.population.count() == 10, "paid nest preserves the starting residents' five meal claims as a deficit")
 	test.expect(notifications[0] == 1 and complete == [true], "composite build sends one complete stock and world update")
-	test.expect(BuildCostText.format(nest.costs) == ("5 %s + 20 %s" % [TranslationServer.translate("ui.resource.stone"), TranslationServer.translate("ui.resource.food")]), "construction price text identifies both resource types")
+	var display := RichTextLabel.new()
+	BuildCostText.show_price(display, nest.costs)
+	var rendered := display.get_parsed_text()
+	test.expect(rendered.contains("5") and rendered.contains("20") and not rendered.contains("+"), "symbolic construction price displays both quantities")
+	display.free()
 	world.free()
 	await test.get_tree().process_frame
 
@@ -105,6 +110,49 @@ func _invalid_batches(test: Node) -> void:
 		commands[Vector2i(28, 26) + offset] = wall
 	test.expect(not world.build_controller.try_build_batch(commands) and world.build_controller.last_result.code == PlacementCheck.Code.NO_ESCAPE, "combined terrain changes cannot cut every safe route to food")
 	test.expect(world.route_service.revision == revision and world.inventory.quantity(wood) == 60 and world.population.count() == 5, "unsafe batch leaves navigation stock and ants unchanged")
+	world.free()
+	await test.get_tree().process_frame
+
+func _construction_egress(test: Node) -> void:
+	var world: World = test.make_world()
+	var controller := world.build_controller
+	var statue: SceneBuildOption = load("res://game/building/options/statue.tres")
+	var feast: SceneBuildOption = load("res://game/building/options/feast.tres")
+	var single_entry := statue.duplicate() as SceneBuildOption
+	single_entry.entry_offsets = [Vector2i.DOWN]
+	controller.options.append_array([statue, feast, single_entry])
+	var cell := Vector2i(30, 29)
+	var below := cell + Vector2i.DOWN
+	var stock := world.inventory.quantity(world.inventory.type_by_id(&"wood"))
+	var plan: Dictionary[Vector2i, BuildOption] = {cell: single_entry, below: feast}
+	test.expect(not controller.try_build_batch(plan) and controller.last_result.code == PlacementCheck.Code.NO_ENTRANCE,
+		"covering a building's only entrance has its own diagnosis")
+	test.expect(world.inventory.quantity(world.inventory.type_by_id(&"wood")) == stock, "failed entrance check leaves stock unchanged")
+	var ant: AntAgent = world.population.agents()[0]
+	ant.global_position = world.route_service.cell_to_world(cell)
+	test.expect(is_finite(world.route_service.food_field().cost(cell)), "the ant starts with access to food")
+	plan[cell] = statue
+	test.expect(controller.try_build_batch(plan), "adjacent task buildings can use alternate entrances even with an ant inside the footprint")
+	var exit := world.route_service.world_to_cell(ant.global_position)
+	test.expect(exit != cell and exit != below and world.route_service.walkable(exit), "an ant is moved to a clear cell when the footprint closes")
+	test.expect(is_finite(world.route_service.food_field().cost(exit)), "the relocated ant keeps its route to food")
+	world.free()
+	await test.get_tree().process_frame
+	world = load("res://game/worlds/world_1.tscn").instantiate()
+	world.auto_start = false
+	world.prices.task_deck = null
+	test.add_child(world)
+	controller = world.build_controller
+	controller.options.append(statue)
+	ant = world.population.agents()[0]
+	ant.global_position = world.route_service.cell_to_world(cell)
+	test.expect(controller.try_build(statue, cell), "an ant on the footprint does not prevent queuing a construction site")
+	var site := controller.construction.at(cell)
+	test.expect(site != null and world.route_service.world_to_cell(ant.global_position) == cell, "the ant stays put while the site is only a reservation")
+	if site != null:
+		test.expect(controller.finish_construction(site), "the blocking site can finish while the ant is still on the cell")
+		exit = world.route_service.world_to_cell(ant.global_position)
+		test.expect(exit != cell and world.route_service.walkable(exit), "assembly moves the ant only when the cell actually closes")
 	world.free()
 	await test.get_tree().process_frame
 

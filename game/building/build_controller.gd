@@ -3,6 +3,8 @@ extends Node
 ## Commits validated placement commands; occupancy belongs to the world registry.
 
 signal built(option: BuildOption, cell: Vector2i)
+signal order_placed
+signal order_completed(order: TaskBuildOrder)
 signal changed
 
 @export var catalog: BuildCatalog
@@ -20,7 +22,7 @@ var buildings: Node2D
 var inventory: WorldInventory
 var route_service: RouteService
 var options: Array[BuildOption] = []
-var order_option: BuildOption
+var can_place_order: Callable
 var _committing := false
 var last_result := PlacementCheck.new()
 
@@ -49,10 +51,14 @@ func check(option: BuildOption, cell: Vector2i) -> PlacementCheck:
 	return PlacementCheck.result(_funding({command: price(option, cell)}, []).code)
 
 ## Geometry-only check for a draft. The final command validates its entire budget and grid.
-func placement_check(option: BuildOption, cell: Vector2i, removed: Array[Building] = []) -> PlacementCheck:
+func placement_check(option: BuildOption, cell: Vector2i, removed: Array[Building] = [], order: TaskBuildOrder = null) -> PlacementCheck:
 	if _committing:
 		return PlacementCheck.result(PlacementCheck.Code.BUSY)
-	if option == null or (not options.has(option) and option != order_option):
+	if option == null:
+		return PlacementCheck.result(PlacementCheck.Code.INVALID_OPTION)
+	if order != null and (not can_place_order.is_valid() or not can_place_order.call(order) or order.variant.building != option):
+		return PlacementCheck.result(PlacementCheck.Code.INVALID_OPTION)
+	if order == null and not options.has(option):
 		return PlacementCheck.result(PlacementCheck.Code.INVALID_OPTION)
 	if construction != null and construction.at(cell, option is TileBuildOption) != null and not removed.has(construction.at(cell, option is TileBuildOption)):
 		return PlacementCheck.result(PlacementCheck.Code.OCCUPIED)
@@ -104,11 +110,6 @@ func placement_check(option: BuildOption, cell: Vector2i, removed: Array[Buildin
 	return PlacementCheck.new()
 
 func allows_another(option: SceneBuildOption, removed: Array[Building], planned: int = 0) -> bool:
-	if option == order_option:
-		if planned > 0:
-			return false
-		if construction != null and construction.sites.any(func(site: ConstructionSite) -> bool: return site.option == option):
-			return false
 	if option.instance_limit == 0:
 		return true
 	var count := planned
@@ -154,8 +155,8 @@ func _funding(quotes: Dictionary, removed: Array[Building]) -> Dictionary:
 			allocations[command] = crates
 	return {"code": PlacementCheck.Code.OK, "crates": allocations, "costs": costs}
 
-func try_build(option: BuildOption, cell: Vector2i) -> bool:
-	return try_build_batch({cell: option})
+func try_build(option: BuildOption, cell: Vector2i, order: TaskBuildOrder = null) -> bool:
+	return try_build_plan([BuildCommand.create(cell, option, order)])
 
 ## All placements either commit together or leave stock, buildings, and navigation untouched.
 func try_build_batch(commands: Dictionary[Vector2i, BuildOption]) -> bool:
@@ -198,13 +199,19 @@ func try_build_plan(commands: Array[BuildCommand]) -> bool:
 	var occupied: Dictionary[Vector2i, bool] = {}
 	var terrain: Dictionary[Vector2i, bool] = {}
 	var planned_instances: Dictionary[StringName, int] = {}
+	var planned_tasks: Dictionary[TaskSpec, bool] = {}
 	var candidates: Array[Building] = []
 	for command in placements:
 		var cell: Vector2i = command.cell
 		var option: BuildOption = command.option
-		last_result = placement_check(option, cell, removed)
+		last_result = placement_check(option, cell, removed, command.order)
 		if not last_result.allowed():
 			break
+		if command.order != null:
+			if planned_tasks.has(command.order.task):
+				last_result = PlacementCheck.result(PlacementCheck.Code.INSTANCE_LIMIT)
+				break
+			planned_tasks[command.order.task] = true
 		if option is SceneBuildOption:
 			var already_planned: int = planned_instances.get(option.id, 0)
 			if not allows_another(option, removed, already_planned):
@@ -235,8 +242,23 @@ func try_build_plan(commands: Array[BuildCommand]) -> bool:
 		quotes = _quote_orders(commands)
 		funding = _funding(quotes, removed)
 		last_result = PlacementCheck.result(funding.code)
-	if last_result.allowed() and not _safety().preserves_escape(placements, candidates, removed):
-		last_result = PlacementCheck.result(PlacementCheck.Code.NO_ESCAPE)
+	var safety: ConstructionSafety
+	if last_result.allowed():
+		safety = _safety()
+		last_result = PlacementCheck.result(safety.check(placements, candidates, removed))
+		if last_result.allowed() and not funding.crates.is_empty():
+			# Queued sites use the full plan for preflight, but do not close their cells yet.
+			var immediate: Array[BuildCommand] = []
+			var buildings_now: Array[Building] = []
+			var scene_index := 0
+			for command in placements:
+				if not funding.crates.has(command):
+					immediate.append(command)
+					if command.option is SceneBuildOption:
+						buildings_now.append(candidates[scene_index])
+				if command.option is SceneBuildOption:
+					scene_index += 1
+			last_result = PlacementCheck.result(safety.check(immediate, buildings_now, removed))
 	if not last_result.allowed():
 		for candidate in candidates: candidate.free()
 		return false
@@ -288,6 +310,7 @@ func try_build_plan(commands: Array[BuildCommand]) -> bool:
 			construction.enqueue(command, candidate, quotes[command], allocations[command])
 			if candidate != null: queued_candidates.append(candidate)
 	for candidate in queued_candidates: candidates.erase(candidate)
+	_evacuate_ants(safety.exits)
 	var blocked: Array[Vector2i] = registry.blocked_cells()
 	for candidate in candidates:
 		if candidate.option.blocks_movement:
@@ -301,15 +324,23 @@ func try_build_plan(commands: Array[BuildCommand]) -> bool:
 	_committing = false
 	inventory.end_update()
 	for command in placements:
-		if allocations.has(command): continue
+		if allocations.has(command):
+			if command.order != null: order_placed.emit()
+			continue
 		if prices != null: prices.record(GameEvents.Kind.TERRAIN_CHANGED if command.option is TileBuildOption else GameEvents.Kind.BUILDING_BUILT, command.option.id)
 		built.emit(command.option, command.cell)
+		if command.order != null: order_completed.emit(command.order)
 		if command.option is SceneBuildOption and command.option.lifetime_seconds > 0.0:
 			_start_lifetime(registry.at(command.cell), command.option.lifetime_seconds)
 	if not removed_improvements.is_empty() or placements.any(func(command: BuildCommand) -> bool: return command.option is WorkplaceUpgradeOption):
 		population.planner.queue_workplace_refresh()
 	changed.emit()
 	return true
+
+func _evacuate_ants(exits: Dictionary[AntAgent, Vector2i]) -> void:
+	for ant in exits:
+		if is_instance_valid(ant):
+			ant.step_clear_of_construction(exits[ant])
 
 func _start_lifetime(building: Building, seconds: float) -> void:
 	var timer := get_tree().create_timer(seconds)

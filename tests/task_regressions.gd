@@ -16,19 +16,21 @@ func run(test: Node) -> void:
 	var road_position: int = world.build_controller.options.find(ordinary)
 	test.expect(world.build_controller.try_build(ordinary, road_cell), "ordinary road can be built before upgrade")
 	var ordinary_price: int = BuildController.price_amount(world.build_controller.price(ordinary), world.inventory.type_by_id(&"wood"))
-	var requested: BuildOption = tasks.start_order(0)
-	test.expect(requested == tasks.slots[0].building and tasks.start_order(1) == null, "one order locks other requests")
+	var requested := tasks.start_order(tasks.slots[0].id, &"build")
+	test.expect(requested != null and tasks.start_order(tasks.slots[1].id, &"build") != null, "previewing one order leaves the other offers available")
 	var before: float = world.match_controller.time_remaining
 	var previous_closed: int = tasks.closed
 	var royal: ResourceType = world.inventory.type_by_id(&"royal")
-	world.build_controller.built.emit(requested, road_cell)
+	world.build_controller.built.emit(requested.variant.building, road_cell)
+	test.expect(tasks.closed == previous_closed, "a matching regular building does not complete the order")
+	world.build_controller.order_completed.emit(requested)
 	test.expect(tasks.closed == previous_closed + 1 and world.match_controller.time_remaining == before + 25 and world.inventory.quantity(royal) == 1, "matching completion grants configured rewards")
 	for type in world.inventory.registered_types(): world.inventory.add(type, 10000)
 	while tasks.closed < tasks.stage().tasks.size():
 		var index := 0
 		while tasks.slots[index] == null: index += 1
-		var option: BuildOption = tasks.start_order(index)
-		world.build_controller.built.emit(option, road_cell)
+		var order := tasks.start_order(tasks.slots[index].id, &"build")
+		world.build_controller.order_completed.emit(order)
 	test.expect(tasks.pending_reward and tasks.choose_reward(0), "stage completion waits for one explicit reward")
 	test.expect(tasks.level == 2 and tasks.closed == 0 and world.build_controller.options.has(tasks.deck.unlocked_road), "closing the five-item pool unlocks the next level")
 	var facilities: int = world.build_controller.options.filter(func(option: BuildOption) -> bool: return option is WorkplaceUpgradeOption).size()
@@ -39,21 +41,21 @@ func run(test: Node) -> void:
 	while tasks.closed < tasks.stage().tasks.size():
 		var index := 0
 		while tasks.slots[index] == null: index += 1
-		var option: BuildOption = tasks.start_order(index)
-		world.build_controller.built.emit(option, road_cell)
+		var order := tasks.start_order(tasks.slots[index].id, &"build")
+		world.build_controller.order_completed.emit(order)
 	tasks.choose_reward(1)
 	test.expect(tasks.level == 3 and is_equal_approx(world.prices.global_multiplier, 0.9), "completed orders apply level upgrade")
 	var speed: float = world.population.agents()[0].speed
 	while tasks.closed < tasks.stage().tasks.size():
 		var index := 0
 		while tasks.slots[index] == null: index += 1
-		var option: BuildOption = tasks.start_order(index)
-		world.build_controller.built.emit(option, road_cell)
+		var order := tasks.start_order(tasks.slots[index].id, &"build")
+		world.build_controller.order_completed.emit(order)
 	tasks.choose_reward(2)
 	test.expect(tasks.level == 4 and world.population.agents()[0].speed > speed, "repeated progression improves worker speed")
 	var tile: TileBuildOption = tasks.deck.unlocked_road
 	test.expect(world.build_controller.try_build(tile, Vector2i(26, 25)) and world.route_service.entry_cost(Vector2i(26, 25)) < 0.35, "replacement road paints faster tile")
 	world.match_controller._process(100000)
-	test.expect(tasks.start_order(0) == null, "expired match cannot start an order")
+	test.expect(tasks.start_order(tasks.slots[0].id, &"build") == null, "expired match cannot start an order")
 	world.free()
 	await test.get_tree().process_frame

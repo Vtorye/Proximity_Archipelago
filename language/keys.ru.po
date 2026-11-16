@@ -181,7 +181,10 @@ msgid "ui.construction.demolish_hint"
 msgstr "ЛКМ: снос · ПКМ: убрать отметку"
 
 msgid "ui.construction.cost"
-msgstr "План: %d · %s"
+msgstr "План: %d · Цена: %s"
+
+msgid "ui.construction.plan_reward"
+msgstr "Награда: %s"
 
 msgid "ui.placement.busy"
 msgstr "Дождитесь завершения строительства"
@@ -215,6 +218,9 @@ msgstr "На клетке нет здания"
 
 msgid "ui.placement.no_escape"
 msgstr "Это лишит муравьёв безопасного пути к еде"
+
+msgid "ui.placement.no_entrance"
+msgstr "План перекрывает все входы в одну из построек"
 
 msgid "ui.placement.unavailable"
 msgstr "Действие недоступно"
@@ -1133,3 +1139,6 @@ msgstr "Скорость движения: ×%s от базовой"
 
 msgid "ui.trap.clear_action"
 msgstr "Убрать ловушку"
+
+msgid "ui.task.building_variant"
+msgstr "Строится: %s"

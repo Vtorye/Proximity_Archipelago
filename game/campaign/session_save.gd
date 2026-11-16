@@ -97,7 +97,11 @@ static func capture(world: World) -> Dictionary:
 	for site in sites:
 		var crates: Array = []
 		for source in site.crates: crates.append([buildings.find(source), ResourceAmount.pack(site.crates[source])])
-		data.sites.append({"option": str(site.option.id), "cell": site.cell, "required": ResourceAmount.pack(site.required), "delivered": site.delivered.duplicate(), "transit": site.transit.duplicate(), "progress": site.progress, "crates": crates})
+		var saved := {"option": str(site.option.id), "cell": site.cell, "required": ResourceAmount.pack(site.required), "delivered": site.delivered.duplicate(), "transit": site.transit.duplicate(), "progress": site.progress, "crates": crates}
+		if site.order != null:
+			saved["task_id"] = str(site.order.task.id)
+			saved["variant_id"] = str(site.order.variant.id)
+		data.sites.append(saved)
 	for ant in world.population.agents():
 		data.ants.append(ant.capture_state(buildings, sites))
 	if world.tasks != null:
@@ -150,14 +154,32 @@ static func apply(world: World, data: Dictionary) -> void:
 	world.prices.definitions = world.build_controller.options.duplicate()
 	world.prices.global_multiplier = data.prices.multiplier
 	world.events.restore_counts(data.prices.counts)
+	var legacy_order: TaskBuildOrder
+	if data.has("tasks") and world.tasks != null:
+		world.tasks.restore_state(data.tasks)
+		var legacy_id: String = data.tasks.get("active_order_id", "")
+		if not legacy_id.is_empty():
+			legacy_order = _saved_order(world.tasks, legacy_id, &"diversion" if data.tasks.get("active_order_diversion", false) else &"build")
 	var sites: Array[ConstructionSite] = []
 	for state in data.sites:
 		var option: BuildOption = definitions[state.option]
+		var order: TaskBuildOrder
+		if world.tasks != null and state.has("task_id"):
+			order = _saved_order(world.tasks, state.task_id, state.get("variant_id", ""))
+		elif legacy_order != null and legacy_order.variant.building.id == StringName(state.option):
+			order = legacy_order
+			legacy_order = null
+		if order != null:
+			if order.variant.building.id == StringName(state.option):
+				option = order.variant.building
+			else:
+				order = null
 		var candidate: Building
 		if option is SceneBuildOption:
 			candidate = option.scene.instantiate()
 			candidate.setup(state.cell, option)
 		var site: ConstructionSite = world.build_controller.construction.instantiate_site()
+		site.order = order
 		site.candidate = candidate
 		site.required = ResourceAmount.unpack(state.required, world.inventory.type_by_id)
 		site.delivered.assign(state.delivered)
@@ -178,8 +200,6 @@ static func apply(world: World, data: Dictionary) -> void:
 		var ant: AntAgent = world.population.restore_resident(home, state.role)
 		if ant != null:
 			ant.restore_state(state, buildings, sites)
-	if data.has("tasks"):
-		world.tasks.restore_state(data.tasks)
 	if data.has("voyage"): world.voyage.restore_state(data.voyage)
 	if data.has("combat"):
 		world.combat.spawner.number = data.combat.number
@@ -196,6 +216,9 @@ static func apply(world: World, data: Dictionary) -> void:
 	world.population.changed.emit()
 	if data.get("finished", false): world.match_controller.complete_objective()
 
+static func _saved_order(director: TaskDirector, task_id: String, variant_id: StringName) -> TaskBuildOrder:
+	return director.order_from_ids(director.deck.legacy_task_ids.get(task_id, task_id), variant_id)
+
 static func _definitions(world: World) -> Dictionary:
 	var result := {}
 	var options: Array[BuildOption] = world.build_controller.options.duplicate()
@@ -203,13 +226,13 @@ static func _definitions(world: World) -> Dictionary:
 	if world.tasks != null:
 		options.append(world.tasks.deck.unlocked_road)
 		for task in world.tasks.deck.requests:
-			options.append(task.building)
-			options.append(task.diversion)
+			for variant in task.variants:
+				if variant != null: options.append(variant.building)
 			options.append_array(task.unlocks)
 		for stage in world.tasks.deck.stages:
 			for task in stage.tasks:
-				options.append(task.building)
-				options.append(task.diversion)
+				for variant in task.variants:
+					if variant != null: options.append(variant.building)
 				options.append_array(task.unlocks)
 	for option in options:
 		if option != null: result[str(option.id)] = option

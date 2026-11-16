@@ -63,9 +63,9 @@ func run(test: Node) -> void:
 		for step in range(5):
 			var index := 0
 			while world.tasks.slots[index] == null: index += 1
-			var order: BuildOption = world.tasks.start_order(index)
-			world.build_controller.built.emit(order, home.cell)
-		test.expect(world.tasks.pending_reward and world.tasks.start_order(0) == null, "completed stage waits for exactly one upgrade choice")
+			var order := world.tasks.start_order(world.tasks.slots[index].id, &"build")
+			world.build_controller.order_completed.emit(order)
+		test.expect(world.tasks.pending_reward and world.tasks.start_order(&"missing", &"build") == null, "completed stage waits for exactly one upgrade choice")
 		test.expect(world.tasks.choose_reward(level % 3), "a valid reward advances the task ladder")
 		test.expect(not world.tasks.choose_reward(0), "reward cannot be claimed twice")
 	test.expect(world.tasks.level == 5 and world.build_controller.options.has(Voyage.SHIP), "reaching level five unlocks ship construction")

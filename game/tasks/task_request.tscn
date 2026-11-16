@@ -1,35 +1,41 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" path="res://game/tasks/task_offer_button.gd" id="offer"]
+[ext_resource type="Script" path="res://game/tasks/task_request.gd" id="script"]
+[ext_resource type="StyleBox" path="res://game/ui/dialog_panel.tres" id="panel"]
 
-[node name="Request" type="VBoxContainer"]
-theme_override_constants/separation = 3
+[node name="Request" type="PanelContainer"]
+script = ExtResource("script")
+theme_override_styles/panel = ExtResource("panel")
 
-[node name="Title" type="Label" parent="."]
+[node name="Content" type="VBoxContainer" parent="."]
+theme_override_constants/separation = 4
+
+[node name="Title" type="Label" parent="Content"]
+unique_name_in_owner = true
+mouse_filter = 2
+horizontal_alignment = 1
+autowrap_mode = 3
+theme_override_colors/font_color = Color(0.8745, 0.7765, 0.5451, 1)
+text = "ui.task.request_1_1"
+
+[node name="Unlocks" type="RichTextLabel" parent="Content"]
+unique_name_in_owner = true
+mouse_filter = 1
+horizontal_alignment = 1
+fit_content = true
+scroll_active = false
+visible = false
+
+[node name="Offers" type="HFlowContainer" parent="Content"]
+unique_name_in_owner = true
+alignment = 1
+theme_override_constants/h_separation = 5
+theme_override_constants/v_separation = 5
+
+[node name="Status" type="Label" parent="Content"]
+unique_name_in_owner = true
 theme_type_variation = &"Caption"
 mouse_filter = 2
-text = "ui.task.request_1_1"
-text_overrun_behavior = 3
-
-[node name="Actions" type="HBoxContainer" parent="."]
-theme_override_constants/separation = 3
-
-[node name="Build" type="Button" parent="Actions"]
-script = ExtResource("offer")
-theme_type_variation = &"CompactButton"
-unique_name_in_owner = true
-mouse_default_cursor_shape = 2
-custom_minimum_size = Vector2(40, 40)
-expand_icon = true
-icon_alignment = 1
-theme_override_constants/icon_max_width = 30
-
-[node name="Diversion" type="Button" parent="Actions"]
-script = ExtResource("offer")
-theme_type_variation = &"CompactButton"
-unique_name_in_owner = true
-mouse_default_cursor_shape = 2
-custom_minimum_size = Vector2(40, 40)
-expand_icon = true
-icon_alignment = 1
-theme_override_constants/icon_max_width = 30
+horizontal_alignment = 1
+autowrap_mode = 3
+visible = false

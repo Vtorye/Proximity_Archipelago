@@ -80,36 +80,107 @@ func _run() -> void:
 	await click(screen.hud.get_node("%TasksTab"))
 	var panel: TaskPanel = screen.hud.task_panel
 	var task: TaskSpec = world.tasks.slots[0]
-	var card: Button = panel.get_node("%Requests").get_child(0).get_node("Actions/Diversion")
-	expect(card.icon != null, "task variant shows an icon")
+	var choice: TaskVariant = task.variant_by_id(&"diversion")
+	AppSettings.text_size = AppSettings.TYPOGRAPHY.minimum_sizes.size() - 1
+	AppSettings.apply()
+	await frames(7)
+	var large_card := _offer_card(panel, 0, 1)
+	expect(get_viewport().get_visible_rect().encloses(panel.get_global_rect()), "task panel fits at maximum text size")
+	expect(large_card.get_global_rect().encloses(large_card._cost.get_global_rect()) and large_card.get_global_rect().encloses(large_card._reward.get_global_rect()), "price and reward both fit the large card")
+	AppSettings.text_size = AppSettings.TYPOGRAPHY.default_index
+	AppSettings.apply()
+	await frames(6)
+	var extra := TaskVariant.new()
+	extra.id = &"extra"
+	extra.building = choice.building
+	task.variants.append(extra)
+	panel._queue_refresh()
+	await frames(4)
+	expect(_offer_card(panel, 0, 2).option == extra.building, "an order can show more than two authored variants")
+	task.variants.erase(extra)
+	panel._queue_refresh()
+	await frames(4)
+	var card := _offer_card(panel, 0, 1)
+	expect(card._image.texture != null and card._reward.visible, "task variant uses a construction card with an inline reward")
+	await click(card._info)
+	expect(screen.hud._task_details.visible and screen._construction == null, "the card info opens shared details without selecting the variant")
 	await click(card)
 	menu = screen._construction
 	if menu != null: await click(menu.controls[&"cancel"])
-	expect(world.tasks.active_order_id == &"", "cancel releases the unfinished order")
-	card = panel.get_node("%Requests").get_child(0).get_node("Actions/Diversion")
+	expect(world.tasks.placed_order(task) == null, "cancel leaves the unplaced task open")
+	card = _offer_card(panel, 0, 1)
 	await click(card)
 	menu = screen._construction
-	if menu == null or menu.order_option != task.diversion:
+	if menu == null or menu.order == null or menu.order.variant != choice:
 		expect(false, "task card opens the selected order")
 		get_tree().quit(1)
 		return
 	expect(panel.visible and menu.panel.position.x > panel.position.x, "order details open on the right of the task list")
-	expect(not world.build_controller.options.has(task.diversion), "order stays outside the construction catalog")
+	expect(not world.build_controller.options.has(choice.building), "order stays outside the construction catalog")
 	await click_at(cell_point(Vector2i(25, 27)))
 	await click_at(cell_point(Vector2i(26, 27)))
 	expect(menu.draft.size() == 1, "order limits the draft to one building")
+	expect(not _offer_card(panel, 0, 0).disabled and world.tasks.placed_order(task) == null, "an unsubmitted map draft leaves alternatives available")
+	var other: TaskSpec = world.tasks.slots[1]
+	var other_index := other.variants.find_custom(func(candidate: TaskVariant) -> bool: return candidate.building == choice.building)
+	expect(other_index >= 0, "two tasks offer the same building in this fixture")
+	if other_index < 0:
+		get_tree().quit(1)
+		return
+	await click(_offer_card(panel, 1, other_index))
+	expect(screen._construction == menu and menu.order.task == other and menu.draft.size() == 1, "selecting the second task keeps the first placement in the same map preview")
+	await click_at(cell_point(Vector2i(25, 27)))
+	expect(menu.draft.task_orders().size() == 1 and menu.draft.task_orders()[0].task == task, "another task cannot overwrite an occupied draft cell")
+	var other_cell := Vector2i(26, 27)
+	await click_at(cell_point(other_cell))
+	expect(menu.draft.size() == 2 and menu.draft.task_orders().size() == 2, "one draft contains both tasks")
+	if menu.draft.size() != 2:
+		get_tree().quit(1)
+		return
+	var expected_time: float = menu.draft.task_orders()[0].time_reward() + menu.draft.task_orders()[1].time_reward()
+	var displayed_reward := menu._reward.get_parsed_text().replace(" ", " ").split(" ", false)
+	expect(displayed_reward.has(str(int(expected_time))) and displayed_reward.has("2"), "the plan shows both time and resource rewards summed")
+	var displayed_cost := menu._cost.get_parsed_text().replace(" ", " ").split(" ", false)
+	for entry in choice.building.costs:
+		expect(displayed_cost.has(str(entry.amount * 2)), "the plan price displays each resource summed")
+	expect(not _offer_card(panel, 0, 0).disabled and not _offer_card(panel, 1, 0).disabled, "both tasks remain selectable until the plan is submitted")
+	await click(menu.controls[&"undo"])
+	expect(menu.draft.size() == 1 and menu.draft.task_orders()[0].task == task, "undo removes only the most recent placement")
+	expect(not menu._reward.get_parsed_text().replace(" ", " ").split(" ", false).has(str(int(expected_time))), "undo recalculates the estimated reward")
+	await click_at(cell_point(other_cell))
 	await click(menu.controls[&"apply"])
-	var site := world.build_controller.construction.at(Vector2i(25, 27))
-	expect(site != null and world.tasks.completed_count == 0, "placing the order queues construction without granting a reward")
-	expect(world.tasks.active_order_id == task.id, "the order stays active while being built")
+	var site := construction.at(Vector2i(25, 27))
+	var other_site := construction.at(other_cell)
+	expect(site != null and other_site != null and other_site.option == site.option and other_site.order.task == other, "one confirmation commits two orders for the same building")
+	expect(world.tasks.completed_count == 0 and _offer_card(panel, 0, 0).disabled and _offer_card(panel, 1, 0).disabled and not _offer_card(panel, 2, 0).disabled, "only submitted tasks lock and no reward is paid before completion")
+	expect(world.tasks.placed_order(task) == site.order, "placing a second task cannot replace the first order")
 	var snapshot := SessionSave.capture(world)
-	snapshot.options.append(str(task.diversion.id))
+	snapshot.options.append(str(choice.building.id))
 	var restored := LevelLayout.create_world(snapshot.layout)
 	restored.auto_start = false
 	add_child(restored)
 	SessionSave.apply(restored, snapshot)
-	expect(restored.tasks.active_order_id == task.id and restored.build_controller.construction.at(Vector2i(25, 27)) != null, "a save restores the active order and its site")
-	expect(not restored.build_controller.options.has(task.diversion), "legacy saves do not add orders to the regular catalog")
+	var restored_site := restored.build_controller.construction.at(Vector2i(25, 27))
+	expect(restored_site != null and restored_site.order != null and restored_site.order.task.id == task.id and restored_site.order.variant.id == choice.id, "a save restores the active order and its variant")
+	var restored_other := restored.build_controller.construction.at(other_cell)
+	expect(restored_other != null and restored_other.order != null and restored_other.order.task.id == other.id, "a save restores both orders separately")
+	if restored_other != null:
+		restored.build_controller._remove_site(restored_other)
+		expect(restored.tasks.start_order(other.id, other.variants[0].id) != null and restored.tasks.start_order(task.id, choice.id) == null, "cancelling a site reopens only its task")
+	expect(not restored.build_controller.options.has(choice.building), "legacy saves do not add orders to the regular catalog")
+	var legacy: Dictionary = snapshot.duplicate(true)
+	legacy.tasks["active_order_id"] = str(task.id)
+	legacy.tasks["active_order_diversion"] = true
+	for state: Dictionary in legacy.sites:
+		state.erase("task_id")
+		state.erase("variant_id")
+	var legacy_world := LevelLayout.create_world(legacy.layout)
+	legacy_world.auto_start = false
+	add_child(legacy_world)
+	SessionSave.apply(legacy_world, legacy)
+	var legacy_site := legacy_world.build_controller.construction.at(Vector2i(25, 27))
+	expect(legacy_site != null and legacy_site.order != null and legacy_site.order.variant.id == &"diversion", "legacy single-order saves restore the chosen variant")
+	legacy_world.free()
 	# A version 1 snapshot from before the order system used these IDs.
 	snapshot.tasks.level = 1
 	snapshot.tasks.closed = 1
@@ -128,14 +199,16 @@ func _run() -> void:
 	var remaining: Dictionary = restored.tasks.capture_state()
 	expect(not remaining.slots.has("") and remaining.pool.size() == 1 and restored.tasks.closed == 1, "unmapped tasks are replaced without losing progress or blocking the stage")
 	restored.free()
+	if other_site != null: world.build_controller.finish_construction(other_site)
+	expect(world.tasks.completed_count == 1 and world.tasks.slots.has(task) and not world.tasks.slots.has(other), "finishing the second site credits only the second task")
 	var old_time := world.match_controller.time_remaining
 	if site != null: world.build_controller.finish_construction(site)
-	expect(world.tasks.completed_count == 1, "finished order completes the selected task")
-	expect(absf(world.match_controller.time_remaining - old_time - task.time_reward_for(true)) < 0.5, "selected variant grants its own time reward")
-	var limited: SceneBuildOption = task.diversion.duplicate()
-	limited.instance_limit = 2
+	expect(world.tasks.completed_count == 2, "each finished site completes its own task once")
+	expect(absf(world.match_controller.time_remaining - old_time - (choice.reward_seconds if choice.reward_seconds >= 0.0 else task.reward_seconds)) < 0.5, "selected variant grants its own time reward")
+	var limited: SceneBuildOption = choice.building.duplicate()
+	limited.instance_limit = 3
 	world.build_controller.options.append(limited)
-	var first := BuildCommand.create(Vector2i(26, 27), limited)
+	var first := BuildCommand.create(Vector2i(28, 27), limited)
 	var second := BuildCommand.create(Vector2i(27, 27), limited)
 	expect(not world.build_controller.try_build_plan([first, second]) and world.build_controller.last_result.code == PlacementCheck.Code.INSTANCE_LIMIT, "batch limit includes a previously built instance")
 	expect(world.build_controller.try_build_plan([first]), "one additional instance fits within the configured limit")
@@ -169,3 +242,6 @@ func _check_new_nest_popup(world: World) -> void:
 	expect(popup.get_node("%ResidentsTab").visible, "new nest shows its residents")
 	await click(popup.controls[&"close"])
 	expect(screen.nest_popup == null, "new nest popup can be closed")
+
+func _offer_card(panel: TaskPanel, task_index: int, choice_index: int) -> ConstructionCard:
+	return panel.get_node("%Requests").get_child(task_index).get_node("%Offers").get_child(choice_index) as ConstructionCard

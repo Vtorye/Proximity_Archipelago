@@ -1,7 +1,0 @@
-[gd_scene format=3]
-
-[node name="TaskRewardTooltip" type="RichTextLabel"]
-fit_content = true
-scroll_active = false
-autowrap_mode = 0
-mouse_filter = 2

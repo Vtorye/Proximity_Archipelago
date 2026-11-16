@@ -6,22 +6,25 @@ const CARD: PackedScene = preload("res://game/ui/construction_card.tscn")
 
 ## Construction editor. The draft owns edits; the controller commits the final plan.
 signal map_inspection_requested(cell: Vector2i)
-var order_option: BuildOption
+var order: TaskBuildOrder
 
 var context: ConstructionContext
 var draft := BuildDraft.new()
 var controls: Dictionary[StringName, Button] = {}
 @onready var panel: PanelContainer = %Panel
 @onready var buildings_panel: PanelContainer = %BuildingsPanel
-@onready var description_panel: PanelContainer = %DescriptionPanel
+@onready var description_panel: BuildDetailsPanel = %DescriptionPanel
 @onready var _building_scroll: ScrollContainer = %Buildings
 @onready var _choices: HBoxContainer = %Choices
 @onready var _category_scroll: ScrollContainer = %CategoryScroll
 @onready var _category_list: VBoxContainer = %CategoryList
 @onready var _cost: RichTextLabel = %Cost
+@onready var _reward: RichTextLabel = %PlanReward
+@onready var _order_card: ConstructionCard = %OrderCard
 @onready var _status: Label = %Status
 var _preview: BuildPreview
 var _selected: BuildOption
+var _task_mode := false
 var _map_drag := false
 var _tool: StringName = &"build"
 var _pan_mask := MOUSE_BUTTON_MASK_MIDDLE
@@ -37,8 +40,6 @@ var _pointer := Vector2.ZERO
 var category_buttons: Array[Button] = []
 var _category_for: Dictionary[StringName, Button] = {}
 var _active_category: Button
-var _described_option: BuildOption
-var _source_parameters := PackedStringArray()
 
 var _pricing_cell := Vector2i(2147483647, 2147483647)
 var _bottom_inset := 8.0
@@ -58,7 +59,34 @@ func set_palette_visible(shown: bool) -> void:
 		_layout_windows()
 
 func _update_buildings_visibility() -> void:
-	buildings_panel.visible = panel.visible and not _map_drag and (_active_category != null or order_option != null)
+	var has_choices := order != null if _task_mode else _active_category != null
+	buildings_panel.visible = panel.visible and not _map_drag and has_choices
+
+func show_catalog() -> void:
+	if _task_mode:
+		_task_mode = false
+		_select(null)
+		_update_mode()
+	set_palette_visible(true)
+
+func select_order(task_order: TaskBuildOrder = null) -> void:
+	_task_mode = true
+	_select(task_order.variant.building if task_order != null else null, task_order)
+	if order != null:
+		_order_card.configure(_selected, context.art)
+		_order_card.set_pressed_no_signal(true)
+	_update_mode()
+	set_palette_visible(true)
+
+func _update_mode() -> void:
+	for button in category_buttons:
+		button.visible = not _task_mode
+	for id in _category_for:
+		controls[id].visible = not _task_mode and _category_for[id] == _active_category
+	_order_card.visible = _task_mode and order != null
+	%Demolish.disabled = _task_mode
+	description_panel.hide()
+	_update_buildings_visibility()
 
 func detach_undo() -> void:
 	controls[&"undo"].pressed.disconnect(_undo)
@@ -82,7 +110,7 @@ func _layout_windows() -> void:
 	var frame: Vector2 = buildings_panel.get_theme_stylebox(&"panel").get_minimum_size()
 	var content: Vector2 = _choices.get_combined_minimum_size() + frame
 	var left := margin
-	if order_option != null:
+	if _task_mode:
 		left = maxf(margin, viewport.x - panel.size.x - content.x - 2.0 * margin)
 	panel.position = Vector2(left, bottom - panel.size.y)
 	var strip_left: float = panel.position.x + panel.size.x + margin
@@ -98,8 +126,6 @@ func _layout_windows() -> void:
 func _ready() -> void:
 	%PreviewCategory.hide()
 	%PreviewCard.hide()
-	%CloseDescription.pressed.connect(AppSettings.play_click)
-	%CloseDescription.pressed.connect(func(): description_panel.hide())
 	_pointer = get_viewport().get_mouse_position()
 	dismissable = false
 	visibility_changed.connect(_on_visibility_changed)
@@ -132,15 +158,10 @@ func _ready() -> void:
 	controls[&"keep_residents"] = %KeepResidents
 	%KeepResidents.pressed.connect(AppSettings.play_click)
 	%KeepResidents.pressed.connect(_cancel_confirmation)
-	if order_option != null:
-		%Demolish.disabled = true
-		_add_card(order_option)
-		buildings_panel.show()
-
-		_select(order_option)
-	else:
-		_populate_categories()
-		buildings_panel.hide()
+	_populate_categories()
+	buildings_panel.hide()
+	_order_card.info_requested.connect(_toggle_description)
+	_order_card.pressed.connect(func(): _order_card.set_pressed_no_signal(true))
 	_layout_windows()
 	get_viewport().size_changed.connect(_layout_windows)
 	panel.minimum_size_changed.connect(_layout_windows.call_deferred)
@@ -152,12 +173,10 @@ func _ready() -> void:
 		draft.last_result = PlacementCheck.new()
 		_queue_refresh())
 	context.controller.inventory.changed.connect(_queue_refresh)
-	context.controller.registry.removed.connect(draft.forget_removal)
+	if not context.controller.registry.removed.is_connected(draft.forget_removal):
+		context.controller.registry.removed.connect(draft.forget_removal)
 	context.controller.registry.changed.connect(_queue_refresh)
-	AppSettings.language_changed.connect(func():
-		if _described_option != null:
-			_read_source_template(_described_option)
-		_queue_refresh())
+	AppSettings.language_changed.connect(_queue_refresh)
 	draft.changed.connect(_queue_refresh)
 	_refresh()
 	default_focus = controls.get(_selected.id) if _selected != null else null
@@ -233,118 +252,8 @@ func _show_category(category: Button) -> void:
 	_layout_windows.call_deferred()
 
 func _toggle_description(option: BuildOption) -> void:
-	if description_panel.visible and _described_option == option:
-		description_panel.hide()
-		return
-	_described_option = option
-	_read_source_template(option)
-	_refresh_description(option)
-	description_panel.show()
+	description_panel.toggle(option, context.controller, _pricing_cell)
 	_layout_windows.call_deferred()
-
-func _refresh_description(option: BuildOption) -> void:
-	%BuildingName.text = tr(option.display_name)
-	%Description.text = tr(option.description)
-	var price: Array[ResourceAmount] = context.controller.price(option, _pricing_cell)
-	var details := PackedStringArray()
-	var size := _footprint_size(option)
-	details.append(tr("ui.construction.size") % [size.x, size.y])
-	if option is NestBuildOption:
-		details.append(tr("ui.construction.residents") % option.resident_capacity)
-		details.append(tr("ui.construction.storage") % option.stock_capacity())
-	if context.controller.construction != null and ConstructionService.needs_builders(option, price):
-		details.append(tr("ui.construction.time") % str(option.construction_seconds))
-	else:
-		details.append(tr("ui.construction.instant"))
-	if option is SceneBuildOption:
-		if option.requires_water: details.append(tr("ui.construction.water"))
-		details.append_array(_source_parameters)
-	elif option is WorkplaceUpgradeOption:
-		details.append(tr("ui.construction.slots") % option.added_slots)
-		var source := context.controller.registry.at(_pricing_cell) as Workplace
-		if source != null and source.matches_improvement(option):
-			var slots: int = source.work_slots + (option.added_slots if source.accepts_improvement(option) else 0)
-			_append_source_parameters(details, source, slots)
-		else:
-			details.append(tr("ui.construction.source_target"))
-	elif option is TileBuildOption:
-		var terrain_map := context.controller.map as TerrainMap
-		if terrain_map != null:
-			var terrain: TerrainType = terrain_map.catalog.for_tile(Vector4i(option.source_id, option.atlas_coords.x, option.atlas_coords.y, option.alternative_tile))
-			if terrain != null and terrain.kind == TerrainType.Kind.ROAD:
-				details.append(tr("ui.construction.speed") % String.num(terrain.move_cost, 2))
-				if terrain.move_cost > 0.0:
-					details.append(tr("ui.construction.speed_multiplier") % String.num(AntMotion.speed_multiplier(terrain.move_cost), 2))
-	_update_price_growth(option, details)
-	%Parameters.text = "\n".join(details)
-	BuildCostText.show_price(%Price, price, tr("ui.construction.price"))
-
-func _read_source_template(option: BuildOption) -> void:
-	var source_type: ResourceType
-	_source_parameters.clear()
-	if option is WorkplaceUpgradeOption:
-		source_type = option.source_type
-	elif option is SceneBuildOption and option.scene != null:
-		# Read the authored defaults once per selection, without starting a runtime workplace.
-		var template: Node = option.scene.instantiate()
-		if template is Workplace and template.recipe == null and template.output != null:
-			source_type = template.output
-			_append_source_parameters(_source_parameters, template, template.work_slots)
-		template.free()
-	var resource: RichTextLabel = %ProductionResource
-	resource.visible = source_type != null
-	if resource.visible:
-		resource.clear()
-		resource.add_text(tr("ui.construction.production_resource") + " ")
-		BuildCostText.append_resource(resource, source_type)
-
-func _append_source_parameters(details: PackedStringArray, source: Workplace, slots: int) -> void:
-	details.append(tr("ui.construction.production_slots") % slots)
-	var output: float = source.output_amount * source.terrain_yield_multiplier
-	details.append(tr("ui.construction.production_rate") % String.num(output, 2).trim_suffix(".0"))
-	details.append(tr("ui.source.remaining") % source.remaining_supply if source.finite_supply else tr("ui.source.infinite"))
-
-func _footprint_size(option: BuildOption) -> Vector2i:
-	var cells: Array[Vector2i] = context.controller.footprint_at(option, Vector2i.ZERO)
-	if cells.is_empty():
-		return Vector2i.ZERO
-	var first: Vector2i = cells[0]
-	var last: Vector2i = first
-	for cell in cells:
-		first = first.min(cell)
-		last = last.max(cell)
-	return last - first + Vector2i.ONE
-
-func _update_price_growth(option: BuildOption, details: PackedStringArray) -> void:
-	var event := GameEvents.Kind.TERRAIN_CHANGED if option is TileBuildOption else GameEvents.Kind.BUILDING_BUILT
-	var next_price: RichTextLabel = %NextPrice
-	if context.controller.prices != null:
-		var changes_price := false
-		for rule in option.price_rules:
-			if rule == null or rule.event != event or (rule.subject != &"" and rule.subject != option.id):
-				continue
-			if (rule.operation == 0 and rule.value == 1.0) or (rule.operation == 1 and rule.value == 0.0):
-				continue
-			if rule.resource != null and not option.costs.any(func(cost: ResourceAmount) -> bool:
-				return cost != null and cost.type != null and cost.type.id == rule.resource.id):
-				continue
-			changes_price = true
-			var key := "ui.construction.price_multiplier" if rule.operation == 0 else "ui.construction.price_add"
-			if rule.resource != null:
-				key = "ui.construction.price_partial_multiplier" if rule.operation == 0 else "ui.construction.price_partial_add"
-			details.append(tr(key) % String.num(rule.value).trim_suffix(".0"))
-		if changes_price:
-			var pending: Dictionary[String, int] = {
-				PriceService.key(event, option.id): 1,
-				PriceService.key(event, &""): 1,
-			}
-			BuildCostText.show_price(next_price, context.controller.price(option, _pricing_cell, pending),
-				tr("ui.construction.next_price"))
-			next_price.show()
-			return
-	next_price.hide()
-	if option is SceneBuildOption:
-		details.append(tr("ui.construction.price_constant"))
 
 func _on_visibility_changed() -> void:
 	if is_instance_valid(_preview):
@@ -358,14 +267,20 @@ func _on_visibility_changed() -> void:
 func _exit_tree() -> void:
 	if is_instance_valid(_preview): _preview.queue_free()
 
-func _select(option: BuildOption) -> void:
+func _select(option: BuildOption, task_order: TaskBuildOrder = null) -> void:
 	if _map_drag: _set_map_drag(false)
 	_end_stroke()
+	if order == null and _selected != null and controls.has(_selected.id):
+		controls[_selected.id].set_pressed_no_signal(false)
+	draft.last_result = PlacementCheck.new()
 	_tool = &"build"
 	_selected = option
+	order = task_order
 	_preview.demolishing = false
-	if controls.has(option.id): controls[option.id].set_pressed_no_signal(true)
+	if option != null and order == null and controls.has(option.id):
+		controls[option.id].set_pressed_no_signal(true)
 	_preview.option = option
+	_preview.order = order
 	_preview.queue_redraw()
 	_refresh()
 
@@ -410,8 +325,19 @@ func _refresh() -> void:
 		var card := control as ConstructionCard
 		if card != null and card.option != null:
 			card.set_price(context.controller.price(card.option, _pricing_cell))
+	if order != null and _order_card.option != null:
+		_order_card.set_price(context.controller.price(order.variant.building, _pricing_cell))
 	var budget: PlacementCheck = draft.budget_check()
 	BuildCostText.show_price(_cost, draft.costs(), tr("ui.construction.cost") % [draft.size(), "%s"])
+	var orders := draft.task_orders()
+	_reward.visible = not orders.is_empty()
+	if _reward.visible:
+		var rewards: Array[ResourceAmount] = []
+		var seconds := 0.0
+		for task_order in orders:
+			rewards.append_array(task_order.resources())
+			seconds += task_order.time_reward()
+		BuildCostText.show_reward(_reward, rewards, seconds, tr("ui.construction.plan_reward"))
 	_cost.add_theme_color_override("default_color", ColonyStyle.color(&"text") if budget.allowed() else ColonyStyle.color(&"danger"))
 	controls[&"demolish"].set_pressed_no_signal(_tool == &"demolish")
 	controls[&"undo"].disabled = not draft.can_undo()
@@ -420,8 +346,7 @@ func _refresh() -> void:
 	_status.text = PlacementMessages.text(reason.code)
 	_status.visible = not reason.allowed()
 	_status.add_theme_color_override("font_color", ColonyStyle.color(&"danger") if not reason.allowed() else ColonyStyle.color(&"muted"))
-	if description_panel.visible and _described_option != null:
-		_refresh_description(_described_option)
+	description_panel.refresh_at(_pricing_cell)
 	_preview.queue_redraw()
 
 func _queue_refresh() -> void:
@@ -567,7 +492,7 @@ func _paint_to(point: Vector2) -> void:
 
 func _paint_cell(cell: Vector2i) -> void:
 	if _tool == &"demolish": draft.demolish(cell)
-	elif _tool == &"build": draft.paint(_selected, cell)
+	elif _tool == &"build" and _selected != null: draft.paint(_selected, cell, order)
 
 func _end_stroke() -> void:
 	_painting = false

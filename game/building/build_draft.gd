@@ -29,33 +29,47 @@ func end_stroke() -> void:
 	_stroke = []
 	_painting = false
 
-func paint(option: BuildOption, cell: Vector2i) -> bool:
-	last_result = controller.placement_check(option, cell, removals())
+func paint(option: BuildOption, cell: Vector2i, order: TaskBuildOrder = null) -> bool:
+	last_result = controller.placement_check(option, cell, removals(), order)
 	var previous: BuildCommand = _terrain.get(cell) if option is TileBuildOption else _occupied.get(cell)
-	if last_result.code == PlacementCheck.Code.ALREADY_PLACED and previous != null:
+	if last_result.code == PlacementCheck.Code.ALREADY_PLACED and previous != null and previous.order == null and order == null:
 		_erase(previous)
 		last_result = PlacementCheck.new()
 		changed.emit()
 		return true
 	if not last_result.allowed(): return false
-	if previous != null and previous.cell == cell and previous.option == option: return true
+	var prior_order: BuildCommand
+	if order != null:
+		for command in _commands:
+			if command.order != null and command.order.task == order.task:
+				prior_order = command
+				break
+		if prior_order != null and prior_order.order.variant == order.variant:
+			if prior_order.cell == cell: return true
+			last_result = PlacementCheck.result(PlacementCheck.Code.INSTANCE_LIMIT)
+			return false
+	if previous != null and previous != prior_order and (previous.order != null or order != null):
+		last_result = PlacementCheck.result(PlacementCheck.Code.OCCUPIED)
+		return false
+	if order == null and previous != null and previous.cell == cell and previous.option == option: return true
 	if option is SceneBuildOption:
 		var planned := 0
 		for command in _commands:
-			if command != previous and command.option != null and command.option.id == option.id:
+			if command != previous and command != prior_order and command.option != null and command.option.id == option.id:
 				planned += 1
 		if not controller.allows_another(option, _removed, planned):
 			last_result = PlacementCheck.result(PlacementCheck.Code.INSTANCE_LIMIT)
 			return false
 		for target in controller.footprint_at(option, cell):
-			if _occupied.has(target) and _occupied[target] != previous:
+			if _occupied.has(target) and _occupied[target] != previous and _occupied[target] != prior_order:
 				last_result = PlacementCheck.result(PlacementCheck.Code.OCCUPIED)
 				return false
-		if previous != null and previous.cell != cell:
+		if previous != null and previous != prior_order and previous.cell != cell:
 			last_result = PlacementCheck.result(PlacementCheck.Code.OCCUPIED)
 			return false
 	if previous != null: _erase(previous)
-	var command: BuildCommand = BuildCommand.create(cell, option)
+	if prior_order != null and prior_order != previous: _erase(prior_order)
+	var command: BuildCommand = BuildCommand.create(cell, option, order)
 	_commands.append(command)
 	_index(command)
 	changed.emit()
@@ -96,6 +110,13 @@ func clear() -> void:
 
 func costs() -> Array[ResourceAmount]:
 	return controller.prices.quote_plan(_commands) if controller.prices != null else controller._base_plan_price(_commands)
+
+func task_orders() -> Array[TaskBuildOrder]:
+	var result: Array[TaskBuildOrder] = []
+	for command in _commands:
+		if command.order != null:
+			result.append(command.order)
+	return result
 
 func budget_check() -> PlacementCheck:
 	return controller.funding_check(_commands, _removed)

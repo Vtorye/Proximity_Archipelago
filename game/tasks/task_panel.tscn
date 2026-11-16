@@ -14,14 +14,17 @@ theme_override_constants/separation = 3
 unique_name_in_owner = true
 title = "ui.window.tasks"
 dock = 3
-panel_width = 198.0
-inset = Vector2(8, 147)
+panel_width = 280.0
+inset = Vector2(8, 80)
+draggable = false
 panel = NodePath("../..")
 body = NodePath("../Scroll")
 
 [node name="Scroll" type="ScrollContainer" parent="WindowContents"]
+unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 120)
 horizontal_scroll_mode = 0
+follow_focus = true
 
 [node name="Inset" type="MarginContainer" parent="WindowContents/Scroll"]
 size_flags_horizontal = 3
@@ -40,7 +43,7 @@ theme_override_colors/font_color = Color(0.8745, 0.7765, 0.5451, 1)
 
 [node name="Requests" type="VBoxContainer" parent="WindowContents/Scroll/Inset/Content"]
 unique_name_in_owner = true
-theme_override_constants/separation = 3
+theme_override_constants/separation = 8
 
 [node name="Message" type="Label" parent="WindowContents/Scroll/Inset/Content"]
 theme_type_variation = &"Caption"

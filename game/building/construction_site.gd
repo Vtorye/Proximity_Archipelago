@@ -2,6 +2,7 @@ class_name ConstructionSite
 extends Building
 ## A non-operational reservation. Materials and assembly progress belong to this site.
 var service: ConstructionService
+var order: TaskBuildOrder
 var candidate: Building
 var crates: Dictionary = {}
 var delivered: Dictionary[StringName, int] = {}

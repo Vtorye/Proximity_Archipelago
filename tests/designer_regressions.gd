@@ -116,13 +116,14 @@ func test_resource_facilities(test: Node) -> void:
 	var task := TaskSpec.new()
 	task.id = &"facility_unlock_fixture"
 	task.unlocks = [sawmill, quarry, farm]
-	task.building = load("res://game/building/options/building.tres")
-	task.diversion = load("res://game/building/options/house.tres")
-	if not world.build_controller.options.has(task.building): world.build_controller.options.append(task.building)
+	var variant := TaskVariant.new()
+	variant.id = &"build"
+	variant.building = load("res://game/building/options/building.tres")
+	task.variants = [variant]
 	world.tasks.slots[0] = task
-	var order: BuildOption = world.tasks.start_order(0)
-	test.expect(order == task.building and not world.build_controller.options.has(sawmill), "selecting an order does not grant its unlocks")
-	world.build_controller.built.emit(order, home.cell)
+	var order := world.tasks.start_order(task.id, variant.id)
+	test.expect(order != null and order.variant == variant and not world.build_controller.options.has(sawmill), "selecting an order does not grant its unlocks")
+	world.build_controller.order_completed.emit(order)
 	test.expect(world.build_controller.options.has(sawmill) and world.prices.definitions.has(quarry), "completed order unlocks its configured construction options")
 	test.expect(not world.build_controller.can_build(sawmill, stone.cell) and not world.build_controller.can_build(quarry, berries.cell) and not world.build_controller.can_build(farm, workplace.cell), "each facility requires the matching raw resource")
 	test.expect(not world.build_controller.can_build(sawmill, Vector2i(26, 25)), "resource facilities cannot be built on empty ground")

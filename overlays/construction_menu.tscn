@@ -7,6 +7,8 @@
 [ext_resource type="Texture2D" path="res://game/assets/ui/build_cancel.svg" id="cancel_icon"]
 [ext_resource type="PackedScene" path="res://game/ui/construction_card.tscn" id="card"]
 
+[ext_resource type="PackedScene" path="res://game/ui/build_details_panel.tscn" id="details"]
+
 [sub_resource type="ButtonGroup" id="tools"]
 resource_local_to_scene = true
 
@@ -69,6 +71,15 @@ fit_content = true
 scroll_active = false
 autowrap_mode = 0
 horizontal_alignment = 1
+
+[node name="PlanReward" type="RichTextLabel" parent="Panel/CategoryContent"]
+unique_name_in_owner = true
+visible = false
+mouse_filter = 2
+fit_content = true
+scroll_active = false
+horizontal_alignment = 1
+theme_override_colors/default_color = Color(0.77, 0.9, 0.61, 1)
 
 [node name="Status" type="Label" parent="Panel/CategoryContent"]
 theme_type_variation = &"Caption"
@@ -154,75 +165,16 @@ unique_name_in_owner = true
 alignment = 1
 theme_override_constants/separation = 4
 
+[node name="OrderCard" parent="BuildingsPanel/Buildings/Choices" instance=ExtResource("card")]
+unique_name_in_owner = true
+visible = false
+
 [node name="PreviewCard" parent="BuildingsPanel/Buildings/Choices" instance=ExtResource("card")]
 unique_name_in_owner = true
 button_group = SubResource("tools")
 
-[node name="DescriptionPanel" type="PanelContainer" parent="."]
+[node name="DescriptionPanel" parent="." instance=ExtResource("details")]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(340, 132)
-visible = false
-theme_override_styles/panel = ExtResource("style")
-
-[node name="DescriptionContent" type="VBoxContainer" parent="DescriptionPanel"]
-theme_override_constants/separation = 4
-
-[node name="DescriptionHeader" type="HBoxContainer" parent="DescriptionPanel/DescriptionContent"]
-theme_override_constants/separation = 6
-
-[node name="Spacer" type="Control" parent="DescriptionPanel/DescriptionContent/DescriptionHeader"]
-custom_minimum_size = Vector2(27, 0)
-mouse_filter = 2
-
-[node name="BuildingName" type="Label" parent="DescriptionPanel/DescriptionContent/DescriptionHeader"]
-theme_type_variation = &"Heading"
-unique_name_in_owner = true
-size_flags_horizontal = 3
-text = ""
-horizontal_alignment = 1
-theme_override_colors/font_color = Color(0.8745, 0.7765, 0.5451, 1)
-
-[node name="CloseDescription" type="Button" parent="DescriptionPanel/DescriptionContent/DescriptionHeader"]
-unique_name_in_owner = true
-theme_type_variation = &"CompactButton"
-custom_minimum_size = Vector2(27, 27)
-text = "×"
-
-[node name="Description" type="Label" parent="DescriptionPanel/DescriptionContent"]
-unique_name_in_owner = true
-autowrap_mode = 3
-horizontal_alignment = 1
-
-[node name="Parameters" type="Label" parent="DescriptionPanel/DescriptionContent"]
-theme_type_variation = &"Caption"
-unique_name_in_owner = true
-autowrap_mode = 3
-horizontal_alignment = 1
-theme_override_colors/font_color = Color(0.6667, 0.651, 0.6118, 1)
-
-[node name="ProductionResource" type="RichTextLabel" parent="DescriptionPanel/DescriptionContent"]
-unique_name_in_owner = true
-visible = false
-horizontal_alignment = 1
-fit_content = true
-scroll_active = false
-mouse_filter = 2
-
-[node name="Price" type="RichTextLabel" parent="DescriptionPanel/DescriptionContent"]
-unique_name_in_owner = true
-theme_override_colors/default_color = Color(0.8745, 0.7765, 0.5451, 1)
-fit_content = true
-scroll_active = false
-mouse_filter = 2
-horizontal_alignment = 1
-
-[node name="NextPrice" type="RichTextLabel" parent="DescriptionPanel/DescriptionContent"]
-unique_name_in_owner = true
-fit_content = true
-scroll_active = false
-mouse_filter = 2
-horizontal_alignment = 1
-visible = false
 
 [node name="UiText" type="Node" parent="." node_paths=PackedStringArray("target")]
 script = ExtResource("binding")

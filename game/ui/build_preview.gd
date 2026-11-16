@@ -8,6 +8,7 @@ var art: ArtCatalog
 var hover := Vector2i.ZERO
 var hovering := false
 var option: BuildOption
+var order: TaskBuildOrder
 var demolishing := false
 
 func _draw() -> void:
@@ -27,7 +28,7 @@ func _draw() -> void:
 		if building != null: cells = building.footprint()
 		_draw_removal(cells)
 	if hovering and option != null:
-		var check: PlacementCheck = draft.controller.placement_check(option, hover, draft.removals())
+		var check: PlacementCheck = draft.controller.placement_check(option, hover, draft.removals(), order)
 		var border: Color = ColonyStyle.color(&"green") if check.allowed() else ColonyStyle.color(&"danger")
 		_draw_option(hover, option, Color(Color.WHITE, PRESENTATION.ghost_hover_opacity), border)
 

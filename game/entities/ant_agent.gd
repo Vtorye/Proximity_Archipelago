@@ -119,7 +119,7 @@ func _physics_process(delta: float) -> void:
 				_decide()
 		Status.WALKING:
 			var before: Vector2 = global_position
-			global_position = motion.step(global_position, speed * (planner.carry_speed_ratio if transport.carrying else 1.0), delta)
+			global_position = motion.step(global_position, movement_speed(), delta)
 			var old_cell: Vector2i = route_service.world_to_cell(before)
 			var next_cell: Vector2i = route_service.world_to_cell(global_position)
 			if old_cell != next_cell:
@@ -279,6 +279,15 @@ func _arrive() -> void:
 			transport.carrying = false
 			_set_status(Status.HOME)
 			_timer = 0.5
+
+func movement_speed() -> float:
+	return speed * (planner.carry_speed_ratio if transport.carrying else 1.0)
+
+func step_clear_of_construction(cell: Vector2i) -> void:
+	var previous := route_service.world_to_cell(global_position)
+	global_position = route_service.cell_to_world(cell)
+	_queue_reconsideration(true)
+	cell_changed.emit(previous, cell)
 
 func _on_navigation_changed() -> void:
 	_queue_reconsideration(true)

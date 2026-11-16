@@ -283,7 +283,7 @@ func _test_worlds() -> void:
 	first.route_service.rebuild(first.registry.blocked_cells())
 	var from_cell: Vector2i = first.route_service.world_to_cell(ant.global_position)
 	var current_escape: float = first.route_service.food_field().cost(from_cell)
-	ant.needs.satiety = current_escape * first.route_service.cell_size() / (ant.speed * TripPlanner.CARRY_SPEED_RATIO) + AntNeeds.MEAL_SECONDS + AntNeeds.SAFETY_MARGIN + 0.1
+	ant.needs.satiety = ant.planner.travel_energy(current_escape, ant.movement_speed()) + AntNeeds.MEAL_SECONDS * AntNeeds.EAT_RATE + ant.needs.safety_margin + 0.1
 	var ground: BuildOption = load("res://game/building/options/ground.tres")
 	var before_terrain: Vector2i = (first.get_node("Map") as TileMapLayer).get_cell_atlas_coords(Vector2i(28, 26))
 	expect(not first.build_controller.try_build(ground, Vector2i(28, 26)) and first.build_controller.last_result.code == PlacementCheck.Code.NO_ESCAPE, "terrain change cannot strand a hungry ant")

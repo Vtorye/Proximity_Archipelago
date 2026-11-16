@@ -211,25 +211,24 @@ func _open_settings() -> void:
 func _select_section(section: StringName) -> void:
 	if Router.has_overlay() or campaign_panel.visible:
 		return
-	if section == &"build" and is_instance_valid(_construction) and _construction.order_option != null:
-		_construction.set_palette_visible(not _construction.is_palette_open())
-		return
 	var already_open := _section == section
 	if section == &"build" and is_instance_valid(_construction):
-		already_open = _construction.is_palette_open()
+		already_open = _section == &"build" and _construction.is_palette_open()
 	_section = &"" if already_open else section
 	hud.set_section(_section)
 	if _section == &"build":
 		if not is_instance_valid(_construction):
 			_create_construction_panel()
-		_construction.set_palette_visible(true)
+		_construction.show_catalog()
 		camera.dragging = false
 		camera.enabled_input = false
 		selection.clear()
+	elif _section == &"tasks" and is_instance_valid(_construction):
+		_construction.select_order()
 	elif is_instance_valid(_construction):
 		_construction.set_palette_visible(false)
 
-func _create_construction_panel(order_option: BuildOption = null) -> void:
+func _create_construction_panel() -> void:
 	var context := ConstructionContext.new()
 	context.controller = world.build_controller
 	context.art = world.art
@@ -239,23 +238,20 @@ func _create_construction_panel(order_option: BuildOption = null) -> void:
 	context.dismiss_map_popup = _dismiss_visible_nest_popup
 	_construction = CONSTRUCTION_PANEL.instantiate()
 	_construction.payload = context
-	_construction.order_option = order_option
 	_construction.map_inspection_requested.connect(_inspect_secondary_cell)
 	_construction.close_requested.connect(_close_construction_panel)
 	$ConstructionLayer.add_child(_construction)
 	_update_construction_dock()
 
-func _begin_royal_order(index: int, diversion: bool) -> void:
-	if is_instance_valid(_construction) and _construction.draft.size() > 0:
-		_construction.set_palette_visible(true)
+func _begin_royal_order(task_id: StringName, variant_id: StringName) -> void:
+	var order := world.tasks.start_order(task_id, variant_id)
+	if order == null:
 		return
-	var option: BuildOption = world.tasks.start_order(index, diversion)
-	if option == null: return
-	if is_instance_valid(_construction):
-		_close_construction_panel(_construction)
+	if not is_instance_valid(_construction):
+		_create_construction_panel()
 	_section = &"tasks"
 	hud.set_section(_section)
-	_create_construction_panel(option)
+	_construction.select_order(order)
 	camera.dragging = false
 	camera.enabled_input = false
 	selection.clear()
@@ -263,15 +259,11 @@ func _begin_royal_order(index: int, diversion: bool) -> void:
 func _close_construction_panel(menu: MenuBase) -> void:
 	if menu != _construction:
 		return
-	var order := _construction.order_option
 	_construction.hide()
 	_construction.detach_undo()
 	_construction.queue_free()
 	_construction = null
-	if order != null:
-		world.tasks.cancel_unplaced_order(order)
-		_section = &"tasks"
-	else:
+	if _section != &"tasks":
 		_section = &""
 	hud.set_section(_section)
 

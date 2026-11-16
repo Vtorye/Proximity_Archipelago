@@ -181,7 +181,10 @@ msgid "ui.construction.demolish_hint"
 msgstr "LMB: demolish · RMB: unmark"
 
 msgid "ui.construction.cost"
-msgstr "Plan: %d · %s"
+msgstr "Plan: %d · Cost: %s"
+
+msgid "ui.construction.plan_reward"
+msgstr "Reward: %s"
 
 msgid "ui.placement.busy"
 msgstr "Wait for construction to finish"
@@ -215,6 +218,9 @@ msgstr "There is no building on this tile"
 
 msgid "ui.placement.no_escape"
 msgstr "This would block the ants' safe route to food"
+
+msgid "ui.placement.no_entrance"
+msgstr "The plan blocks every entrance to one of the buildings"
 
 msgid "ui.placement.unavailable"
 msgstr "Action unavailable"
@@ -1133,3 +1139,6 @@ msgstr "Movement speed: ×%s of base"
 
 msgid "ui.trap.clear_action"
 msgstr "Remove trap"
+
+msgid "ui.task.building_variant"
+msgstr "Under construction: %s"

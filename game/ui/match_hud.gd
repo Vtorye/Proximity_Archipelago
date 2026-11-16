@@ -8,7 +8,7 @@ signal settings_requested
 signal pause_requested
 signal navigation_requested
 signal construction_requested
-signal order_requested(index: int, diversion: bool)
+signal order_requested(task_id: StringName, variant_id: StringName)
 signal section_requested(section: StringName)
 signal construction_bounds_changed
 signal zoom_in_requested
@@ -31,6 +31,7 @@ var navigation: NavigationOverlay
 var navigation_panel: NavigationPanel
 var task_panel: TaskPanel
 @onready var _bottom: PanelContainer = %Bottom
+@onready var _task_details: BuildDetailsPanel = %TaskDetails
 
 func configure(session: World, routes: NavigationOverlay) -> void:
 	world = session
@@ -102,7 +103,11 @@ func _build_hud() -> void:
 		task_panel = preload("res://game/tasks/task_panel.tscn").instantiate()
 		task_panel.director = world.tasks
 		add_child(task_panel)
-		task_panel.order_requested.connect(func(index: int, diversion: bool): order_requested.emit(index, diversion))
+		task_panel.order_requested.connect(_request_task_order)
+		task_panel.info_requested.connect(_show_task_details)
+		construction_bounds_changed.connect(_layout_task_panel)
+		get_viewport().size_changed.connect(_layout_task_panel)
+		_layout_task_panel.call_deferred()
 	if navigation != null:
 		navigation_panel = preload("res://game/ui/navigation_panel.tscn").instantiate()
 		navigation_panel.process_mode = Node.PROCESS_MODE_ALWAYS
@@ -182,6 +187,8 @@ func build_obstacles() -> Array[Rect2]:
 	var goals_panel: Control = task_panel if task_panel != null else _objectives
 	if goals_panel.is_visible_in_tree():
 		result.append(goals_panel.get_global_rect())
+	if _task_details.is_visible_in_tree():
+		result.append(_task_details.get_global_rect())
 	if colony_summary.is_visible_in_tree():
 		result.append(colony_summary.get_global_rect())
 	if navigation_panel != null and navigation_panel.is_visible_in_tree() and navigation_panel.mouse_filter == Control.MOUSE_FILTER_STOP:
@@ -216,7 +223,20 @@ func set_section(section: StringName) -> void:
 	colony_summary.set_expanded(section == &"colony")
 	var goals_panel: Control = task_panel if task_panel != null else _objectives
 	goals_panel.visible = section == &"tasks"
+	if section != &"tasks":
+		_task_details.hide()
 	_toast.hide()
+
+func _layout_task_panel() -> void:
+	task_panel.dock_below(colony_panel_bottom(), bottom_bar_height())
+
+func _show_task_details(option: BuildOption) -> void:
+	_task_details.toggle(option, world.build_controller, Vector2i(2147483647, 2147483647))
+	_task_details.reset_size()
+
+func _request_task_order(task_id: StringName, variant_id: StringName) -> void:
+	_task_details.hide()
+	order_requested.emit(task_id, variant_id)
 
 func _on_colony_expanded(expanded: bool) -> void:
 	if expanded != (_active_section == &"colony"):

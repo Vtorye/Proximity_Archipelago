@@ -1,0 +1,70 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://game/ui/build_details_panel.gd" id="script"]
+[ext_resource type="StyleBox" path="res://game/ui/dialog_panel.tres" id="style"]
+
+[node name="DescriptionPanel" type="PanelContainer"]
+script = ExtResource("script")
+custom_minimum_size = Vector2(340, 132)
+visible = false
+theme_override_styles/panel = ExtResource("style")
+
+[node name="DescriptionContent" type="VBoxContainer" parent="."]
+theme_override_constants/separation = 4
+
+[node name="DescriptionHeader" type="HBoxContainer" parent="DescriptionContent"]
+theme_override_constants/separation = 6
+
+[node name="Spacer" type="Control" parent="DescriptionContent/DescriptionHeader"]
+custom_minimum_size = Vector2(27, 0)
+mouse_filter = 2
+
+[node name="BuildingName" type="Label" parent="DescriptionContent/DescriptionHeader"]
+theme_type_variation = &"Heading"
+unique_name_in_owner = true
+size_flags_horizontal = 3
+text = ""
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(0.8745, 0.7765, 0.5451, 1)
+
+[node name="CloseDescription" type="Button" parent="DescriptionContent/DescriptionHeader"]
+unique_name_in_owner = true
+theme_type_variation = &"CompactButton"
+custom_minimum_size = Vector2(27, 27)
+text = "×"
+
+[node name="Description" type="Label" parent="DescriptionContent"]
+unique_name_in_owner = true
+autowrap_mode = 3
+horizontal_alignment = 1
+
+[node name="Parameters" type="Label" parent="DescriptionContent"]
+theme_type_variation = &"Caption"
+unique_name_in_owner = true
+autowrap_mode = 3
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(0.6667, 0.651, 0.6118, 1)
+
+[node name="ProductionResource" type="RichTextLabel" parent="DescriptionContent"]
+unique_name_in_owner = true
+visible = false
+horizontal_alignment = 1
+fit_content = true
+scroll_active = false
+mouse_filter = 2
+
+[node name="Price" type="RichTextLabel" parent="DescriptionContent"]
+unique_name_in_owner = true
+theme_override_colors/default_color = Color(0.8745, 0.7765, 0.5451, 1)
+fit_content = true
+scroll_active = false
+mouse_filter = 2
+horizontal_alignment = 1
+
+[node name="NextPrice" type="RichTextLabel" parent="DescriptionContent"]
+unique_name_in_owner = true
+fit_content = true
+scroll_active = false
+mouse_filter = 2
+horizontal_alignment = 1
+visible = false

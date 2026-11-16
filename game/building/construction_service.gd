@@ -2,7 +2,7 @@ class_name ConstructionService
 extends Node
 ## Orders reserve space immediately; carriers deliver crates and assemble buildings. Workers only gather resources.
 signal changed
-signal cancelled(option: BuildOption)
+signal order_cancelled
 
 @export var site_scene: PackedScene = preload("res://game/building/construction_site.tscn")
 var controller: BuildController
@@ -35,6 +35,7 @@ func at(cell: Vector2i, terrain: bool = false) -> ConstructionSite:
 
 func enqueue(command: BuildCommand, candidate: Building, quote: Array[ResourceAmount], crates: Dictionary) -> ConstructionSite:
 	var site: ConstructionSite = instantiate_site()
+	site.order = command.order
 	site.candidate = candidate
 	site.required = _aggregate(quote)
 	site.crates = crates
@@ -153,8 +154,10 @@ func complete(site: ConstructionSite) -> bool:
 	if controller.terrain != null and not (site.option is SceneBuildOption and site.option.requires_water) and not controller.terrain.allows(site.option, site.cell):
 		controller._remove_site(site)
 		return true
-	if not controller._safety().preserves_escape([command], candidates): return false
+	var safety := controller._safety()
+	if safety.check([command], candidates) != PlacementCheck.Code.OK: return false
 	controller._committing = true
+	controller._evacuate_ants(safety.exits)
 	var option: BuildOption = site.option
 	var cell: Vector2i = site.cell
 	if option is TileBuildOption:
@@ -179,6 +182,7 @@ func complete(site: ConstructionSite) -> bool:
 	controller._committing = false
 	if controller.prices != null: controller.prices.record(GameEvents.Kind.TERRAIN_CHANGED if option is TileBuildOption else GameEvents.Kind.BUILDING_BUILT, option.id)
 	controller.built.emit(option, cell)
+	if site.order != null: controller.order_completed.emit(site.order)
 	if option is SceneBuildOption and option.lifetime_seconds > 0.0:
 		controller._start_lifetime(controller.registry.at(cell), option.lifetime_seconds)
 	controller.population.planner.queue_workplace_refresh()
@@ -192,7 +196,7 @@ func cancel(site: ConstructionSite) -> void:
 	for source: House in site.crates: _refund(source, site.crates[source])
 	site.crates.clear()
 	if controller.prices != null: controller.prices.queue_order(site.option, -1)
-	cancelled.emit(site.option)
+	if site.order != null: order_cancelled.emit()
 	changed.emit()
 
 func finished(site: ConstructionSite) -> void:
