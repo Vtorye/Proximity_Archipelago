@@ -3,7 +3,7 @@
 [ext_resource type="Texture2D" uid="uid://nag6mbt2bp30" path="res://game/assets/ui/button.svg" id="button_tex"]
 [ext_resource type="Texture2D" uid="uid://ch4vvu4aohys8" path="res://game/assets/ui/disabled.svg" id="disabled_tex"]
 [ext_resource type="Texture2D" uid="uid://156ijwa72v0u" path="res://game/assets/ui/focus.svg" id="focus_tex"]
-[ext_resource type="FontFile" uid="uid://c5kwgiwldeiaj" path="res://game/assets/fonts/Pixuf.ttf" id="font"]
+[ext_resource type="FontFile" path="res://game/assets/fonts/Pangolin-Regular.ttf" id="font"]
 [ext_resource type="Texture2D" uid="uid://cp0qbvvdfne3r" path="res://game/assets/ui/hover.svg" id="hover_tex"]
 [ext_resource type="Texture2D" uid="uid://h7mnqvifj7up" path="res://game/assets/ui/slider_knob.svg" id="knob"]
 [ext_resource type="Texture2D" uid="uid://u0h2pr1i5fvg" path="res://game/assets/ui/panel.svg" id="panel_tex"]

@@ -162,6 +162,9 @@ msgstr "Снос: отметить здание или дорогу"
 msgid "ui.construction.undo"
 msgstr "Отменить ход (Ctrl+Z)"
 
+msgid "ui.construction.drag"
+msgstr "Перетаскивание"
+
 msgid "ui.construction.cancel"
 msgstr "Отменить всё"
 
@@ -880,7 +883,7 @@ msgid "ui.resource.royal"
 msgstr "Регалии"
 
 msgid "ui.hud.match_timer"
-msgstr "Матч %d:%02d"
+msgstr "До казни осталось: %d:%02d"
 
 msgid "ui.hud.wave_timer"
 msgstr "Волна %d:%02d"
@@ -1082,3 +1085,33 @@ msgstr "Мин. размер текста"
 
 msgid "ui.settings.text_pixels"
 msgstr "%d пкс"
+
+msgid "ui.construction.demolish_short"
+msgstr "Снос"
+
+msgid "ui.construction.size"
+msgstr "Размер: %dx%d"
+
+msgid "ui.construction.residents"
+msgstr "Вместимость: %d муравьёв"
+
+msgid "ui.construction.storage"
+msgstr "Склад: %d ед."
+
+msgid "ui.construction.price_constant"
+msgstr "Цена не меняется с каждой постройкой"
+
+msgid "ui.construction.price_multiplier"
+msgstr "Цена после каждой постройки: ×%s"
+
+msgid "ui.construction.price_add"
+msgstr "Прибавка к цене после каждой постройки: +%s"
+
+msgid "ui.construction.price_partial_multiplier"
+msgstr "Часть цены умножается на %s после каждой постройки"
+
+msgid "ui.construction.price_partial_add"
+msgstr "Часть цены растёт на %s после каждой постройки"
+
+msgid "ui.construction.next_price"
+msgstr "Следующая постройка: %s"

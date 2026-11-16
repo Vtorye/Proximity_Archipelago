@@ -94,4 +94,4 @@ func _on_row_input(event: InputEvent, nest: House) -> void:
 		get_viewport().set_input_as_handled()
 
 func _amount_text(type: ResourceType, amount: int) -> String:
-	return tr("ui.colony.amount") % [tr(type.display_name), amount]
+	return "%s %d" % [BuildCostText.icon(type), amount]

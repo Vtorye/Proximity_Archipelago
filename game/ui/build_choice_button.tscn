@@ -33,6 +33,7 @@ mouse_filter = 2
 size_flags_horizontal = 3
 
 [node name="Caption" type="Label" parent="Body/Row/Lines"]
+theme_type_variation = &"Caption"
 unique_name_in_owner = true
 mouse_filter = 2
 text = ""

@@ -1,6 +1,9 @@
 [gd_scene format=3]
 
+[ext_resource type="Script" path="res://game/ui/hud_resource_chip.gd" id="script"]
+
 [node name="ResourceChip" type="HBoxContainer"]
+script = ExtResource("script")
 size_flags_horizontal = 1
 theme_override_constants/separation = 4
 

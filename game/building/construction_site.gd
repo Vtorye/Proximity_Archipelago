@@ -36,7 +36,7 @@ func display_title() -> String:
 func details() -> String:
 	var lines := PackedStringArray([display_title()])
 	for item in required:
-		lines.append("%s: %d / %d" % [TranslationServer.translate(item.type.display_name), delivered.get(item.type.id, 0), item.amount])
+		lines.append("%s: %d / %d" % [BuildCostText.icon(item.type), delivered.get(item.type.id, 0), item.amount])
 	lines.append(TranslationServer.translate("ui.site.assembly") % roundi(progress / option.construction_seconds * 100) if supplied() else TranslationServer.translate("ui.site.delivery"))
 	return "\n".join(lines)
 

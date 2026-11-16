@@ -18,7 +18,6 @@ var _section: StringName
 var _active := false
 var _pointer := Vector2(-1, -1)
 var _camera_moved := false
-var _map_drag := false
 
 func _ready() -> void:
 	var waves: bool = payload is Dictionary and payload.get("wave_mode", false)
@@ -44,7 +43,7 @@ func _ready() -> void:
 	navigation_overlay.configure(world)
 	selection.map = world.map
 	hud.configure(world, navigation_overlay)
-	camera.left_button_drag = _map_drag
+	camera.left_button_drag = false
 	if world.voyage != null:
 		if payload is Dictionary and payload.has("journey"): world.voyage.apply(payload.journey)
 	if payload is Dictionary and payload.has("snapshot"): SessionSave.apply(world, payload.snapshot)
@@ -53,13 +52,9 @@ func _ready() -> void:
 	hud.settings_requested.connect(_open_settings)
 	hud.navigation_requested.connect(_toggle_navigation)
 	hud.construction_requested.connect(_select_section.bind(&"build"))
-	var demolish: Button = hud.construction_buttons()[&"demolish"]
-	demolish.pressed.connect(AppSettings.play_click)
-	demolish.pressed.connect(_toggle_demolition)
 	hud.order_requested.connect(_begin_royal_order)
-	hud.map_drag_toggled.connect(_set_map_drag)
 	hud.section_requested.connect(_select_section)
-	hud.bottom_bar_resized.connect(_update_construction_dock)
+	hud.construction_bounds_changed.connect(_update_construction_dock)
 	hud.pause_requested.connect(PauseController.toggle_manual)
 	hud.zoom_in_requested.connect(func(): camera.set_level(camera.level + 1))
 	hud.zoom_out_requested.connect(func(): camera.set_level(camera.level - 1))
@@ -145,8 +140,6 @@ func _process(_delta: float) -> void:
 	var can_use_map: bool = top == null and not campaign_panel.visible
 	if is_instance_valid(_construction):
 		_construction.visible = can_use_map
-	var editing := is_instance_valid(_construction)
-	hud.set_construction_mode_available(can_use_map, editing, editing and _construction.order_option != null)
 	camera.enabled_input = can_use_map and not _building_active()
 	if is_instance_valid(nest_popup):
 		nest_popup.visible = (top == null or top is PauseMenu) and not campaign_panel.visible
@@ -236,25 +229,12 @@ func _select_section(section: StringName) -> void:
 	elif is_instance_valid(_construction):
 		_construction.set_palette_visible(false)
 
-func _toggle_demolition() -> void:
-	if Router.has_overlay() or campaign_panel.visible:
-		return
-	var started_here := not is_instance_valid(_construction)
-	if started_here:
-		_create_construction_panel()
-		_construction.set_palette_visible(false)
-	elif _construction.order_option != null:
-		return
-	_construction.select_demolition()
-	camera.dragging = false
-	camera.enabled_input = false
-
 func _create_construction_panel(order_option: BuildOption = null) -> void:
 	var context := ConstructionContext.new()
 	context.controller = world.build_controller
 	context.art = world.art
 	context.camera = camera
-	context.action_buttons = hud.construction_buttons()
+	context.undo_button = hud.construction_undo_button()
 	context.obstacles = _construction_obstacles
 	context.dismiss_map_popup = _dismiss_visible_nest_popup
 	_construction = CONSTRUCTION_PANEL.instantiate()
@@ -262,9 +242,7 @@ func _create_construction_panel(order_option: BuildOption = null) -> void:
 	_construction.order_option = order_option
 	_construction.map_inspection_requested.connect(_inspect_secondary_cell)
 	_construction.close_requested.connect(_close_construction_panel)
-	_construction.map_drag_released.connect(_set_map_drag.bind(false))
 	$ConstructionLayer.add_child(_construction)
-	_construction.set_map_drag(_map_drag)
 	_update_construction_dock()
 
 func _begin_royal_order(index: int, diversion: bool) -> void:
@@ -277,7 +255,6 @@ func _begin_royal_order(index: int, diversion: bool) -> void:
 		_close_construction_panel(_construction)
 	_section = &"tasks"
 	hud.set_section(_section)
-	_set_map_drag(false)
 	_create_construction_panel(option)
 	camera.dragging = false
 	camera.enabled_input = false
@@ -288,8 +265,7 @@ func _close_construction_panel(menu: MenuBase) -> void:
 		return
 	var order := _construction.order_option
 	_construction.hide()
-	_construction.detach_actions()
-	hud.set_construction_mode_available(true, false, false)
+	_construction.detach_undo()
 	_construction.queue_free()
 	_construction = null
 	if order != null:
@@ -299,20 +275,12 @@ func _close_construction_panel(menu: MenuBase) -> void:
 		_section = &""
 	hud.set_section(_section)
 
-func _set_map_drag(enabled: bool) -> void:
-	_map_drag = enabled
-	camera.left_button_drag = enabled
-	camera.dragging = false
-	hud.set_map_drag(enabled)
-	if is_instance_valid(_construction):
-		_construction.set_map_drag(enabled)
-
 func _building_active() -> bool:
 	return is_instance_valid(_construction) and _construction.visible
 
 func _update_construction_dock() -> void:
 	if is_instance_valid(_construction):
-		_construction.dock_above(hud.bottom_bar_height())
+		_construction.dock_between(hud.bottom_bar_height(), hud.colony_panel_bottom())
 
 func _construction_obstacles() -> Array[Rect2]:
 	var obstacles: Array[Rect2] = hud.build_obstacles()

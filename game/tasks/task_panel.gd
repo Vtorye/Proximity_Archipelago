@@ -2,6 +2,7 @@ class_name TaskPanel
 extends PanelContainer
 ## Three compact royal requests with two construction routes each.
 var director: TaskDirector
+const TaskOfferButton = preload("res://game/tasks/task_offer_button.gd")
 @onready var _requests: VBoxContainer = %Requests
 var _queued := false
 signal order_requested(index: int, diversion: bool)
@@ -37,7 +38,7 @@ func _refresh() -> void:
 				title.tooltip_text = tr("ui.task.unlocks") % ", ".join(names)
 				title.add_theme_color_override("font_color", ColonyStyle.color(&"accent"))
 		for diversion in [false, true]:
-			var button: Button = request.get_node("Actions/Diversion" if diversion else "Actions/Build")
+			var button: TaskOfferButton = request.get_node("Actions/Diversion" if diversion else "Actions/Build")
 			var option: BuildOption = task.diversion if diversion else task.building
 			var label_key: String = task.diversion_label if diversion else task.building_label
 
@@ -45,7 +46,7 @@ func _refresh() -> void:
 				button.icon = director.world.art.build_icon(option)
 				var label := tr(label_key if not label_key.is_empty() else option.display_name)
 				var time := tr("ui.task.time_reward") % task.time_reward_for(diversion)
-				button.tooltip_text = "%s\n%s\n%s" % [label, time, BuildCostText.format(task.resources_for(diversion))]
+				button.set_reward_tooltip(label, time, task.resources_for(diversion))
 			else:
 				button.hide()
 			button.pressed.connect(AppSettings.play_click)

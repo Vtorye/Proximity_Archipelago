@@ -3,10 +3,11 @@
 [node name="ResourceGoal" type="HBoxContainer"]
 theme_override_constants/separation = 4
 
-[node name="Caption" type="Label" parent="."]
+[node name="Icon" type="TextureRect" parent="."]
 mouse_filter = 2
-text = "Food"
-custom_minimum_size = Vector2(84, 0)
+custom_minimum_size = Vector2(22, 22)
+expand_mode = 1
+stretch_mode = 5
 
 [node name="Progress" type="ProgressBar" parent="."]
 custom_minimum_size = Vector2(56, 6)

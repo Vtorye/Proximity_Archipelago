@@ -117,7 +117,13 @@ func _prune() -> void:
 	_residents = alive
 
 func _on_setup() -> bool:
-	if option is SceneBuildOption and option.spawn_count > 0:
+	if option is NestBuildOption:
+		if is_main_nest:
+			main_resident_limit = option.resident_capacity
+		else:
+			capacity = option.resident_capacity
+			storage_capacity = option.stock_capacity()
+	elif option is SceneBuildOption and option.spawn_count > 0:
 		capacity = option.spawn_count
 	return true
 

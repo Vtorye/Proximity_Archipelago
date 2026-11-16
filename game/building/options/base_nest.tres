@@ -1,7 +1,7 @@
-[gd_resource type="Resource" script_class="SceneBuildOption" format=3 uid="uid://cwg6he5xyq7c7"]
+[gd_resource type="Resource" script_class="NestBuildOption" format=3 uid="uid://cwg6he5xyq7c7"]
 
 [ext_resource type="Script" uid="uid://dohq4yj0b3afb" path="res://game/resources/resource_amount.gd" id="amount"]
-[ext_resource type="Script" uid="uid://ctb7np3cfufgu" path="res://game/building/scene_build_option.gd" id="option"]
+[ext_resource type="Script" path="res://game/building/nest_build_option.gd" id="option"]
 [ext_resource type="Script" uid="uid://clwif6xxyitqt" path="res://game/economy/price_rule.gd" id="price_rule"]
 [ext_resource type="Resource" path="res://game/resources/dot_treses/royal.tres" id="royal"]
 [ext_resource type="PackedScene" path="res://game/entities/base_nest.tscn" id="scene"]
@@ -17,6 +17,7 @@ value = 6.0
 
 [resource]
 script = ExtResource("option")
+resident_capacity = 20
 scene = ExtResource("scene")
 blocks_movement = false
 occupied_cells = Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1)])

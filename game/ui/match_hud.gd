@@ -2,21 +2,20 @@ class_name MatchHud
 extends Control
 
 const PRESENTATION: UiPresentation = preload("res://game/ui/ui_presentation.tres")
+const ResourceChip = preload("res://game/ui/hud_resource_chip.gd")
 signal nest_selected(nest: House)
 signal settings_requested
 signal pause_requested
 signal navigation_requested
 signal construction_requested
 signal order_requested(index: int, diversion: bool)
-signal map_drag_toggled(enabled: bool)
 signal section_requested(section: StringName)
-signal bottom_bar_resized
+signal construction_bounds_changed
 signal zoom_in_requested
 signal zoom_out_requested
 var world: World
 var controls: Dictionary[StringName, Button] = {}
-var stock_labels: Dictionary[StringName, Label] = {}
-var stock_chips: Dictionary[StringName, Control] = {}
+var stock_chips: Dictionary[StringName, ResourceChip] = {}
 var progress: Dictionary[StringName, ProgressBar] = {}
 @onready var _timer: Label = %Timer
 @onready var colony_summary: ColonySummary = %ColonySummary
@@ -49,19 +48,18 @@ func _build_hud() -> void:
 	colony_summary.expanded_changed.connect(_on_colony_expanded)
 	var regalia: ResourceType = world.inventory.type_by_id(WorldInventory.CURRENCY_ID)
 	if regalia != null:
-		var chip: HBoxContainer = preload("res://game/ui/hud_resource_chip.tscn").instantiate()
-		chip.get_node("Icon").texture = regalia.icon
+		var chip: ResourceChip = preload("res://game/ui/hud_resource_chip.tscn").instantiate()
+		chip.configure(regalia)
 		stock_chips[regalia.id] = chip
-		stock_labels[regalia.id] = chip.get_node("Amount")
 		%Counters.add_child(chip)
 		%Counters.move_child(chip, 0)
-	%Counters.move_child(%WaveTimer, %Timer.get_index() + 1)
 	var goals: VBoxContainer = %Goals
 	%GoalTitle.text = tr("ui.hud.goal") % world.match_controller.target_amount
 	for type in world.match_controller.tracked_types:
 		var line: HBoxContainer = preload("res://game/ui/hud_resource_goal.tscn").instantiate()
-		var caption: Label = line.get_node("Caption")
-		caption.text = type.display_name
+		var icon: TextureRect = line.get_node("Icon")
+		icon.texture = type.icon
+		line.tooltip_text = type.display_name
 		var bar: ProgressBar = line.get_node("Progress")
 		bar.max_value = world.match_controller.target_amount
 
@@ -88,9 +86,8 @@ func _build_hud() -> void:
 	%ColonyTab.pressed.connect(func(): section_requested.emit(&"colony"))
 	%TasksTab.pressed.connect(AppSettings.play_click)
 	%TasksTab.pressed.connect(func(): section_requested.emit(&"tasks"))
-	%Move.pressed.connect(AppSettings.play_click)
-	%Move.toggled.connect(map_drag_toggled.emit)
-	_bottom.resized.connect(bottom_bar_resized.emit)
+	_bottom.resized.connect(construction_bounds_changed.emit)
+	colony_summary.resized.connect(construction_bounds_changed.emit)
 	controls[&"zoom_out"] = %ZoomOut
 	%ZoomOut.pressed.connect(AppSettings.play_click)
 	%ZoomOut.pressed.connect(func(): zoom_out_requested.emit())
@@ -124,10 +121,8 @@ func _build_hud() -> void:
 
 func refresh() -> void:
 	for type in world.inventory.registered_types():
-		if stock_labels.has(type.id):
-			var amount: int = world.inventory.quantity(type)
-			stock_labels[type.id].text = str(amount)
-			stock_chips[type.id].tooltip_text = tr(type.display_name)
+		if stock_chips.has(type.id):
+			stock_chips[type.id].set_amount(world.inventory.quantity(type))
 		if progress.has(type.id):
 			progress[type.id].value = world.inventory.quantity(type)
 	var agents: Array[AntAgent] = world.population.agents()
@@ -179,12 +174,10 @@ func _refresh_pause_indicator(paused: bool) -> void:
 	%Pause.tooltip_text = "ui.hud.unpause" if manual else "ui.hud.pause"
 	%Pause.disabled = paused and not manual
 
-func set_map_drag(enabled: bool) -> void:
-	%Move.set_pressed_no_signal(enabled)
-
 func build_obstacles() -> Array[Rect2]:
 	var result: Array[Rect2] = []
-	result.append(%Top.get_global_rect())
+	result.append(%MatchStatus.get_global_rect())
+	result.append(%MatchControls.get_global_rect())
 	result.append(_bottom.get_global_rect())
 	var goals_panel: Control = task_panel if task_panel != null else _objectives
 	if goals_panel.is_visible_in_tree():
@@ -206,19 +199,14 @@ func toast(message: String, danger: bool = false) -> void:
 	_toast_time = PRESENTATION.toast_duration
 	_toast.show()
 
-func construction_buttons() -> Dictionary[StringName, Button]:
-	return {&"demolish": %Demolish, &"undo": %Undo, &"apply": %Apply, &"cancel": %Cancel}
-
-func set_construction_mode_available(available: bool, active: bool, is_order: bool) -> void:
-	%Demolish.disabled = not available or is_order
-	%Cancel.disabled = not available or not active
-	if not active:
-		%Demolish.set_pressed_no_signal(false)
-		%Undo.disabled = true
-		%Apply.disabled = true
+func construction_undo_button() -> Button:
+	return %Undo
 
 func bottom_bar_height() -> float:
 	return _bottom.size.y
+
+func colony_panel_bottom() -> float:
+	return colony_summary.get_global_rect().end.y
 
 func set_section(section: StringName) -> void:
 	_active_section = section

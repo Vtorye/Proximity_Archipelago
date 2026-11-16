@@ -16,7 +16,7 @@ static func theme_for_text_size(index: int) -> Theme:
 	var theme := THEME.duplicate() as Theme
 	var body := maxi(minimum, typography.body_size)
 	theme.default_font_size = body
-	for type in [&"Label", &"Button", &"CheckButton", &"OptionButton", &"LineEdit", &"TextEdit"]:
+	for type in [&"Label", &"Button", &"CheckButton", &"OptionButton", &"PopupMenu", &"LineEdit", &"TextEdit"]:
 		theme.set_font_size(&"font_size", type, body)
 	theme.set_font_size(&"normal_font_size", &"RichTextLabel", body)
 	var caption := maxi(minimum, typography.caption_size)

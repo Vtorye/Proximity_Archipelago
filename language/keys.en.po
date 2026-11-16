@@ -162,6 +162,9 @@ msgstr "Demolish: mark a building or road"
 msgid "ui.construction.undo"
 msgstr "Undo stroke (Ctrl+Z)"
 
+msgid "ui.construction.drag"
+msgstr "Pan map"
+
 msgid "ui.construction.cancel"
 msgstr "Cancel all"
 
@@ -880,7 +883,7 @@ msgid "ui.resource.royal"
 msgstr "Regalia"
 
 msgid "ui.hud.match_timer"
-msgstr "Match %d:%02d"
+msgstr "Execution in %d:%02d"
 
 msgid "ui.hud.wave_timer"
 msgstr "Wave %d:%02d"
@@ -1082,3 +1085,33 @@ msgstr "Minimum text size"
 
 msgid "ui.settings.text_pixels"
 msgstr "%d px"
+
+msgid "ui.construction.demolish_short"
+msgstr "Demolish"
+
+msgid "ui.construction.size"
+msgstr "Size: %dx%d"
+
+msgid "ui.construction.residents"
+msgstr "Residents: %d"
+
+msgid "ui.construction.storage"
+msgstr "Storage: %d goods"
+
+msgid "ui.construction.price_constant"
+msgstr "Building another does not change the price"
+
+msgid "ui.construction.price_multiplier"
+msgstr "Price after each build: ×%s"
+
+msgid "ui.construction.price_add"
+msgstr "Added to the price after each build: +%s"
+
+msgid "ui.construction.price_partial_multiplier"
+msgstr "Part of the price changes by ×%s after each build"
+
+msgid "ui.construction.price_partial_add"
+msgstr "Part of the price increases by %s after each build"
+
+msgid "ui.construction.next_price"
+msgstr "Next build: %s"

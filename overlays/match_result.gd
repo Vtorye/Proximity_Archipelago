@@ -1,5 +1,6 @@
 extends MenuBase
 ## End-of-match summary. Cannot be dismissed with Esc: navigation starts a new session.
+const ResourceChip = preload("res://game/ui/hud_resource_chip.gd")
 var controls: Dictionary[StringName, Button] = {}
 
 func _ready() -> void:
@@ -13,8 +14,9 @@ func _ready() -> void:
 		%Reason.text = "ui.result.goal_reached" if won else "ui.result.time_up"
 	if summary != null:
 		for entry in summary.resources:
-			var line: Label = preload("res://game/ui/nest_stock_label.tscn").instantiate()
-			line.text = tr("ui.colony.amount") % [tr(entry.type.display_name), entry.amount]
+			var line: ResourceChip = preload("res://game/ui/hud_resource_chip.tscn").instantiate()
+			line.configure(entry.type)
+			line.set_amount(entry.amount)
 			%Resources.add_child(line)
 		%TimeLeft.text = tr("ui.result.time_left") % [int(summary.time_left) / 60, int(summary.time_left) % 60]
 		%TimeLeft.show()

@@ -39,6 +39,8 @@ func _ready() -> void:
 	%Residents.pressed.connect(AppSettings.play_click)
 	%Residents.pressed.connect(_show_tab.bind(&"residents"))
 	for type in world.inventory.registered_types():
+		if type.id == WorldInventory.CURRENCY_ID:
+			continue
 		var line: Label = preload("res://game/ui/nest_stock_label.tscn").instantiate()
 		_stock_labels[type.id] = line
 		_inventory_tab.add_child(line)
@@ -120,8 +122,11 @@ func refresh() -> void:
 	var capacity: int = WorldInventory.base_capacity() if main else house.storage_capacity
 	_capacity.text = tr("ui.storage.fill") % [used, capacity]
 	for type in world.inventory.registered_types():
+		if not _stock_labels.has(type.id):
+			continue
 		var amount: int = world.inventory.nest_quantity(house, world.logistics.main_nest, type)
-		_stock_labels[type.id].text = "%s · %d" % [tr(type.display_name), amount]
+		_stock_labels[type.id].text = "%s · %d" % [BuildCostText.icon(type), amount]
+		_stock_labels[type.id].tooltip_text = tr(type.display_name)
 	_funds.visible = true
 	_funds.set_pressed_no_signal(house.funds_construction)
 	for id in _order_rows:
@@ -129,7 +134,8 @@ func refresh() -> void:
 		var type: ResourceType = row.type
 		var order: Dictionary = house.order_of(id)
 		var stock: int = world.inventory.nest_quantity(house, world.logistics.main_nest, type)
-		(row.name as Label).text = "%s · %d" % [tr(type.display_name), stock]
+		(row.name as Label).text = "%s · %d" % [BuildCostText.icon(type), stock]
+		(row.name as Label).tooltip_text = tr(type.display_name)
 		var spins: Dictionary = row.spins
 		for field in ["min", "max"]:
 			(spins[field] as SpinBox).set_value_no_signal(int(order.get(field, 0)))

@@ -1,8 +1,8 @@
-[gd_resource type="Resource" script_class="SceneBuildOption" format=3 uid="uid://bi3bebyyyf4kk"]
+[gd_resource type="Resource" script_class="NestBuildOption" format=3 uid="uid://bi3bebyyyf4kk"]
 
 [ext_resource type="Script" uid="uid://clwif6xxyitqt" path="res://game/economy/price_rule.gd" id="4_jgd4o"]
 [ext_resource type="Script" uid="uid://dohq4yj0b3afb" path="res://game/resources/resource_amount.gd" id="amount"]
-[ext_resource type="Script" uid="uid://ctb7np3cfufgu" path="res://game/building/scene_build_option.gd" id="option"]
+[ext_resource type="Script" path="res://game/building/nest_build_option.gd" id="option"]
 [ext_resource type="PackedScene" path="res://game/entities/house.tscn" id="scene"]
 [ext_resource type="Resource" path="res://game/resources/dot_treses/stone.tres" id="stone"]
 [ext_resource type="Resource" path="res://game/resources/dot_treses/wood.tres" id="wood"]
@@ -19,6 +19,8 @@ amount = 20
 
 [resource]
 script = ExtResource("option")
+resident_capacity = 5
+storage_capacity = 120
 scene = ExtResource("scene")
 blocks_movement = false
 spawn_count = 5

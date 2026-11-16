@@ -50,6 +50,7 @@ ui.build.confirm_demolition,Demolish the building without a refund?,Снести
 ui.build.confirm,"Yes, demolish","Да, снести"
 ui.build.demolished,Building demolished,Здание снесено
 ui.construction.move,Move: LMB pans the map,Перемещение: ЛКМ двигает карту
+ui.construction.drag,Pan map,Перетаскивание
 ui.construction.demolish,Demolish: mark a building or road,Снос: отметить здание или дорогу
 ui.construction.undo,Undo stroke (Ctrl+Z),Отменить ход (Ctrl+Z)
 ui.construction.cancel,Cancel all,Отменить всё
@@ -282,7 +283,7 @@ ui.settings.text_normal,Normal,Обычный
 ui.settings.text_large,Large,Крупный
 ui.settings.text_xlarge,Very large,Очень крупный
 ui.resource.royal,Regalia,Регалии
-ui.hud.match_timer,Match %d:%02d,Матч %d:%02d
+ui.hud.match_timer,Execution in %d:%02d,До казни осталось: %d:%02d
 ui.hud.wave_timer,Wave %d:%02d,Волна %d:%02d
 ui.colony.population,Ants: %d,Муравьи: %d
 ui.colony.store,%s (%d / %d),%s (%d / %d)
@@ -359,3 +360,13 @@ ui.hud.tab_colony,Colony,Колония
 ui.hud.tab_tasks,Tasks,Задачи
 ui.settings.minimum_text,Minimum text size,Мин. размер текста
 ui.settings.text_pixels,%d px,%d пкс
+ui.construction.demolish_short,Demolish,Снос
+ui.construction.size,Size: %dx%d,Размер: %dx%d
+ui.construction.residents,Residents: %d,Вместимость: %d муравьёв
+ui.construction.storage,Storage: %d goods,Склад: %d ед.
+ui.construction.price_constant,Building another does not change the price,Цена не меняется с каждой постройкой
+ui.construction.price_multiplier,Price after each build: ×%s,Цена после каждой постройки: ×%s
+ui.construction.price_add,Added to the price after each build: +%s,Прибавка к цене после каждой постройки: +%s
+ui.construction.price_partial_multiplier,Part of the price changes by ×%s after each build,Часть цены умножается на %s после каждой постройки
+ui.construction.price_partial_add,Part of the price increases by %s after each build,Часть цены растёт на %s после каждой постройки
+ui.construction.next_price,Next build: %s,Следующая постройка: %s

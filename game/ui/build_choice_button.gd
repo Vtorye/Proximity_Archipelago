@@ -23,7 +23,6 @@ func _ready() -> void:
 	if option.id == &"house":
 		icon.modulate = House.BARRACKS_TINT
 	%Caption.text = option.display_name
-	%Caption.set("theme_type_variation", &"Caption")
 	cost_label.text = BuildCostText.format(controller.price(option, pricing_cell) if controller != null else option.costs)
 	cost_label.set("theme_type_variation", &"Caption")
 	minimum_size_changed.connect(_fit_content)

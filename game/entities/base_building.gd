@@ -59,7 +59,7 @@ func validate_definition() -> Array[String]:
 
 func footprint() -> Array[Vector2i]:
 	var cells: Array[Vector2i] = []
-	if self is House and (self as House).is_main_nest:
+	if not option is SceneBuildOption and self is House and (self as House).is_main_nest:
 		return [cell, cell + Vector2i.RIGHT, cell + Vector2i.DOWN, cell + Vector2i(1, 1)]
 	if self is Workplace and (self as Workplace).finite_supply and (self as Workplace).remaining_supply > 200 and (self as Workplace).output != null and (self as Workplace).output.id == &"stone":
 		return [cell, cell + Vector2i.RIGHT]

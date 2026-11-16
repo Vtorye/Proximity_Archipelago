@@ -9,13 +9,6 @@
 
 [ext_resource type="StyleBox" path="res://game/ui/hud_bottom_bar.tres" id="bottom_bar"]
 
-[ext_resource type="Texture2D" path="res://game/assets/ui/build_move.svg" id="move_icon"]
-
-[ext_resource type="Texture2D" path="res://game/assets/ui/build_demolish.svg" id="demolish_icon"]
-[ext_resource type="Texture2D" path="res://game/assets/ui/build_undo.svg" id="undo_icon"]
-[ext_resource type="Texture2D" path="res://game/assets/ui/build_cancel.svg" id="cancel_icon"]
-[ext_resource type="Texture2D" path="res://game/assets/ui/build_apply.svg" id="apply_icon"]
-
 [node name="Hud" type="Control"]
 script = ExtResource("script")
 anchors_preset = 15
@@ -26,53 +19,78 @@ grow_vertical = 2
 mouse_filter = 2
 process_mode = 3
 
-[node name="Top" type="PanelContainer" parent="."]
+[node name="Top" type="HBoxContainer" parent="."]
 unique_name_in_owner = true
 anchor_right = 1.0
 offset_left = 8.0
 offset_top = 8.0
 offset_right = -8.0
-offset_bottom = 56.0
+offset_bottom = 8.0
 grow_horizontal = 2
+mouse_filter = 2
+theme_override_constants/separation = 6
 
-[node name="Counters" type="HBoxContainer" parent="Top"]
+[node name="ColonySummary" parent="Top" instance=ExtResource("summary")]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(148, 0)
+size_flags_vertical = 0
+
+[node name="MatchStatus" type="PanelContainer" parent="Top"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+size_flags_vertical = 0
+
+[node name="Counters" type="HBoxContainer" parent="Top/MatchStatus"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 32)
+alignment = 1
 theme_override_constants/separation = 8
 
-[node name="Timer" type="Label" parent="Top/Counters"]
+[node name="Timers" type="VBoxContainer" parent="Top/MatchStatus/Counters"]
+size_flags_vertical = 4
+theme_override_constants/separation = 0
+
+[node name="Timer" type="Label" parent="Top/MatchStatus/Counters/Timers"]
 theme_type_variation = &"Caption"
 unique_name_in_owner = true
 mouse_filter = 2
-text = "Match 5:00"
+text = "Execution in 5:00"
 theme_override_colors/font_color = Color(0.8745, 0.7765, 0.5451, 1)
-custom_minimum_size = Vector2(48, 0)
 
-[node name="Routes" type="Button" parent="Top/Counters"]
+[node name="WaveTimer" type="Label" parent="Top/MatchStatus/Counters/Timers"]
+text = "Wave 0:30"
+theme_type_variation = &"Caption"
+unique_name_in_owner = true
+visible = false
+mouse_filter = 2
+
+[node name="MatchControls" type="PanelContainer" parent="Top"]
+unique_name_in_owner = true
+size_flags_vertical = 0
+
+[node name="TopActions" type="HBoxContainer" parent="Top/MatchControls"]
+theme_override_constants/separation = 4
+
+[node name="Routes" type="Button" parent="Top/MatchControls/TopActions"]
 theme_type_variation = &"CompactButton"
 unique_name_in_owner = true
 mouse_default_cursor_shape = 2
 text = ""
 custom_minimum_size = Vector2(32, 32)
 size_flags_horizontal = 4
-size_flags_vertical = 4
 process_mode = 3
 toggle_mode = true
 
-[node name="Spacer" type="Control" parent="Top/Counters"]
-size_flags_horizontal = 3
-mouse_filter = 2
-
-[node name="Pause" type="Button" parent="Top/Counters"]
+[node name="Pause" type="Button" parent="Top/MatchControls/TopActions"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(27, 27)
-size_flags_vertical = 4
+custom_minimum_size = Vector2(32, 32)
 theme_type_variation = &"CompactButton"
 expand_icon = true
 theme_override_constants/icon_max_width = 16
 tooltip_text = "ui.hud.pause"
 mouse_default_cursor_shape = 2
 
-[node name="Settings" type="Button" parent="Top/Counters"]
+[node name="Settings" type="Button" parent="Top/MatchControls/TopActions"]
 expand_icon = true
 theme_override_constants/icon_max_width = 16
 unique_name_in_owner = true
@@ -80,7 +98,6 @@ mouse_default_cursor_shape = 2
 text = ""
 custom_minimum_size = Vector2(32, 32)
 size_flags_horizontal = 4
-size_flags_vertical = 4
 icon = ExtResource("menu_icon")
 icon_alignment = 1
 tooltip_text = "ui.hud.menu"
@@ -156,61 +173,13 @@ text = "ui.hud.tab_tasks"
 toggle_mode = true
 mouse_default_cursor_shape = 2
 
-[node name="Move" type="Button" parent="Bottom/Actions"]
-unique_name_in_owner = true
-mouse_default_cursor_shape = 2
-text = ""
-custom_minimum_size = Vector2(27, 27)
-size_flags_vertical = 4
-icon = ExtResource("move_icon")
-expand_icon = true
-theme_override_constants/icon_max_width = 16
-icon_alignment = 1
-tooltip_text = "ui.construction.inspect_hint"
-toggle_mode = true
-
-[node name="Demolish" type="Button" parent="Bottom/Actions"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(34, 34)
-icon = ExtResource("demolish_icon")
-icon_alignment = 1
-expand_icon = true
-theme_override_constants/icon_max_width = 16
-tooltip_text = "ui.construction.demolish"
-mouse_default_cursor_shape = 2
-toggle_mode = true
-
 [node name="Undo" type="Button" parent="Bottom/Actions"]
 disabled = true
 unique_name_in_owner = true
 custom_minimum_size = Vector2(58, 34)
-icon = ExtResource("undo_icon")
 text = "Ctrl+Z"
 theme_type_variation = &"CompactButton"
 tooltip_text = "ui.construction.undo"
-mouse_default_cursor_shape = 2
-
-[node name="Apply" type="Button" parent="Bottom/Actions"]
-disabled = true
-unique_name_in_owner = true
-custom_minimum_size = Vector2(148, 34)
-icon = ExtResource("apply_icon")
-expand_icon = true
-theme_override_constants/icon_max_width = 16
-icon_alignment = 1
-text = "ui.construction.apply"
-theme_override_colors/font_color = Color(0.8745, 0.7765, 0.5451, 1)
-mouse_default_cursor_shape = 2
-
-[node name="Cancel" type="Button" parent="Bottom/Actions"]
-disabled = true
-unique_name_in_owner = true
-custom_minimum_size = Vector2(34, 34)
-icon = ExtResource("cancel_icon")
-icon_alignment = 1
-expand_icon = true
-theme_override_constants/icon_max_width = 16
-tooltip_text = "ui.construction.cancel"
 mouse_default_cursor_shape = 2
 
 [node name="Spacer" type="Control" parent="Bottom/Actions"]
@@ -256,16 +225,6 @@ grow_horizontal = 2
 grow_vertical = 0
 horizontal_alignment = 1
 visible = false
-
-[node name="ColonySummary" parent="." instance=ExtResource("summary")]
-unique_name_in_owner = true
-
-[node name="WaveTimer" type="Label" parent="Top/Counters"]
-text = "Wave 0:30"
-theme_type_variation = &"Caption"
-unique_name_in_owner = true
-visible = false
-mouse_filter = 2
 
 [node name="UiText" type="Node" parent="." node_paths=PackedStringArray("target")]
 script = ExtResource("ui_text_binding")

@@ -99,10 +99,6 @@ func placement_check(option: BuildOption, cell: Vector2i, removed: Array[Buildin
 				return PlacementCheck.result(PlacementCheck.Code.IMPASSABLE)
 		if registry.at(target) != null and not removed.has(registry.at(target)) and (option is SceneBuildOption or not option.allow_when_occupied):
 			return PlacementCheck.result(PlacementCheck.Code.OCCUPIED)
-		if not option.allow_when_occupied and population != null:
-			for ant in population.agents():
-				if route_service.world_to_cell(ant.global_position) == target:
-					return PlacementCheck.result(PlacementCheck.Code.ANT_PRESENT)
 	if water_site and not option.entries_at(cell).any(route_service.walkable):
 		return PlacementCheck.result(PlacementCheck.Code.SHORE_REQUIRED)
 	return PlacementCheck.new()
@@ -411,9 +407,9 @@ func _footprint(option: BuildOption, origin: Vector2i) -> Array[Vector2i]:
 func _safety() -> ConstructionSafety:
 	return ConstructionSafety.new(map, registry, population, route_service)
 
-func price(option: BuildOption, cell := Vector2i(2147483647, 2147483647)) -> Array[ResourceAmount]:
+func price(option: BuildOption, cell := Vector2i(2147483647, 2147483647), pending: Dictionary[String, int] = {}) -> Array[ResourceAmount]:
 	var factor: float = terrain.price_multiplier(option, cell) if terrain != null else 1.0
-	return prices.quote(option, {}, factor) if prices != null else option.costs
+	return prices.quote(option, pending, factor) if prices != null else option.costs
 
 func apply_surface(option: TileBuildOption, cell: Vector2i) -> void:
 	if map is TerrainMap:

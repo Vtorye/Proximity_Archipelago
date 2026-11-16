@@ -1,5 +1,6 @@
 [gd_scene format=3]
 
+[ext_resource type="Script" path="res://game/tasks/task_offer_button.gd" id="offer"]
 
 [node name="Request" type="VBoxContainer"]
 theme_override_constants/separation = 3
@@ -14,6 +15,7 @@ text_overrun_behavior = 3
 theme_override_constants/separation = 3
 
 [node name="Build" type="Button" parent="Actions"]
+script = ExtResource("offer")
 theme_type_variation = &"CompactButton"
 unique_name_in_owner = true
 mouse_default_cursor_shape = 2
@@ -23,6 +25,7 @@ icon_alignment = 1
 theme_override_constants/icon_max_width = 30
 
 [node name="Diversion" type="Button" parent="Actions"]
+script = ExtResource("offer")
 theme_type_variation = &"CompactButton"
 unique_name_in_owner = true
 mouse_default_cursor_shape = 2
