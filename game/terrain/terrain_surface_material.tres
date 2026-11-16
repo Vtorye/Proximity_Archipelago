@@ -1,6 +1,6 @@
-[gd_resource type="ShaderMaterial" format=3]
+[gd_resource type="ShaderMaterial" format=3 uid="uid://b67mignmd88gk"]
 
-[ext_resource type="Shader" path="res://game/terrain/pretty_terrain.gdshader" id="1_shader"]
+[ext_resource type="Shader" uid="uid://dh3tc8qjga42i" path="res://game/terrain/pretty_terrain.gdshader" id="1_shader"]
 
 [sub_resource type="FastNoiseLite" id="FastNoiseLite_06xp3"]
 frequency = 0.0396
@@ -13,14 +13,14 @@ noise = SubResource("FastNoiseLite_06xp3")
 
 [resource]
 shader = ExtResource("1_shader")
-shader_parameter/tile_mask = true
 shader_parameter/viewport_side = 50
+shader_parameter/tile_mask = true
 shader_parameter/alfa_cutoff = 0.37
 shader_parameter/land_types_cutoff = 0.335
-shader_parameter/dirt_color = Color(0.8862745, 0.69803923, 0.6901961, 1)
-shader_parameter/grass_color = Color(0.6123197, 0.71377975, 0.3554366, 1)
-shader_parameter/mountains_color = Color(0.6116368, 0.60167825, 0.8443188, 1)
-shader_parameter/mountain_pieck_color = Color(0.800376, 0.62219876, 0.6970835, 1)
+shader_parameter/dirt_color = Color(0.6, 0.466667, 0.372549, 1)
+shader_parameter/grass_color = Color(0.6, 0.678431, 0.403922, 1)
+shader_parameter/mountains_color = Color(0.592157, 0.584314, 0.772549, 1)
+shader_parameter/mountain_pieck_color = Color(0.745098, 0.607843, 0.666667, 1)
 shader_parameter/mountains_noise = SubResource("NoiseTexture2D_iw1w7")
 shader_parameter/mountain_size = 0.0390010018525
 shader_parameter/mountain_density = 1.0
@@ -32,8 +32,8 @@ shader_parameter/mountains_discard_outside_region_margin = 0.30000000447036
 shader_parameter/grass_blade_size = Vector2(-2.57, 0.8)
 shader_parameter/draw_coast = true
 shader_parameter/coast_offset = Vector2(0.003, 0.003)
-shader_parameter/coast_color = Color(0.1496095, 0.1922862, 0.3134059, 1)
-shader_parameter/waveline_color = Color(0.37174377, 0.545062, 0.5969153, 1)
+shader_parameter/coast_color = Color(0.156863, 0.192157, 0.286275, 1)
+shader_parameter/waveline_color = Color(0.384314, 0.517647, 0.560784, 1)
 shader_parameter/waveline_wave_scale = 33.0
 shader_parameter/waveline_wave_speed = 1.0
 shader_parameter/waveline_wave_amplitude = 2.0

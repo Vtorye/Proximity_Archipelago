@@ -1,25 +1,25 @@
-[gd_resource type="Resource" script_class="TaskDeck" format=3]
+[gd_resource type="Resource" script_class="TaskDeck" format=3 uid="uid://clier5qj0teei"]
 
-[ext_resource type="Script" path="res://game/tasks/task_stage.gd" id="stage"]
-[ext_resource type="Script" path="res://game/tasks/task_deck.gd" id="deck"]
-[ext_resource type="Script" path="res://game/tasks/task_spec.gd" id="task"]
-[ext_resource type="Resource" path="res://game/building/options/road_plus.tres" id="road_plus"]
-[ext_resource type="Resource" path="res://game/building/options/road.tres" id="road"]
-[ext_resource type="Resource" path="res://game/tasks/request_statue_feast.tres" id="q0"]
-[ext_resource type="Resource" path="res://game/tasks/request_quarry_feast.tres" id="q1"]
-[ext_resource type="Resource" path="res://game/tasks/request_farm_feast.tres" id="q2"]
-[ext_resource type="Resource" path="res://game/tasks/request_sawmill_feast.tres" id="q3"]
-[ext_resource type="Resource" path="res://game/tasks/request_house_feast.tres" id="q4"]
-[ext_resource type="Resource" path="res://game/tasks/request_canteen_feast.tres" id="q5"]
-[ext_resource type="Resource" path="res://game/tasks/request_statue_feast_b.tres" id="q6"]
-[ext_resource type="Resource" path="res://game/tasks/request_feast_statue_b.tres" id="q7"]
-[ext_resource type="Resource" path="res://game/tasks/request_statue_feast_c.tres" id="q8"]
-[ext_resource type="Resource" path="res://game/tasks/request_feast_statue_c.tres" id="q9"]
-[ext_resource type="Resource" path="res://game/tasks/request_statue_feast_d.tres" id="q10"]
-[ext_resource type="Resource" path="res://game/tasks/request_feast_statue_d.tres" id="q11"]
-[ext_resource type="Resource" path="res://game/tasks/request_statue_feast_e.tres" id="q12"]
-[ext_resource type="Resource" path="res://game/tasks/request_feast_statue_e.tres" id="q13"]
-[ext_resource type="Resource" path="res://game/tasks/request_statue_feast_f.tres" id="q14"]
+[ext_resource type="Script" uid="uid://bbv8cv7briafs" path="res://game/tasks/task_deck.gd" id="deck"]
+[ext_resource type="Resource" uid="uid://hd7mbi1by4i2" path="res://game/tasks/request_statue_feast.tres" id="q0"]
+[ext_resource type="Resource" uid="uid://wmybruumrjxc" path="res://game/tasks/request_quarry_feast.tres" id="q1"]
+[ext_resource type="Resource" uid="uid://bo8efttldbtjp" path="res://game/tasks/request_farm_feast.tres" id="q2"]
+[ext_resource type="Resource" uid="uid://cj7yue5h4whx6" path="res://game/tasks/request_sawmill_feast.tres" id="q3"]
+[ext_resource type="Resource" uid="uid://chjdbgwu30py4" path="res://game/tasks/request_house_feast.tres" id="q4"]
+[ext_resource type="Resource" uid="uid://bdhm6c8uoi5j5" path="res://game/tasks/request_canteen_feast.tres" id="q5"]
+[ext_resource type="Resource" uid="uid://ydqdslbxer1c" path="res://game/tasks/request_statue_feast_b.tres" id="q6"]
+[ext_resource type="Resource" uid="uid://d2o0fvdjxj2i6" path="res://game/tasks/request_feast_statue_b.tres" id="q7"]
+[ext_resource type="Resource" uid="uid://b0bllkqjjdbu5" path="res://game/tasks/request_statue_feast_c.tres" id="q8"]
+[ext_resource type="Resource" uid="uid://bkyg1l63aj2o7" path="res://game/tasks/request_feast_statue_c.tres" id="q9"]
+[ext_resource type="Resource" uid="uid://c73wrhw6etgj5" path="res://game/tasks/request_statue_feast_d.tres" id="q10"]
+[ext_resource type="Resource" uid="uid://dx2j0x8oe86dg" path="res://game/tasks/request_feast_statue_d.tres" id="q11"]
+[ext_resource type="Resource" uid="uid://ixow83f7mwqy" path="res://game/tasks/request_statue_feast_e.tres" id="q12"]
+[ext_resource type="Resource" uid="uid://f246pv7xeo6c" path="res://game/tasks/request_feast_statue_e.tres" id="q13"]
+[ext_resource type="Resource" uid="uid://d2o66fjdayd15" path="res://game/tasks/request_statue_feast_f.tres" id="q14"]
+[ext_resource type="Resource" uid="uid://b3bspiavx16wa" path="res://game/building/options/road.tres" id="road"]
+[ext_resource type="Resource" uid="uid://cv3ygwvsnayd2" path="res://game/building/options/road_plus.tres" id="road_plus"]
+[ext_resource type="Script" uid="uid://bwgiil82r4a20" path="res://game/tasks/task_stage.gd" id="stage"]
+[ext_resource type="Script" uid="uid://bmf8btgjq0fm3" path="res://game/tasks/task_spec.gd" id="task"]
 
 [sub_resource type="Resource" id="stage_1"]
 script = ExtResource("stage")
@@ -37,6 +37,9 @@ tasks = Array[ExtResource("task")]([ExtResource("q10"), ExtResource("q11"), ExtR
 script = ExtResource("deck")
 requests = Array[ExtResource("task")]([ExtResource("q0"), ExtResource("q1"), ExtResource("q2"), ExtResource("q3"), ExtResource("q4"), ExtResource("q5"), ExtResource("q6"), ExtResource("q7"), ExtResource("q8"), ExtResource("q9"), ExtResource("q10"), ExtResource("q11"), ExtResource("q12"), ExtResource("q13"), ExtResource("q14")])
 stages = Array[ExtResource("stage")]([SubResource("stage_1"), SubResource("stage_2"), SubResource("stage_3")])
+choose_upgrades = true
+unlocked_road = ExtResource("road_plus")
+replaced_road = ExtResource("road")
 legacy_task_ids = Dictionary[String, String]({
 "stage_1_task_0": "statue_feast",
 "stage_1_task_1": "quarry_feast",
@@ -54,7 +57,3 @@ legacy_task_ids = Dictionary[String, String]({
 "stage_3_task_3": "statue_feast_e",
 "stage_3_task_4": "statue_feast_f"
 })
-choose_upgrades = true
-loop_last_stage = true
-unlocked_road = ExtResource("road_plus")
-replaced_road = ExtResource("road")

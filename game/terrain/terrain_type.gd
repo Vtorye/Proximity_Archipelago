@@ -17,6 +17,11 @@ enum Kind { LAND, ROAD, WATER }
 	set(value):
 		surface_blend = value
 		emit_changed()
+## Optional color for dirt or grass terrain. Alpha controls its strength.
+@export var surface_tint := Color(1.0, 1.0, 1.0, 0.0):
+	set(value):
+		surface_tint = value
+		emit_changed()
 @export_range(0.0, 10.0, 0.05) var move_cost := 1.6
 @export var roads_allowed := true
 @export var berries_allowed := true

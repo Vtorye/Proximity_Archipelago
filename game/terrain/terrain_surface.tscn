@@ -15,4 +15,4 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-color = Color(0.18906647, 0.28287807, 0.36208087, 1)
+color = Color(0.203922, 0.278431, 0.341176, 1)

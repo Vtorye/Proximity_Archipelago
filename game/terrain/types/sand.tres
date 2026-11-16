@@ -1,15 +1,16 @@
-[gd_resource type="Resource" script_class="TerrainType" format=3]
-[ext_resource type="Script" path="res://game/terrain/terrain_type.gd" id="type"]
-[ext_resource type="Texture2D" path="res://game/assets/tiles/sand.svg" id="texture"]
+[gd_resource type="Resource" script_class="TerrainType" format=3 uid="uid://cefnxvu2lcf6"]
+
+[ext_resource type="Texture2D" uid="uid://ctq0fiku2mdoj" path="res://game/assets/tiles/sand.svg" id="texture"]
+[ext_resource type="Script" uid="uid://dpryvfum3wfo2" path="res://game/terrain/terrain_type.gd" id="type"]
 
 [resource]
 script = ExtResource("type")
 id = &"sand"
 display_name = "ui.terrain.sand"
 tile = Vector4i(9, 0, 0, 0)
-surface_blend = Color(1, 0, 0, 1)
-move_cost = 1.6
 texture = ExtResource("texture")
+surface_blend = Color(1, 0, 0, 1)
+surface_tint = Color(0.894118, 0.886275, 0.705882, 1)
 berries_allowed = false
 nests_allowed = false
 road_price_multiplier = 1.5

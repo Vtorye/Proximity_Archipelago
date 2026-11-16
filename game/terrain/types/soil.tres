@@ -1,5 +1,6 @@
-[gd_resource type="Resource" script_class="TerrainType" format=3]
-[ext_resource type="Script" path="res://game/terrain/terrain_type.gd" id="type"]
+[gd_resource type="Resource" script_class="TerrainType" format=3 uid="uid://beprxny40h6ar"]
+
+[ext_resource type="Script" uid="uid://dpryvfum3wfo2" path="res://game/terrain/terrain_type.gd" id="type"]
 
 [resource]
 script = ExtResource("type")
@@ -7,5 +8,5 @@ id = &"soil"
 display_name = "ui.terrain.soil"
 tile = Vector4i(3, 1, 0, 0)
 surface_blend = Color(1, 0, 0, 1)
-move_cost = 1.6
+surface_tint = Color(0.6, 0.619608, 0.368627, 1)
 restores_ground = true

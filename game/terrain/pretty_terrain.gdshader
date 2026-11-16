@@ -4,6 +4,7 @@ const float defoult_viewport_side = 50.; // for stuff to not change size when st
 uniform int viewport_side = 50;
 
 uniform sampler2D world_curr_col : filter_linear, repeat_disable;
+uniform sampler2D terrain_tint : filter_nearest, repeat_disable;
 uniform bool tile_mask = false;
 instance uniform vec2 patch_origin;
 instance uniform vec4 water_color : source_color;
@@ -58,6 +59,44 @@ vec4 sample_mask(vec2 uv) {
 	return texture(world_curr_col, uv);
 }
 
+vec4 sample_soil_color(vec2 uv) {
+	// Calculate the same bilinear coverage as the ground mask, grouping
+	// weights by soil color before choosing a material at the cutoff.
+	vec2 texel = uv * defoult_viewport_side - patch_origin - 0.5;
+	ivec2 corner = ivec2(floor(texel));
+	vec2 f = fract(texel);
+	vec4 weights = vec4((1.0 - f.x) * (1.0 - f.y), f.x * (1.0 - f.y),
+		(1.0 - f.x) * f.y, f.x * f.y);
+	vec4 colors[4] = {
+		texelFetch(terrain_tint, corner, 0),
+		texelFetch(terrain_tint, corner + ivec2(1, 0), 0),
+		texelFetch(terrain_tint, corner + ivec2(0, 1), 0),
+		texelFetch(terrain_tint, corner + ivec2(1, 1), 0)
+	};
+	if (all(equal(colors[0], colors[1])) && all(equal(colors[0], colors[2])) &&
+			all(equal(colors[0], colors[3]))) {
+		return colors[0];
+	}
+	float strongest = land_types_cutoff;
+	vec4 soil_color = vec4(0.0);
+	for (int i = 0; i < 4; i++) {
+		if (colors[i].a == 0.0) {
+			continue;
+		}
+		float coverage = 0.0;
+		for (int j = 0; j < 4; j++) {
+			if (all(equal(colors[i], colors[j]))) {
+				coverage += weights[j];
+			}
+		}
+		if (coverage > strongest) {
+			strongest = coverage;
+			soil_color = colors[i];
+		}
+	}
+	return soil_color;
+}
+
 vec2 get_aspect_correct_uv(vec2 uv) {
 	vec2 size = vec2(textureSize(world_curr_col, 0));
 	vec2 max_dim = vec2(max(size.x, size.y));
@@ -94,12 +133,14 @@ float hash12(vec2 p) {
 
 vec3 terrain_color(vec3 curr_col, vec2 uv) {
 	vec3 col = grass_color;
+	vec2 soil_uv = uv;
 	//vec3 curr_col_with_grass = curr_col.xyz;
 	
 	if (draw_grass_blades && curr_col.g > land_types_cutoff) { // grass blades 
 		float grass_offset = tringle(uv.x + sin(TIME * 1.3) * 0.002, grass_blades_ampletude, -grass_blades_hight) * scale_change;
 		
-		vec3 grass_blades = sample_mask(vec2(uv.x, uv.y + grass_offset)).xyz;
+		soil_uv.y += grass_offset;
+		vec3 grass_blades = sample_mask(soil_uv).xyz;
 		
 		//col = grass_blades;
 		curr_col = grass_blades;
@@ -109,6 +150,10 @@ vec3 terrain_color(vec3 curr_col, vec2 uv) {
 		col = dirt_color;
 	}
 
+	if (tile_mask && curr_col.b <= land_types_cutoff) {
+		vec4 soil_color = sample_soil_color(soil_uv);
+		col = mix(col, soil_color.rgb, soil_color.a);
+	}
 	
 	if (curr_col.b > land_types_cutoff) { // mountains
 		

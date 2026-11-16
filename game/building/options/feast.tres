@@ -1,11 +1,12 @@
-[gd_resource type="Resource" script_class="SceneBuildOption" format=3]
+[gd_resource type="Resource" script_class="SceneBuildOption" format=3 uid="uid://c62wo80ihkc7y"]
 
-[ext_resource type="Texture2D" path="res://game/assets/sprites/canteen.png" id="appearance"]
-[ext_resource type="Script" path="res://game/resources/resource_amount.gd" id="amount"]
-[ext_resource type="Script" path="res://game/building/scene_build_option.gd" id="option"]
+[ext_resource type="Script" uid="uid://clwif6xxyitqt" path="res://game/economy/price_rule.gd" id="5_ajvmo"]
+[ext_resource type="Script" uid="uid://dohq4yj0b3afb" path="res://game/resources/resource_amount.gd" id="amount"]
+[ext_resource type="Texture2D" uid="uid://uf13uqirtfts" path="res://game/assets/sprites/canteen.png" id="appearance"]
+[ext_resource type="Resource" uid="uid://bc4vd8o7qyldd" path="res://game/resources/dot_treses/food.tres" id="food"]
+[ext_resource type="Script" uid="uid://ctb7np3cfufgu" path="res://game/building/scene_build_option.gd" id="option"]
 [ext_resource type="PackedScene" path="res://game/entities/feast.tscn" id="scene"]
 [ext_resource type="Resource" path="res://game/resources/dot_treses/wood.tres" id="wood"]
-[ext_resource type="Resource" path="res://game/resources/dot_treses/food.tres" id="food"]
 
 [sub_resource type="Resource" id="wood_cost"]
 script = ExtResource("amount")
@@ -19,11 +20,10 @@ amount = 8
 
 [resource]
 script = ExtResource("option")
-icon = ExtResource("appearance")
 scene = ExtResource("scene")
-blocks_movement = true
 lifetime_seconds = 10.0
 id = &"feast"
 display_name = "ui.building.feast"
 description = "ui.construction.description.feast"
+icon = ExtResource("appearance")
 costs = Array[ExtResource("amount")]([SubResource("wood_cost"), SubResource("food_cost")])
