@@ -1,5 +1,7 @@
 extends "res://tests/ui_runner.gd"
 ## Real editor and construction input; a compact fixture makes all five ground types readable together.
+const ROUNDED_ROCK := Vector2i(9, 8)
+
 func _run() -> void:
 	seed(20261108)
 	AppSettings.reset_defaults()
@@ -48,6 +50,7 @@ func _run() -> void:
 	var world: World = screen.world
 	world.units.process_mode = Node.PROCESS_MODE_DISABLED
 	await capture("03-readable-soil-fixture", 20)
+	await _check_rounded_soil()
 	var dry := Vector2i(8, 3)
 	var rocky := Vector2i(5, 3)
 	var sand := Vector2i(14, 3)
@@ -119,6 +122,28 @@ func _run() -> void:
 	await frames(25)
 	_finish()
 
+func _check_rounded_soil() -> void:
+	var cell := ROUNDED_ROCK
+	screen.camera.set_level(3)
+	_focus(cell)
+	screen.hud.hide()
+	await RenderingServer.frame_post_draw
+	var image := get_viewport().get_texture().get_image()
+	var scale := Vector2(image.get_size()) / get_viewport().get_visible_rect().size
+	var center := cell_point(cell) * scale
+	var tile_span := (cell_point(cell + Vector2i.ONE) - cell_point(cell)) * scale
+	var corners_in_ground := 0
+	for direction in [Vector2(-1, -1), Vector2(1, -1), Vector2(-1, 1), Vector2(1, 1)]:
+		var point := Vector2i(center + Vector2(direction) * tile_span * 0.45)
+		var corner := image.get_pixelv(point)
+		if corner.r > corner.b:
+			corners_in_ground += 1
+	var rock := image.get_pixelv(Vector2i(center))
+	expect(rock.b > rock.r and corners_in_ground >= 3, "the rocky cell has a stone center and rounded corners at high zoom")
+	await capture("03a-rounded-soil-closeup", 20)
+	screen.hud.show()
+	screen.camera.set_level(2)
+
 func _check_built_road(world: World, cell: Vector2i) -> void:
 	var menu := await _open_construction()
 	_focus(cell)
@@ -172,6 +197,8 @@ func _fixture() -> Dictionary:
 	for x in range(18):
 		for y in range(10):
 			var source: int = 5 + clampi((x - 2) / 3, 0, 4) if x >= 2 and x <= 16 else 3
+			if Vector2i(x, y) == ROUNDED_ROCK:
+				source = 6
 			tiles.append([x, y, source, 0, 0, 0])
 	tiles[tiles.size() - 1] = [17, 9, 3, 3, 0, 0]
 	return {"version": 1, "tiles": tiles, "objects": [[10, 6, "build/base_nest"], [10, 7, "Food"], [3, 2, "AppleTree"], [9, 2, "AppleTree"]]}

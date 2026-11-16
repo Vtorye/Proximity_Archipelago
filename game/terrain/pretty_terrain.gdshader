@@ -4,6 +4,9 @@ const float defoult_viewport_side = 50.; // for stuff to not change size when st
 uniform int viewport_side = 50;
 
 uniform sampler2D world_curr_col : filter_linear, repeat_disable;
+uniform bool tile_mask = false;
+instance uniform vec2 patch_origin;
+instance uniform vec4 water_color : source_color;
 
 uniform float alfa_cutoff = 0.6;
 uniform float land_types_cutoff = 0.53;
@@ -45,6 +48,16 @@ uniform float grass_blades_ampletude = 70;
 
 varying float scale_change;
 
+// In the game the reference mask uses a 50-cell coordinate system. Patches
+// keep the same texel density and provide neighboring cells for subsampling.
+vec4 sample_mask(vec2 uv) {
+	if (tile_mask) {
+		vec2 sample_uv = (uv * defoult_viewport_side - patch_origin) / vec2(textureSize(world_curr_col, 0));
+		return texture(world_curr_col, sample_uv);
+	}
+	return texture(world_curr_col, uv);
+}
+
 vec2 get_aspect_correct_uv(vec2 uv) {
 	vec2 size = vec2(textureSize(world_curr_col, 0));
 	vec2 max_dim = vec2(max(size.x, size.y));
@@ -52,7 +65,7 @@ vec2 get_aspect_correct_uv(vec2 uv) {
 }
 
 float island_alpha(vec2 uv) {
-	return texture(world_curr_col, uv).a;
+	return sample_mask(uv).a;
 }
 
 float tringle(float x, float ampletude, float hight) {
@@ -86,7 +99,7 @@ vec3 terrain_color(vec3 curr_col, vec2 uv) {
 	if (draw_grass_blades && curr_col.g > land_types_cutoff) { // grass blades 
 		float grass_offset = tringle(uv.x + sin(TIME * 1.3) * 0.002, grass_blades_ampletude, -grass_blades_hight) * scale_change;
 		
-		vec3 grass_blades = texture(world_curr_col, vec2(uv.x, uv.y + grass_offset)).xyz;
+		vec3 grass_blades = sample_mask(vec2(uv.x, uv.y + grass_offset)).xyz;
 		
 		//col = grass_blades;
 		curr_col = grass_blades;
@@ -133,10 +146,10 @@ vec3 terrain_color(vec3 curr_col, vec2 uv) {
 					vec2 up_left_corner_uv = (neighbor_cell + peak_pos + vec2(-0.5 + m, m)) * adjusted_mountain_size;
 					vec2 up_right_corner_uv = (neighbor_cell + peak_pos + vec2(0.5 - m, m)) * adjusted_mountain_size;
 					if (
-							texture(world_curr_col, down_left_corner_uv).b <= land_types_cutoff || 
-							texture(world_curr_col, down_right_corner_uv).b <= land_types_cutoff ||
-							texture(world_curr_col, up_left_corner_uv).b <= land_types_cutoff ||
-							texture(world_curr_col, up_right_corner_uv).b <= land_types_cutoff
+							sample_mask(down_left_corner_uv).b <= land_types_cutoff ||
+							sample_mask(down_right_corner_uv).b <= land_types_cutoff ||
+							sample_mask(up_left_corner_uv).b <= land_types_cutoff ||
+							sample_mask(up_right_corner_uv).b <= land_types_cutoff
 							) {
 						continue;
 					}
@@ -146,7 +159,9 @@ vec3 terrain_color(vec3 curr_col, vec2 uv) {
 				vec2 peak_local_pos = grid_pos - neighbor_cell - peak_pos;
 
 				float height_scale = 1.0 + (hash12(neighbor_cell + height_salt) * 2.0 - 1.0) * mountain_height_variation;
-				float hight = texture(mountains_noise, uv).x * 2. * height_scale;
+				// Mirror the original noise beyond its unit square on larger maps.
+				vec2 noise_uv = tile_mask ? 1.0 - abs(mod(uv, 2.0) - 1.0) : uv;
+				float hight = texture(mountains_noise, noise_uv).x * 2. * height_scale;
 				float mountain_hight = hight / 2. - pow(peak_local_pos.x, 2.) * 2. * hight;
 
 				float gradient_value = 1. - peak_local_pos.y; // 1 at the cell bottom, 0 at the cell top
@@ -176,7 +191,16 @@ void fragment() {
 	scale_change = defoult_viewport_side / float(viewport_side);
 	
 	vec2 uv = get_aspect_correct_uv(UV);
-	vec4 curr_col = texture(world_curr_col, uv);
+	if (tile_mask) {
+		vec2 texel = UV * vec2(textureSize(world_curr_col, 0));
+		vec4 cell = texelFetch(world_curr_col, ivec2(texel), 0);
+		// Opaque black reserves a cell for the TileMapLayer's own road or custom tile.
+		if (cell.a == 1.0 && dot(cell.rgb, vec3(1.0)) == 0.0) {
+			discard;
+		}
+		uv = (texel + patch_origin) / defoult_viewport_side;
+	}
+	vec4 curr_col = sample_mask(uv);
 	vec4 res_col;
 
 	if (curr_col.a > alfa_cutoff) {
@@ -201,5 +225,5 @@ void fragment() {
 		
 	}
 
-	COLOR = res_col;
+	COLOR = tile_mask ? vec4(mix(water_color.rgb, res_col.rgb, res_col.a), 1.0) : res_col;
 }

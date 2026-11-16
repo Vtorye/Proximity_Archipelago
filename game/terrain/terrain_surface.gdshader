@@ -9,6 +9,7 @@ uniform vec4 peak_color : source_color;
 uniform sampler2D terrain_noise : filter_linear, repeat_enable;
 uniform float noise_period : hint_range(1.0, 256.0) = 50.0;
 uniform float texture_strength : hint_range(0.0, 0.3) = 0.05;
+uniform float terrain_edge_variation : hint_range(0.0, 0.35, 0.01) = 0.24;
 uniform float terrain_transition_pixels : hint_range(1.0, 8.0, 0.1) = 3.0;
 
 group_uniforms Grass;
@@ -75,18 +76,66 @@ float mountain_relief(vec2 point, float noise_value) {
 	return clamp(relief, 0.0, 1.0);
 }
 
-vec4 ground_sample(vec4 tile) {
-	// Water and native atlas tiles contribute no color to the land palette.
-	float styled = tile.a * step(1.0 / 255.0, dot(tile.rgb, vec3(1.0)));
-	return vec4(tile.rgb, 1.0) * styled;
+vec3 ground_palette(vec3 soils[4], vec2 point, vec2 pixel_span) {
+	if (all(equal(soils[0], soils[1])) && all(equal(soils[0], soils[2])) && all(equal(soils[0], soils[3]))) {
+		return soils[0];
+	}
+
+	// Cubic weights make adjoining contour segments meet tangentially at cell centers.
+	vec2 factor = smoothstep(vec2(0.0), vec2(1.0), point);
+	vec2 inverse = 1.0 - factor;
+	vec2 slope = 6.0 * point * (1.0 - point);
+	vec4 votes = vec4(inverse.x * inverse.y, factor.x * inverse.y, inverse.x * factor.y, factor.x * factor.y);
+	vec4 vote_dx = vec4(-inverse.y, inverse.y, -factor.y, factor.y) * slope.x;
+	vec4 vote_dy = vec4(-inverse.x, -factor.x, inverse.x, factor.x) * slope.y;
+
+	vec4 scores = vec4(-1.0);
+	vec2 gradients[4];
+	int best = 0;
+	for (int i = 0; i < 4; i++) {
+		if (all(equal(soils[i], vec3(0.0)))) {
+			continue;
+		}
+		// Cells with the same soil donate their weight to one candidate.
+		vec4 matching = vec4(0.0);
+		bool counted = false;
+		for (int j = 0; j < 4; j++) {
+			if (all(equal(soils[i], soils[j]))) {
+				matching[j] = 1.0;
+				counted = counted || j < i;
+			}
+		}
+		if (counted) {
+			continue;
+		}
+		scores[i] = dot(matching, votes);
+		gradients[i] = vec2(dot(matching, vote_dx), dot(matching, vote_dy));
+		if (scores[i] > scores[best]) {
+			best = i;
+		}
+	}
+
+	// Mix only at the contour, using the score difference per screen pixel.
+	vec3 palette = vec3(0.0);
+	float total = 0.0;
+	for (int i = 0; i < 4; i++) {
+		if (scores[i] < 0.0) {
+			continue;
+		}
+		float slope_per_pixel = dot(abs(gradients[best] - gradients[i]), pixel_span);
+		float edge = max(0.5 * terrain_transition_pixels * slope_per_pixel, 0.00001);
+		float weight = 1.0 - smoothstep(0.0, edge, scores[best] - scores[i]);
+		palette += soils[i] * weight;
+		total += weight;
+	}
+	return palette / max(total, 0.00001);
 }
 
 void fragment() {
 	vec2 pixel = TEXTURE_PIXEL_SIZE;
 	vec2 map_sample = UV / pixel;
 	vec2 size = 1.0 / pixel;
-	// Keep the palette transition the same screen width as the camera zoom changes.
-	vec2 transition = clamp(0.5 * fwidth(map_sample) * terrain_transition_pixels, vec2(0.00001), vec2(0.5));
+	vec2 pixel_span = fwidth(map_sample);
 	float coverage = texture(TEXTURE, UV).a;
 	float wave = sin(coverage * wave_scale + sin(TIME * wave_speed) * wave_amplitude);
 	float wave_aa = clamp(0.5 * fwidth(wave), 0.00001, 0.5);
@@ -106,15 +155,22 @@ void fragment() {
 	} else if (dot(cell.rgb, vec3(1.0)) == 0.0) {
 		discard;
 	} else {
-		// Blend around cell edges while keeping each soil readable at its center.
-		vec2 texel = map_sample - 0.5;
+		vec2 noise_uv = terrain_pos / noise_period;
+		float noise_value = texture(terrain_noise, noise_uv).r;
+		// Read a second, decorrelated component from the same world-space noise.
+		vec2 edge_noise = vec2(noise_value, texture(terrain_noise, noise_uv + vec2(0.37, 0.61)).r);
+		vec2 texel = map_sample + (2.0 * edge_noise - 1.0) * terrain_edge_variation - 0.5;
 		ivec2 corner = ivec2(floor(texel));
-		vec2 factor = smoothstep(0.5 - transition, 0.5 + transition, fract(texel));
-		vec4 upper = mix(ground_sample(texelFetch(TEXTURE, corner, 0)), ground_sample(texelFetch(TEXTURE, corner + ivec2(1, 0), 0)), factor.x);
-		vec4 lower = mix(ground_sample(texelFetch(TEXTURE, corner + ivec2(0, 1), 0)), ground_sample(texelFetch(TEXTURE, corner + ivec2(1, 1), 0)), factor.x);
-		vec4 palette = mix(upper, lower, factor.y);
-		vec3 blend = palette.rgb / max(palette.a, 0.00001);
-		float noise_value = texture(terrain_noise, terrain_pos / noise_period).r;
+		vec4 upper_left = texelFetch(TEXTURE, corner, 0);
+		vec4 upper_right = texelFetch(TEXTURE, corner + ivec2(1, 0), 0);
+		vec4 lower_left = texelFetch(TEXTURE, corner + ivec2(0, 1), 0);
+		vec4 lower_right = texelFetch(TEXTURE, corner + ivec2(1, 1), 0);
+		// Zero-alpha water and black atlas tiles do not supply soil colors.
+		vec3 soils[4] = {
+			upper_left.rgb * upper_left.a, upper_right.rgb * upper_right.a,
+			lower_left.rgb * lower_left.a, lower_right.rgb * lower_right.a
+		};
+		vec3 blend = ground_palette(soils, fract(texel), pixel_span);
 		vec3 stone = stone_color.rgb;
 		float relief = smoothstep(0.25, 0.6, blend.b);
 		if (relief > 0.0) {

@@ -4,3 +4,15 @@
 
 [node name="TerrainSurface" type="Node2D"]
 script = ExtResource("1_surface")
+
+[node name="Sea" type="CanvasLayer" parent="."]
+layer = -4
+
+[node name="Water" type="ColorRect" parent="Sea"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.18906647, 0.28287807, 0.36208087, 1)

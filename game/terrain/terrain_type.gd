@@ -11,7 +11,8 @@ enum Kind { LAND, ROAD, WATER }
 		texture = value
 		emit_changed()
 @export var kind: Kind = Kind.LAND
-## Red blends in dirt, green grass, and blue stone. Black uses the original tile art.
+## Mask color for the terrain shader. Red marks dirt, green grass, and blue
+## mountains. Black keeps the tile's own art.
 @export_color_no_alpha var surface_blend := Color.BLACK:
 	set(value):
 		surface_blend = value

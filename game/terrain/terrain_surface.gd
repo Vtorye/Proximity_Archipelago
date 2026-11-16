@@ -5,12 +5,12 @@ extends Node2D
 const PATCH := preload("res://game/terrain/terrain_surface_patch.tscn")
 # Bound texture allocations even when authored islands are far apart.
 const PATCH_SIDE := 128
-# The shader samples one neighbor across the edge of each patch.
-const SAMPLE_MARGIN := 1
-# With zero land coverage, the red channel distinguishes painted water from empty cells.
-const WATER_SAMPLE := Color(1.0, 0.0, 0.0, 0.0)
+# The reference mountain shader can sample two mountain widths away, up to
+# five cells per width. Include the remaining peak offset and linear filter.
+const SAMPLE_MARGIN := 16
 
 @export var map: TerrainMap
+@onready var _water: ColorRect = $Sea/Water
 var _patches: Dictionary[Vector2i, Sprite2D] = {}
 var _queued := false
 
@@ -38,14 +38,13 @@ func _rebuild() -> void:
 		for cell in map.get_used_cells():
 			var surface := map.surface_at(cell)
 			if surface != null and surface.kind == TerrainType.Kind.WATER:
-				samples[cell] = WATER_SAMPLE
 				_include_region(Rect2i(cell, Vector2i.ONE), regions)
 				continue
 			# Opaque black protects roads and unmapped atlas tiles while keeping the coast continuous.
 			var blend := surface.surface_blend if surface != null and surface.kind == TerrainType.Kind.LAND else Color.BLACK
 			samples[cell] = Color(blend.r, blend.g, blend.b, 1.0)
 			if blend.r > 0.0 or blend.g > 0.0 or blend.b > 0.0:
-				_include_region(Rect2i(cell, Vector2i.ONE).grow(SAMPLE_MARGIN), regions)
+				_include_region(Rect2i(cell, Vector2i.ONE).grow(1), regions)
 	for key in _patches.keys():
 		if not regions.has(key):
 			_patches[key].hide()
@@ -57,7 +56,7 @@ func _rebuild() -> void:
 	position = map.map_to_local(Vector2i.ZERO) - tile_size * 0.5
 	scale = tile_size
 	for key in regions:
-		_update_patch(key, regions[key].grow(SAMPLE_MARGIN), samples)
+		_update_patch(key, regions[key], samples)
 
 func _include_region(area: Rect2i, regions: Dictionary[Vector2i, Rect2i]) -> void:
 	var first := Vector2i((Vector2(area.position) / PATCH_SIDE).floor())
@@ -70,21 +69,29 @@ func _include_region(area: Rect2i, regions: Dictionary[Vector2i, Rect2i]) -> voi
 			regions[key] = regions[key].merge(region) if regions.has(key) else region
 
 func _update_patch(key: Vector2i, bounds: Rect2i, samples: Dictionary[Vector2i, Color]) -> void:
-	var image := Image.create_empty(bounds.size.x, bounds.size.y, false, Image.FORMAT_RGBA8)
-	for y in range(bounds.size.y):
-		for x in range(bounds.size.x):
+	var padded := bounds.grow(SAMPLE_MARGIN)
+	var image := Image.create_empty(padded.size.x, padded.size.y, false, Image.FORMAT_RGBA8)
+	for y in range(padded.size.y):
+		for x in range(padded.size.x):
 			var pixel := Vector2i(x, y)
-			var cell := bounds.position + pixel
+			var cell := padded.position + pixel
 			if samples.has(cell):
 				image.set_pixelv(pixel, samples[cell])
 	var patch := _patches.get(key) as Sprite2D
 	if patch == null:
 		patch = PATCH.instantiate() as Sprite2D
+		patch.material = patch.material.duplicate()
 		add_child(patch)
 		_patches[key] = patch
 	patch.offset = Vector2(bounds.position)
+	patch.region_enabled = true
+	patch.region_rect = Rect2(Vector2.ONE * SAMPLE_MARGIN, Vector2(bounds.size))
+	patch.set_instance_shader_parameter(&"patch_origin", Vector2(padded.position))
+	patch.set_instance_shader_parameter(&"water_color", _water.color)
 	var existing := patch.texture as ImageTexture
-	if existing != null and Vector2i(existing.get_size()) == bounds.size:
+	if existing != null and Vector2i(existing.get_size()) == padded.size:
 		existing.update(image)
 	else:
-		patch.texture = ImageTexture.create_from_image(image)
+		var texture := ImageTexture.create_from_image(image)
+		patch.texture = texture
+		(patch.material as ShaderMaterial).set_shader_parameter(&"world_curr_col", texture)
