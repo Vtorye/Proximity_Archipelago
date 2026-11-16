@@ -5,7 +5,7 @@ static func generate(seed_value: int, difficulty := 0, biome := 0, extent := 80)
 	var data: LevelData = generate_data(seed_value, difficulty, biome, extent)
 	return LevelLayout.encode(data) if data != null else {}
 
-static func generate_data(seed_value: int, difficulty := 0, biome := 0, extent := 80) -> LevelData:
+static func generate_data(seed_value: int, difficulty := 0, biome := 0, extent := 80, resource_totals: Dictionary = {}) -> LevelData:
 	extent = clampi(extent, 40, 160)
 	var rng := RandomNumberGenerator.new()
 	rng.seed = seed_value
@@ -31,11 +31,15 @@ static func generate_data(seed_value: int, difficulty := 0, biome := 0, extent :
 	var canteen: Vector2i = center + [Vector2i(0, 3), Vector2i(3, 0), Vector2i(0, -3), Vector2i(-3, 0)][rng.randi_range(0, 3)]
 	layout.objects.append(LevelData.Placement.new(center, "build/base_nest"))
 	layout.objects.append(LevelData.Placement.new(canteen, "Food"))
-	var occupied: Dictionary[Vector2i, bool] = {center: true, canteen: true}
+	var occupied: Dictionary[Vector2i, bool] = {}
+	for x in range(2):
+		for y in range(2): occupied[center + Vector2i(x, y)] = true
+	occupied[canteen] = true
 	var kinds := ["Workplace", "Workplace2", "AppleTree"]
 	var favored: int = [2, 0, 1][clampi(biome, 0, 2)]
 	# The central land disk guarantees reachable, finite deposits. Seed and biome
 	# determine where each kind appears and which resource is easiest to acquire.
+	var totals := {"Workplace": int(resource_totals.get("Workplace", 900)), "Workplace2": int(resource_totals.get("Workplace2", 900)), "AppleTree": int(resource_totals.get("AppleTree", 900))}
 	for deposit in range(6):
 		var kind: int = deposit % kinds.size()
 		var minimum: int = 7 if deposit >= 3 else (6 if kind == favored else 7 + clampi(difficulty, 0, 2))
@@ -56,15 +60,22 @@ static func generate_data(seed_value: int, difficulty := 0, biome := 0, extent :
 		if candidates.is_empty():
 			return null
 		var cell: Vector2i = candidates[rng.randi_range(0, candidates.size() - 1)]
-		var supply: int = maxi(60, rng.randi_range(130, 220) - difficulty * 10)
-		if kind == favored:
-			supply += 55
+		var supply: int = mini(int(totals[kinds[kind]]), maxi(60, rng.randi_range(130, 220) - difficulty * 10) + (55 if kind == favored else 0))
+		totals[kinds[kind]] = int(totals[kinds[kind]]) - supply
+		if kind == 0 and supply > 200:
+			layout.objects.append(LevelData.Placement.new(cell, kinds[kind], supply, true))
+			occupied[cell] = true
+			occupied[cell + Vector2i.RIGHT] = true
+			continue
 		layout.objects.append(LevelData.Placement.new(cell, kinds[kind], supply, true))
 		occupied[cell] = true
 	for cell in land:
 		if (cell - center).length_squared() < 81 or occupied.has(cell) or rng.randf() > 0.025: continue
 		var kind: String = kinds[rng.randi_range(0, 2)]
-		layout.objects.append(LevelData.Placement.new(cell, kind, maxi(20, 140 - difficulty * 12), true))
+		var kind_supply: int = mini(int(totals[kind]), maxi(20, 140 - difficulty * 12))
+		if kind_supply <= 0: continue
+		layout.objects.append(LevelData.Placement.new(cell, kind, kind_supply, true))
+		totals[kind] = int(totals[kind]) - kind_supply
 	var world: World = LevelLayout.instantiate_world(layout)
 	if world == null:
 		return null

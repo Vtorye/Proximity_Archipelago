@@ -23,6 +23,9 @@ var _selected_source: Workplace
 @onready var _supply: SpinBox = %Supply
 @onready var _generator_seed: SpinBox = %Seed
 @onready var _generator_size: OptionButton = %Extent
+@onready var _wood_total: SpinBox = %WoodTotal
+@onready var _stone_total: SpinBox = %StoneTotal
+@onready var _food_total: SpinBox = %FoodTotal
 var _active := false
 
 func _ready() -> void:
@@ -385,7 +388,8 @@ func _generate_map() -> void:
 		_discard_action = "generate"
 		_status.text = "ui.voyage.generate_confirm"
 		return
-	var layout: LevelData = IslandGenerator.generate_data(int(_generator_seed.value), 0, 0, _generator_size.get_selected_id())
+	var totals := {"Workplace": int(_wood_total.value), "Workplace2": int(_stone_total.value), "AppleTree": int(_food_total.value)}
+	var layout: LevelData = IslandGenerator.generate_data(int(_generator_seed.value), 0, 0, _generator_size.get_selected_id(), totals)
 	var generated: World = LevelLayout.instantiate_world(layout) if layout != null else null
 	if generated == null:
 		_status.text = "ui.map.load_failed"

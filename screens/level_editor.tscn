@@ -153,6 +153,30 @@ custom_minimum_size = Vector2(110, 0)
 [node name="Extent" type="OptionButton" parent="Interface/UI/Top/Rows/Generation"]
 unique_name_in_owner = true
 
+[node name="WoodTotal" type="SpinBox" parent="Interface/UI/Top/Rows/Generation"]
+unique_name_in_owner = true
+tooltip_text = "ui.resource.wood"
+min_value = 0.0
+max_value = 100000.0
+value = 900.0
+custom_minimum_size = Vector2(90, 0)
+
+[node name="StoneTotal" type="SpinBox" parent="Interface/UI/Top/Rows/Generation"]
+unique_name_in_owner = true
+tooltip_text = "ui.resource.stone"
+min_value = 0.0
+max_value = 100000.0
+value = 900.0
+custom_minimum_size = Vector2(90, 0)
+
+[node name="FoodTotal" type="SpinBox" parent="Interface/UI/Top/Rows/Generation"]
+unique_name_in_owner = true
+tooltip_text = "ui.resource.food"
+min_value = 0.0
+max_value = 100000.0
+value = 900.0
+custom_minimum_size = Vector2(90, 0)
+
 [node name="GenerateMap" type="Button" parent="Interface/UI/Top/Rows/Generation"]
 theme_type_variation = &"CompactButton"
 unique_name_in_owner = true

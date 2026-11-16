@@ -59,6 +59,10 @@ func validate_definition() -> Array[String]:
 
 func footprint() -> Array[Vector2i]:
 	var cells: Array[Vector2i] = []
+	if self is House and (self as House).is_main_nest:
+		return [cell, cell + Vector2i.RIGHT, cell + Vector2i.DOWN, cell + Vector2i(1, 1)]
+	if self is Workplace and (self as Workplace).finite_supply and (self as Workplace).remaining_supply > 200 and (self as Workplace).output != null and (self as Workplace).output.id == &"stone":
+		return [cell, cell + Vector2i.RIGHT]
 	if option is SceneBuildOption:
 		for offset in option.occupied_cells:
 			if not cells.has(cell + offset):
@@ -82,7 +86,18 @@ func configure_appearance(art: ArtCatalog, tile_size: float) -> void:
 		_apply_default_appearance(sprite, art)
 	if sprite.texture != null:
 		_finalize_appearance(sprite)
-		sprite.scale = Vector2.ONE * tile_size / sprite.texture.get_width()
+	var cells := footprint()
+	var min_cell := cell
+	var max_cell := cell
+	for occupied_cell in cells:
+		min_cell.x = mini(min_cell.x, occupied_cell.x)
+		min_cell.y = mini(min_cell.y, occupied_cell.y)
+		max_cell.x = maxi(max_cell.x, occupied_cell.x)
+		max_cell.y = maxi(max_cell.y, occupied_cell.y)
+	var size := max_cell - min_cell + Vector2i.ONE
+	if sprite.texture != null:
+		sprite.position = Vector2((size.x - 1) * tile_size, (size.y - 1) * tile_size) * 0.5
+		sprite.scale = Vector2(tile_size * size.x, tile_size * size.y) / Vector2(sprite.texture.get_width(), sprite.texture.get_height())
 
 func _apply_default_appearance(_sprite: Sprite2D, _art: ArtCatalog) -> void:
 	pass

@@ -34,14 +34,24 @@ func _draw() -> void:
 func _draw_option(cell: Vector2i, definition: BuildOption, tint: Color, border: Color) -> void:
 	var navigation: RouteService = draft.controller.route_service
 	var size: Vector2 = Vector2.ONE * navigation.cell_size()
-	var center: Vector2 = to_local(navigation.cell_to_world(cell))
-	var rect := Rect2(center - size / 2.0, size)
+	var occupied: Array[Vector2i] = draft.controller.footprint_at(definition, cell)
+	var min_cell := cell
+	var max_cell := cell
+	for target in occupied:
+		min_cell.x = mini(min_cell.x, target.x)
+		min_cell.y = mini(min_cell.y, target.y)
+		max_cell.x = maxi(max_cell.x, target.x)
+		max_cell.y = maxi(max_cell.y, target.y)
+	var footprint_size := Vector2(max_cell - min_cell + Vector2i.ONE) * size
+	var center_cell := (Vector2(min_cell + max_cell) + Vector2.ONE) * 0.5
+	var center: Vector2 = to_local(navigation.cell_to_world(cell)) + (center_cell - Vector2(cell) - Vector2.ONE * 0.5) * size
+	var rect := Rect2(center - footprint_size / 2.0, footprint_size)
 	var texture: Texture2D = art.build_icon(definition)
 	if definition.id == &"house":
 		tint *= House.BARRACKS_TINT
 	if texture != null:
 		draw_texture_rect(texture, rect, false, Color(tint, PRESENTATION.ghost_opacity * tint.a))
-	for target in draft.controller.footprint_at(definition, cell):
+	for target in occupied:
 		var point: Vector2 = to_local(navigation.cell_to_world(target))
 		draw_rect(Rect2(point - size / 2.0 + Vector2.ONE * PRESENTATION.outline_inset, size - Vector2.ONE * PRESENTATION.outline_inset * 2), border, false, PRESENTATION.outline_width)
 
