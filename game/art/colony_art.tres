@@ -4,11 +4,11 @@
 [ext_resource type="Texture2D" path="res://game/assets/tiles/soil.png" id="soil"]
 [ext_resource type="Texture2D" path="res://game/assets/tiles/road.png" id="road"]
 [ext_resource type="Texture2D" path="res://game/assets/tiles/water.png" id="water"]
-[ext_resource type="Texture2D" path="res://game/assets/sprites/nest.png" id="nest"]
-[ext_resource type="Texture2D" path="res://game/assets/sprites/berries.png" id="berries"]
-[ext_resource type="Texture2D" path="res://game/assets/sprites/timber.png" id="timber"]
-[ext_resource type="Texture2D" path="res://game/assets/sprites/stone.png" id="stone"]
-[ext_resource type="Texture2D" path="res://game/assets/sprites/canteen.png" id="canteen"]
+[ext_resource type="Texture2D" path="res://game/assets/sprites/nest.svg" id="nest"]
+[ext_resource type="Texture2D" path="res://game/assets/sprites/berries.svg" id="berries"]
+[ext_resource type="Texture2D" path="res://game/assets/sprites/timber.svg" id="timber"]
+[ext_resource type="Texture2D" path="res://game/assets/sprites/stone.svg" id="stone"]
+[ext_resource type="Texture2D" path="res://game/assets/sprites/canteen.svg" id="canteen"]
 [resource]
 script = ExtResource("script")
 grass = ExtResource("grass")

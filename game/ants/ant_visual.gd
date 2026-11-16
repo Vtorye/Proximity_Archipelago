@@ -32,7 +32,7 @@ func _draw() -> void:
 			for sign_value in [-1.0, 1.0]:
 				var foot: Vector2 = origin + side * sign_value * 3.5 + forward * leg_phase * sign_value
 				draw_line(origin, foot.round(), Color("222521"), 1.0)
-		var abdomen := Color("a87054") if ant.role == AntAgent.Role.WARRIOR else (Color("50677b") if ant.role == AntAgent.Role.CARRIER else Color("38271e"))
+		var abdomen := Color("a87054") if ant.role == AntAgent.Role.WARRIOR else (Color("5067F9") if ant.role == AntAgent.Role.CARRIER else Color("38271e"))
 		draw_circle(-forward * 3.0, 2.0, abdomen)
 		draw_circle(Vector2.ZERO, 1.5, Color("241e19"))
 		draw_circle(forward * 3.0, 1.7, Color("33251d"))
@@ -46,4 +46,3 @@ func _draw() -> void:
 	if ant.needs.fraction() < 0.25:
 		draw_rect(Rect2(-4, -8, 8, 1), Color("38271e"))
 		draw_rect(Rect2(-4, -8, 8 * ant.needs.fraction(), 1), Color("edb86c"))
-
