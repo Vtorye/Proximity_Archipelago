@@ -1115,3 +1115,21 @@ msgstr "Часть цены растёт на %s после каждой пос�
 
 msgid "ui.construction.next_price"
 msgstr "Следующая постройка: %s"
+
+msgid "ui.construction.production_resource"
+msgstr "Ресурс:"
+
+msgid "ui.construction.production_slots"
+msgstr "Рабочие места: %d"
+
+msgid "ui.construction.production_rate"
+msgstr "Добыча за рабочий цикл: %s"
+
+msgid "ui.construction.source_target"
+msgstr "Наведите курсор на подходящий источник, чтобы увидеть добычу и запас."
+
+msgid "ui.construction.speed_multiplier"
+msgstr "Скорость движения: ×%s от базовой"
+
+msgid "ui.trap.clear_action"
+msgstr "Убрать ловушку"

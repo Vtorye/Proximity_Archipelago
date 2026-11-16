@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://game/resources/resource_type.gd" id="1"]
 
-[ext_resource type="Texture2D" path="res://game/assets/sprites/timber.svg" id="icon"]
+[ext_resource type="Texture2D" path="res://game/assets/ui/resource_wood.svg" id="icon"]
 
 [resource]
 script = ExtResource("1")

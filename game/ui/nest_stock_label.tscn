@@ -1,5 +1,7 @@
 [gd_scene format=3]
 
-[node name="NestStockLabel" type="Label"]
+[node name="NestStockLabel" type="RichTextLabel"]
 text = "Food · 24"
 mouse_filter = 2
+fit_content = true
+scroll_active = false

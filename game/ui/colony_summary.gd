@@ -67,25 +67,25 @@ func refresh() -> void:
 	var types: Array[ResourceType] = _world.inventory.registered_types().filter(
 		func(type: ResourceType) -> bool: return type.id != WorldInventory.CURRENCY_ID)
 	var nests: Array[House] = _world.logistics.nests()
-	var totals := PackedStringArray()
+	var totals: RichTextLabel = %Totals
+	totals.clear()
 	for type in types:
 		var total := 0
 		for nest in nests:
 			total += _world.inventory.stock_of(_world.logistics.store_of(nest), type)
-		totals.append(_amount_text(type, total))
+		_append_stock(totals, type, total)
 	var marker: String = "−" if _summary.button_pressed else "+"
 	_summary.text = "%s  %s" % [marker, tr("ui.colony.population") % _world.population.count()]
-	%Totals.text = " · ".join(totals)
 	for nest in _rows:
 		if not is_instance_valid(nest) or not _world.logistics.owns(nest):
 			_rows[nest].hide()
 			continue
-		var amounts := PackedStringArray()
+		var amounts: RichTextLabel = _rows[nest].get_node("Content/Amounts")
+		amounts.clear()
 		for type in types:
-			amounts.append(_amount_text(type, _world.inventory.stock_of(_world.logistics.store_of(nest), type)))
+			_append_stock(amounts, type, _world.inventory.stock_of(_world.logistics.store_of(nest), type))
 		var title: String = tr(nest.display_title())
 		_rows[nest].get_node("Content/Focus").text = tr("ui.colony.store") % [title, nest.cell.x, nest.cell.y]
-		_rows[nest].get_node("Content/Amounts").text = " · ".join(amounts)
 
 func _on_row_input(event: InputEvent, nest: House) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
@@ -93,5 +93,7 @@ func _on_row_input(event: InputEvent, nest: House) -> void:
 		nest_selected.emit(nest)
 		get_viewport().set_input_as_handled()
 
-func _amount_text(type: ResourceType, amount: int) -> String:
-	return "%s %d" % [BuildCostText.icon(type), amount]
+func _append_stock(label: RichTextLabel, type: ResourceType, amount: int) -> void:
+	if not label.get_parsed_text().is_empty():
+		label.add_text(BuildCostText.RESOURCE_GAP)
+	BuildCostText.append_resource(label, type, str(amount))

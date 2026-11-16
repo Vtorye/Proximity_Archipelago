@@ -1115,3 +1115,21 @@ msgstr "Part of the price increases by %s after each build"
 
 msgid "ui.construction.next_price"
 msgstr "Next build: %s"
+
+msgid "ui.construction.production_resource"
+msgstr "Resource:"
+
+msgid "ui.construction.production_slots"
+msgstr "Work slots: %d"
+
+msgid "ui.construction.production_rate"
+msgstr "Output per work cycle: %s"
+
+msgid "ui.construction.source_target"
+msgstr "Hover over a compatible source to see its output and supply."
+
+msgid "ui.construction.speed_multiplier"
+msgstr "Movement speed: ×%s of base"
+
+msgid "ui.trap.clear_action"
+msgstr "Remove trap"

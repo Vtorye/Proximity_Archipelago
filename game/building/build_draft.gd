@@ -149,6 +149,10 @@ func demolition_check(cell: Vector2i) -> PlacementCheck:
 	if building != null:
 		if removals().has(building): return PlacementCheck.result(PlacementCheck.Code.ALREADY_PLACED)
 		return controller.demolition_check(cell)
+	if controller.map is TerrainMap:
+		var surface: TerrainType = controller.map.surface_at(cell)
+		if surface == null or surface.kind != TerrainType.Kind.ROAD:
+			return PlacementCheck.result(PlacementCheck.Code.NO_BUILDING)
 	for option in controller.options:
 		if option.id == &"ground": return controller.placement_check(option, cell)
 	return PlacementCheck.result(PlacementCheck.Code.NO_BUILDING)

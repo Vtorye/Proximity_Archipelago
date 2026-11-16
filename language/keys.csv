@@ -370,3 +370,9 @@ ui.construction.price_add,Added to the price after each build: +%s,Прибав�
 ui.construction.price_partial_multiplier,Part of the price changes by ×%s after each build,Часть цены умножается на %s после каждой постройки
 ui.construction.price_partial_add,Part of the price increases by %s after each build,Часть цены растёт на %s после каждой постройки
 ui.construction.next_price,Next build: %s,Следующая постройка: %s
+ui.construction.production_resource,Resource:,Ресурс:
+ui.construction.production_slots,Work slots: %d,Рабочие места: %d
+ui.construction.production_rate,Output per work cycle: %s,Добыча за рабочий цикл: %s
+ui.construction.source_target,Hover over a compatible source to see its output and supply.,"Наведите курсор на подходящий источник, чтобы увидеть добычу и запас."
+ui.construction.speed_multiplier,Movement speed: ×%s of base,Скорость движения: ×%s от базовой
+ui.trap.clear_action,Remove trap,Убрать ловушку

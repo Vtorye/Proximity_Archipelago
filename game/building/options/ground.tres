@@ -14,6 +14,7 @@ script = ExtResource("option")
 source_id = 3
 atlas_coords = Vector2i(1, 0)
 id = &"ground"
+show_in_palette = false
 display_name = "ui.building.ground"
 description = "ui.construction.description.ground"
 costs = Array[ExtResource("amount")]([SubResource("cost")])

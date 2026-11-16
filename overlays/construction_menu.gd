@@ -38,6 +38,7 @@ var category_buttons: Array[Button] = []
 var _category_for: Dictionary[StringName, Button] = {}
 var _active_category: Button
 var _described_option: BuildOption
+var _source_parameters := PackedStringArray()
 
 var _pricing_cell := Vector2i(2147483647, 2147483647)
 var _bottom_inset := 8.0
@@ -153,13 +154,17 @@ func _ready() -> void:
 	context.controller.inventory.changed.connect(_queue_refresh)
 	context.controller.registry.removed.connect(draft.forget_removal)
 	context.controller.registry.changed.connect(_queue_refresh)
-	AppSettings.language_changed.connect(_queue_refresh)
+	AppSettings.language_changed.connect(func():
+		if _described_option != null:
+			_read_source_template(_described_option)
+		_queue_refresh())
 	draft.changed.connect(_queue_refresh)
 	_refresh()
 	default_focus = controls.get(_selected.id) if _selected != null else null
 
 func _populate_categories() -> void:
-	var remaining: Array[BuildOption] = context.controller.options.duplicate()
+	var remaining: Array[BuildOption] = context.controller.options.filter(
+		func(option: BuildOption) -> bool: return option != null and option.show_in_palette)
 	var catalog: BuildCatalog = context.controller.catalog
 	var production: Button
 	if catalog != null:
@@ -178,7 +183,6 @@ func _populate_categories() -> void:
 			var entry: Button = _add_category(category.title, available)
 			if category.title == "ui.construction.category.production":
 				production = entry
-	remaining = remaining.filter(func(option: BuildOption) -> bool: return option != null)
 	_add_category("ui.construction.category.other", remaining)
 	# Move starts before the generated categories, so the old index puts it directly after Production.
 	%CategoryList.move_child(%Move, production.get_index() if production != null else -1)
@@ -233,6 +237,7 @@ func _toggle_description(option: BuildOption) -> void:
 		description_panel.hide()
 		return
 	_described_option = option
+	_read_source_template(option)
 	_refresh_description(option)
 	description_panel.show()
 	_layout_windows.call_deferred()
@@ -253,16 +258,51 @@ func _refresh_description(option: BuildOption) -> void:
 		details.append(tr("ui.construction.instant"))
 	if option is SceneBuildOption:
 		if option.requires_water: details.append(tr("ui.construction.water"))
+		details.append_array(_source_parameters)
 	elif option is WorkplaceUpgradeOption:
 		details.append(tr("ui.construction.slots") % option.added_slots)
+		var source := context.controller.registry.at(_pricing_cell) as Workplace
+		if source != null and source.matches_improvement(option):
+			var slots: int = source.work_slots + (option.added_slots if source.accepts_improvement(option) else 0)
+			_append_source_parameters(details, source, slots)
+		else:
+			details.append(tr("ui.construction.source_target"))
 	elif option is TileBuildOption:
 		var terrain_map := context.controller.map as TerrainMap
 		if terrain_map != null:
 			var terrain: TerrainType = terrain_map.catalog.for_tile(Vector4i(option.source_id, option.atlas_coords.x, option.atlas_coords.y, option.alternative_tile))
-			if terrain != null: details.append(tr("ui.construction.speed") % str(terrain.move_cost))
+			if terrain != null and terrain.kind == TerrainType.Kind.ROAD:
+				details.append(tr("ui.construction.speed") % String.num(terrain.move_cost, 2))
+				if terrain.move_cost > 0.0:
+					details.append(tr("ui.construction.speed_multiplier") % String.num(AntMotion.speed_multiplier(terrain.move_cost), 2))
 	_update_price_growth(option, details)
 	%Parameters.text = "\n".join(details)
 	BuildCostText.show_price(%Price, price, tr("ui.construction.price"))
+
+func _read_source_template(option: BuildOption) -> void:
+	var source_type: ResourceType
+	_source_parameters.clear()
+	if option is WorkplaceUpgradeOption:
+		source_type = option.source_type
+	elif option is SceneBuildOption and option.scene != null:
+		# Read the authored defaults once per selection, without starting a runtime workplace.
+		var template: Node = option.scene.instantiate()
+		if template is Workplace and template.recipe == null and template.output != null:
+			source_type = template.output
+			_append_source_parameters(_source_parameters, template, template.work_slots)
+		template.free()
+	var resource: RichTextLabel = %ProductionResource
+	resource.visible = source_type != null
+	if resource.visible:
+		resource.clear()
+		resource.add_text(tr("ui.construction.production_resource") + " ")
+		BuildCostText.append_resource(resource, source_type)
+
+func _append_source_parameters(details: PackedStringArray, source: Workplace, slots: int) -> void:
+	details.append(tr("ui.construction.production_slots") % slots)
+	var output: float = source.output_amount * source.terrain_yield_multiplier
+	details.append(tr("ui.construction.production_rate") % String.num(output, 2).trim_suffix(".0"))
+	details.append(tr("ui.source.remaining") % source.remaining_supply if source.finite_supply else tr("ui.source.infinite"))
 
 func _footprint_size(option: BuildOption) -> Vector2i:
 	var cells: Array[Vector2i] = context.controller.footprint_at(option, Vector2i.ZERO)

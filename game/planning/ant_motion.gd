@@ -16,14 +16,16 @@ func follow(next_route: Route, position := Vector2(INF, INF)) -> void:
 	if (position - center).dot(next - center) > 0:
 		route.advance()
 
+static func speed_multiplier(move_cost: float) -> float:
+	return 1.0 / maxf(0.05, move_cost)
+
 func step(position: Vector2, speed: float, delta: float) -> Vector2:
 	if finished:
 		return position
 	var budget: float = delta
 	for iteration in range(32):
 		var target: Vector2 = navigation.cell_to_world(route.current_cell())
-		var terrain: float = maxf(0.05, navigation.entry_cost(route.current_cell()))
-		var velocity: float = speed / terrain
+		var velocity: float = speed * speed_multiplier(navigation.entry_cost(route.current_cell()))
 		var distance: float = position.distance_to(target)
 		if distance > velocity * budget:
 			return position.move_toward(target, velocity * budget)

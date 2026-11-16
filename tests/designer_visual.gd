@@ -106,7 +106,7 @@ func _check_storage_and_hover() -> void:
 	move.position = cell_point(workplace.cell)
 	get_viewport().push_input(move, true)
 	await frames(10)
-	expect(get_tree().paused and screen.navigation_overlay.mode == 0 and panel.visible and panel._detail.text.contains(" / 4"), "hovering an unselected workplace shows its load during pause")
+	expect(get_tree().paused and screen.navigation_overlay.mode == 0 and panel.visible and panel._detail.get_parsed_text().contains(" / 4"), "hovering an unselected workplace shows its load during pause")
 	await capture("02d-workplace-hover-paused")
 	await click(pause.controls[&"resume"])
 	var cell := Vector2i(27, 27)

@@ -121,7 +121,7 @@ func _check_resource_facilities() -> void:
 		worker._physics_process(1.0 / 30.0)
 		await frames(1)
 	screen.hud.navigation_panel.refresh()
-	expect(stone.remaining_supply == 0 and screen.hud.navigation_panel._detail.text.contains("Запас: 0"), "finite resource exhaustion appears in the workplace inspector")
+	expect(stone.remaining_supply == 0 and screen.hud.navigation_panel._detail.get_parsed_text().contains("Запас: 0"), "finite resource exhaustion appears in the workplace inspector")
 	await capture("07c-exhausted-quarry", 30)
 	await key(KEY_SPACE)
 	menu = Router.top_overlay() as ConstructionMenu

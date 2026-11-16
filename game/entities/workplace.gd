@@ -243,19 +243,18 @@ func restore_production(state: Dictionary, output_items: Array[ResourceAmount]) 
 	_pending_output = output_items
 
 func _apply_default_appearance(sprite: Sprite2D, art: ArtCatalog) -> void:
+	if sprite.texture != null:
+		return
 	var product: ResourceType = output
 	if product == null and recipe != null and not recipe.outputs.is_empty():
 		product = recipe.outputs[0].type
-	if product != null and product.icon != null:
-		sprite.texture = product.icon
-	elif sprite.texture == null:
-		match product.id if product != null else &"":
-			&"food":
-				sprite.texture = art.berries
-			&"wood":
-				sprite.texture = art.timber
-			_:
-				sprite.texture = art.stone
+	match product.id if product != null else &"":
+		&"food":
+			sprite.texture = art.berries
+		&"wood":
+			sprite.texture = art.timber
+		_:
+			sprite.texture = art.stone
 
 func _finalize_appearance(sprite: Sprite2D) -> void:
 	refresh_appearance(sprite.texture)

@@ -4,7 +4,7 @@ extends Button
 var option: BuildOption
 var controller: BuildController
 var art: ArtCatalog
-@onready var cost_label: Label = %Cost
+@onready var cost_label: RichTextLabel = %Cost
 var card_width := 176
 var compact := false
 var pricing_cell := Vector2i(2147483647, 2147483647)
@@ -23,21 +23,20 @@ func _ready() -> void:
 	if option.id == &"house":
 		icon.modulate = House.BARRACKS_TINT
 	%Caption.text = option.display_name
-	cost_label.text = BuildCostText.format(controller.price(option, pricing_cell) if controller != null else option.costs)
-	cost_label.set("theme_type_variation", &"Caption")
+	tooltip_text = option.display_name
+	_refresh_price()
 	minimum_size_changed.connect(_fit_content)
 	_body.minimum_size_changed.connect(_fit_content)
 	if controller != null and controller.prices != null: controller.prices.changed.connect(_refresh_price)
 	_fit_content()
 
 func _refresh_price() -> void:
-	cost_label.text = BuildCostText.format(controller.price(option, pricing_cell))
+	BuildCostText.show_price(cost_label, controller.price(option, pricing_cell) if controller != null else option.costs)
 
 func set_pricing_cell(cell: Vector2i) -> void:
 	if pricing_cell == cell: return
 	pricing_cell = cell
 	if cost_label != null: _refresh_price()
-	tooltip_text = "%s: %s" % [tr(option.display_name), BuildCostText.format(controller.price(option, pricing_cell))]
 
 func _process(_delta: float) -> void:
 	_body.modulate.a = 0.35 if disabled else 1.0

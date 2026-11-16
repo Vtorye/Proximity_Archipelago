@@ -33,12 +33,10 @@ func route(from_cell: Vector2i) -> Route:
 func display_title() -> String:
 	return TranslationServer.translate("ui.site.title") % TranslationServer.translate(option.display_name)
 
-func details() -> String:
-	var lines := PackedStringArray([display_title()])
-	for item in required:
-		lines.append("%s: %d / %d" % [BuildCostText.icon(item.type), delivered.get(item.type.id, 0), item.amount])
-	lines.append(TranslationServer.translate("ui.site.assembly") % roundi(progress / option.construction_seconds * 100) if supplied() else TranslationServer.translate("ui.site.delivery"))
-	return "\n".join(lines)
+func assembly_status() -> String:
+	if supplied():
+		return TranslationServer.translate("ui.site.assembly") % roundi(progress / option.construction_seconds * 100)
+	return TranslationServer.translate("ui.site.delivery")
 
 func _on_demolish() -> void:
 	if active: service.cancel(self)

@@ -14,8 +14,9 @@ theme_type_variation = &"CompactButton"
 mouse_default_cursor_shape = 2
 tooltip_text = "ui.colony.focus_hint"
 
-[node name="Amounts" type="Label" parent="Content"]
+[node name="Amounts" type="RichTextLabel" parent="Content"]
 text = "Food: 24 · Wood: 8 · Stone: 0"
 mouse_filter = 2
 autowrap_mode = 3
-theme_type_variation = &"Caption"
+fit_content = true
+scroll_active = false

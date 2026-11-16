@@ -81,13 +81,20 @@ mouse_filter = 2
 text = "ui.nav.food"
 theme_override_colors/font_color = Color(0.62, 0.89, 0.627, 1)
 
-[node name="Detail" type="Label" parent="WindowContents/Content"]
-theme_type_variation = &"Caption"
+[node name="Detail" type="RichTextLabel" parent="WindowContents/Content"]
 unique_name_in_owner = true
 mouse_filter = 2
 text = "ui.nav.hover"
 custom_minimum_size = Vector2(172, 0)
-autowrap_mode = 3
+fit_content = true
+scroll_active = false
+
+[node name="TrapPrice" type="RichTextLabel" parent="WindowContents/Content"]
+unique_name_in_owner = true
+mouse_filter = 2
+fit_content = true
+scroll_active = false
+visible = false
 
 [node name="ClearTrap" type="Button" parent="WindowContents/Content"]
 unique_name_in_owner = true

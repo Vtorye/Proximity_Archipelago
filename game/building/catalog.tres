@@ -21,7 +21,7 @@
 [sub_resource type="Resource" id="terrain"]
 script = ExtResource("category")
 title = "ui.construction.category.terrain"
-options = Array[ExtResource("option")]([ExtResource("road"), ExtResource("ground"), ExtResource("road_plus")])
+options = Array[ExtResource("option")]([ExtResource("road"), ExtResource("road_plus")])
 
 [sub_resource type="Resource" id="colony"]
 script = ExtResource("category")

@@ -7,9 +7,9 @@ var house: House
 var controls: Dictionary[StringName, Button] = {}
 @onready var _inventory_tab: VBoxContainer = %InventoryTab
 @onready var _residents_tab: VBoxContainer = %ResidentsTab
-var _stock_labels: Dictionary[StringName, Label] = {}
+var _stock_labels: Dictionary[StringName, RichTextLabel] = {}
 var _role_labels: Dictionary[int, Label] = {}
-var _purchase_labels: Dictionary[int, Label] = {}
+var _purchase_labels: Dictionary[int, RichTextLabel] = {}
 @onready var _population: Label = %Population
 @onready var _capacity: Label = %Capacity
 @onready var _orders_tab: VBoxContainer = %OrdersTab
@@ -41,7 +41,7 @@ func _ready() -> void:
 	for type in world.inventory.registered_types():
 		if type.id == WorldInventory.CURRENCY_ID:
 			continue
-		var line: Label = preload("res://game/ui/nest_stock_label.tscn").instantiate()
+		var line: RichTextLabel = preload("res://game/ui/nest_stock_label.tscn").instantiate()
 		_stock_labels[type.id] = line
 		_inventory_tab.add_child(line)
 	_funds.toggled.connect(func(enabled: bool):
@@ -125,8 +125,7 @@ func refresh() -> void:
 		if not _stock_labels.has(type.id):
 			continue
 		var amount: int = world.inventory.nest_quantity(house, world.logistics.main_nest, type)
-		_stock_labels[type.id].text = "%s · %d" % [BuildCostText.icon(type), amount]
-		_stock_labels[type.id].tooltip_text = tr(type.display_name)
+		_show_stock(_stock_labels[type.id], type, amount)
 	_funds.visible = true
 	_funds.set_pressed_no_signal(house.funds_construction)
 	for id in _order_rows:
@@ -134,8 +133,7 @@ func refresh() -> void:
 		var type: ResourceType = row.type
 		var order: Dictionary = house.order_of(id)
 		var stock: int = world.inventory.nest_quantity(house, world.logistics.main_nest, type)
-		(row.name as Label).text = "%s · %d" % [BuildCostText.icon(type), stock]
-		(row.name as Label).tooltip_text = tr(type.display_name)
+		_show_stock(row.name, type, stock)
 		var spins: Dictionary = row.spins
 		for field in ["min", "max"]:
 			(spins[field] as SpinBox).set_value_no_signal(int(order.get(field, 0)))
@@ -154,8 +152,16 @@ func refresh() -> void:
 		controls[_control_key("kill", role)].disabled = counts[role] == 0
 		var buy: Button = controls[_control_key("buy", role)]
 		buy.disabled = not world.population.can_recruit(house, role)
-		_purchase_labels[role].text = BuildCostText.format(world.population.recruitment.price(role)) if world.population.recruitment != null else "—"
+		if world.population.recruitment != null:
+			BuildCostText.show_price(_purchase_labels[role], world.population.recruitment.price(role))
+		else:
+			_purchase_labels[role].text = "—"
 		buy.tooltip_text = "ui.nest.full" if not house.has_space() else ("ui.nest.unaffordable" if buy.disabled else "ui.nest.from_main")
+
+func _show_stock(label: RichTextLabel, type: ResourceType, amount: int) -> void:
+	label.clear()
+	BuildCostText.append_resource(label, type, str(amount))
+	label.tooltip_text = type.display_name
 
 func _control_key(action: String, role: int) -> StringName:
 	return StringName(action + "_" + AntAgent.Role.keys()[role].to_lower())

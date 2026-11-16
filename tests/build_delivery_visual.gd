@@ -19,7 +19,8 @@ func _run() -> void:
 	var site := world.registry.at(cell) as ConstructionSite
 	expect(site != null and world.population.count() == 5, "applying the plan queues a non-operational house")
 	await click_at(cell_point(cell), MOUSE_BUTTON_RIGHT)
-	expect(screen.hud.navigation_panel._detail.text.contains("0 / 10") and screen.hud.navigation_panel._detail.text.contains("0 / 20"), "the inspector shows undelivered wood and stone")
+	var materials: String = screen.hud.navigation_panel._detail.get_parsed_text()
+	expect(materials.contains("0 / 10") and materials.contains("0 / 20"), "the inspector shows undelivered wood and stone")
 	await capture("01-waiting-for-materials", 20)
 	var delivered := false
 	var assembling := false

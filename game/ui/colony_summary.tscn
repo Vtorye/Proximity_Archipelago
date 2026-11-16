@@ -21,12 +21,13 @@ text_overrun_behavior = 0
 theme_type_variation = &"CompactButton"
 tooltip_text = "ui.colony.summary_hint"
 
-[node name="Totals" type="Label" parent="Content"]
+[node name="Totals" type="RichTextLabel" parent="Content"]
 text = "Food: 24 · Wood: 8 · Stone: 0"
 unique_name_in_owner = true
 mouse_filter = 2
 autowrap_mode = 3
-theme_type_variation = &"Caption"
+fit_content = true
+scroll_active = false
 
 [node name="Stores" type="ScrollContainer" parent="Content"]
 unique_name_in_owner = true
