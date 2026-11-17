@@ -55,12 +55,15 @@ func apply_profile() -> void:
 	health = max_health
 	attack_damage = definition.damage
 
+func meal_fraction() -> float:
+	return (profile if profile != null else DEFAULT_PROFILE).meal_fraction
+
 func configure(nest: House, policy: TripPlanner, navigation: RouteService, storage: ColonyLogistics) -> void:
 	home = nest
 	work.ant = self
 	transport.ant = self
 	planner = policy
-	needs.safety_margin = policy.safety_margin
+	needs.rules = policy.satiety_rules
 	route_service = navigation
 	motion.navigation = navigation
 	logistics = storage
@@ -97,13 +100,13 @@ func _exit_tree() -> void:
 func _physics_process(delta: float) -> void:
 	if status == Status.DEAD:
 		return
-	var rate: float = AntNeeds.REST_RATE
+	var rate: float = needs.rules.rest_rate
 	if status == Status.WALKING:
-		rate = AntNeeds.WALK_RATE
+		rate = needs.rules.walk_rate
 	elif status in [Status.WORKING, Status.CONSTRUCTING]:
-		rate = AntNeeds.WORK_RATE
+		rate = needs.rules.work_rate
 	elif status == Status.EATING:
-		rate = AntNeeds.EAT_RATE
+		rate = needs.rules.eat_rate
 	needs.consume(delta, rate)
 	_animation_time += delta
 	if needs.satiety <= 0.0:
@@ -193,10 +196,10 @@ func _wander() -> void:
 	var nearby := neighbors.filter(func(next: Vector2i) -> bool:
 		return absi(next.x - origin.x) + absi(next.y - origin.y) <= radius)
 	if not _is_foodless():
-		var approach: float = global_position.distance_to(route_service.cell_to_world(cell)) * route_service.entry_cost(cell) / speed
+		var approach := planner.approach_energy(global_position, cell, speed)
 		nearby = nearby.filter(func(next: Vector2i) -> bool:
 			var step_energy: float = planner.travel_energy(route_service.entry_cost(next), speed)
-			return needs.can_afford(approach + step_energy + planner.escape_energy(next, speed) + 2.0))
+			return needs.can_afford(approach + step_energy + planner.escape_energy(next, speed) + needs.rules.travel_reserve))
 		if nearby.is_empty() and not neighbors.is_empty():
 			_seek_food()
 			return
@@ -241,7 +244,7 @@ func _go_home() -> void:
 		return
 	var entry: Vector2i = planner.accessible_entry(home)
 	var route: Route = planner.home_route(home, route_service.world_to_cell(global_position))
-	if not route.is_valid() or not needs.can_afford(planner.travel_energy(route.cost, speed * planner.carry_speed_ratio) + planner.escape_energy(entry, speed)):
+	if not route.is_valid() or not needs.can_afford(planner.travel_energy(route.cost, movement_speed()) + planner.escape_energy(entry, speed)):
 		_seek_food()
 		return
 	_walk(route, &"home")
@@ -274,7 +277,7 @@ func _arrive() -> void:
 			_timer = randf_range(0.2, 0.7)
 		&"food":
 			_set_status(Status.EATING)
-			_timer = AntNeeds.MEAL_SECONDS
+			_timer = needs.rules.meal_seconds
 		&"home":
 			transport.carrying = false
 			_set_status(Status.HOME)

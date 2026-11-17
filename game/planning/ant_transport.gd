@@ -28,7 +28,7 @@ func decide_pickup(foodless: bool) -> void:
 	_order_amount = 0
 	if foodless:
 		ant._wander()
-	elif not ant.needs.can_afford(ant.planner.escape_energy(cell, ant.speed) + 2.0):
+	elif not ant.needs.can_afford(ant.planner.escape_energy(cell, ant.speed) + ant.needs.rules.travel_reserve):
 		ant._seek_food()
 	elif is_instance_valid(ant.home) and (cell - ant.planner.accessible_entry(ant.home)).length_squared() > 4:
 		ant._go_home()
@@ -39,7 +39,7 @@ func can_start_pickup(pickup: Route, delivery: Route) -> bool:
 	if not delivery.is_valid():
 		return false
 	var cell: Vector2i = pickup.cells.front()
-	var approach: float = ant.global_position.distance_to(ant.route_service.cell_to_world(cell)) * ant.route_service.entry_cost(cell) / ant.speed
+	var approach := ant.planner.approach_energy(ant.global_position, cell, ant.speed)
 	var energy: float = approach + ant.planner.travel_energy(pickup.cost, ant.speed)
 	energy += ant.planner.travel_energy(delivery.cost, ant.speed * ant.planner.carry_speed_ratio)
 	if ant._is_foodless():
@@ -82,7 +82,7 @@ func deliver() -> void:
 		return
 	var meal_energy: float = ant.planner.escape_energy(cell, ant.speed * ant.planner.carry_speed_ratio)
 	var meal_would_enable_delivery: bool = route.is_valid() and _delivery_energy(route, cell) + ant.needs.safety_margin <= ant.needs.capacity
-	var meal_due: bool = meal_would_enable_delivery or ant.needs.satiety <= meal_energy + ant.needs.safety_margin + 2.0
+	var meal_due: bool = meal_would_enable_delivery or ant.needs.satiety <= meal_energy + ant.needs.safety_margin + ant.needs.rules.travel_reserve
 	if meal_due and ant.needs.satiety > meal_energy and not ant._is_foodless():
 		ant._seek_food()
 	elif ant.role == AntAgent.Role.WORKER:
@@ -115,7 +115,7 @@ func _can_deliver(route: Route, from_cell: Vector2i) -> bool:
 
 func _delivery_energy(route: Route, from_cell: Vector2i) -> float:
 	var loaded_speed: float = ant.speed * ant.planner.carry_speed_ratio
-	var approach: float = ant.global_position.distance_to(ant.route_service.cell_to_world(from_cell)) * ant.route_service.entry_cost(from_cell) / loaded_speed
+	var approach := ant.planner.approach_energy(ant.global_position, from_cell, loaded_speed)
 	var energy: float = ant.planner.travel_energy(route.cost, loaded_speed) + approach
 	if not ant._is_foodless():
 		energy += ant.planner.escape_energy(route.cells.back(), ant.speed)

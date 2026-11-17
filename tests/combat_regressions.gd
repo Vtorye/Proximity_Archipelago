@@ -4,10 +4,10 @@ func _world(test: Node) -> World:
 	var tiles: Array = []
 	for x in range(14):
 		for y in range(7): tiles.append([x, y, 3, 2 if y == 3 else 0, 0, 0])
-	var world: World = LevelLayout.create_world({"version": 1, "tiles": tiles, "objects": [[0, 3, "build/base_nest"], [0, 4, "Food"], [6, 2, "Workplace"], [8, 4, "AppleTree"]]})
+	var world: World = LevelLayout.create_world({"version": 1, "tiles": tiles, "objects": [[0, 3, "build/base_nest"], [0, 2, "Food"], [6, 2, "Workplace"], [8, 4, "AppleTree"]]})
 	world.auto_start = false
 	world.build_controller.physical_construction = false
-	world.prices.task_deck = null
+	world.task_deck = null
 	world.waves.enabled = true
 	world.waves.rules = load("res://game/combat/default_waves.tres").duplicate(true)
 	world.waves.rules.first_wave_seconds = 1000

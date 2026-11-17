@@ -57,7 +57,7 @@ func tick(delta: float) -> bool:
 
 func arrive() -> void:
 	var cell: Vector2i = ant.route_service.world_to_cell(ant.global_position)
-	if plan == null or not is_instance_valid(workplace) or (not plan.foodless and not ant.planner.can_finish_work(cell, ant.needs, ant.speed, ant.work_time)) or not workplace.begin_work(ant):
+	if plan == null or not is_instance_valid(workplace) or (not plan.foodless and not ant.planner.can_finish_work(cell, ant.home, ant.needs, ant.speed, ant.work_time)) or not workplace.begin_work(ant):
 		ant._seek_food()
 		return
 	ant._set_status(AntAgent.Status.WORKING)
@@ -72,7 +72,7 @@ func reconsider() -> void:
 			plan.foodless = true
 			ant.planner.inventory.release(ant._meal)
 			ant._meal = null
-		elif not ant.planner.can_finish_work(ant.route_service.world_to_cell(ant.global_position), ant.needs, ant.speed, ant._timer):
+		elif not ant.planner.can_finish_work(ant.route_service.world_to_cell(ant.global_position), ant.home, ant.needs, ant.speed, ant._timer):
 			ant._seek_food()
 
 func release() -> void:

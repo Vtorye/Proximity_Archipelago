@@ -23,10 +23,3 @@ enum PlacementKind { ANY, ROAD, BERRY, NEST }
 
 func has_presentation() -> bool:
 	return not display_name.strip_edges().is_empty() and not description.strip_edges().is_empty()
-
-func cost_amount(type: ResourceType) -> int:
-	var total := 0
-	for cost in costs:
-		if cost != null and cost.type != null and type != null and cost.type.id == type.id:
-			total += cost.amount
-	return total

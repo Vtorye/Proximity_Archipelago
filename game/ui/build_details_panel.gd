@@ -112,12 +112,12 @@ func _update_price_growth(option: BuildOption, details: PackedStringArray) -> vo
 	var next_price: RichTextLabel = %NextPrice
 	if _controller.prices != null:
 		var changes_price := false
-		for rule in option.price_rules:
+		for rule in _controller.prices.price_rules(option):
 			if rule == null or rule.event != event or (rule.subject != &"" and rule.subject != option.id):
 				continue
 			if (rule.operation == 0 and rule.value == 1.0) or (rule.operation == 1 and rule.value == 0.0):
 				continue
-			if rule.resource != null and not option.costs.any(func(cost: ResourceAmount) -> bool:
+			if rule.resource != null and not _controller.prices.base_costs(option).any(func(cost: ResourceAmount) -> bool:
 				return cost != null and cost.type != null and cost.type.id == rule.resource.id):
 				continue
 			changes_price = true

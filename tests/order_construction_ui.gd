@@ -251,7 +251,7 @@ func _run() -> void:
 	expect(absf(world.match_controller.time_remaining - old_time - (choice.reward_seconds if choice.reward_seconds >= 0.0 else task.reward_seconds)) < 0.5, "selected variant grants its own time reward")
 	var limited: SceneBuildOption = choice.building.duplicate()
 	limited.instance_limit = 3
-	world.build_controller.options.append(limited)
+	world.build_controller.unlock_option(limited)
 	var first := BuildCommand.create(Vector2i(28, 27), limited)
 	var second := BuildCommand.create(Vector2i(27, 27), limited)
 	expect(not world.build_controller.try_build_plan([first, second]) and world.build_controller.last_result.code == PlacementCheck.Code.INSTANCE_LIMIT, "batch limit includes a previously built instance")

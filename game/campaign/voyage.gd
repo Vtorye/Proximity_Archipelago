@@ -8,26 +8,24 @@ var score := 0
 var offers: Array[Dictionary] = []
 var departed := false
 var _destinations: Dictionary[int, LevelData] = {}
-const SHIP = preload("res://game/campaign/ship.tres")
+var _rules: VoyageRules
 
-func configure(colony: World) -> void:
+func configure(colony: World, rules: VoyageRules) -> void:
 	world = colony
+	_rules = rules
 	seed_value = randi_range(1, 1000000000)
 	world.tasks.changed.connect(refresh)
 	world.registry.added.connect(_built)
 	refresh()
 
 func refresh() -> void:
-	if world.tasks.level >= 5 and not world.build_controller.options.has(SHIP):
-		world.build_controller.options.append(SHIP)
+	if world.tasks.level >= _rules.ship_unlock_level and world.build_controller.unlock_option(_rules.ship):
 		world.tasks.message = "ui.voyage.ship_unlocked"
-		world.prices.definitions = world.build_controller.options.duplicate()
-		world.prices.changed.emit()
 
 func _built(building: Building) -> void:
-	if building.option == null or building.option.id != &"ship" or building is ConstructionSite or departed: return
+	if _rules.ship == null or building.option == null or building.option.id != _rules.ship.id or building is ConstructionSite or departed: return
 	departed = true
-	score += world.tasks.completed_count * 100 + maxi(0, roundi(world.match_controller.time_remaining)) + island * 500
+	score += world.tasks.completed_count * _rules.points_per_task + maxi(0, roundi(world.match_controller.time_remaining)) + island * _rules.points_per_island
 	offers.clear()
 	for index in range(3):
 		offers.append({"seed": seed_value + island * 7919 + index * 1543, "difficulty": island, "biome": index})
@@ -42,7 +40,7 @@ func destination_data(index: int) -> LevelData:
 		return null
 	if not _destinations.has(index):
 		var choice: Dictionary = offers[index]
-		_destinations[index] = IslandGenerator.generate_data(choice.seed, choice.difficulty, choice.biome)
+		_destinations[index] = IslandGenerator.generate_data(world, choice.seed, choice.difficulty, choice.biome)
 	return _destinations[index]
 
 func travel(index: int) -> Dictionary:
@@ -66,13 +64,19 @@ func apply(data: Dictionary) -> void:
 	for id in data.get("wealth", {}):
 		var type: ResourceType = world.inventory.type_by_id(StringName(id))
 		if type != null:
-			var difference: int = int(data.wealth[id]) - world.inventory.quantity(type)
-			if difference >= 0: world.inventory.add(type, difference)
-			else: world.inventory._withdraw(type.id, -difference)
+			var difference: int = maxi(0, int(data.wealth[id])) - world.inventory.quantity(type)
+			if difference >= 0:
+				world.inventory.add(type, difference)
+			else:
+				var cost := ResourceAmount.new()
+				cost.type = type
+				cost.amount = -difference
+				world.inventory.try_spend_all([cost], false, true)
 	for buff in data.get("buffs", []): world.tasks.grant_buff(int(buff))
-	world.match_controller.match_duration = maxf(90.0, 180.0 - (island - 1) * 10.0)
+	var completed_islands := maxi(0, island - 1)
+	world.match_controller.configure_duration_reduction(completed_islands * _rules.match_time_reduction, _rules.minimum_match_time)
 	if world.combat != null:
-		world.combat.spawner.interval_seconds = maxf(20.0, 60.0 - (island - 1) * 5.0)
+		world.combat.configure_wave_interval_reduction(completed_islands * _rules.wave_interval_reduction, _rules.minimum_wave_interval)
 
 func capture_state() -> Dictionary:
 	return {

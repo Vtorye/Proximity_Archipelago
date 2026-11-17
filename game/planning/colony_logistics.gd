@@ -76,20 +76,6 @@ func closest_depot(cell: Vector2i, count: int) -> House:
 			best = house
 	return best
 
-func closest_base(cell: Vector2i, count: int) -> House:
-	var best: House
-	var lowest := INF
-	for house in [main_nest] + _depots:
-		if not owns(house) or not house.is_main_nest:
-			continue
-		if not inventory.can_deposit(null if house == main_nest else house, count):
-			continue
-		var cost: float = _field(house).cost(cell)
-		if cost < lowest:
-			lowest = cost
-			best = house
-	return best
-
 func construction_sources(entries: Array[Vector2i], removed: Array[Building] = []) -> Array[House]:
 	var grid: TileGrid = navigation.snapshot()
 	var sources: Array[House] = []

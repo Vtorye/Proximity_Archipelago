@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="VoyageRules" format=3]
+
+[ext_resource type="Script" path="res://game/campaign/voyage_rules.gd" id="rules"]
+[ext_resource type="Resource" path="res://game/campaign/ship.tres" id="ship"]
+
+[resource]
+script = ExtResource("rules")
+ship = ExtResource("ship")
+ship_unlock_level = 5
+points_per_task = 100
+points_per_island = 500
+match_time_reduction = 10.0
+minimum_match_time = 90.0
+wave_interval_reduction = 5.0
+minimum_wave_interval = 20.0

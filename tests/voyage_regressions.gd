@@ -1,9 +1,10 @@
 extends RefCounted
 func run(test: Node) -> void:
-	var first: Dictionary = IslandGenerator.generate(8123, 0, 0, 50)
+	var template := LevelLayout.DEFAULT_WORLD.instantiate() as World
+	var first := LevelLayout.encode(IslandGenerator.generate_data(template, 8123, 0, 0, 50))
 	var starter := Vector2i(int(first.objects[0][0]), int(first.objects[0][1]))
 	for seed_value in [1, 52, 991]:
-		var sample: World = LevelLayout.create_world(IslandGenerator.generate(seed_value, 2, seed_value % 3, 50))
+		var sample := LevelLayout.instantiate_world(IslandGenerator.generate_data(template, seed_value, 2, seed_value % 3, 50))
 		test.expect(sample != null and LevelValidator.validate_world(sample, "seed " + str(seed_value)).is_empty(), "multiple seed and biome combinations produce playable maps")
 		var grid := TileGrid.new()
 		grid.setup(sample.get_node("Map"), [])
@@ -17,9 +18,11 @@ func run(test: Node) -> void:
 			if row[2] != "Food":
 				var offset := Vector2i(int(row[0]), int(row[1])) - starter
 				test.expect(absi(offset.x) + absi(offset.y) >= 6, "generated deposits stay away from the starter nest")
-	var again: Dictionary = IslandGenerator.generate(8123, 0, 0, 50)
+	var again := LevelLayout.encode(IslandGenerator.generate_data(template, 8123, 0, 0, 50))
 	test.expect(first == again and first.tiles.size() == 2500, "island generation is deterministic and respects the chosen extent")
-	test.expect(first != IslandGenerator.generate(8124, 0, 0, 50), "different seeds create different maps")
+	test.expect(first != LevelLayout.encode(IslandGenerator.generate_data(template, 8124, 0, 0, 50)), "different seeds create different maps")
+	_test_generation_rules(test, template)
+	template.free()
 	var world: World = LevelLayout.create_world(first)
 	test.expect(LevelValidator.validate_world(world, "generated").is_empty(), "generated starter colony has valid terrain, entrances and resources")
 	var built_berry := load("res://game/entities/apple_tree.tscn").instantiate() as Workplace
@@ -68,7 +71,7 @@ func run(test: Node) -> void:
 		test.expect(world.tasks.pending_reward and world.tasks.start_order(&"missing", &"build") == null, "completed stage waits for exactly one upgrade choice")
 		test.expect(world.tasks.choose_reward(level % 3), "a valid reward advances the task ladder")
 		test.expect(not world.tasks.choose_reward(0), "reward cannot be claimed twice")
-	test.expect(world.tasks.level == 5 and world.build_controller.options.has(Voyage.SHIP), "reaching level five unlocks ship construction")
+	test.expect(world.tasks.level == 5 and world.build_controller.options.has(world.voyage_rules.ship), "reaching level five unlocks ship construction")
 	var site_cell: Vector2i = home.cell + Vector2i(-2, -1)
 	var berry_option: BuildOption = load("res://game/building/options/apple_tree.tres")
 	test.expect(world.build_controller.try_build(berry_option, site_cell), "a paid unfinished building exists in the save fixture")
@@ -119,19 +122,19 @@ func run(test: Node) -> void:
 	world.build_controller.construction = null
 	var map: TerrainMap = world.get_node("Map")
 	var land_cell: Vector2i = home.cell
-	test.expect(world.build_controller.placement_check(Voyage.SHIP, land_cell).code == PlacementCheck.Code.WATER_REQUIRED, "the ship requires water")
+	test.expect(world.build_controller.placement_check(world.voyage_rules.ship, land_cell).code == PlacementCheck.Code.WATER_REQUIRED, "the ship requires water")
 	var ship_cell := Vector2i(-1, -1)
 	var deep_water := Vector2i(-1, -1)
 	for cell in map.get_used_cells():
 		if map.surface_at(cell).kind != TerrainType.Kind.WATER:
 			continue
-		var check: PlacementCheck = world.build_controller.placement_check(Voyage.SHIP, cell)
+		var check: PlacementCheck = world.build_controller.placement_check(world.voyage_rules.ship, cell)
 		if check.code == PlacementCheck.Code.SHORE_REQUIRED:
 			deep_water = cell
-		elif check.allowed() and world.logistics.construction_sources(Voyage.SHIP.entries_at(cell)).has(home):
+		elif check.allowed() and world.logistics.construction_sources(world.voyage_rules.ship.entries_at(cell)).has(home):
 			ship_cell = cell
-	test.expect(world.build_controller.placement_check(Voyage.SHIP, deep_water).code == PlacementCheck.Code.SHORE_REQUIRED, "water without a walkable shore is rejected")
-	test.expect(world.build_controller.try_build(Voyage.SHIP, ship_cell), "unlocked ship can finish on water at the shore")
+	test.expect(world.build_controller.placement_check(world.voyage_rules.ship, deep_water).code == PlacementCheck.Code.SHORE_REQUIRED, "water without a walkable shore is rejected")
+	test.expect(world.build_controller.try_build(world.voyage_rules.ship, ship_cell), "unlocked ship can finish on water at the shore")
 	test.expect(world.voyage.departed and world.match_controller.is_finished() and world.voyage.offers.size() == 3, "finished ship commits one victory and three destinations")
 	var preview_layout: Dictionary = world.voyage.destination(1)
 	var destination: Dictionary = world.voyage.travel(1)
@@ -140,10 +143,27 @@ func run(test: Node) -> void:
 	next.auto_start = false
 	test.add_child(next)
 	next.voyage.apply(destination.journey)
-	test.expect(next.voyage.island == 2 and next.tasks.buffs == world.tasks.buffs and next.match_controller.match_duration < 180, "travel keeps buffs and increases island difficulty")
+	test.expect(next.voyage.island == 2 and next.tasks.buffs == world.tasks.buffs and next.match_controller.starting_duration() < next.match_controller.match_duration, "travel keeps buffs and increases island difficulty")
 	for type in world.inventory.registered_types():
 		test.expect(next.inventory.quantity(type) == world.inventory.quantity(type), "travel transfers accumulated colony stock without a starter-stock bonus")
 	world.free()
 	restored.free()
 	next.free()
 	await test.get_tree().process_frame
+
+func _test_generation_rules(test: Node, template: World) -> void:
+	var original := template.island_generation
+	var custom := original.duplicate() as IslandGenerationRules
+	custom.default_extent = 44
+	custom.canteen_distance = 4
+	custom.starter_deposits_per_resource = 1
+	custom.extra_deposit_chance = 0.0
+	custom.deposit_budgets = Vector3i(21, 22, 23)
+	template.island_generation = custom
+	var generated := IslandGenerator.generate_data(template, 8123)
+	test.expect(generated != null and generated.tiles.size() == 44 * 44, "the world resource sets the default generated extent")
+	if generated != null:
+		var displacement := generated.objects[1].cell - generated.objects[0].cell
+		test.expect(absi(displacement.x) + absi(displacement.y) == 4, "the canteen uses the authored distance from the nest")
+		test.expect(generated.objects.size() == 5 and generated.objects[2].remaining_supply == 21 and generated.objects[3].remaining_supply == 22 and generated.objects[4].remaining_supply == 23, "configured deposit counts and budgets are used in the generated layout")
+	test.expect(original.default_extent == 80 and original.deposit_budgets == Vector3i(900, 900, 900), "custom generation leaves the shared resource unchanged")

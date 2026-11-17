@@ -71,10 +71,10 @@ func _run() -> void:
 			world.build_controller.order_completed.emit(order)
 		await frames(4)
 		await click(screen.campaign_panel.controls[stage % 3])
-	expect(world.tasks.level == 5 and world.build_controller.options.has(Voyage.SHIP), "ship appears after reaching development level five")
+	expect(world.tasks.level == 5 and world.build_controller.options.has(world.voyage_rules.ship), "ship appears after reaching development level five")
 	# A real ship order: ants transport paid materials and perform its assembly.
 	var ship_cell: Vector2i = _nearest_ship_cell(world, home.cell)
-	expect(world.build_controller.try_build(Voyage.SHIP, ship_cell), "ship order accepts a funded coastal water tile")
+	expect(world.build_controller.try_build(world.voyage_rules.ship, ship_cell), "ship order accepts a funded coastal water tile")
 	screen.camera.position = world.route_service.cell_to_world(ship_cell)
 	screen.camera.force_update_scroll()
 	await frames(4)
@@ -139,9 +139,9 @@ func _nearest_ship_cell(world: World, origin: Vector2i) -> Vector2i:
 	for cell in map.get_used_cells():
 		if map.surface_at(cell).kind != TerrainType.Kind.WATER:
 			continue
-		if not world.build_controller.placement_check(Voyage.SHIP, cell).allowed():
+		if not world.build_controller.placement_check(world.voyage_rules.ship, cell).allowed():
 			continue
-		for shore in Voyage.SHIP.entries_at(cell):
+		for shore in world.voyage_rules.ship.entries_at(cell):
 			var cost: float = field.cost(shore)
 			if cost < distance:
 				distance = cost

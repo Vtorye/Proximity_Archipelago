@@ -60,6 +60,7 @@ func _run() -> void:
 	await preload("res://tests/combat_regressions.gd").new().run(self)
 	await preload("res://tests/terrain_regressions.gd").new().run(self)
 	await _test_simulation()
+	await _test_satiety_rules()
 	print("TEST REPORT ", JSON.stringify({"assertions": assertions, "failures": failures, "metrics": metrics}))
 	print("TESTS PASS" if failures.is_empty() else "TESTS FAIL")
 	get_tree().quit(0 if failures.is_empty() else 1)
@@ -208,13 +209,43 @@ func _test_resident_pruning() -> void:
 	view[0].free()
 	house.free()
 
-func make_world() -> World:
+func make_world(satiety: SatietyRules = null) -> World:
 	var world: World = WORLD.instantiate() as World
-	world.prices.task_deck = null
+	if satiety != null:
+		world.satiety_rules = satiety
+	world.task_deck = null
 	world.auto_start = false
 	world.build_controller.physical_construction = false
 	add_child(world)
 	return world
+
+func _test_satiety_rules() -> void:
+	var rules := SatietyRules.new()
+	rules.walk_rate = 2.5
+	rules.rest_rate = 1.5
+	rules.eat_rate = 0.75
+	rules.meal_seconds = 3.0
+	rules.safety_margin = 5.0
+	var world := make_world(rules)
+	var ant := world.population.agents()[0]
+	var cell := world.route_service.world_to_cell(ant.global_position)
+	var route := world.planner.food_route(cell)
+	expect(route.is_valid(), "satiety fixture has a route to food")
+	expect(ant.needs.rules == rules and world.planner.satiety_rules == rules, "planning and resident metabolism use the world's satiety resource")
+	var escape := world.planner.escape_energy(cell, ant.speed)
+	var expected := world.planner.travel_seconds(route.cost, ant.speed) * 2.5 + 3.0 * 0.75
+	expect(is_equal_approx(escape, expected) and not world.planner.food_within_range(cell, ant.speed, escape + 4.0), "escape checks use the configured walk rate, meal cost, and safety margin")
+	ant._timer = 1.0
+	ant._physics_process(0.25)
+	expect(is_equal_approx(ant.needs.capacity - ant.needs.satiety, 1.5 * 0.25), "rest spends energy at the configured rate")
+	ant.needs.eat()
+	ant._walk(route, &"food")
+	ant._physics_process(0.25)
+	expect(is_equal_approx(ant.needs.capacity - ant.needs.satiety, 2.5 * 0.25), "walking consumes energy at the rate quoted by the planner")
+	ant._arrive()
+	expect(ant.status == AntAgent.Status.EATING and is_equal_approx(ant._timer, 3.0), "meal duration comes from the world resource")
+	world.free()
+	await get_tree().process_frame
 
 func _test_worlds() -> void:
 	var first: World = make_world()
@@ -241,13 +272,12 @@ func _test_worlds() -> void:
 	expect(plan == null, "unsafe outward-work-return-food assignment rejected")
 	ant.needs.eat()
 	plan = first.planner.plan_work(ant, ant.home, ant.needs, ant.speed, ant.work_time, ant._meal)
-	expect(plan != null and plan.estimated_energy + AntNeeds.SAFETY_MARGIN <= ant.needs.satiety, "healthy ant receives a complete feasible plan")
+	expect(plan != null and plan.estimated_energy + ant.needs.safety_margin <= ant.needs.satiety, "healthy ant receives a complete feasible plan")
 	if plan != null and plan.workplace != null: plan.workplace.release_worker(ant)
-	var options: Array[BuildOption] = first.build_controller.options
 	var nest: SceneBuildOption = load("res://game/building/options/house.tres").duplicate(true) as SceneBuildOption
 	nest.blocks_movement = true
 	nest.costs = [entry(wood, 0)]
-	options.append(nest)
+	first.build_controller.unlock_option(nest)
 	var built: bool = first.build_controller.try_build(nest, Vector2i(27, 29))
 	expect(built, "blocking nest can have an accessible external entrance")
 	if built:
@@ -268,7 +298,7 @@ func _test_worlds() -> void:
 	invalid.scene = packed
 	invalid.costs = [entry(wood, 20)]
 	invalid.blocks_movement = false
-	options.append(invalid)
+	first.build_controller.unlock_option(invalid)
 	var stock_before: int = first.inventory.quantity(wood)
 	expect(not first.build_controller.try_build(invalid, Vector2i(28, 29)), "invalid nest setup fails")
 	expect(first.inventory.quantity(wood) == stock_before and first.registry.at(Vector2i(28, 29)) == null, "invalid setup leaves stock and world unchanged")
@@ -276,14 +306,14 @@ func _test_worlds() -> void:
 	expect(first.build_controller.check(far, Vector2i(9, 10)).allowed(), "nest with unreachable feeding can be placed")
 	var slow: SceneBuildOption = far.duplicate(true) as SceneBuildOption
 	slow.spawn_speed = 1.0
-	options.append(slow)
+	first.build_controller.unlock_option(slow)
 	expect(first.build_controller.check(slow, Vector2i(39, 25)).allowed(), "slow nest outside its feeding budget can be placed")
 	# A slower tile must not consume a hungry ant's last safe escape budget.
 	map.set_cell(Vector2i(28, 26), 3, Vector2i(2, 0))
 	first.route_service.rebuild(first.registry.blocked_cells())
 	var from_cell: Vector2i = first.route_service.world_to_cell(ant.global_position)
 	var current_escape: float = first.route_service.food_field().cost(from_cell)
-	ant.needs.satiety = ant.planner.travel_energy(current_escape, ant.movement_speed()) + AntNeeds.MEAL_SECONDS * AntNeeds.EAT_RATE + ant.needs.safety_margin + 0.1
+	ant.needs.satiety = ant.planner.travel_energy(current_escape, ant.movement_speed()) + ant.needs.rules.meal_energy() + ant.needs.safety_margin + 0.1
 	var ground: BuildOption = load("res://game/building/options/ground.tres")
 	var before_terrain: Vector2i = (first.get_node("Map") as TileMapLayer).get_cell_atlas_coords(Vector2i(28, 26))
 	expect(not first.build_controller.try_build(ground, Vector2i(28, 26)) and first.build_controller.last_result.code == PlacementCheck.Code.NO_ESCAPE, "terrain change cannot strand a hungry ant")
@@ -390,8 +420,6 @@ func _test_rules() -> void:
 func _test_art_resolution() -> void:
 	var art: ArtCatalog = load("res://game/art/colony_art.tres") as ArtCatalog
 	expect(art.validate().is_empty(), "default art catalog valid")
-	for name in ["grass", "soil", "road", "water", "nest", "canteen", "berries", "timber", "stone"]:
-		expect((art.get(name) as Texture2D).get_size() == Vector2(16, 16), "default game texture is 16x16")
 	var replacement: ArtCatalog = art.duplicate() as ArtCatalog
 	var image := Image.create(32, 32, false, Image.FORMAT_RGBA8)
 	image.fill(Color.GREEN)

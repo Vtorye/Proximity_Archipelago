@@ -667,19 +667,19 @@ msgid "ui.voyage.discount"
 msgstr "Бережливое строительство"
 
 msgid "ui.voyage.discount_detail"
-msgstr "Все новые постройки на 10% дешевле."
+msgstr "Все новые постройки на %s%% дешевле."
 
 msgid "ui.voyage.speed"
 msgstr "Быстрые лапки"
 
 msgid "ui.voyage.speed_detail"
-msgstr "Все муравьи двигаются на 15% быстрее."
+msgstr "Все муравьи двигаются на %s%% быстрее."
 
 msgid "ui.voyage.satiety"
 msgstr "Большой запас сил"
 
 msgid "ui.voyage.satiety_detail"
-msgstr "Запас сытости всех муравьёв увеличен на 20%."
+msgstr "Запас сытости всех муравьёв увеличен на %s%%."
 
 msgid "ui.voyage.departure"
 msgstr "Корабль готов. Победа!"

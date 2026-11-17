@@ -182,8 +182,8 @@ static func _restore_objects(world: World, map: TileMapLayer, objects: Array[Lev
 	var originals: Dictionary[String, Building] = prototypes(world)
 	var catalog: Dictionary[String, SceneBuildOption] = {}
 	var improvements: Dictionary[String, WorkplaceUpgradeOption] = {}
-	if world.prices.task_deck != null:
-		for stage in world.prices.task_deck.stages:
+	if world.task_deck != null:
+		for stage in world.task_deck.stages:
 			if stage == null: continue
 			for task in stage.tasks:
 				if task == null: continue
@@ -196,7 +196,8 @@ static func _restore_objects(world: World, map: TileMapLayer, objects: Array[Lev
 	var definitions: Array[BuildOption] = world.build_controller.initial_options()
 	if world.waves.rules != null and world.waves.rules.defenses != null:
 		definitions.append_array(world.waves.rules.defenses.options)
-	definitions.append(load("res://game/campaign/ship.tres"))
+	if world.voyage_rules != null and world.voyage_rules.ship != null:
+		definitions.append(world.voyage_rules.ship)
 	for option in definitions:
 		if option is SceneBuildOption:
 			catalog["build/" + str(option.id)] = option

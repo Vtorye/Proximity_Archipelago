@@ -15,7 +15,7 @@ func _composite_price(test: Node) -> void:
 	var food: ResourceType = world.inventory.type_by_id(&"food")
 	var nest: SceneBuildOption = load("res://game/building/options/house.tres").duplicate(true)
 	nest.costs = [test.entry(stone, 5), test.entry(food, 21)]
-	world.build_controller.options.append(nest)
+	world.build_controller.unlock_option(nest)
 	var cell := Vector2i(30, 29)
 	var stone_before: int = world.inventory.quantity(stone)
 	test.expect(not world.build_controller.try_build(nest, cell), "composite nest cannot spend more berries than exist")
@@ -94,7 +94,7 @@ func _invalid_batches(test: Node) -> void:
 	var wood: ResourceType = world.inventory.type_by_id(&"wood")
 	var expensive: TileBuildOption = road.duplicate(true)
 	expensive.costs = [test.entry(wood, 40)]
-	world.build_controller.options.append(expensive)
+	world.build_controller.unlock_option(expensive)
 	var commands: Dictionary[Vector2i, BuildOption] = {Vector2i(25, 29): expensive, Vector2i(26, 29): expensive}
 	var revision: int = world.route_service.revision
 	var map: TileMapLayer = world.get_node("Map")
@@ -104,7 +104,7 @@ func _invalid_batches(test: Node) -> void:
 	test.expect(not world.build_controller.try_build_batch(commands) and world.route_service.revision == revision, "invalid final command cannot partly apply earlier commands")
 	var wall: TileBuildOption = road.duplicate(true)
 	wall.atlas_coords = Vector2i(3, 0)
-	world.build_controller.options.append(wall)
+	world.build_controller.unlock_option(wall)
 	commands.clear()
 	for offset in [Vector2i.UP, Vector2i.RIGHT, Vector2i.DOWN, Vector2i.LEFT]:
 		commands[Vector2i(28, 26) + offset] = wall
@@ -120,7 +120,8 @@ func _construction_egress(test: Node) -> void:
 	var feast: SceneBuildOption = load("res://game/building/options/feast.tres")
 	var single_entry := statue.duplicate() as SceneBuildOption
 	single_entry.entry_offsets = [Vector2i.DOWN]
-	controller.options.append_array([statue, feast, single_entry])
+	for option in [statue, feast, single_entry]:
+		controller.unlock_option(option)
 	var cell := Vector2i(30, 29)
 	var below := cell + Vector2i.DOWN
 	var stock := world.inventory.quantity(world.inventory.type_by_id(&"wood"))
@@ -140,10 +141,10 @@ func _construction_egress(test: Node) -> void:
 	await test.get_tree().process_frame
 	world = load("res://game/worlds/world_1.tscn").instantiate()
 	world.auto_start = false
-	world.prices.task_deck = null
+	world.task_deck = null
 	test.add_child(world)
 	controller = world.build_controller
-	controller.options.append(statue)
+	controller.unlock_option(statue)
 	ant = world.population.agents()[0]
 	ant.global_position = world.route_service.cell_to_world(cell)
 	test.expect(controller.try_build(statue, cell), "an ant on the footprint does not prevent queuing a construction site")
@@ -225,7 +226,7 @@ func _planned_demolition(test: Node) -> void:
 	var workplace: Workplace = world.registry.workplaces()[0]
 	var expensive: TileBuildOption = road.duplicate(true)
 	expensive.costs = [test.entry(wood, 10000)]
-	controller.options.append(expensive)
+	controller.unlock_option(expensive)
 	test.expect(not controller.try_build_plan([BuildCommand.remove(workplace), BuildCommand.create(cell, expensive)]) and is_instance_valid(workplace), "unaffordable plan cannot partially demolish an existing building")
 	world.free()
 	await test.get_tree().process_frame

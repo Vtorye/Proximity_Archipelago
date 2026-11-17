@@ -33,6 +33,12 @@ func at(cell: Vector2i, terrain: bool = false) -> ConstructionSite:
 		if site.active and (site.option is TileBuildOption) == terrain and site.footprint().has(cell): return site
 	return null
 
+func active_order_for(task: TaskSpec) -> TaskBuildOrder:
+	for site in sites:
+		if site.active and site.order != null and site.order.task == task:
+			return site.order
+	return null
+
 func enqueue(command: BuildCommand, candidate: Building, quote: Array[ResourceAmount], crates: Dictionary) -> ConstructionSite:
 	if candidate != null:
 		candidate.configure_appearance(art, controller.route_service.cell_size())
@@ -69,7 +75,7 @@ func claim(ant: AntAgent) -> ConstructionJob:
 		if not delivery.is_valid(): continue
 		if site.supplied():
 			if is_instance_valid(site.builder): continue
-			var energy: float = ant.planner.travel_energy(delivery.cost, ant.speed) + (site.option.construction_seconds - site.progress) * AntNeeds.WORK_RATE
+			var energy: float = ant.planner.travel_energy(delivery.cost, ant.speed) + (site.option.construction_seconds - site.progress) * ant.needs.rules.work_rate
 			if not ant._is_foodless(): energy += ant.planner.escape_energy(delivery.cells.back(), ant.speed)
 			if not ant.needs.can_afford(energy) or delivery.cost >= lowest: continue
 			best = ConstructionJob.new()

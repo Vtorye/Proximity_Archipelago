@@ -211,11 +211,11 @@ ui.voyage.choose_reward,Choose one upgrade. Keep it on future islands.,Выбе�
 ui.voyage.road,Fast trail,Быстрая тропинка
 ui.voyage.road_detail,"Replaces the ordinary trail. Faster movement, same price.","Заменяет обычную тропинку. Движение быстрее, цена прежняя."
 ui.voyage.discount,Efficient construction,Бережливое строительство
-ui.voyage.discount_detail,All new buildings cost 10% less.,Все новые постройки на 10% дешевле.
+ui.voyage.discount_detail,All new buildings cost %s%% less.,Все новые постройки на %s%% дешевле.
 ui.voyage.speed,Quick feet,Быстрые лапки
-ui.voyage.speed_detail,All ants move 15% faster.,Все муравьи двигаются на 15% быстрее.
+ui.voyage.speed_detail,All ants move %s%% faster.,Все муравьи двигаются на %s%% быстрее.
 ui.voyage.satiety,Deep reserves,Большой запас сил
-ui.voyage.satiety_detail,All ants gain 20% satiety capacity.,Запас сытости всех муравьёв увеличен на 20%.
+ui.voyage.satiety_detail,All ants gain %s%% satiety capacity.,Запас сытости всех муравьёв увеличен на %s%%.
 ui.voyage.departure,Ship ready. Victory!,Корабль готов. Победа!
 ui.voyage.score,Score: %d,Счёт: %d
 ui.voyage.next_island,Island %d: choose a shore for your next colony.,Остров %d: выберите берег для новой колонии.

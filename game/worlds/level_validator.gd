@@ -19,6 +19,10 @@ static func validate(path: String) -> Array[String]:
 
 static func validate_world(world: World, path: String) -> Array[String]:
 	var errors: Array[String] = []
+	if world.satiety_rules == null or not world.satiety_rules.is_valid():
+		errors.append(path + ": missing or invalid satiety rules")
+	if world.island_generation == null or not world.island_generation.is_valid():
+		errors.append(path + ": missing or invalid island generation rules")
 	if world.waves.enabled:
 		for error in world.waves.validate(): errors.append(path + ":Waves: " + error)
 	for scene: PackedScene in [world.population.worker_scene, world.population.carrier_scene, world.population.warrior_scene]:
@@ -72,7 +76,7 @@ static func validate_world(world: World, path: String) -> Array[String]:
 				errors.append(prefix + ": no accessible entry")
 		var stock := WorldInventory.new()
 		var types: Dictionary[StringName, bool] = {}
-		for entry in world.prices.starting_resources:
+		for entry in world.starting_resources:
 			if entry == null or entry.type == null or entry.type.id == &"" or entry.amount < 0: errors.append(path + ": invalid starting resource")
 			elif types.has(entry.type.id): errors.append(path + ": duplicate resource " + str(entry.type.id))
 			else: types[entry.type.id] = true
@@ -120,9 +124,9 @@ static func validate_world(world: World, path: String) -> Array[String]:
 						for error in candidate.validate_definition(): errors.append(prefix + ": " + error)
 					else: errors.append(prefix + ": scene root is not a Building")
 					candidate.free()
-		if world.prices.task_deck != null and errors.is_empty():
-			stock.configure(world.prices.starting_resources)
-			errors.append_array(world.prices.task_deck.validate(stock))
+		if world.task_deck != null and errors.is_empty():
+			stock.configure(world.starting_resources)
+			errors.append_array(world.task_deck.validate(stock))
 		prices.free()
 		stock.free()
 	return errors
