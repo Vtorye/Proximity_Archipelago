@@ -1,6 +1,6 @@
 [gd_resource type="Resource" script_class="FirstChapterRules" format=3]
 [ext_resource type="Script" path="res://story/first_chapter_rules.gd" id="rules"]
-[ext_resource type="Resource" path="res://game/assets/dialogue/first_chapter.dialogue" id="dialogue"]
+[ext_resource type="Resource" path="res://game/assets/dialogue/first_chapter.tres" id="dialogue"]
 [ext_resource type="Script" path="res://story/story_character.gd" id="character"]
 [ext_resource type="Resource" path="res://story/queen.tres" id="queen"]
 [ext_resource type="Resource" path="res://story/shuti.tres" id="shuti"]

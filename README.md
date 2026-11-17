@@ -22,6 +22,14 @@
 по 100 каждого материала. Отсчёт до казни на первом острове отключён.
 Реплики редактируются в `game/assets/dialogue/first_chapter.dialogue`,
 параметры — в `story/first_chapter_rules.tres`, карта — в `game/worlds/first_island.tscn`.
+
+Сцены используют версионируемые ресурсы диалогов `.tres` из `game/assets/dialogue`.
+После редактирования `.dialogue` обновите импорт и сохраните обе версии в Git.
+
+```sh
+godot --headless --editor --import
+godot --headless --script res://tools/check_dialogue_assets.gd -- --write
+```
 Кнопка пропуска реплик переводит к действию текущей сцены. В меню сохраняется
 прогресс главы. После гибели королевы повтор начинается перед нападением.
 Короткий звук печати реплик синтезирован для проекта.

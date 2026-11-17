@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="StoryEpisode" format=3]
 
 [ext_resource type="Script" path="res://story/story_episode.gd" id="episode"]
-[ext_resource type="Resource" path="res://game/assets/dialogue/tutorial.dialogue" id="dialogue"]
+[ext_resource type="Resource" path="res://game/assets/dialogue/tutorial.tres" id="dialogue"]
 [ext_resource type="Resource" path="res://game/tasks/request_statue_feast.tres" id="order"]
 [ext_resource type="Resource" path="res://game/building/options/road.tres" id="road"]
 

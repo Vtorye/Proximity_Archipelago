@@ -22,6 +22,7 @@ if rg -q '(^|[[:space:]])(SCRIPT ERROR|ERROR):' "$check_root/import.log"; then
   cat "$check_root/import.log"
   exit 1
 fi
+"$godot_binary" --headless --path "$check_root/project" --script res://tools/check_dialogue_assets.gd
 if ! "$godot_binary" --headless --path "$check_root/project" --fixed-fps 60 res://tests/test_runner.tscn > "$check_root/tests.log" 2>&1; then cat "$check_root/tests.log"; exit 1; fi
 cat "$check_root/tests.log"
 if rg -qi '(script error|error):|leaked|tests fail' "$check_root/tests.log" || ! rg -q '^TESTS PASS$' "$check_root/tests.log"; then exit 1; fi
