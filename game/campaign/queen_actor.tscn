@@ -1,0 +1,23 @@
+[gd_scene format=3]
+[ext_resource type="Script" path="res://game/campaign/queen_actor.gd" id="script"]
+[ext_resource type="Texture2D" path="res://game/assets/sprites/visual_novel/ant_queen/ant_queen_pleased.png" id="portrait"]
+
+[node name="Queen" type="Node2D"]
+script = ExtResource("script")
+z_index = 15
+
+[node name="Sprite" type="Sprite2D" parent="."]
+texture = ExtResource("portrait")
+scale = Vector2(0.012, 0.012)
+offset = Vector2(0, -90)
+
+[node name="Health" type="ProgressBar" parent="."]
+unique_name_in_owner = true
+offset_left = -7.0
+offset_top = -20.0
+offset_right = 7.0
+offset_bottom = -17.0
+mouse_filter = 2
+max_value = 12.0
+value = 12.0
+show_percentage = false

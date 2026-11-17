@@ -1205,3 +1205,225 @@ msgstr "Ah, never mind."
 
 msgid "ui.story.tutorial.given_name"
 msgstr "I'll call you Jesty. My very own jester. Now make your queen smile."
+
+msgid "ui.chapter.planner"
+msgstr "Planner"
+
+msgid "ui.chapter.courier"
+msgstr "Courier"
+
+msgid "ui.chapter.worker"
+msgstr "Worker"
+
+msgid "ui.chapter.conversations"
+msgstr "Talk"
+
+msgid "ui.chapter.colony_intro"
+msgstr "Look at my kingdom! Nests, sawmills, walls, towers. Impressive, isn't it? You may improve it. First, let me show you the pause button. Space. Even I need a break."
+
+msgid "ui.chapter.food_intro"
+msgstr "Everyone eats in the canteen because I said so. Watch that hungry ant. No one has to tell her where lunch is."
+
+msgid "ui.chapter.observe_food"
+msgstr "Watch the hungry worker go to the canteen."
+
+msgid "ui.chapter.worker_appears"
+msgstr "Oh! That's Worker. She can build just about anything. Say hello."
+
+msgid "ui.chapter.worker_hello"
+msgstr "Hi. I work, I eat, I go home. Where else would I go? My home's here."
+
+msgid "ui.chapter.free_intro"
+msgstr "Build me a statue, then upgrade the timber grove with a sawmill and the stone deposit with a quarry. Pick the spots yourself. And roads! Make it look like I planned it."
+
+msgid "ui.chapter.wish_hint"
+msgstr "Build the queen's three wishes. Roads are optional."
+
+msgid "ui.chapter.wish"
+msgstr "Wish %d / %d — %s. Open Build (B) and place it."
+
+msgid "ui.chapter.planner_shock"
+msgstr "What... who let you build all this? I calculated the remaining supplies yesterday!"
+
+msgid "ui.chapter.planner_reply"
+msgstr "The queen asked me to—"
+
+msgid "ui.chapter.planner_materials"
+msgstr "We can't afford this pace. If I leave these plans running, soon we'll have nothing to repair even the walls. I'm removing the new construction."
+
+msgid "ui.chapter.demolition_goal"
+msgstr "The planner is removing your new construction."
+
+msgid "ui.chapter.queen_accuses"
+msgstr "Are you saying my kingdom cannot afford my plans?"
+
+msgid "ui.chapter.planner_truth"
+msgstr "I'm saying our supplies are finite. The spent materials are gone. I stopped the new projects to save what's left for—"
+
+msgid "ui.chapter.execution"
+msgstr "Execute her. I don't need news that spoils my mood."
+
+msgid "ui.chapter.execution_reaction"
+msgstr "She was trying to help us. The queen didn't even let her finish."
+
+msgid "ui.chapter.work_intro"
+msgstr "I'm the courier. Call me Logistics if it helps. Let's look at what the workers actually do. Watch her finish a job and carry the output home."
+
+msgid "ui.chapter.observe_work"
+msgstr "Watch a worker gather resources and return to her own nest."
+
+msgid "ui.chapter.carry_command"
+msgstr "Worker, take this to the next warehouse."
+
+msgid "ui.chapter.no"
+msgstr "No."
+
+msgid "ui.chapter.not_question"
+msgstr "That wasn't a question."
+
+msgid "ui.chapter.home"
+msgstr "I've worked already. Now I'm going home."
+
+msgid "ui.chapter.always"
+msgstr "She always does this."
+
+msgid "ui.chapter.find_me"
+msgstr "At least you always know where to find me."
+
+msgid "ui.chapter.job"
+msgstr "I know where to find everyone. It's my job."
+
+msgid "ui.chapter.coffee"
+msgstr "Sure. Can you find coffee too?"
+
+msgid "ui.chapter.no_coffee"
+msgstr "No. The queen banned everything except berries."
+
+msgid "ui.chapter.berry"
+msgstr "Then I'll bring you a berry. Home, obviously."
+
+msgid "ui.chapter.explain_transport"
+msgstr "Workers bring output to their own nest. Carriers move supplies between warehouses and building sites. I've ordered six wood for the western barracks. Watch the delivery."
+
+msgid "ui.chapter.observe_transport"
+msgstr "Wait for six wood to arrive at the western barracks."
+
+msgid "ui.chapter.work_choice"
+msgstr "A worker compares travel time and workload. A nearby full workplace can lose to a farther free one. And she needs enough food to get back."
+
+msgid "ui.chapter.work_return"
+msgstr "I go where there's work. Then home."
+
+msgid "ui.chapter.recruit_intro"
+msgstr "Open a nest and hire a worker in the Ants tab. It costs food and materials, and every nest has a population limit."
+
+msgid "ui.chapter.recruit_goal"
+msgstr "Open a nest and recruit one worker."
+
+msgid "ui.chapter.magic_intro"
+msgstr "I don't build roads around inconvenient land. I command the land to become convenient. A crown pays for a nest. Instantly."
+
+msgid "ui.chapter.magic_command"
+msgstr "Watch the queen change the island."
+
+msgid "ui.chapter.magic_failed"
+msgstr "The queen needs a crown and a clear place for her miracle."
+
+msgid "ui.chapter.supplies_intro"
+msgstr "Let's stock up before anything happens. We need at least fifty food, wood and stone for the ship, plus materials for building it and completing the road. The goal includes a food reserve."
+
+msgid "ui.chapter.supplies_worker"
+msgstr "I'll gather what I can. Then home."
+
+msgid "ui.chapter.stock_goal"
+msgstr "Prepare supplies and construction materials."
+
+msgid "ui.chapter.spiders_warning"
+msgstr "Spiders at the western shore. They tried to talk before. Something about drying up the island. The queen wouldn't listen."
+
+msgid "ui.chapter.defend"
+msgstr "Towers, stop them! Walls, hold formation! ...Why is everything falling apart?"
+
+msgid "ui.chapter.spiders_target"
+msgstr "They're not coming for us."
+
+msgid "ui.chapter.queen_target"
+msgstr "No. They're coming for her. Those old defenses won't hold."
+
+msgid "ui.chapter.queen_fear"
+msgstr "Why are they looking at me? Build a ship. A big, beautiful one. Immediately."
+
+msgid "ui.chapter.ship_plan"
+msgstr "I've marked the coast. Build the ship and let the carriers load it. At least fifty of each supply. It can hold up to a hundred of each."
+
+msgid "ui.chapter.and_road"
+msgstr "And the road?"
+
+msgid "ui.chapter.what_road"
+msgstr "What road?"
+
+msgid "ui.chapter.road_rule"
+msgstr "You only walk on roads. We need a continuous path to the ship. Once the cargo is ready, Shuti gives the evacuation order."
+
+msgid "ui.chapter.royal_road"
+msgstr "I walk on royal roads."
+
+msgid "ui.chapter.build_ship"
+msgstr "Build the ship on the marked coast and connect the golden road tiles."
+
+msgid "ui.chapter.evacuate_goal"
+msgstr "Ship, cargo, road, then the queen."
+
+msgid "ui.chapter.road_missing"
+msgstr "Complete a continuous road to the landing."
+
+msgid "ui.chapter.evacuate"
+msgstr "Lead the queen aboard"
+
+msgid "ui.chapter.escort_hint"
+msgstr "The queen is walking to the ship. Keep the road open!"
+
+msgid "ui.chapter.strategic"
+msgstr "That was a strategic evacuation. Exactly as I planned."
+
+msgid "ui.chapter.of_course"
+msgstr "Of course."
+
+msgid "ui.chapter.can_home"
+msgstr "Can I go home now?"
+
+msgid "ui.chapter.no_home"
+msgstr "We don't have a home anymore."
+
+msgid "ui.chapter.closer"
+msgstr "Then I'll go wherever's closer."
+
+msgid "ui.chapter.board"
+msgstr "Get aboard, you stubborn ant. I'm not leaving you here."
+
+msgid "ui.chapter.depart"
+msgstr "All aboard. We're leaving."
+
+msgid "ui.chapter.wrong_action"
+msgstr "Queen: Focus, Jesty. Follow the current task before inventing another one."
+
+msgid "ui.chapter.nest_secret"
+msgstr "Don't think about it :)"
+
+msgid "ui.chapter.resource_question"
+msgstr "Where do all the supplies come from?"
+
+msgid "ui.chapter.resource_answer"
+msgstr "No idea, lol. They appear. That's what subjects are for."
+
+msgid "ui.chapter.shuti_topic"
+msgstr "Newly born, immediately employed as a jester. I keep wondering why I can create ants too."
+
+msgid "ui.chapter.planner_topic"
+msgstr "I used to keep the accounts on paper. Then Her Majesty decided the numbers looked depressing."
+
+msgid "ui.chapter.courier_topic"
+msgstr "I like horror stories about wasps. At least fictional wasps don't need their warehouse routes explained twice."
+
+msgid "ui.chapter.worker_topic"
+msgstr "I like romance novels. The kind where both of them get to come home."

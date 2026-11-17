@@ -116,12 +116,13 @@ static func decode(layout: Dictionary) -> LevelData:
 
 static func create_world(layout: Dictionary) -> World:
 	var data: LevelData = decode(layout)
-	return instantiate_world(data) if data != null else null
+	var template: PackedScene = load("res://game/worlds/first_island.tscn") if layout.get("chapter") == "first_island" else DEFAULT_WORLD
+	return instantiate_world(data, template) if data != null else null
 
-static func instantiate_world(data: LevelData) -> World:
+static func instantiate_world(data: LevelData, template: PackedScene = null) -> World:
 	if data == null or data.tiles.size() > TILE_LIMIT or data.objects.size() > data.tiles.size():
 		return null
-	var world: World = DEFAULT_WORLD.instantiate()
+	var world: World = (template if template != null else DEFAULT_WORLD).instantiate()
 	var map: TileMapLayer = world.map
 	if map is TerrainMap:
 		map.prepare_terrain()
@@ -194,6 +195,11 @@ static func _restore_objects(world: World, map: TileMapLayer, objects: Array[Lev
 					if option is WorkplaceUpgradeOption:
 						improvements[str(option.id)] = option
 	var definitions: Array[BuildOption] = world.build_controller.initial_options()
+	if world.chapter_rules != null:
+		definitions.append_array(world.chapter_rules.wishes)
+		for option in world.chapter_rules.wishes:
+			if option is WorkplaceUpgradeOption:
+				improvements[str(option.id)] = option
 	if world.waves.rules != null and world.waves.rules.defenses != null:
 		definitions.append_array(world.waves.rules.defenses.options)
 	if world.voyage_rules != null and world.voyage_rules.ship != null:

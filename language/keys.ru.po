@@ -1205,3 +1205,225 @@ msgstr "А, неважно"
 
 msgid "ui.story.tutorial.given_name"
 msgstr "Будешь Шути. Моя личная шутиха. А теперь порадуй свою королеву."
+
+msgid "ui.chapter.planner"
+msgstr "Планировщица"
+
+msgid "ui.chapter.courier"
+msgstr "Логистка"
+
+msgid "ui.chapter.worker"
+msgstr "Рабочая"
+
+msgid "ui.chapter.conversations"
+msgstr "Разговоры"
+
+msgid "ui.chapter.colony_intro"
+msgstr "Посмотри на моё королевство! Муравейники, лесопилки, стены, башни. Впечатляет? Можешь немного обустроить его. Для начала — Пробел ставит мир на паузу. Даже мне нужен отдых."
+
+msgid "ui.chapter.food_intro"
+msgstr "Все едят в столовой, потому что я так решила. Вон та уже проголодалась. Посмотри, как она сама пойдёт обедать."
+
+msgid "ui.chapter.observe_food"
+msgstr "Посмотри, как голодная рабочая идёт в столовую."
+
+msgid "ui.chapter.worker_appears"
+msgstr "О!!! Это Рабочая. Она почти всё умеет строить. Поздоровайся."
+
+msgid "ui.chapter.worker_hello"
+msgstr "Привет. Работаю, ем, домой хожу. А куда попрёшь? Дом-то здесь."
+
+msgid "ui.chapter.free_intro"
+msgstr "Построй мне статую, потом улучши лес лесопилкой и каменную россыпь каменоломней. Места выбирай сама. И дороги! Пусть выглядит так, будто я всё спланировала."
+
+msgid "ui.chapter.wish_hint"
+msgstr "Выполни три строительных пожелания королевы. Дороги можно прокладывать по желанию."
+
+msgid "ui.chapter.wish"
+msgstr "Пожелание %d / %d — %s. Открой стройку (B) и выбери место."
+
+msgid "ui.chapter.planner_shock"
+msgstr "Что… кто разрешил тебе всё это строить? Я только вчера сводила остатки!"
+
+msgid "ui.chapter.planner_reply"
+msgstr "Королева попросила меня—"
+
+msgid "ui.chapter.planner_materials"
+msgstr "Материалов на всё это не хватит. Если сейчас не остановить стройку, скоро нечем будет чинить даже стены. Я убираю новые постройки."
+
+msgid "ui.chapter.demolition_goal"
+msgstr "Планировщица сносит новые постройки."
+
+msgid "ui.chapter.queen_accuses"
+msgstr "Ты говоришь, что моё королевство не может позволить себе мои планы?"
+
+msgid "ui.chapter.planner_truth"
+msgstr "Я говорю, что запасы конечны. Потраченное уже не вернуть. Я убрала новые постройки, чтобы сохранить остатки для—"
+
+msgid "ui.chapter.execution"
+msgstr "Казнить её. Мне не нужны новости, которые портят настроение."
+
+msgid "ui.chapter.execution_reaction"
+msgstr "Она ведь пыталась помочь. Королева даже не дала ей договорить."
+
+msgid "ui.chapter.work_intro"
+msgstr "Я Логистка. Носильщик, если по штатному расписанию. Давай посмотрим, что рабочие делают на самом деле. Проследи, как она закончит работу и отнесёт добытое домой."
+
+msgid "ui.chapter.observe_work"
+msgstr "Проследи за рабочей до предприятия и обратно к её муравейнику."
+
+msgid "ui.chapter.carry_command"
+msgstr "Рабочая, отнеси это в соседний склад."
+
+msgid "ui.chapter.no"
+msgstr "Нет."
+
+msgid "ui.chapter.not_question"
+msgstr "Это не вопрос."
+
+msgid "ui.chapter.home"
+msgstr "Я уже работала. Теперь домой."
+
+msgid "ui.chapter.always"
+msgstr "Она всегда так делает."
+
+msgid "ui.chapter.find_me"
+msgstr "Зато ты всегда знаешь, где меня искать."
+
+msgid "ui.chapter.job"
+msgstr "Я знаю, где искать всех. Это моя работа."
+
+msgid "ui.chapter.coffee"
+msgstr "Конечно. И кофе ты тоже найдёшь?"
+
+msgid "ui.chapter.no_coffee"
+msgstr "Нет. Королева запретила всё, кроме ягод."
+
+msgid "ui.chapter.berry"
+msgstr "Тогда я принесу тебе ягоду. Домой, конечно."
+
+msgid "ui.chapter.explain_transport"
+msgstr "Рабочие несут добытое в свой муравейник. Носильщики перевозят между складами и к стройкам. Я заказала шесть древесины в западную казарму. Посмотри на доставку."
+
+msgid "ui.chapter.observe_transport"
+msgstr "Дождись доставки шести древесины в западную казарму."
+
+msgid "ui.chapter.work_choice"
+msgstr "Рабочая учитывает путь и загрузку. Близкое занятое предприятие может проиграть дальнему свободному. И сил на возвращение должно хватить."
+
+msgid "ui.chapter.work_return"
+msgstr "Я иду туда, где работа. Потом домой."
+
+msgid "ui.chapter.recruit_intro"
+msgstr "Открой муравейник и найми рабочую на вкладке «Муравьи». Нужны еда и материалы. У каждого муравейника есть предел жителей."
+
+msgid "ui.chapter.recruit_goal"
+msgstr "Открой муравейник и найми одну рабочую."
+
+msgid "ui.chapter.magic_intro"
+msgstr "Я не строю дорогу вокруг неудобного места. Я приказываю месту стать удобным. За корону будет муравейник. Немедленно."
+
+msgid "ui.chapter.magic_command"
+msgstr "Посмотри, как королева меняет остров."
+
+msgid "ui.chapter.magic_failed"
+msgstr "Для чуда королеве нужна корона и свободное место."
+
+msgid "ui.chapter.supplies_intro"
+msgstr "Давай подготовим запасы, пока ничего не случилось. На корабль нужны хотя бы по пятьдесят еды, дерева и камня. Ещё нужны материалы на сам корабль, дорогу и еда рабочим. Всё учтено в цели."
+
+msgid "ui.chapter.supplies_worker"
+msgstr "Добуду, что смогу. Потом домой."
+
+msgid "ui.chapter.stock_goal"
+msgstr "Накопи припасы и материалы для эвакуации."
+
+msgid "ui.chapter.spiders_warning"
+msgstr "Пауки у западного берега. Они и раньше пытались говорить. Что-то про высохший остров. Королева не слушала."
+
+msgid "ui.chapter.defend"
+msgstr "Башни, остановить их! Стены, держать строй! …Почему всё разваливается?"
+
+msgid "ui.chapter.spiders_target"
+msgstr "Они не идут к нам."
+
+msgid "ui.chapter.queen_target"
+msgstr "Нет. Они идут к ней. Эта старая оборона их не задержит."
+
+msgid "ui.chapter.queen_fear"
+msgstr "Почему они смотрят на меня? Постройте корабль. Большой. Красивый. И немедленно."
+
+msgid "ui.chapter.ship_plan"
+msgstr "Я отметила берег. Построй корабль, носильщики его загрузят. Нужно хотя бы по пятьдесят каждого припаса. Помещается до ста каждого."
+
+msgid "ui.chapter.and_road"
+msgstr "А дорогу?"
+
+msgid "ui.chapter.what_road"
+msgstr "Какую дорогу?"
+
+msgid "ui.chapter.road_rule"
+msgstr "Ты ходишь только по дорогам. Нужен непрерывный путь к кораблю. Когда припасы будут на борту, Шути отдаст приказ об эвакуации."
+
+msgid "ui.chapter.royal_road"
+msgstr "Я хожу по королевским дорогам."
+
+msgid "ui.chapter.build_ship"
+msgstr "Построй корабль на отмеченном берегу и соедини золотые клетки дорогой."
+
+msgid "ui.chapter.evacuate_goal"
+msgstr "Корабль, припасы, дорога, затем королева."
+
+msgid "ui.chapter.road_missing"
+msgstr "Дострой непрерывную дорогу к причалу."
+
+msgid "ui.chapter.evacuate"
+msgstr "Вести королеву на борт"
+
+msgid "ui.chapter.escort_hint"
+msgstr "Королева идёт к кораблю. Сохрани дорогу!"
+
+msgid "ui.chapter.strategic"
+msgstr "Это была стратегическая эвакуация. Именно так я и планировала."
+
+msgid "ui.chapter.of_course"
+msgstr "Разумеется."
+
+msgid "ui.chapter.can_home"
+msgstr "Можно теперь домой?"
+
+msgid "ui.chapter.no_home"
+msgstr "У нас больше нет дома."
+
+msgid "ui.chapter.closer"
+msgstr "Тогда пойду туда, где ближе."
+
+msgid "ui.chapter.board"
+msgstr "Залезай на борт, упрямица. Я тебя здесь не оставлю."
+
+msgid "ui.chapter.depart"
+msgstr "Все на борт. Отплываем."
+
+msgid "ui.chapter.wrong_action"
+msgstr "Королева: Соберись, Шути. Сначала текущее поручение, потом выдумывай новые."
+
+msgid "ui.chapter.nest_secret"
+msgstr "Не думай об этом :)"
+
+msgid "ui.chapter.resource_question"
+msgstr "А откуда вообще берутся все материалы?"
+
+msgid "ui.chapter.resource_answer"
+msgstr "Хз лол. Появляются. Для этого и существуют подданные."
+
+msgid "ui.chapter.shuti_topic"
+msgstr "Только родилась, а уже работаю шутихой. Интересно, почему я тоже могу создавать муравьёв?"
+
+msgid "ui.chapter.planner_topic"
+msgstr "Раньше я вела расчёты на бумаге. Потом Её Величество решило, что цифры выглядят уныло."
+
+msgid "ui.chapter.courier_topic"
+msgstr "Люблю ужастики про ос. Хотя бы выдуманным осам не надо дважды объяснять маршрут до склада."
+
+msgid "ui.chapter.worker_topic"
+msgstr "Я люблю романтические книжки. Такие, где обе в конце возвращаются домой."

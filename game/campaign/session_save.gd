@@ -79,6 +79,9 @@ static func capture(world: World) -> Dictionary:
 	var layout_buildings: Array[Node] = []
 	layout_buildings.assign(buildings)
 	var data := {"save_version": VERSION, "layout": LevelLayout.capture(world.map, layout_buildings), "buildings": [], "ants": [], "sites": []}
+	if world.chapter != null:
+		data["chapter"] = world.chapter.capture_state()
+		data.layout["chapter"] = "first_island"
 	data.layout["wave_mode"] = world.combat != null
 	data["stock"] = world.inventory.capture_stock()
 	data["time"] = world.match_controller.time_remaining
@@ -94,6 +97,7 @@ static func capture(world: World) -> Dictionary:
 		if building is Workplace:
 			state = building.capture_production()
 		if building is DefenseBuilding: state["shot_timer"] = building.shot_timer
+		if building is CargoShip: state["manifest"] = building.manifest.duplicate()
 		if world.combat != null: state["health"] = world.combat.health(building)
 		data.buildings.append(state)
 	var sites: Array[ConstructionSite] = world.build_controller.construction.sites if world.build_controller.construction != null else [] as Array[ConstructionSite]
@@ -131,6 +135,8 @@ static func apply(world: World, data: Dictionary) -> void:
 		if building is House:
 			building.restore_storage_settings(state)
 			world.inventory.restore_depot(building, state.get("stock", world.inventory.capture_depot(building)))
+		elif building is CargoShip:
+			building.manifest.assign(state.get("manifest", {}))
 		elif building is Workplace:
 			building.restore_production(state, ResourceAmount.unpack(state.output, world.inventory.type_by_id))
 		elif building is DefenseBuilding:
@@ -155,6 +161,10 @@ static func apply(world: World, data: Dictionary) -> void:
 	for id in data.options:
 		if catalog_ids.has(id) and definitions.has(id):
 			options.append(definitions[id])
+	if world.chapter_rules != null:
+		for option in world.chapter_rules.wishes:
+			if data.options.has(str(option.id)) and not options.has(option):
+				options.append(option)
 	world.build_controller.set_available_options(options)
 	world.prices.restore_state(data.prices)
 	var legacy_order: TaskBuildOrder
@@ -199,6 +209,13 @@ static func apply(world: World, data: Dictionary) -> void:
 		world.prices.queue_order(option, 1)
 		sites.append(site)
 	world.route_service.rebuild(world.registry.blocked_cells())
+	if world.chapter_rules != null:
+		for building in buildings:
+			if building is CargoShip:
+				building.requirements = world.chapter_rules.minimum_cargo
+				building.accepting_cargo = true
+				building.capacity_per_resource = world.chapter_rules.cargo_capacity
+				world.logistics.cargo_receiver = building
 	for state in data.ants:
 		var home: House = buildings[state.home]
 		var ant: AntAgent = world.population.restore_resident(home, state.role)
@@ -226,6 +243,10 @@ static func _saved_order(director: TaskDirector, task_id: String, variant_id: St
 static func _definitions(world: World) -> Dictionary:
 	var result := {}
 	var options: Array[BuildOption] = world.build_controller.options
+	if world.chapter_rules != null:
+		options.append_array(world.chapter_rules.wishes)
+		options.append(world.chapter_rules.ship)
+		options.append(world.chapter_rules.base_nest)
 	if world.voyage_rules != null:
 		options.append(world.voyage_rules.ship)
 	if world.tasks != null:

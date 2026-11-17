@@ -10,6 +10,10 @@ class_name World
 @export var voyage_rules: VoyageRules
 @export var satiety_rules: SatietyRules
 @export var island_generation: IslandGenerationRules
+@export var chapter_rules: FirstChapterRules
+@export var queen: QueenActor
+@export var chapter_spawn_points: Array[Marker2D] = []
+var chapter: Node
 var map_size: Vector2i:
 	get:
 		return map.get_used_rect().size

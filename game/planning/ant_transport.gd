@@ -7,8 +7,8 @@ var cargo: Array[ResourceAmount] = []
 var carrying := false
 var shipment := false
 var pickup_source: Building
-var delivery_nest: House
-var order_target: House
+var delivery_nest: Building
+var order_target: Building
 var _order_type: ResourceType
 var _order_amount := 0
 
@@ -45,7 +45,7 @@ func can_start_pickup(pickup_cost: float, delivery_cost: float, start_cell: Vect
 
 func load_pickup() -> void:
 	var source: House = pickup_source as House
-	var target: House = order_target
+	var target: Building = order_target
 	var type: ResourceType = _order_type
 	var amount: int = _order_amount
 	pickup_source = null
@@ -119,10 +119,14 @@ func _delivery_energy(route: Route, from_cell: Vector2i) -> float:
 	return energy
 
 func _order_target_accepts(count: int) -> bool:
+	if not is_instance_valid(order_target):
+		return false
+	if order_target is CargoShip:
+		return ant.logistics.owns(order_target) and order_target.accepts(cargo)
 	return is_instance_valid(order_target) and ant.logistics.owns(order_target) and ant.planner.inventory.can_deposit(ant.logistics.store_of(order_target), count)
 
 ## An order is valid while its source still has surplus and its target still needs the amount.
-func _order_still_valid(source: House, target: House, type: ResourceType, amount: int) -> bool:
+func _order_still_valid(source: House, target: Building, type: ResourceType, amount: int) -> bool:
 	return (
 		type != null and amount > 0
 		and is_instance_valid(source) and source.is_inside_tree() and ant.logistics.owns(source)
@@ -140,10 +144,20 @@ func _set_incoming(delta: int) -> void:
 
 func unload() -> void:
 	if shipment:
+		if is_instance_valid(delivery_nest) and delivery_nest is CargoShip:
+			if ant.logistics.owns(delivery_nest) and delivery_nest.receive(cargo, ant.planner.inventory):
+				_set_incoming(-WorldInventory.cargo_size(cargo))
+				ant.logistics.shipment_delivered.emit(delivery_nest, cargo[0].type, WorldInventory.cargo_size(cargo))
+				_clear_cargo()
+				ant._go_home()
+			else:
+				deliver()
+			return
 		if ant.logistics.owns(delivery_nest) and ant.planner.inventory.close_shipment(cargo, true, ant.logistics.store_of(delivery_nest)):
 			if delivery_nest == order_target:
 				order_target.fulfil(str(cargo[0].type.id), WorldInventory.cargo_size(cargo))
 			_set_incoming(-WorldInventory.cargo_size(cargo))
+			ant.logistics.shipment_delivered.emit(delivery_nest, cargo[0].type, WorldInventory.cargo_size(cargo))
 			_clear_cargo()
 			ant._set_waiting_reason(WorkPlan.WaitReason.NONE)
 			ant._go_home()
@@ -151,7 +165,7 @@ func unload() -> void:
 		# Destination lost its room while this load was en route; keep the cargo and retry.
 		deliver()
 		return
-	if not ant.logistics.deposit(delivery_nest, cargo):
+	if not ant.logistics.deposit(delivery_nest as House, cargo):
 		deliver()
 		return
 	_clear_cargo()
@@ -177,10 +191,20 @@ func capture_state(state: Dictionary, buildings: Array[Building]) -> void:
 	state["cargo"] = ResourceAmount.pack(cargo)
 	state["pickup"] = buildings.find(pickup_source)
 	state["delivery"] = buildings.find(delivery_nest)
+	if is_instance_valid(order_target):
+		state["order_target"] = buildings.find(order_target)
+		state["order_type"] = str(_order_type.id) if _order_type != null else ""
+		state["order_amount"] = _order_amount
 
 func restore_state(state: Dictionary, buildings: Array[Building]) -> void:
 	cargo = ResourceAmount.unpack(state.cargo, ant.planner.inventory.type_by_id)
 	pickup_source = buildings[state.pickup] if state.pickup >= 0 else null
-	delivery_nest = buildings[state.delivery] as House if state.delivery >= 0 else null
+	delivery_nest = buildings[state.delivery] if state.delivery >= 0 else null
 	carrying = state._carrying
 	shipment = state._shipment
+	if int(state.get("order_target", -1)) >= 0:
+		order_target = buildings[state.order_target]
+		_order_type = ant.planner.inventory.type_by_id(StringName(state.get("order_type", "")))
+		_order_amount = int(state.get("order_amount", 0))
+		if shipment and order_target != null:
+			_set_incoming(WorldInventory.cargo_size(cargo))

@@ -22,6 +22,7 @@ var progress: Dictionary[StringName, ProgressBar] = {}
 @onready var _zoom: Label = %Zoom
 @onready var _toast: Label = %Toast
 var _toast_time := 0.0
+var _economy_visible := true
 @onready var _warning: Label = %Warning
 @onready var _waiting: Label = %Waiting
 var _zoom_level := 2
@@ -146,7 +147,7 @@ func refresh() -> void:
 		_waiting.text += ("\n" if not _waiting.text.is_empty() else "") + tr("ui.hud.missing_inputs") % missing_inputs
 	if storage_full > 0:
 		_waiting.text += ("\n" if not _waiting.text.is_empty() else "") + tr("ui.hud.storage_full") % storage_full
-	_waiting.visible = busy > 0 or unsafe_work > 0 or missing_inputs > 0 or storage_full > 0
+	_waiting.visible = _economy_visible and (busy > 0 or unsafe_work > 0 or missing_inputs > 0 or storage_full > 0)
 	var food: ResourceType = world.inventory.type_by_id(&"food")
 	_warning.text = "ui.hud.need_food" if world.inventory.available(food) < PRESENTATION.low_food_threshold else ""
 
@@ -167,6 +168,14 @@ func _on_time_changed(seconds: int) -> void:
 
 func set_countdown_visible(enabled: bool) -> void:
 	_timer.visible = enabled
+
+func set_economy_visible(enabled: bool) -> void:
+	_economy_visible = enabled
+	colony_summary.get_node("%Totals").visible = enabled
+	%Counters.visible = enabled
+	%MatchStatus.self_modulate.a = 1.0 if enabled else 0.0
+	_warning.visible = enabled
+	_waiting.visible = enabled
 
 func set_zoom(value: int) -> void:
 	_zoom_level = value

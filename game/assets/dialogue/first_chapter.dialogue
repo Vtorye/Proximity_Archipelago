@@ -1,0 +1,117 @@
+~ intro
+Queen: ui.story.tutorial.wake
+Queen: ui.story.tutorial.ask_name [#name_input]
+Queen: ui.story.tutorial.never_mind
+Queen: ui.story.tutorial.given_name
+Queen: ui.story.tutorial.purpose
+Protagonist: ui.story.tutorial.before
+Queen: ui.story.tutorial.my_fault
+Queen: ui.chapter.colony_intro
+Queen: ui.chapter.food_intro
+Queen: ui.chapter.observe_food [#action=food]
+=> END
+
+~ worker_hello
+Queen: ui.chapter.worker_appears
+Worker: ui.chapter.worker_hello
+Queen: ui.chapter.free_intro
+Queen: ui.chapter.wish_hint [#action=free]
+=> END
+
+~ planner
+Planner: ui.chapter.planner_shock
+Protagonist: ui.chapter.planner_reply
+Planner: ui.chapter.planner_materials
+Planner: ui.chapter.demolition_goal [#action=demolish]
+=> END
+
+~ execution
+Queen: ui.chapter.queen_accuses
+Planner: ui.chapter.planner_truth
+Queen: ui.chapter.execution
+Protagonist: ui.chapter.execution_reaction
+Courier: ui.chapter.work_intro
+Worker: ui.chapter.observe_work [#action=work]
+=> END
+
+~ logistics
+Courier: ui.chapter.carry_command
+Worker: ui.chapter.no
+Courier: ui.chapter.not_question
+Worker: ui.chapter.home
+Courier: ui.chapter.always
+Worker: ui.chapter.find_me
+Courier: ui.chapter.job
+Worker: ui.chapter.coffee
+Courier: ui.chapter.no_coffee
+Worker: ui.chapter.berry
+Courier: ui.chapter.explain_transport
+Courier: ui.chapter.observe_transport [#action=transport]
+=> END
+
+~ recruit
+Courier: ui.chapter.work_choice
+Worker: ui.chapter.work_return
+Courier: ui.chapter.recruit_intro
+Courier: ui.chapter.recruit_goal [#action=recruit]
+=> END
+
+~ magic
+Queen: ui.chapter.magic_intro
+Queen: ui.chapter.magic_command [#action=magic]
+=> END
+
+~ supplies
+Courier: ui.chapter.supplies_intro
+Worker: ui.chapter.supplies_worker
+Courier: ui.chapter.stock_goal [#action=supplies]
+=> END
+
+~ attack
+Courier: ui.chapter.spiders_warning
+Queen: ui.chapter.defend
+Worker: ui.chapter.spiders_target
+Courier: ui.chapter.queen_target
+Queen: ui.chapter.queen_fear
+Courier: ui.chapter.ship_plan
+Worker: ui.chapter.and_road
+Queen: ui.chapter.what_road
+Courier: ui.chapter.road_rule
+Queen: ui.chapter.royal_road
+Courier: ui.chapter.build_ship [#action=attack]
+=> END
+
+~ farewell
+Queen: ui.chapter.strategic
+Courier: ui.chapter.of_course
+Worker: ui.chapter.can_home
+Courier: ui.chapter.no_home
+Worker: ui.chapter.closer
+Courier: ui.chapter.board
+Queen: ui.chapter.depart [#action=depart]
+=> END
+
+~ first_reprimand
+Queen: ui.story.tutorial.first_reprimand [#portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_angry.png]
+=> END
+
+~ queen_topic
+Protagonist: ui.chapter.resource_question
+Queen: ui.chapter.resource_answer
+=> END
+
+~ shuti_topic
+Protagonist: ui.chapter.shuti_topic
+=> END
+
+~ planner_topic
+Planner: ui.chapter.planner_topic
+=> END
+
+~ courier_topic
+Courier: ui.chapter.courier_topic
+=> END
+
+~ worker_topic
+Worker: ui.chapter.worker_topic
+=> END

@@ -4,7 +4,7 @@ extends Node2D
 var director: CombatDirector
 var health := 6
 var motion := AntMotion.new()
-var _target: Building
+var _target: Node2D
 var _retarget := 0.0
 var _attack := 0.0
 var _last_target_cell := Vector2i(2147483647, 2147483647)

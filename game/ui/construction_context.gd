@@ -8,3 +8,4 @@ var pan_button: Button
 var obstacles: Callable
 var dismiss_map_popup: Callable
 var allow_tool: Callable
+var prices_visible := true

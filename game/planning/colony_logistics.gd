@@ -6,10 +6,12 @@ const TIMING := preload("res://game/navigation/navigation_timing.gd")
 
 var main_nest: House
 var construction: ConstructionService
+var cargo_receiver: CargoShip
 var inventory: WorldInventory
 var navigation: RouteService
 var _depots: Array[House] = []
-var _fields: Dictionary[House, NavigationField] = {}
+var _fields: Dictionary[Building, NavigationField] = {}
+signal shipment_delivered(target: Building, type: ResourceType, amount: int)
 
 func configure(stock: WorldInventory, routes: RouteService, registry: BuildingRegistry) -> void:
 	inventory = stock
@@ -51,7 +53,11 @@ func _remove_building(building: Building) -> void:
 		_depots.erase(house)
 		inventory.unregister_depot(house)
 
-func owns(house: House) -> bool:
+func owns(house: Building) -> bool:
+	if not is_instance_valid(house):
+		return false
+	if house is CargoShip:
+		return house == cargo_receiver and house.is_inside_tree() and house.accepting_cargo
 	return is_instance_valid(house) and (house == main_nest or _depots.has(house))
 
 ## A worker's cargo goes only to the storage of the nest it lives in.
@@ -89,7 +95,7 @@ func construction_sources(entries: Array[Vector2i], removed: Array[Building] = [
 				break
 	return sources
 
-func route_to(house: House, cell: Vector2i) -> Route:
+func route_to(house: Building, cell: Vector2i) -> Route:
 	return navigation.make_route(_field(house).path(cell)) if owns(house) else Route.invalid()
 
 func field_to(house: House) -> NavigationField:
@@ -129,7 +135,9 @@ func order_for(house: House, type: ResourceType) -> Dictionary:
 
 ## Units a nest still wants: refill up to max once stock (plus incoming) drops below min,
 ## plus any one-time request not yet on its way. Never more than free space.
-func order_need(house: House, type: ResourceType) -> int:
+func order_need(house: Building, type: ResourceType) -> int:
+	if house is CargoShip:
+		return house.need(type) if owns(house) else 0
 	if not owns(house):
 		return 0
 	var id: String = str(type.id)
@@ -153,12 +161,12 @@ func construction_pending() -> bool:
 
 class StockOrder:
 	var source: House
-	var target: House
+	var target: Building
 	var type: ResourceType
 	var amount: int
 	var pickup: Route
 
-	func _init(origin: House, destination: House, resource: ResourceType, quantity: int, approach: Route) -> void:
+	func _init(origin: House, destination: Building, resource: ResourceType, quantity: int, approach: Route) -> void:
 		source = origin
 		target = destination
 		type = resource
@@ -179,6 +187,10 @@ func _nearest_order(from_cell: Vector2i, capacity: int, can_collect: Callable) -
 	var best: StockOrder
 	var lowest := INF
 	var houses := nests()
+	var targets: Array[Building] = []
+	targets.assign(houses)
+	if owns(cargo_receiver):
+		targets.append(cargo_receiver)
 	var types := _order_types()
 	var pending := construction_pending()
 	var surplus_by_type: Dictionary[ResourceType, Dictionary] = {}
@@ -189,7 +201,7 @@ func _nearest_order(from_cell: Vector2i, capacity: int, can_collect: Callable) -
 			var surplus := order_surplus(house, type)
 			if surplus > 0: sources[house] = surplus
 		if not sources.is_empty(): surplus_by_type[type] = sources
-	for target in houses:
+	for target in targets:
 		for type in surplus_by_type:
 			var need: int = mini(order_need(target, type), capacity)
 			if need <= 0:
@@ -212,7 +224,9 @@ func _nearest_order(from_cell: Vector2i, capacity: int, can_collect: Callable) -
 		best.pickup = route_to(best.source, from_cell)
 	return best
 
-func _field(house: House) -> NavigationField:
+func _field(house: Building) -> NavigationField:
+	if house is CargoShip:
+		return navigation.reverse_field(house.entry_cells())
 	var field: NavigationField = _fields.get(house)
 	if field == null or field.revision != navigation.revision:
 		field = navigation.reverse_field(house.entry_cells(), field)

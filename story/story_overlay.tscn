@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://story/story_overlay.gd" id="script"]
 [ext_resource type="StyleBox" path="res://game/ui/dialog_panel.tres" id="panel"]
-[ext_resource type="Resource" path="res://story/tutorial_episode.tres" id="episode"]
+[ext_resource type="Resource" path="res://game/assets/dialogue/first_chapter.dialogue" id="dialogue"]
 [ext_resource type="AudioStream" path="res://game/assets/audio/dialogue_blip.wav" id="blip"]
 
 [sub_resource type="StyleBoxFlat" id="dialogue_style"]
@@ -25,7 +25,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 mouse_filter = 2
 script = ExtResource("script")
-episode = ExtResource("episode")
+dialogue_resource = ExtResource("dialogue")
 
 [node name="Shade" type="ColorRect" parent="."]
 unique_name_in_owner = true
@@ -111,6 +111,7 @@ anchor_right = 0.5
 offset_left = -156.0
 offset_right = 72.0
 offset_top = 52.0
+visible = false
 grow_horizontal = 2
 theme_override_styles/panel = ExtResource("panel")
 
@@ -173,3 +174,10 @@ virtual_keyboard_enabled = true
 unique_name_in_owner = true
 stream = ExtResource("blip")
 volume_db = -12.0
+
+[node name="PaperHat" type="Polygon2D" parent="PortraitMount/Portrait"]
+unique_name_in_owner = true
+visible = false
+position = Vector2(88, 80)
+polygon = PackedVector2Array(-31, 0, 0, -26, 32, 0, 22, 13, -22, 13)
+color = Color(0.93, 0.9, 0.77, 1)

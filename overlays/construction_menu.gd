@@ -231,6 +231,9 @@ func _add_card(option: BuildOption) -> ConstructionCard:
 	entry.info_requested.connect(_toggle_description)
 	_choices.add_child(entry)
 	entry.configure(option, context.art)
+	if not context.prices_visible:
+		entry.get_node("%Cost").hide()
+		entry.get_node("%Info").hide()
 	controls[option.id] = entry
 	return entry
 
@@ -253,6 +256,8 @@ func _show_category(category: Button) -> void:
 	_layout_windows.call_deferred()
 
 func _toggle_description(option: BuildOption) -> void:
+	if not context.prices_visible:
+		return
 	description_panel.toggle(option, context.controller, _pricing_cell)
 	_layout_windows.call_deferred()
 
@@ -362,6 +367,10 @@ func _refresh() -> void:
 	_status.text = PlacementMessages.text(reason.code)
 	_status.visible = not _status.text.is_empty()
 	_status.add_theme_color_override("font_color", ColonyStyle.color(&"danger") if not reason.allowed() else ColonyStyle.color(&"muted"))
+	if not context.prices_visible:
+		_cost.hide()
+		_reward.hide()
+		_status.hide()
 	description_panel.refresh_at(_pricing_cell)
 	_preview.queue_redraw()
 

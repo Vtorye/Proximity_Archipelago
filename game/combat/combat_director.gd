@@ -3,6 +3,8 @@ extends Node2D
 ## World-local combat owns threats, damage, defenses and traps; it never changes production policy.
 signal changed
 var world: World
+var priority_target: QueenActor
+var automatic_waves := true
 @export var enabled := false
 @export var rules: WaveRules
 @export var enemy_scenes: Array[PackedScene] = []
@@ -108,6 +110,7 @@ func alive(target) -> bool:
 	if not is_instance_valid(target) or not target.is_inside_tree() or target.is_queued_for_deletion(): return false
 	if target is AntAgent: return target.status != AntAgent.Status.DEAD
 	if target is SpiderAgent: return target.health > 0
+	if target is QueenActor: return target.health > 0
 	return target is Building and _health.has(target)
 
 func can_melee(from: Vector2, target: Node2D) -> bool:
@@ -129,13 +132,30 @@ func approach(target: Node2D, from: Vector2i) -> Route:
 	return world.route_service.request_route(from, world.route_service.world_to_cell(target.global_position))
 
 func is_spider_target(building: Variant) -> bool:
+	if not alive(building):
+		return false
+	if building is QueenActor:
+		return true
 	if not alive(building) or not building is Building:
 		return false
 	if building is Workplace:
 		return building.improvement != null or (building.colony_owned and (not building.finite_supply or building.remaining_supply > 0))
 	return building.colony_owned
 
-func prey(cell: Vector2i) -> Building:
+func prey(cell: Vector2i) -> Node2D:
+	if alive(priority_target):
+		if approach(priority_target, cell).is_valid():
+			return priority_target
+		# Trace the land route to the queen and break the first blocking structure.
+		var terrain := TileGrid.new()
+		terrain.setup(world.map, [])
+		var pathfinder := preload("res://game/navigation/astar_path_finder.gd").new()
+		pathfinder.build(terrain)
+		for point in pathfinder.find_path(cell, world.route_service.world_to_cell(priority_target.global_position)):
+			var obstruction := world.registry.at(point)
+			if obstruction != null and is_spider_target(obstruction):
+				return obstruction
+		return null
 	var target: Building
 	var best := INF
 	for building in world.registry.all():
@@ -159,7 +179,9 @@ func nearest_spider(point: Vector2, cells: float) -> SpiderAgent:
 
 func damage(target: Node2D, amount: int) -> void:
 	if amount <= 0 or not alive(target): return
-	if target is AntAgent:
+	if target is QueenActor:
+		target.take_damage(amount)
+	elif target is AntAgent:
 		target.take_damage(amount, AntAgent.DeathCause.ENEMY)
 	elif target is SpiderAgent:
 		target.take_damage(amount)
@@ -215,7 +237,8 @@ func clear_trap(cell: Vector2i) -> bool:
 
 func _physics_process(delta: float) -> void:
 	if not running(): return
-	spawner.tick(delta)
+	if automatic_waves:
+		spawner.tick(delta)
 	for building in world.registry.all():
 		if not building is DefenseBuilding or building.kind != DefenseBuilding.Kind.TOWER: continue
 		building.shot_timer = maxf(0.0, building.shot_timer - delta)

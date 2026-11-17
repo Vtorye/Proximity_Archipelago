@@ -10,6 +10,8 @@ var world: World
 @onready var campaign_panel: CampaignPanel = $Interface/Campaign
 @onready var hud: MatchHud = $Interface/Hud
 @onready var story: StoryOverlay = $StoryLayer/Story
+@onready var chapter: FirstChapter = $Chapter
+@onready var chapter_panel: ChapterPanel = $Interface/ChapterPanel
 const CONSTRUCTION_PANEL := preload("res://overlays/construction_menu.tscn")
 const NEST_POPUP := preload("res://overlays/nest_menu.tscn")
 const FIRST_ISLAND := preload("res://game/worlds/first_island.tscn")
@@ -21,15 +23,14 @@ var _active := false
 var _pointer := Vector2(-1, -1)
 var _camera_moved := false
 var _tutorial_start := false
-var _tutorial_enabled := false
-var _tutorial_checkpoint: Dictionary = {}
+var _chapter_active := false
+var _chapter_checkpoint: Dictionary = {}
 
 func _ready() -> void:
 	var waves: bool = payload is Dictionary and payload.get("wave_mode", false)
 	_tutorial_start = payload is Dictionary and payload.get("tutorial", false) == true
 	var snapshot: Dictionary = payload.get("snapshot", {}) if payload is Dictionary else {}
-	if snapshot.get("tutorial") is Dictionary:
-		_tutorial_checkpoint = snapshot.tutorial
+	_chapter_checkpoint = snapshot.get("chapter", {})
 	if payload is Dictionary and payload.has("tiles"):
 		world = LevelLayout.create_world(payload)
 	elif _tutorial_start:
@@ -47,11 +48,10 @@ func _ready() -> void:
 			template.free()
 	if world == null:
 		world = LevelLayout.DEFAULT_WORLD.instantiate()
-	world.waves.enabled = waves
+	_chapter_active = world.chapter_rules != null and (_tutorial_start or not _chapter_checkpoint.is_empty())
+	world.waves.enabled = waves or _chapter_active
 	world.name = "World"
 	world.auto_start = false
-	if _tutorial_start:
-		world.opening_order = story.episode.opening_order
 	add_child(world)
 	move_child(world, 0)
 	world.match_controller.completed.connect(_on_completed)
@@ -61,13 +61,15 @@ func _ready() -> void:
 	navigation_overlay.configure(world)
 	selection.map = world.map
 	hud.configure(world, navigation_overlay)
-	_tutorial_enabled = (_tutorial_start or not _tutorial_checkpoint.is_empty()) and world.tasks != null
-	if _tutorial_enabled:
-		_set_tutorial_restrictions(true)
-		story.finished.connect(_set_tutorial_restrictions.bind(false))
-		world.build_controller.built.connect(story.on_build_completed)
-		world.build_controller.order_completed.connect(story.on_order_completed)
+	if _chapter_active:
+		chapter.configure(world, story)
+		chapter_panel.configure(chapter)
+		chapter.focus_requested.connect(_focus_chapter_cell)
+		chapter.demolition_requested.connect(_show_scripted_demolition)
+		chapter.checkpoint_requested.connect(save_game)
+		chapter.presentation_changed.connect(_refresh_chapter_ui)
 		story.modal_changed.connect(_on_story_modal_changed)
+		_refresh_chapter_ui()
 	camera.left_button_drag = false
 	if world.voyage != null:
 		if payload is Dictionary and payload.has("journey"): world.voyage.apply(payload.journey)
@@ -88,8 +90,9 @@ func _ready() -> void:
 func on_focus() -> void:
 	_active = true
 	world.start()
-	if _tutorial_enabled:
-		story.start(_tutorial_checkpoint)
+	if _chapter_active:
+		camera.set_level(1)
+		chapter.start(_chapter_checkpoint)
 	if payload is Dictionary and payload.has("journey"): SessionSave.write(world)
 	if debug_show_result:
 		_on_completed(MatchSummary.capture(true, &"target_reached", 83.0, world.inventory))
@@ -178,12 +181,9 @@ func _process(_delta: float) -> void:
 		nest_popup.visible = (top == null or top is PauseMenu) and not story.is_modal and not campaign_panel.visible
 		$PopupLayer.layer = 8
 	hud.lock_zoom(top != null or story.is_modal)
-	var guide_section := story.guide_section()
-	if not guide_section.is_empty():
-		var target := story.guide_cell()
-		var waiting := world.construction_service.at(target, true) != null if guide_section == &"build" else world.tasks.placed_order(story.episode.opening_order) != null
-		story.set_waiting_for_workers(waiting)
-		if can_use_map and not waiting:
+	if _chapter_active:
+		var target := chapter.guide_cell()
+		if can_use_map and world.map.get_used_rect().has_point(target):
 			if not selection.selected or selection.cell != target:
 				selection.select(target, true)
 		elif selection.selected:
@@ -201,17 +201,34 @@ func _process(_delta: float) -> void:
 		if navigation_overlay.hover_active or not panel.is_visible_in_tree():
 			navigation_overlay.hovered = _cell_at(_pointer)
 
-func _set_tutorial_restrictions(enabled: bool) -> void:
-	world.match_controller.countdown_suspended = enabled
-	hud.set_countdown_visible(not enabled)
-	if enabled:
-		world.build_controller.placement_allowed = story.allows_placement
-	else:
-		world.build_controller.placement_allowed = Callable()
-		selection.clear()
+func _refresh_chapter_ui() -> void:
+	_close_nest_popup()
+	hud.navigation_panel.inspect_cell(null)
+	hud.set_countdown_visible(false)
+	hud.set_economy_visible(chapter.economy_visible())
+	hud.get_node("%TasksTab").hide()
+	hud.get_node("%ColonyTab").visible = chapter.economy_visible()
+	hud.get_node("%Routes").visible = chapter.economy_visible()
+	hud.get_node("%WaveTimer").hide()
+	if is_instance_valid(_construction):
+		_close_construction_panel(_construction)
+	hud.set_section(&"")
+	_section = &""
+
+func _focus_chapter_cell(cell: Vector2i) -> void:
+	camera.position = world.route_service.cell_to_world(cell) - Vector2(0, 14)
+	camera.force_update_scroll()
+
+func _show_scripted_demolition(_cell: Vector2i) -> void:
+	if not is_instance_valid(_construction):
+		_create_construction_panel()
+	_construction.select_demolition()
+	_construction.set_palette_visible(true)
 
 func _on_story_modal_changed(modal: bool) -> void:
 	if modal:
+		hud.navigation_panel.inspect_cell(null)
+		_close_nest_popup()
 		camera.dragging = false
 		camera.enabled_input = false
 		if is_instance_valid(_construction):
@@ -220,20 +237,24 @@ func _on_story_modal_changed(modal: bool) -> void:
 			nest_popup.hide()
 
 func save_game(path := SessionSave.PATH) -> Error:
-	return SessionSave.write(world, path, story.capture_checkpoint())
+	return SessionSave.write(world, path)
+
+func retry_game() -> void:
+	var saved := SessionSave.read(FirstChapter.CHECKPOINT) if _chapter_active else {}
+	if not saved.is_empty():
+		var layout: Dictionary = saved.layout.duplicate()
+		layout["snapshot"] = saved
+		Router.goto(&"match", layout)
+	else:
+		Router.restart_current()
 
 func _cell_at(point: Vector2) -> Vector2i:
 	var map: TileMapLayer = world.map
 	return map.local_to_map(map.get_global_transform_with_canvas().affine_inverse() * point)
 
 func _inspect_building(cell: Vector2i) -> void:
-	if story.is_active():
-		if cell != story.guide_cell():
-			story.reprimand(&"cell")
-		elif _section.is_empty():
-			_select_section(story.guide_section())
-		else:
-			story.reprimand()
+	if _chapter_active and not chapter.nest_available():
+		story.flash_warning("ui.chapter.nest_secret")
 		return
 	var building: Building = world.registry.at(cell)
 	hud.navigation_panel.inspect_cell(cell)
@@ -279,9 +300,9 @@ func _open_settings() -> void:
 func _select_section(section: StringName) -> void:
 	if story.is_modal or Router.has_overlay() or campaign_panel.visible:
 		return
-	if story.is_active() and section != story.guide_section():
+	if _chapter_active and not chapter.allows_section(section):
 		hud.set_section(_section)
-		story.reprimand()
+		chapter.reprimand()
 		return
 	var already_open := _section == section
 	if section == &"build" and is_instance_valid(_construction):
@@ -291,7 +312,7 @@ func _select_section(section: StringName) -> void:
 	if _section == &"build":
 		if not is_instance_valid(_construction):
 			_create_construction_panel()
-		_construction.show_catalog(story.episode.road_option.id if story.is_active() else &"")
+		_construction.show_catalog(chapter.preferred_option() if _chapter_active else &"")
 		camera.dragging = false
 		camera.enabled_input = false
 		selection.clear()
@@ -310,12 +331,15 @@ func _create_construction_panel() -> void:
 	context.pan_button = hud.construction_pan_button()
 	context.obstacles = _construction_obstacles
 	context.dismiss_map_popup = _dismiss_visible_nest_popup
-	context.allow_tool = story.allows_tool
+	if _chapter_active:
+		context.allow_tool = chapter.allows_tool
+	context.prices_visible = not _chapter_active or chapter.economy_visible()
 	_construction = CONSTRUCTION_PANEL.instantiate()
 	_construction.payload = context
 	_construction.map_inspection_requested.connect(_inspect_secondary_cell)
 	_construction.pan_mode_changed.connect(hud.set_task_pan_mode)
-	_construction.restricted_action.connect(story.reprimand)
+	if _chapter_active:
+		_construction.restricted_action.connect(chapter.reprimand)
 	_construction.placement_drafted.connect(story.clear_reprimand)
 	_construction.close_requested.connect(_close_construction_panel)
 	$ConstructionLayer.add_child(_construction)
@@ -324,8 +348,8 @@ func _create_construction_panel() -> void:
 func _begin_royal_order(task_id: StringName, variant_id: StringName) -> void:
 	if story.is_modal:
 		return
-	if not story.allows_order(task_id):
-		story.reprimand()
+	if _chapter_active:
+		chapter.reprimand()
 		return
 	var order := world.tasks.start_order(task_id, variant_id)
 	if order == null:
@@ -362,6 +386,8 @@ func _update_construction_dock() -> void:
 
 func _construction_obstacles() -> Array[Rect2]:
 	var obstacles: Array[Rect2] = hud.build_obstacles()
+	if _chapter_active:
+		obstacles.append_array(chapter_panel.obstacles())
 	var hint_bounds := story.hint_bounds()
 	if hint_bounds.has_area():
 		obstacles.append(hint_bounds)
@@ -375,9 +401,9 @@ func _navigation_available() -> bool:
 
 func _toggle_navigation() -> void:
 	if not _navigation_available(): return
-	if story.is_active():
+	if _chapter_active and not chapter.economy_visible():
 		hud.set_navigation_mode(navigation_overlay.mode)
-		story.reprimand()
+		chapter.reprimand()
 		return
 	navigation_overlay.cycle()
 	hud.set_navigation_mode(navigation_overlay.mode)
