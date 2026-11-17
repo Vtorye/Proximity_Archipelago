@@ -667,19 +667,19 @@ msgid "ui.voyage.discount"
 msgstr "Efficient construction"
 
 msgid "ui.voyage.discount_detail"
-msgstr "All new buildings cost 10% less."
+msgstr "All new buildings cost %s%% less."
 
 msgid "ui.voyage.speed"
 msgstr "Quick feet"
 
 msgid "ui.voyage.speed_detail"
-msgstr "All ants move 15% faster."
+msgstr "All ants move %s%% faster."
 
 msgid "ui.voyage.satiety"
 msgstr "Deep reserves"
 
 msgid "ui.voyage.satiety_detail"
-msgstr "All ants gain 20% satiety capacity."
+msgstr "All ants gain %s%% satiety capacity."
 
 msgid "ui.voyage.departure"
 msgstr "Ship ready. Victory!"

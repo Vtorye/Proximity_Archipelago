@@ -26,9 +26,14 @@ func _ready() -> void:
 	else:
 		var seed_generator := RandomNumberGenerator.new()
 		seed_generator.randomize()
-		var generated: LevelData = IslandGenerator.generate_data(seed_generator.randi())
+		var template := LevelLayout.DEFAULT_WORLD.instantiate() as World
+		var generated := IslandGenerator.generate_data(template, seed_generator.randi())
 		if generated != null:
 			world = LevelLayout.instantiate_world(generated)
+		if world == null:
+			world = template
+		else:
+			template.free()
 	if world == null:
 		world = LevelLayout.DEFAULT_WORLD.instantiate()
 	world.waves.enabled = waves

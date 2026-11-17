@@ -80,7 +80,7 @@ func _agents_can_escape(grid: TileGrid, preview: TileGrid, field: NavigationFiel
 
 func _can_afford_route(ant: AntAgent, cost: float) -> bool:
 	var energy := ant.planner.travel_energy(cost, ant.movement_speed())
-	return ant.needs.can_afford(energy + AntNeeds.MEAL_SECONDS * AntNeeds.EAT_RATE)
+	return ant.needs.can_afford(energy + ant.needs.rules.meal_energy())
 
 func _find_exit(ant: AntAgent, start: Vector2i, grid: TileGrid, preview: TileGrid,
 		food: NavigationField, needs_food_route: bool, fields: Dictionary[Vector2i, NavigationField]) -> Vector2i:

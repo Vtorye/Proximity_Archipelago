@@ -3,9 +3,10 @@ extends RefCounted
 ## Authoring-only biome distribution. Saved maps are never regenerated during play.
 const OFFSETS: Array[Vector2i] = [Vector2i(-1, -1), Vector2i(0, -1), Vector2i(1, -1), Vector2i(-1, 0), Vector2i(1, 0), Vector2i(-1, 1), Vector2i(0, 1), Vector2i(1, 1)]
 
-static func populate(map: TerrainMap, objects: Array[Node], seed_value := 814) -> int:
+static func populate(map: TerrainMap, objects: Array[Node], rules: IslandGenerationRules, seed_value: int) -> int:
 	map.prepare_terrain()
-	var distances: Dictionary[Vector2i, int] = _water_distances(map)
+	var shore_distance := maxi(maxi(rules.wet_shore_depth, rules.dry_inland_distance), rules.dry_nest_distance)
+	var distances: Dictionary[Vector2i, int] = _water_distances(map, shore_distance)
 	var protected: Dictionary[Vector2i, int] = {}
 	var stone_cells: Array[Vector2i] = []
 	for object in objects:
@@ -16,24 +17,25 @@ static func populate(map: TerrainMap, objects: Array[Node], seed_value := 814) -
 		if building is Workplace and building.output != null and building.output.id == &"stone": stone_cells.append(building.cell)
 	var noise := FastNoiseLite.new()
 	noise.seed = seed_value
-	noise.frequency = 0.09
-	noise.fractal_octaves = 2
+	noise.frequency = rules.soil_noise_frequency
+	noise.fractal_octaves = rules.soil_noise_octaves
+	var quarry_radius_squared := rules.quarry_soil_radius * rules.quarry_soil_radius
 	var count := 0
 	for cell in map.get_used_cells():
 		var ground: TerrainType = map.ground_at(cell)
 		if ground == null or ground.kind != TerrainType.Kind.LAND: continue
-		var distance: int = distances.get(cell, 7)
+		var distance: int = distances.get(cell, shore_distance + 1)
 		var value: float = noise.get_noise_2d(cell.x, cell.y)
 		var id: StringName = &""
-		if distance == 1: id = &"sand" if value > 0.1 else &"wet"
-		elif distance == 2: id = &"wet"
-		elif stone_cells.any(func(stone: Vector2i) -> bool: return (stone - cell).length_squared() <= 2): id = &"rocky"
-		elif distance >= 5 and value > 0.08: id = &"dry"
-		elif value < -0.04: id = &"fertile"
+		if distance == 1: id = &"sand" if value > rules.sand_threshold else &"wet"
+		elif distance <= rules.wet_shore_depth: id = &"wet"
+		elif stone_cells.any(func(stone: Vector2i) -> bool: return (stone - cell).length_squared() <= quarry_radius_squared): id = &"rocky"
+		elif distance >= rules.dry_inland_distance and value > rules.dry_threshold: id = &"dry"
+		elif value < rules.fertile_threshold: id = &"fertile"
 		var type: TerrainType = map.catalog.by_id(id) if id != &"" else (map.catalog.default_ground if ground.preserve_ground else ground)
 		if type == null: continue
 		if protected.get(cell) == BuildOption.PlacementKind.NEST and not type.nests_allowed:
-			type = map.catalog.by_id(&"dry" if distance >= 4 else &"fertile")
+			type = map.catalog.by_id(&"dry" if distance >= rules.dry_nest_distance else &"fertile")
 		elif protected.get(cell) == BuildOption.PlacementKind.BERRY and not type.berries_allowed:
 			type = map.catalog.by_id(&"wet")
 		var surface: TerrainType = map.surface_at(cell)
@@ -61,7 +63,7 @@ static func grow_wet_shore(map: TerrainMap, water: Vector2i, objects: Array[Node
 		if map.surface_at(cell).kind == TerrainType.Kind.ROAD: map.underlays[cell] = wet.tile
 		else: map.paint_tile(cell, wet.tile, true)
 
-static func _water_distances(map: TerrainMap) -> Dictionary[Vector2i, int]:
+static func _water_distances(map: TerrainMap, limit: int) -> Dictionary[Vector2i, int]:
 	var distances: Dictionary[Vector2i, int] = {}
 	var queue: Array[Vector2i] = []
 	for cell in map.get_used_cells():
@@ -77,7 +79,7 @@ static func _water_distances(map: TerrainMap) -> Dictionary[Vector2i, int]:
 	while index < queue.size():
 		var cell: Vector2i = queue[index]
 		index += 1
-		if distances[cell] >= 6: continue
+		if distances[cell] >= limit: continue
 		for offset in OFFSETS:
 			var next: Vector2i = cell + offset
 			var type: TerrainType = map.surface_at(next)

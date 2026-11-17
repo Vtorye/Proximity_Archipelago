@@ -1,6 +1,6 @@
 class_name ArtCatalog
 extends Resource
-## Default art is 16x16. Image resolution is independent of the 16-unit world grid.
+## Image resolution is independent of the world grid.
 ## Replace PNGs or assign a complete catalog on a World; no game logic changes.
 
 @export var grass: Texture2D

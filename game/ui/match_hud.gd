@@ -121,7 +121,7 @@ func _build_hud() -> void:
 	AppSettings.language_changed.connect(_refresh_localized_labels)
 	set_section(&"")
 	refresh()
-	_on_time_changed(ceili(world.match_controller.match_duration))
+	_on_time_changed(ceili(world.match_controller.starting_duration()))
 	set_zoom(2)
 	set_navigation_mode(0)
 

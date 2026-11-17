@@ -1,6 +1,7 @@
 extends RefCounted
 func run(test: Node) -> void:
 	test_finite_sources(test)
+	_test_price_reload(test)
 	test_resource_facilities(test)
 	var world: World = test.make_world()
 	var wood: ResourceType = world.inventory.type_by_id(&"wood")
@@ -12,8 +13,8 @@ func run(test: Node) -> void:
 	rule.subject = option.id
 	option.price_rules = [rule]
 	var service := PriceService.new()
-	service.events.publish(GameEvents.Kind.RESOURCE_PRODUCED, &"wood", 10)
-	test.expect(service.events.count(GameEvents.Kind.RESOURCE_PRODUCED, &"wood") == 1, "one produced batch is one fact even when it contains ten units")
+	service.record(GameEvents.Kind.RESOURCE_PRODUCED, &"wood", 10)
+	test.expect(service.event_count(GameEvents.Kind.RESOURCE_PRODUCED, &"wood") == 1, "one produced batch is one fact even when it contains ten units")
 	test.expect(BuildController.price_amount(service.quote(option), stone) == 20, "base composite price is exact")
 	service.record(GameEvents.Kind.BUILDING_BUILT, option.id)
 	test.expect(BuildController.price_amount(service.quote(option), wood) == 12 and BuildController.price_amount(service.quote(option), stone) == 24, "one event increases both components by 1.2")
@@ -48,6 +49,28 @@ func run(test: Node) -> void:
 	workplace.free()
 	service.free()
 	world.free()
+
+func _test_price_reload(test: Node) -> void:
+	var path := "user://price-reload-regression.tres"
+	var wood: ResourceType = test.resource(&"wood")
+	var authored := SceneBuildOption.new()
+	authored.costs = [test.entry(wood, 5)]
+	if ResourceSaver.save(authored, path) != OK:
+		test.expect(false, "price reload fixture can be saved")
+		return
+	var shared := load(path) as BuildOption
+	var first := PriceService.new()
+	var second := PriceService.new()
+	first.track_options([shared])
+	first._process(first.reload_interval_seconds)
+	authored.costs = [test.entry(wood, 7)]
+	test.expect(ResourceSaver.save(authored, path) == OK, "edited price can be saved")
+	first._process(first.reload_interval_seconds)
+	test.expect(BuildController.price_amount(first.quote(shared), wood) == 7, "live quotes pick up an edited price")
+	test.expect(BuildController.price_amount(second.quote(shared), wood) == 5 and shared.costs[0].amount == 5, "reloading one world leaves the shared definition and another world alone")
+	first.free()
+	second.free()
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 
 func test_finite_sources(test: Node) -> void:
 	var world: World = test.make_world()
@@ -124,7 +147,7 @@ func test_resource_facilities(test: Node) -> void:
 	var order := world.tasks.start_order(task.id, variant.id)
 	test.expect(order != null and order.variant == variant and not world.build_controller.options.has(sawmill), "selecting an order does not grant its unlocks")
 	world.build_controller.order_completed.emit(order)
-	test.expect(world.build_controller.options.has(sawmill) and world.prices.definitions.has(quarry), "completed order unlocks its configured construction options")
+	test.expect(world.build_controller.options.has(sawmill) and world.prices.tracks(quarry), "completed order unlocks its configured construction options")
 	test.expect(not world.build_controller.can_build(sawmill, stone.cell) and not world.build_controller.can_build(quarry, berries.cell) and not world.build_controller.can_build(farm, workplace.cell), "each facility requires the matching raw resource")
 	test.expect(not world.build_controller.can_build(sawmill, Vector2i(26, 25)), "resource facilities cannot be built on empty ground")
 	workplace.finite_supply = true

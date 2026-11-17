@@ -81,7 +81,7 @@ static func capture(world: World) -> Dictionary:
 	data["time"] = world.match_controller.time_remaining
 	data["finished"] = world.match_controller.is_finished()
 	data["options"] = world.build_controller.options.map(func(option: BuildOption): return str(option.id))
-	data["prices"] = {"multiplier": world.prices.global_multiplier, "counts": world.events.capture_counts()}
+	data["prices"] = world.prices.capture_state()
 	for building: Building in buildings:
 		var state := {}
 		if building is House:
@@ -138,7 +138,8 @@ static func apply(world: World, data: Dictionary) -> void:
 	var catalog_ids: Array[String] = []
 	for option in world.build_controller.options:
 		catalog_ids.append(str(option.id))
-	catalog_ids.append(str(Voyage.SHIP.id))
+	if world.voyage_rules != null and world.voyage_rules.ship != null:
+		catalog_ids.append(str(world.voyage_rules.ship.id))
 	if world.tasks != null:
 		var deck := world.tasks.deck
 		if deck.unlocked_road != null:
@@ -147,13 +148,12 @@ static func apply(world: World, data: Dictionary) -> void:
 			for task in stage.tasks:
 				for option in task.unlocks:
 					catalog_ids.append(str(option.id))
-	world.build_controller.options.clear()
+	var options: Array[BuildOption] = []
 	for id in data.options:
 		if catalog_ids.has(id) and definitions.has(id):
-			world.build_controller.options.append(definitions[id])
-	world.prices.definitions = world.build_controller.options.duplicate()
-	world.prices.global_multiplier = data.prices.multiplier
-	world.events.restore_counts(data.prices.counts)
+			options.append(definitions[id])
+	world.build_controller.set_available_options(options)
+	world.prices.restore_state(data.prices)
 	var legacy_order: TaskBuildOrder
 	if data.has("tasks") and world.tasks != null:
 		world.tasks.restore_state(data.tasks)
@@ -221,8 +221,9 @@ static func _saved_order(director: TaskDirector, task_id: String, variant_id: St
 
 static func _definitions(world: World) -> Dictionary:
 	var result := {}
-	var options: Array[BuildOption] = world.build_controller.options.duplicate()
-	options.append(Voyage.SHIP)
+	var options: Array[BuildOption] = world.build_controller.options
+	if world.voyage_rules != null:
+		options.append(world.voyage_rules.ship)
 	if world.tasks != null:
 		options.append(world.tasks.deck.unlocked_road)
 		for task in world.tasks.deck.requests:

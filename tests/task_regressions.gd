@@ -35,7 +35,7 @@ func run(test: Node) -> void:
 	test.expect(tasks.level == 2 and tasks.closed == 0 and world.build_controller.options.has(tasks.deck.unlocked_road), "closing the five-item pool unlocks the next level")
 	var facilities: int = world.build_controller.options.filter(func(option: BuildOption) -> bool: return option is WorkplaceUpgradeOption).size()
 	test.expect(not world.build_controller.options.has(ordinary) and world.build_controller.options.size() == option_count + facilities and world.build_controller.options[road_position] == tasks.deck.unlocked_road, "road upgrade preserves its palette slot")
-	test.expect(not world.prices.definitions.has(ordinary) and world.prices.definitions.has(tasks.deck.unlocked_road), "pricing reload tracks active road")
+	test.expect(not world.prices.tracks(ordinary) and world.prices.tracks(tasks.deck.unlocked_road), "pricing reload tracks active road")
 	test.expect(BuildController.price_amount(world.build_controller.price(tasks.deck.unlocked_road), world.inventory.type_by_id(&"wood")) == ordinary_price, "replacement road preserves base price")
 	test.expect(not world.build_controller.try_build(ordinary, road_cell), "retired road option cannot be built")
 	while tasks.closed < tasks.stage().tasks.size():
@@ -44,7 +44,7 @@ func run(test: Node) -> void:
 		var order := tasks.start_order(tasks.slots[index].id, &"build")
 		world.build_controller.order_completed.emit(order)
 	tasks.choose_reward(1)
-	test.expect(tasks.level == 3 and is_equal_approx(world.prices.global_multiplier, 0.9), "completed orders apply level upgrade")
+	test.expect(tasks.level == 3 and is_equal_approx(world.prices.multiplier(), 0.9), "completed orders apply level upgrade")
 	var speed: float = world.population.agents()[0].speed
 	while tasks.closed < tasks.stage().tasks.size():
 		var index := 0

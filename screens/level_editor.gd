@@ -71,9 +71,20 @@ func _configure_controls() -> void:
 		var choice: OptionButton = _starting_maps[index]
 		choice.item_selected.connect(func(item: int): _set_starting_map(index == 1, choice, item))
 	_generator_seed.value = randi_range(1, 1000000)
-	for extent in [50, 80, 120, 160]:
+	var rules := _template.island_generation
+	var default_extent := clampi(rules.default_extent, rules.extent_limits.x, rules.extent_limits.y)
+	var extents := rules.editor_extents.duplicate()
+	if not extents.has(default_extent):
+		extents.append(default_extent)
+	for extent in extents:
+		if extent < rules.extent_limits.x or extent > rules.extent_limits.y:
+			continue
 		_generator_size.add_item("%d × %d" % [extent, extent], extent)
-	_generator_size.select(1)
+		if extent == default_extent:
+			_generator_size.select(_generator_size.item_count - 1)
+	_wood_total.value = rules.deposit_budgets.x
+	_stone_total.value = rules.deposit_budgets.y
+	_food_total.value = rules.deposit_budgets.z
 	_finite.pressed.connect(AppSettings.play_click)
 	_finite.toggled.connect(func(enabled: bool):
 		if is_instance_valid(_selected_source):
@@ -388,8 +399,8 @@ func _generate_map() -> void:
 		_discard_action = "generate"
 		_status.text = "ui.voyage.generate_confirm"
 		return
-	var totals := {"Workplace": int(_wood_total.value), "Workplace2": int(_stone_total.value), "AppleTree": int(_food_total.value)}
-	var layout: LevelData = IslandGenerator.generate_data(int(_generator_seed.value), 0, 0, _generator_size.get_selected_id(), totals)
+	var budgets := Vector3i(int(_wood_total.value), int(_stone_total.value), int(_food_total.value))
+	var layout := IslandGenerator.generate_data(_template, int(_generator_seed.value), 0, 0, _generator_size.get_selected_id(), budgets)
 	var generated: World = LevelLayout.instantiate_world(layout) if layout != null else null
 	if generated == null:
 		_status.text = "ui.map.load_failed"
@@ -401,7 +412,8 @@ func _generate_map() -> void:
 	_status.text = "ui.voyage.generated"
 
 func _generate_soils() -> void:
-	var count: int = TerrainPainter.populate(_map, _objects.get_children())
+	var rules := _template.island_generation
+	var count := TerrainPainter.populate(_map, _objects.get_children(), rules, rules.soil_seed)
 	_mark_dirty()
 	_status.text = tr("ui.terrain.generated") % count
 

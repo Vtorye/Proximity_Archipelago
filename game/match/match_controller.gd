@@ -25,6 +25,13 @@ var _finished := false
 var _started := false
 var _last_seconds := -1
 var _inventory: WorldInventory
+var _duration_override := 0.0
+
+func configure_duration_reduction(reduction: float, minimum: float) -> void:
+	_duration_override = maxf(minimum, match_duration - reduction)
+
+func starting_duration() -> float:
+	return _duration_override if _duration_override > 0.0 else match_duration
 
 
 func _ready() -> void:
@@ -48,14 +55,14 @@ func is_finished() -> bool:
 func start(stock: WorldInventory) -> bool:
 	if _started or _finished or stock == null or tracked_types.is_empty():
 		return false
-	if match_duration <= 0.0 or target_amount <= 0:
+	if starting_duration() <= 0.0 or target_amount <= 0:
 		return false
 	for type in tracked_types:
 		if type == null or not stock.is_registered(type):
 			return false
 	_inventory = stock
 	_inventory.changed.connect(_on_inventory_changed)
-	time_remaining = match_duration
+	time_remaining = starting_duration()
 	_started = true
 	_last_seconds = ceili(time_remaining)
 	time_changed.emit(_last_seconds)

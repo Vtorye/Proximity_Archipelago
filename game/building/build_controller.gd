@@ -21,24 +21,44 @@ var map: TileMapLayer
 var buildings: Node2D
 var inventory: WorldInventory
 var route_service: RouteService
-var options: Array[BuildOption] = []
+var options: Array[BuildOption]:
+	get:
+		return _options.duplicate()
+var _options: Array[BuildOption] = []
 var can_place_order: Callable
 var _committing := false
 var last_result := PlacementCheck.new()
 
-func configure(tile_map: TileMapLayer, building_root: Node2D, stock: WorldInventory, catalog: Array[BuildOption]) -> void:
+func configure(tile_map: TileMapLayer, building_root: Node2D, stock: WorldInventory, available_options: Array[BuildOption]) -> void:
 	map = tile_map
 	buildings = building_root
 	inventory = stock
-	options = catalog.duplicate()
+	set_available_options(available_options)
+
+func set_available_options(available_options: Array[BuildOption]) -> void:
+	_options = available_options.duplicate()
+	if prices != null:
+		prices.track_options(_options)
+
+## Returns true only when the option was added. An upgrade may take an existing slot.
+func unlock_option(option: BuildOption, replaces: BuildOption = null) -> bool:
+	if option == null or _options.has(option):
+		return false
+	var position := -1
+	if replaces != null:
+		position = _options.find_custom(func(current: BuildOption) -> bool: return current.id == replaces.id)
+	if position >= 0:
+		_options[position] = option
+	else:
+		_options.append(option)
+	if prices != null:
+		prices.track_options(_options)
+	return true
 
 func initial_options() -> Array[BuildOption]:
 	if catalog == null:
 		return []
 	return catalog.options.duplicate()
-
-func blocked_cells() -> Array[Vector2i]:
-	return registry.blocked_cells()
 
 func footprint_at(option: BuildOption, cell: Vector2i) -> Array[Vector2i]:
 	return _footprint(option, cell)
@@ -58,7 +78,7 @@ func placement_check(option: BuildOption, cell: Vector2i, removed: Array[Buildin
 		return PlacementCheck.result(PlacementCheck.Code.INVALID_OPTION)
 	if order != null and (not can_place_order.is_valid() or not can_place_order.call(order) or order.variant.building != option):
 		return PlacementCheck.result(PlacementCheck.Code.INVALID_OPTION)
-	if order == null and not options.has(option):
+	if order == null and not _options.has(option):
 		return PlacementCheck.result(PlacementCheck.Code.INVALID_OPTION)
 	if construction != null and construction.at(cell, option is TileBuildOption) != null and not removed.has(construction.at(cell, option is TileBuildOption)):
 		return PlacementCheck.result(PlacementCheck.Code.OCCUPIED)
@@ -418,10 +438,11 @@ func demolish_at(cell: Vector2i) -> bool:
 
 ## Returns part of the build cost. Buildings without an option (placed in the scene) refund nothing.
 func _refund_for_demolish(option: BuildOption) -> void:
-	if option == null:
+	if option == null or demolish_refund_ratio == 0.0:
 		return
+	var costs := prices.base_costs(option) if prices != null else option.costs
 	for type in inventory.registered_types():
-		var amount: int = floori(option.cost_amount(type) * demolish_refund_ratio)
+		var amount: int = floori(price_amount(costs, type) * demolish_refund_ratio)
 		if amount > 0:
 			inventory.add(type, amount)
 
@@ -439,8 +460,7 @@ func _safety() -> ConstructionSafety:
 	return ConstructionSafety.new(map, registry, population, route_service)
 
 func price(option: BuildOption, cell := Vector2i(2147483647, 2147483647), pending: Dictionary[String, int] = {}) -> Array[ResourceAmount]:
-	var factor: float = terrain.price_multiplier(option, cell) if terrain != null else 1.0
-	return prices.quote(option, pending, factor) if prices != null else option.costs
+	return prices.quote_at(option, cell, pending) if prices != null else option.costs
 
 func apply_surface(option: TileBuildOption, cell: Vector2i) -> void:
 	if map is TerrainMap:
@@ -451,10 +471,4 @@ static func price_amount(costs: Array[ResourceAmount], type: ResourceType) -> in
 	var result := 0
 	for entry in costs:
 		if entry != null and entry.type != null and type != null and entry.type.id == type.id: result += entry.amount
-	return result
-
-func _base_plan_price(commands: Array[BuildCommand]) -> Array[ResourceAmount]:
-	var result: Array[ResourceAmount] = []
-	for command in commands:
-		if not command.is_removal(): result.append_array(price(command.option, command.cell))
 	return result

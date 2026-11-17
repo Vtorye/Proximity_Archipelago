@@ -88,7 +88,7 @@ func tick(delta: float) -> void:
 		ant._decide()
 		return
 	var cell: Vector2i = ant.route_service.world_to_cell(ant.global_position)
-	if not ant._is_foodless() and not ant.needs.can_afford(ant.planner.escape_energy(cell, ant.speed) + 1.0):
+	if not ant._is_foodless() and not ant.needs.can_afford(ant.planner.escape_energy(cell, ant.speed) + ant.needs.rules.construction_reserve):
 		release()
 		ant._seek_food()
 		return

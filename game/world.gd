@@ -2,9 +2,14 @@ extends Node2D
 class_name World
 ## Composition root. Owns services and lifecycle, never shell navigation or input.
 
-@export var art: ArtCatalog = preload("res://game/art/colony_art.tres")
+@export var art: ArtCatalog
 @export var auto_start := true
 @export var map: TileMapLayer
+@export var starting_resources: Array[ResourceAmount] = []
+@export var task_deck: TaskDeck
+@export var voyage_rules: VoyageRules
+@export var satiety_rules: SatietyRules
+@export var island_generation: IslandGenerationRules
 var map_size: Vector2i:
 	get:
 		return map.get_used_rect().size
@@ -13,7 +18,6 @@ var voyage: Voyage
 @export var waves: CombatDirector
 var combat: CombatDirector
 var tasks: TaskDirector
-var events: WorldEvents
 @export var prices: PriceService
 var terrain: TerrainRules
 @export var construction_service: ConstructionService
@@ -43,16 +47,16 @@ func _ready() -> void:
 	var build_options: Array[BuildOption] = build_controller.initial_options()
 	if waves.enabled:
 		build_options.append_array(waves.rules.defenses.options)
-	events = prices.events
-	prices.definitions = build_options
-	prices.process_mode = Node.PROCESS_MODE_ALWAYS
-	if not art.validate().is_empty():
+	if art == null or not art.validate().is_empty():
 		push_error("Invalid world art catalog")
+		return
+	if satiety_rules == null or not satiety_rules.is_valid():
+		push_error("World requires valid satiety rules")
 		return
 	if map.tile_set == null or map.get_used_cells().is_empty():
 		push_error("World requires a painted TileMapLayer with a TileSet")
 		return
-	if not inventory.configure(prices.starting_resources):
+	if not inventory.configure(starting_resources):
 		return
 	route_service.setup(map)
 	route_service.rebuild()
@@ -61,9 +65,9 @@ func _ready() -> void:
 	if map is TerrainMap:
 		terrain = terrain_rules
 		terrain.configure(map, registry)
-		prices.terrain_multiplier = terrain.price_multiplier
+		prices.configure_terrain(terrain.price_multiplier)
 	logistics.configure(inventory, route_service, registry)
-	planner.configure(registry, route_service, inventory, inventory.type_by_id(&"food"), logistics)
+	planner.configure(registry, route_service, inventory, inventory.type_by_id(&"food"), logistics, satiety_rules)
 	population.configure(units, route_service, planner, registry, logistics)
 	build_controller.prices = prices
 	build_controller.route_service = route_service
@@ -83,14 +87,14 @@ func _ready() -> void:
 	build_controller.changed.connect(func(): _navigation_update_queued = false)
 	_register_initial_buildings()
 	_prepare_initial_routes()
-	if prices.task_deck != null:
-		var errors: Array[String] = prices.task_deck.validate(inventory)
+	if task_deck != null:
+		var errors: Array[String] = task_deck.validate(inventory)
 		if not errors.is_empty():
 			for error in errors: push_error(error)
 			return
 		match_controller.task_mode = true
 		tasks = TaskDirector.new()
-		tasks.configure(self, prices.task_deck, randi())
+		tasks.configure(self, task_deck, randi())
 		match_controller.completed.connect(func(summary: MatchSummary):
 			summary.development_level = tasks.level
 			summary.tasks_completed = tasks.completed_count
@@ -98,9 +102,9 @@ func _ready() -> void:
 	if waves.enabled:
 		combat = waves
 		combat.configure(self, waves.rules)
-	if tasks != null:
+	if tasks != null and voyage_rules != null:
 		voyage = Voyage.new()
-		voyage.configure(self)
+		voyage.configure(self, voyage_rules)
 	ready_for_play = true
 	if diagnostics_enabled:
 		var observer := DebugProbe.new()
@@ -167,7 +171,7 @@ func _configure_building(building: Building) -> void:
 	building.configure_appearance(art, route_service.cell_size())
 
 func _on_workplace_produced(type: ResourceType, amount: int) -> void:
-	events.publish(GameEvents.Kind.RESOURCE_PRODUCED, type.id, amount)
+	prices.record(GameEvents.Kind.RESOURCE_PRODUCED, type.id, amount)
 
 func _queue_navigation_update() -> void:
 	if ready_for_play and not _navigation_update_queued:

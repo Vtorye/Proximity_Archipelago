@@ -50,7 +50,12 @@ func _show_rewards() -> void:
 	var choices: Array[int] = world.tasks.reward_choices()
 	for index in range(_rewards.size()):
 		_rewards[index].text = REWARD_NAMES[choices[index]]
-		_reward_details[index].text = REWARD_DETAILS[choices[index]]
+		var reward := choices[index]
+		var detail := tr(REWARD_DETAILS[reward])
+		if reward != TaskDirector.Reward.ROAD:
+			var percent := absf(world.tasks.reward_factor(reward) - 1.0) * 100.0
+			detail = detail % String.num(percent, 2).trim_suffix(".0")
+		_reward_details[index].text = detail
 	controls.assign(_rewards)
 
 func _choose_reward(index: int) -> void:

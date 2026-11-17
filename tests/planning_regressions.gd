@@ -14,6 +14,45 @@ func run(test: Node) -> void:
 	await _active_work(test)
 	await _hungry_retarget(test)
 	await _replanning_progress(test)
+	await _second_nest_meal_return(test)
+
+func _second_nest_meal_return(test: Node) -> void:
+	var tiles: Array = []
+	for x in range(52):
+		for y in range(3):
+			tiles.append([x, y, 3, 1, 0, 0])
+	var world := LevelLayout.create_world({"version": LevelLayout.VERSION, "tiles": tiles,
+		"objects": [[0, 1, "Home"], [1, 1, "Food"], [49, 1, "Workplace"]]})
+	world.auto_start = false
+	world.build_controller.physical_construction = false
+	world.task_deck = null
+	test.add_child(world)
+	var nest_cell := Vector2i(48, 1)
+	var built := world.build_controller.try_build(load("res://game/building/options/house.tres"), nest_cell)
+	test.expect(built, "a second nest can be built beside the remote workplace")
+	if not built:
+		world.free()
+		return
+	var nest := world.registry.at(nest_cell) as House
+	var worker := nest.residents[0] as AntAgent
+	var canteen := Vector2i(1, 1)
+	var return_route := world.planner.home_route(nest, canteen)
+	var escape := world.planner.escape_energy(nest_cell, worker.speed)
+	var unloaded := world.planner.travel_energy(return_route.cost, worker.speed) + escape
+	var loaded := world.planner.travel_energy(return_route.cost, worker.speed * world.planner.carry_speed_ratio) + escape
+	test.expect(worker.needs.can_afford(unloaded) and not worker.needs.can_afford(loaded), "only the empty-handed return fits a full worker's energy budget")
+	worker.needs.satiety = escape + worker.needs.safety_margin + 0.25
+	worker._decide()
+	test.expect(worker._destination == &"food", "the hungry worker leaves the new nest to eat")
+	var cycles := [0]
+	worker.work_completed.connect(func(_worker: Node2D, _place: Node2D): cycles[0] += 1)
+	for frame in range(30 * 115):
+		worker._physics_process(1.0 / 30.0)
+		if cycles[0] > 0:
+			break
+	test.expect(cycles[0] > 0, "after eating, the empty-handed worker returns to the second nest and resumes production")
+	world.free()
+	await test.get_tree().process_frame
 
 func _nearby_resources(test: Node) -> void:
 	var world: World = test.make_world()
@@ -123,7 +162,7 @@ func _hungry_retarget(test: Node) -> void:
 	_stone_only(world, ant)
 	for step in range(30): ant._physics_process(1.0 / 60.0)
 	var cell: Vector2i = world.route_service.world_to_cell(ant.global_position)
-	ant.needs.satiety = world.planner.escape_energy(cell, ant.speed) + AntNeeds.SAFETY_MARGIN + 1.0
+	ant.needs.satiety = world.planner.escape_energy(cell, ant.speed) + ant.needs.safety_margin + 1.0
 	test.expect(world.build_controller.try_build(load("res://game/building/options/apple_tree.tres"), Vector2i(25, 24)), "new nearby work can appear beside a hungry walking ant")
 	await test.get_tree().process_frame
 	test.expect(ant._destination == &"food" and ant.work.workplace == null and ant._meal.active, "hungry ant rejects even nearer work and keeps its meal reservation")

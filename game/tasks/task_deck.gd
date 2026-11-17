@@ -6,6 +6,12 @@ extends Resource
 @export var loop_last_stage := true
 @export var unlocked_road: TileBuildOption
 @export var replaced_road: TileBuildOption
+@export_group("Level Rewards")
+@export_range(0.01, 1.0, 0.01) var discount_reward_factor := 0.9
+@export_range(1.0, 5.0, 0.01, "or_greater") var speed_reward_factor := 1.15
+@export_range(1.0, 5.0, 0.01, "or_greater") var satiety_reward_factor := 1.2
+@export var development_tints := PackedColorArray([Color.WHITE, Color("efd38e"), Color("a8d4e9"), Color("d2b3ed")])
+@export_group("")
 ## IDs from older saves mapped to their replacement task IDs.
 @export var legacy_task_ids: Dictionary[String, String] = {}
 

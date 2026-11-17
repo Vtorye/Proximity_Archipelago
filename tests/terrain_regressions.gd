@@ -7,10 +7,13 @@ func _world(test: Node, physical := false) -> World:
 	for index in range(5):
 		var cell := Vector2i(2 + index * 2, 2)
 		tiles[cell.x * 8 + cell.y] = [cell.x, cell.y, 5 + index, 0, 0, 0]
-	var world: World = LevelLayout.create_world({"version": 1, "tiles": tiles, "objects": [[0, 0, "build/base_nest"], [0, 1, "Food"]]})
+	var world: World = LevelLayout.create_world({"version": 1, "tiles": tiles, "objects": [[0, 0, "build/base_nest"], [0, 2, "Food"]]})
+	test.expect(world != null, "terrain fixture has a valid layout with nonoverlapping buildings")
+	if world == null:
+		return null
 	world.auto_start = false
 	world.build_controller.physical_construction = physical
-	world.prices.task_deck = null
+	world.task_deck = null
 	test.add_child(world)
 	return world
 
@@ -29,7 +32,7 @@ func _placement_and_prices(test: Node) -> void:
 	var road: BuildOption = load("res://game/building/options/road.tres")
 	var berry: BuildOption = load("res://game/building/options/apple_tree.tres")
 	var house: BuildOption = load("res://game/building/options/house.tres")
-	var matrix := [[true, true, true], [false, true, false], [true, true, true], [true, true, false], [true, false, false]]
+	var matrix := [[true, true, true], [true, false, false], [true, true, true], [true, true, false], [true, false, false]]
 	for index in range(5):
 		for kind in range(3):
 			var option: BuildOption = [road, berry, house][kind]
@@ -130,8 +133,8 @@ func _underlays(test: Node) -> void:
 	source.free()
 	var nodes: Array[Node] = []
 	for building in world.registry.all(): nodes.append(building)
-	map.underlays[cell] = Vector4i(6, 0, 0, 0)
-	test.expect(not LevelValidator.validate_world(world, "invalid rocky road").is_empty(), "offline validation catches roads with incompatible hidden soil")
+	map.underlays[cell] = Vector4i(3, 3, 0, 0)
+	test.expect(not LevelValidator.validate_world(world, "invalid road over water").is_empty(), "offline validation catches non-land terrain hidden beneath roads")
 	map.underlays[cell] = Vector4i(5, 0, 0, 0)
 	var layout: Dictionary = LevelLayout.capture(map, nodes)
 	test.expect(layout.has("underlays") and layout.underlays.size() == 1, "saved maps encode hidden ground separately from their road surface")

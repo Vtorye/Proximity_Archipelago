@@ -1,103 +1,160 @@
 class_name IslandGenerator
 extends RefCounted
 ## Deterministic map data, editable and saveable through the existing level editor.
-static func generate(seed_value: int, difficulty := 0, biome := 0, extent := 80) -> Dictionary:
-	var data: LevelData = generate_data(seed_value, difficulty, biome, extent)
-	return LevelLayout.encode(data) if data != null else {}
 
-static func generate_data(seed_value: int, difficulty := 0, biome := 0, extent := 80, resource_totals: Dictionary = {}) -> LevelData:
-	extent = clampi(extent, 40, 160)
+const NEST_ID := &"base_nest"
+# These identifiers and the three biome indices are part of the saved layout format.
+const MATERIAL_SITES := ["Workplace", "Workplace2", "AppleTree"]
+const BIOME_SOILS := [&"fertile", &"dry", &"rocky"]
+const CARDINALS: Array[Vector2i] = [Vector2i.DOWN, Vector2i.RIGHT, Vector2i.UP, Vector2i.LEFT]
+
+## A negative extent selects the authored default. Negative budgets use their authored values.
+static func generate_data(template: World, seed_value: int, difficulty := 0, biome := 0, extent := -1, budgets := Vector3i(-1, -1, -1)) -> LevelData:
+	var rules := template.island_generation
+	var map := template.map as TerrainMap
+	if rules == null or not rules.is_valid() or map == null or map.catalog == null:
+		return null
+	extent = clampi(rules.default_extent if extent < 0 else extent, rules.extent_limits.x, rules.extent_limits.y)
+	for kind in range(MATERIAL_SITES.size()):
+		if budgets[kind] < 0:
+			budgets[kind] = rules.deposit_budgets[kind]
+	var soil := map.catalog.by_id(&"soil")
+	var water := map.catalog.by_id(&"water")
+	if soil == null or water == null:
+		return null
 	var rng := RandomNumberGenerator.new()
 	rng.seed = seed_value
 	var center := Vector2i(extent / 2, extent / 2)
-	var noise := FastNoiseLite.new()
-	noise.seed = seed_value
-	noise.frequency = 0.1
 	var layout := LevelData.new()
-	var land: Dictionary[Vector2i, bool] = {}
-	var lobes: Array[Vector3] = [Vector3(center.x, center.y, extent * 0.24)]
-	for index in range(7):
-		var angle: float = TAU * index / 7.0 + rng.randf_range(-0.2, 0.2)
-		var point: Vector2 = Vector2(center) + Vector2.from_angle(angle) * extent * 0.40
-		lobes.append(Vector3(point.x, point.y, rng.randf_range(0.045, 0.08) * extent))
-	for y in range(extent):
-		for x in range(extent):
-			var cell := Vector2i(x, y)
-			var value := -INF
-			for lobe in lobes:
-				value = maxf(value, 1.0 - Vector2(x - lobe.x, (y - lobe.y) * 1.12).length() / lobe.z)
-			if value + noise.get_noise_2d(x, y) * 0.28 > 0 or (cell - center).length_squared() < 81: land[cell] = true
-			layout.tiles[cell] = Vector4i(3, 1 if land.has(cell) else 3, 0, 0)
-	var canteen: Vector2i = center + [Vector2i(0, 3), Vector2i(3, 0), Vector2i(0, -3), Vector2i(-3, 0)][rng.randi_range(0, 3)]
-	layout.objects.append(LevelData.Placement.new(center, "build/base_nest"))
-	layout.objects.append(LevelData.Placement.new(canteen, "Food"))
+	var land := _paint_land(layout, rules, rng, center, extent, soil.tile, water.tile)
 	var occupied: Dictionary[Vector2i, bool] = {}
-	for x in range(2):
-		for y in range(2): occupied[center + Vector2i(x, y)] = true
-	occupied[canteen] = true
-	var kinds := ["Workplace", "Workplace2", "AppleTree"]
-	var favored: int = [2, 0, 1][clampi(biome, 0, 2)]
-	# The central land disk guarantees reachable, finite deposits. Seed and biome
-	# determine where each kind appears and which resource is easiest to acquire.
-	var totals := {"Workplace": int(resource_totals.get("Workplace", 900)), "Workplace2": int(resource_totals.get("Workplace2", 900)), "AppleTree": int(resource_totals.get("AppleTree", 900))}
-	for deposit in range(6):
-		var kind: int = deposit % kinds.size()
-		var minimum: int = 7 if deposit >= 3 else (6 if kind == favored else 7 + clampi(difficulty, 0, 2))
-		var maximum: int = 12 + clampi(difficulty, 0, 2)
-		var candidates: Array[Vector2i] = []
-		for y in range(-12, 13):
-			for x in range(-12, 13):
-				var offset := Vector2i(x, y)
-				var distance: int = absi(x) + absi(y)
-				var cell: Vector2i = center + offset
-				if distance >= minimum and distance <= maximum and land.has(cell) and not occupied.has(cell):
-					candidates.append(cell)
-		if candidates.is_empty():
-			for cell in land:
-				var distance: int = absi(cell.x - center.x) + absi(cell.y - center.y)
-				if distance >= minimum and land.has(cell) and not occupied.has(cell):
-					candidates.append(cell)
-		if candidates.is_empty():
-			return null
-		var cell: Vector2i = candidates[rng.randi_range(0, candidates.size() - 1)]
-		var supply: int = mini(int(totals[kinds[kind]]), maxi(60, rng.randi_range(130, 220) - difficulty * 10) + (55 if kind == favored else 0))
-		totals[kinds[kind]] = int(totals[kinds[kind]]) - supply
-		if kind == 0 and supply > 200:
-			layout.objects.append(LevelData.Placement.new(cell, kinds[kind], supply, true))
-			occupied[cell] = true
-			occupied[cell + Vector2i.RIGHT] = true
-			continue
-		layout.objects.append(LevelData.Placement.new(cell, kinds[kind], supply, true))
-		occupied[cell] = true
-	for cell in land:
-		if (cell - center).length_squared() < 81 or occupied.has(cell) or rng.randf() > 0.025: continue
-		var kind: String = kinds[rng.randi_range(0, 2)]
-		var kind_supply: int = mini(int(totals[kind]), maxi(20, 140 - difficulty * 12))
-		if kind_supply <= 0: continue
-		layout.objects.append(LevelData.Placement.new(cell, kind, kind_supply, true))
-		totals[kind] = int(totals[kind]) - kind_supply
-	var world: World = LevelLayout.instantiate_world(layout)
-	if world == null:
+	if not _place_start(layout, template, rules, rng, center, land, occupied):
 		return null
-	var map := world.map as TerrainMap
-	var buildings: Array[Building] = world.placed_buildings()
-	var nodes: Array[Node] = []
-	nodes.assign(buildings)
-	TerrainPainter.populate(map, nodes, seed_value)
-	# The selected destination has a recognizable terrain bias, without invalidating buildings.
-	var preferred: TerrainType = map.catalog.by_id([&"fertile", &"dry", &"rocky"][clampi(biome, 0, 2)])
-	var preferred_chance: float = 0.08 if biome == 2 else 0.22
-	for cell in land:
-		if occupied.has(cell) or (cell - center).length_squared() < 36: continue
-		var ground: TerrainType = map.ground_at(cell)
-		if ground != null and ground.kind == TerrainType.Kind.LAND and rng.randf() < preferred_chance: map.paint_tile(cell, preferred.tile, true)
-	for building in buildings:
-		if not building.has_meta(&"layout_kind"): building.set_meta(&"layout_kind", str(world.get_path_to(building)))
-	var result: LevelData = LevelLayout.capture_data(map, nodes)
+	var biome_index := clampi(biome, 0, BIOME_SOILS.size() - 1)
+	var favored: int = [rules.fertile_favored_deposit, rules.dry_favored_deposit, rules.rocky_favored_deposit][biome_index]
+	if not _place_deposits(layout, rules, rng, center, land, occupied, budgets, difficulty, favored):
+		return null
+	var result := _apply_soils(layout, rules, rng, seed_value, biome_index, center, land, occupied)
+	if result == null:
+		return null
 	result.generated = true
 	result.seed_value = seed_value
 	result.difficulty = difficulty
 	result.biome = biome
 	result.title = TranslationServer.translate("ui.world.generated_title") % seed_value
+	return result
+
+static func _paint_land(layout: LevelData, rules: IslandGenerationRules, rng: RandomNumberGenerator, center: Vector2i, extent: int, soil: Vector4i, water: Vector4i) -> Dictionary[Vector2i, bool]:
+	var noise := FastNoiseLite.new()
+	noise.seed = rng.seed
+	noise.frequency = rules.coast_noise_frequency
+	var land: Dictionary[Vector2i, bool] = {}
+	var lobes: Array[Vector3] = [Vector3(center.x, center.y, extent * rules.central_radius_ratio)]
+	for index in range(rules.outer_island_count):
+		var angle := TAU * index / rules.outer_island_count + rng.randf_range(-rules.outer_angle_jitter, rules.outer_angle_jitter)
+		var point := Vector2(center) + Vector2.from_angle(angle) * extent * rules.outer_distance_ratio
+		var radius := rng.randf_range(rules.outer_radius_ratios.x, rules.outer_radius_ratios.y) * extent
+		lobes.append(Vector3(point.x, point.y, radius))
+	var protected_radius_squared := rules.guaranteed_land_radius * rules.guaranteed_land_radius
+	for y in range(extent):
+		for x in range(extent):
+			var cell := Vector2i(x, y)
+			var value := -INF
+			for lobe in lobes:
+				var distance := Vector2(x - lobe.x, (y - lobe.y) * rules.vertical_scale).length()
+				value = maxf(value, 1.0 - distance / lobe.z)
+			if value + noise.get_noise_2d(x, y) * rules.coast_noise_strength > 0 or (cell - center).length_squared() < protected_radius_squared:
+				land[cell] = true
+			layout.tiles[cell] = soil if land.has(cell) else water
+	return land
+
+static func _place_start(layout: LevelData, template: World, rules: IslandGenerationRules, rng: RandomNumberGenerator, center: Vector2i, land: Dictionary[Vector2i, bool], occupied: Dictionary[Vector2i, bool]) -> bool:
+	var nest: SceneBuildOption
+	for option in template.build_controller.initial_options():
+		if option is SceneBuildOption and option.id == NEST_ID:
+			nest = option
+			break
+	if nest == null:
+		return false
+	for offset in nest.occupied_cells:
+		var cell := center + offset
+		if not land.has(cell):
+			return false
+		occupied[cell] = true
+	var canteen := center + CARDINALS[rng.randi_range(0, CARDINALS.size() - 1)] * rules.canteen_distance
+	if not land.has(canteen) or occupied.has(canteen):
+		return false
+	layout.objects.append(LevelData.Placement.new(center, "build/" + String(NEST_ID)))
+	layout.objects.append(LevelData.Placement.new(canteen, "Food"))
+	occupied[canteen] = true
+	return true
+
+static func _place_deposits(layout: LevelData, rules: IslandGenerationRules, rng: RandomNumberGenerator, center: Vector2i, land: Dictionary[Vector2i, bool], occupied: Dictionary[Vector2i, bool], budgets: Vector3i, difficulty: int, favored: int) -> bool:
+	var distance_difficulty := clampi(difficulty, 0, rules.max_distance_difficulty)
+	var search_radius := rules.deposit_distance.y
+	for deposit in range(rules.starter_deposits_per_resource * MATERIAL_SITES.size()):
+		var kind := deposit % MATERIAL_SITES.size()
+		var minimum := rules.deposit_distance.x
+		if deposit < MATERIAL_SITES.size():
+			minimum = rules.favored_deposit_distance if kind == favored else minimum + distance_difficulty
+		var maximum := search_radius + distance_difficulty
+		var candidates: Array[Vector2i] = []
+		for y in range(-search_radius, search_radius + 1):
+			for x in range(-search_radius, search_radius + 1):
+				var cell := center + Vector2i(x, y)
+				var distance := absi(x) + absi(y)
+				if distance >= minimum and distance <= maximum and land.has(cell) and not occupied.has(cell):
+					candidates.append(cell)
+		if candidates.is_empty():
+			for cell in land:
+				var distance := absi(cell.x - center.x) + absi(cell.y - center.y)
+				if distance >= minimum and not occupied.has(cell):
+					candidates.append(cell)
+		if candidates.is_empty():
+			return false
+		var cell := candidates[rng.randi_range(0, candidates.size() - 1)]
+		var supply := maxi(rules.minimum_starter_supply, rng.randi_range(rules.starter_supply_range.x, rules.starter_supply_range.y) - difficulty * rules.starter_supply_loss_per_island)
+		supply = mini(budgets[kind], supply + (rules.favored_supply_bonus if kind == favored else 0))
+		budgets[kind] -= supply
+		layout.objects.append(LevelData.Placement.new(cell, MATERIAL_SITES[kind], supply, true))
+		occupied[cell] = true
+		if kind == 0 and supply > rules.wide_timber_threshold:
+			occupied[cell + Vector2i.RIGHT] = true
+	var protected_radius_squared := rules.guaranteed_land_radius * rules.guaranteed_land_radius
+	var extra_supply := maxi(rules.minimum_extra_supply, rules.extra_deposit_supply - difficulty * rules.extra_supply_loss_per_island)
+	for cell in land:
+		if (cell - center).length_squared() < protected_radius_squared or occupied.has(cell) or rng.randf() > rules.extra_deposit_chance:
+			continue
+		var kind := rng.randi_range(0, MATERIAL_SITES.size() - 1)
+		var supply := mini(budgets[kind], extra_supply)
+		if supply > 0:
+			layout.objects.append(LevelData.Placement.new(cell, MATERIAL_SITES[kind], supply, true))
+			budgets[kind] -= supply
+	return true
+
+static func _apply_soils(layout: LevelData, rules: IslandGenerationRules, rng: RandomNumberGenerator, seed_value: int, biome: int, center: Vector2i, land: Dictionary[Vector2i, bool], occupied: Dictionary[Vector2i, bool]) -> LevelData:
+	var world := LevelLayout.instantiate_world(layout)
+	if world == null:
+		return null
+	var map := world.map as TerrainMap
+	var buildings := world.placed_buildings()
+	var nodes: Array[Node] = []
+	nodes.assign(buildings)
+	TerrainPainter.populate(map, nodes, rules, seed_value)
+	var preferred := map.catalog.by_id(BIOME_SOILS[biome])
+	if preferred != null:
+		var chance: float = [rules.fertile_bias, rules.dry_bias, rules.rocky_bias][biome]
+		var radius_squared := rules.biome_protection_radius * rules.biome_protection_radius
+		var protected: Dictionary[Vector2i, int] = {}
+		for building in buildings:
+			for cell in building.footprint():
+				protected[cell] = TerrainRules.building_kind(building)
+		for cell in land:
+			if occupied.has(cell) or (cell - center).length_squared() < radius_squared:
+				continue
+			var ground := map.ground_at(cell)
+			if ground != null and ground.kind == TerrainType.Kind.LAND and rng.randf() < chance and TerrainRules.supports(preferred, protected.get(cell, BuildOption.PlacementKind.ANY)):
+				map.paint_tile(cell, preferred.tile, true)
+	var result := LevelLayout.capture_data(map, nodes)
 	world.free()
 	return result

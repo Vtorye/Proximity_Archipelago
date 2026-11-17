@@ -65,9 +65,9 @@ func _run() -> void:
 	await click(menu.controls[&"cancel"])
 	menu = await _open_construction()
 	_focus(rocky)
-	await choose_building(menu, &"road")
+	await choose_building(menu, &"house")
 	await click_at(cell_point(rocky))
-	expect(menu.draft.size() == 0 and menu._status.text == tr("ui.placement.soil_restricted"), "rocky ground rejects roads with visible soil-specific feedback")
+	expect(menu.draft.size() == 0 and menu._status.text == tr("ui.placement.soil_restricted"), "rocky ground rejects nests with visible soil-specific feedback")
 	await capture("05-rocky-soil-restriction", 20)
 	await click(menu.controls[&"cancel"])
 	menu = await _open_construction()
@@ -201,7 +201,7 @@ func _fixture() -> Dictionary:
 				source = 6
 			tiles.append([x, y, source, 0, 0, 0])
 	tiles[tiles.size() - 1] = [17, 9, 3, 3, 0, 0]
-	return {"version": 1, "tiles": tiles, "objects": [[10, 6, "build/base_nest"], [10, 7, "Food"], [3, 2, "AppleTree"], [9, 2, "AppleTree"]]}
+	return {"version": 1, "tiles": tiles, "objects": [[10, 6, "build/base_nest"], [10, 8, "Food"], [3, 2, "AppleTree"], [9, 2, "AppleTree"]]}
 
 func hover(cell: Vector2i) -> void:
 	var event := InputEventMouseMotion.new()

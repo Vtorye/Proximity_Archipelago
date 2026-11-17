@@ -46,7 +46,7 @@ func _run() -> void:
 	expect(screen.world.route_service.entry_cost(Vector2i(27, 24)) < 0.35, "unlocked road changes actual travel time")
 	await frames(5)
 	for index in range(5): await action(false)
-	expect(tasks.level == 3 and screen.world.prices.global_multiplier < 1.0, "second-stage reward discounts construction")
+	expect(tasks.level == 3 and screen.world.prices.multiplier() < 1.0, "second-stage reward discounts construction")
 	await capture("06-level-three-discount", 30)
 	for index in range(5): await action(false)
 	expect(tasks.level == 4 and screen.world.population.agents()[0].speed > 24.0, "later stages speed up ants and repeat with harder prices")

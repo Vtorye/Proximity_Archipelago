@@ -44,6 +44,9 @@ func configure(colony: World, definition: WaveRules) -> void:
 	for building in world.registry.all(): _register(building)
 	for ant in world.population.agents(): _configure_ant(ant)
 
+func configure_wave_interval_reduction(reduction: float, minimum: float) -> void:
+	spawner.interval_seconds = maxf(minimum, rules.wave_interval_seconds - reduction)
+
 func running() -> bool:
 	return world != null and not get_tree().paused and world.ready_for_play and world.match_controller != null and world.match_controller.is_active()
 
@@ -200,7 +203,7 @@ func ruin_road(cell: Vector2i) -> bool:
 	var map: TileMapLayer = world.map
 	world.build_controller.apply_surface(ground, cell)
 	world.route_service.update_cells([cell], world.registry.blocked_cells())
-	world.events.publish(GameEvents.Kind.TERRAIN_CHANGED, ground.id)
+	world.prices.record(GameEvents.Kind.TERRAIN_CHANGED, ground.id)
 	return true
 
 func _physics_process(delta: float) -> void:

@@ -3,38 +3,77 @@ extends Node
 ## Prices derive from immutable base definitions and event history, never from prior quotes.
 signal changed
 
-@export var starting_resources: Array[ResourceAmount] = []
-@export var task_deck: TaskDeck
-var events := WorldEvents.new()
-var global_multiplier := 1.0
-var terrain_multiplier: Callable
-var definitions: Array[BuildOption] = []
+@export_range(0.1, 10.0, 0.1, "or_greater") var reload_interval_seconds := 1.0
+var _events := WorldEvents.new()
+var _global_multiplier := 1.0
+var _terrain_multiplier: Callable
+var _definitions: Array[BuildOption] = []
+var _reloaded: Dictionary[String, BuildOption] = {}
 var _stamps: Dictionary[String, String] = {}
 var _elapsed := 0.0
 var errors: Array[String] = []
 var _orders: Dictionary[String, int] = {}
 
 func _init() -> void:
-	events.occurred.connect(func(_event: int, _subject: StringName, _amount: int): changed.emit())
+	_events.occurred.connect(func(_event: int, _subject: StringName, _amount: int): changed.emit())
 
-func record(event: GameEvents.Kind, subject: StringName, amount: int = 1) -> void:
-	events.publish(event, subject, amount)
+func configure_terrain(multiplier: Callable) -> void:
+	_terrain_multiplier = multiplier
+
+func track_options(options: Array[BuildOption]) -> void:
+	_definitions = options.duplicate()
+	changed.emit()
+
+func tracks(option: BuildOption) -> bool:
+	return _definitions.has(option)
+
+func multiplier() -> float:
+	return _global_multiplier
+
+func apply_multiplier(factor: float) -> void:
+	_global_multiplier *= factor
+	changed.emit()
+
+func capture_state() -> Dictionary:
+	return {"multiplier": _global_multiplier, "counts": _events.capture_counts()}
+
+func restore_state(state: Dictionary) -> void:
+	_global_multiplier = state.multiplier
+	_events.restore_counts(state.counts)
+	changed.emit()
+
+func record(event: GameEvents.Kind, subject: StringName = &"", amount: int = 1) -> void:
+	_events.publish(event, subject, amount)
+
+func event_count(event: GameEvents.Kind, subject: StringName) -> int:
+	return _events.count(event, subject)
+
+func base_costs(option: BuildOption) -> Array[ResourceAmount]:
+	return _price_definition(option).costs.duplicate_deep(Resource.DEEP_DUPLICATE_ALL)
+
+func price_rules(option: BuildOption) -> Array[PriceRule]:
+	return _price_definition(option).price_rules.duplicate_deep(Resource.DEEP_DUPLICATE_ALL)
+
+func _price_definition(option: BuildOption) -> BuildOption:
+	return _reloaded.get(option.resource_path, option)
 
 static func key(event: int, subject: StringName) -> String:
 	return GameEvents.key(event, subject)
 
 func quote(option: BuildOption, pending: Dictionary[String, int] = {}, local_multiplier: float = 1.0) -> Array[ResourceAmount]:
-	if option == null or not valid(option): return [null]
+	if option == null: return [null]
+	var definition := _price_definition(option)
+	if not valid(definition): return [null]
 	var totals: Dictionary[StringName, float] = {}
 	var types: Dictionary[StringName, ResourceType] = {}
-	for entry in option.costs:
+	for entry in definition.costs:
 		if entry == null or entry.type == null or entry.amount < 0: return [null]
 		types[entry.type.id] = entry.type
 		totals[entry.type.id] = totals.get(entry.type.id, 0.0) + entry.amount
-	for rule in option.price_rules:
+	for rule in definition.price_rules:
 		if rule == null or rule.value < 0 or not is_finite(rule.value): return [null]
 		var id: String = key(rule.event, rule.subject)
-		var count: int = events.count(rule.event, rule.subject) + _orders.get(id, 0) + pending.get(id, 0)
+		var count: int = _events.count(rule.event, rule.subject) + _orders.get(id, 0) + pending.get(id, 0)
 		for type in totals:
 			if rule.resource == null or rule.resource.id == type:
 				totals[type] = totals[type] * pow(rule.value, count) if rule.operation == 0 else totals[type] + rule.value * count
@@ -43,7 +82,7 @@ func quote(option: BuildOption, pending: Dictionary[String, int] = {}, local_mul
 		if totals[type] < 0 or not is_finite(totals[type]) or totals[type] > 2147483647: return [null]
 		var entry := ResourceAmount.new()
 		entry.type = types[type]
-		entry.amount = ceili(totals[type] * global_multiplier * local_multiplier - 0.000001)
+		entry.amount = ceili(totals[type] * _global_multiplier * local_multiplier - 0.000001)
 		result.append(entry)
 	return result
 
@@ -76,12 +115,16 @@ func quote_commands(commands: Array[BuildCommand]) -> Dictionary:
 		if command == null: return {null: [null]}
 		if command.is_removal(): continue
 		if command.option == null: return {null: [null]}
-		result[command] = quote(command.option, pending, terrain_multiplier.call(command.option, command.cell) if terrain_multiplier.is_valid() else 1.0)
+		result[command] = quote_at(command.option, command.cell, pending)
 		for subject in [command.option.id, &""]:
 			var event: GameEvents.Kind = GameEvents.Kind.TERRAIN_CHANGED if command.option is TileBuildOption else GameEvents.Kind.BUILDING_BUILT
 			var id: String = key(event, subject)
 			pending[id] = pending.get(id, 0) + 1
 	return result
+
+func quote_at(option: BuildOption, cell: Vector2i, pending: Dictionary[String, int] = {}) -> Array[ResourceAmount]:
+	var factor: float = _terrain_multiplier.call(option, cell) if _terrain_multiplier.is_valid() else 1.0
+	return quote(option, pending, factor)
 
 func queue_order(option: BuildOption, delta: int) -> void:
 	var event: GameEvents.Kind = GameEvents.Kind.TERRAIN_CHANGED if option is TileBuildOption else GameEvents.Kind.BUILDING_BUILT
@@ -91,22 +134,19 @@ func queue_order(option: BuildOption, delta: int) -> void:
 
 func _process(delta: float) -> void:
 	_elapsed += delta
-	if _elapsed < 1.0: return
+	if _elapsed < reload_interval_seconds: return
 	_elapsed = 0.0
 	var paths: Dictionary[String, bool] = {}
-	var dependencies: Dictionary[BuildOption, Array] = {}
-	for option in definitions:
-		if option == null: continue
-		var files: Array[String] = []
-		var resources: Array[Resource] = [option]
-		resources.append_array(option.costs)
-		resources.append_array(option.price_rules)
-		for resource in resources:
-			if resource == null: continue
-			var path: String = resource.resource_path
-			if path.is_empty() or path.contains("::") or not FileAccess.file_exists(path): continue
-			files.append(path)
-			paths[path] = true
+	var dependencies: Dictionary[BuildOption, PackedStringArray] = {}
+	for option in _definitions:
+		if option == null or not FileAccess.file_exists(option.resource_path): continue
+		var files := PackedStringArray([option.resource_path])
+		paths[option.resource_path] = true
+		for dependency in ResourceLoader.get_dependencies(option.resource_path):
+			var path := dependency.get_slice("::", 2) if dependency.contains("::") else dependency
+			if path.get_extension() in ["tres", "res"] and FileAccess.file_exists(path):
+				files.append(path)
+				paths[path] = true
 		dependencies[option] = files
 	var changed_paths: Dictionary[String, bool] = {}
 	for path in paths:
@@ -122,8 +162,7 @@ func _process(delta: float) -> void:
 		# Load independently first: malformed edits cannot replace the running definition.
 		var candidate: BuildOption = ResourceLoader.load(option.resource_path, "", ResourceLoader.CACHE_MODE_IGNORE_DEEP) as BuildOption
 		if candidate != null and valid(candidate):
-			option.costs = candidate.costs
-			option.price_rules = candidate.price_rules
+			_reloaded[option.resource_path] = candidate
 		else: errors.append(option.resource_path + ": invalid price edit; retaining previous valid definition")
 	changed.emit()
 

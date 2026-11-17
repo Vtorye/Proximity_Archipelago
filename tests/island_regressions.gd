@@ -32,7 +32,7 @@ func run(test: Node) -> void:
 	var registry := BuildingRegistry.new()
 	var planner := TripPlanner.new()
 	var stock := WorldInventory.new()
-	planner.configure(registry, routes, stock, null, null)
+	planner.configure(registry, routes, stock, null, null, SatietyRules.new())
 	var a := Workplace.new()
 	var b := Workplace.new()
 	a.setup(Vector2i(-2, -1), null)
@@ -84,10 +84,10 @@ func test_foodless_colonies(test: Node) -> void:
 	test.expect(world != null, "restore a map with no canteens")
 	if world == null:
 		return
-	for index in range(world.prices.starting_resources.size()):
-		var entry: ResourceAmount = world.prices.starting_resources[index]
+	for index in range(world.starting_resources.size()):
+		var entry: ResourceAmount = world.starting_resources[index]
 		if entry.type.id == &"food":
-			world.prices.starting_resources[index] = test.entry(entry.type, 0)
+			world.starting_resources[index] = test.entry(entry.type, 0)
 	test.expect(LevelValidator.validate_world(world, title).is_empty(), "validator accepts nests and workplaces without canteens or starting food")
 	world.auto_start = false
 	world.build_controller.physical_construction = false
@@ -133,7 +133,7 @@ func test_foodless_colonies(test: Node) -> void:
 		if step == 90:
 			test.expect(workplace.working_count() == 1 and worker.status == AntAgent.Status.WORKING, "dry ant reaches the workplace")
 	test.expect(stock.quantity(wood) > start_wood, "dry worker carries the first batch to its local nest")
-	test.expect(walked.size() >= 2 and wanderer.needs.satiety < AntNeeds.CAPACITY, "idle ant visits neighboring cells while losing satiety")
+	test.expect(walked.size() >= 2 and wanderer.needs.satiety < wanderer.needs.capacity, "idle ant visits neighboring cells while losing satiety")
 	test.expect(walked.all(func(cell: Vector2i) -> bool:
 		return world.route_service.walkable(cell) and absi(cell.x - second_idle_nest.x) + absi(cell.y - second_idle_nest.y) <= 2), "wander stays on walkable cells near the nest")
 	for step in range(30 * (ceili(world.match_controller.match_duration) - 12) - 1):
@@ -152,7 +152,7 @@ func test_foodless_colonies(test: Node) -> void:
 	test.expect(successor.status == AntAgent.Status.WORKING and stock.available(food) == 1, "isolated workers leave global food unreserved")
 	var canteen: BuildOption = preload("res://game/building/options/canteen.tres")
 	if not world.build_controller.options.has(canteen):
-		world.build_controller.options.append(canteen)
+		world.build_controller.unlock_option(canteen)
 	stock.add(stock.type_by_id(&"royal"), 3)
 	test.expect(world.build_controller.try_build(canteen, job_cell + Vector2i.UP), "new canteen restores access to food on the working island")
 	successor._reconsider_route()
@@ -297,7 +297,7 @@ func test_multiple_bases(test: Node) -> void:
 	var wood: ResourceType = stock.type_by_id(&"wood")
 	var royal: ResourceType = stock.type_by_id(&"royal")
 	var base_option: BuildOption = load("res://game/building/options/base_nest.tres")
-	test.expect(world.build_controller.options.has(base_option) and base_option.cost_amount(royal) == 1, "the catalog offers a base nest for one configurable crown")
+	test.expect(world.build_controller.options.has(base_option) and BuildController.price_amount(base_option.costs, royal) == 1, "the catalog offers a base nest for one configurable crown")
 	test.expect(not world.build_controller.try_build(base_option, Vector2i(9, 1)), "a base nest cannot be built without crowns")
 	stock.add(royal, 1)
 	test.expect(world.build_controller.try_build(base_option, Vector2i(9, 1)) and stock.quantity(royal) == 0, "building another base spends its crown once")
@@ -415,9 +415,10 @@ func test_authored_map(test: Node) -> void:
 	test.expect(world.population.count() == 5 and world.logistics.main_nest.cell == Vector2i(68, 44), "the archipelago starts with one populated central base")
 	var resources := {&"wood": 0, &"stone": 0, &"food": 0}
 	var dry := 0
+	var worker := world.population.agents()[0]
 	for workplace in world.registry.workplaces():
 		resources[workplace.output.id] += 1
-		if not world.planner.food_within_range(workplace.cell, 24.0): dry += 1
+		if not world.planner.food_within_range(workplace.cell, worker.speed, worker.needs.capacity): dry += 1
 	test.expect(resources[&"wood"] >= 10 and resources[&"stone"] >= 10 and resources[&"food"] >= 8 and dry > 0, "distinct islands offer all resource types and optional frontiers needing a canteen")
 	world.free()
 	var idle: Dictionary = await _play_authored_map(test, false)

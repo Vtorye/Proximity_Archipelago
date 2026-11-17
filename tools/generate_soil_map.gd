@@ -15,7 +15,8 @@ func _generate() -> void:
 		var building := world.get_node(path) as Building
 		if not building.has_meta(&"layout_kind"): building.set_meta(&"layout_kind", path)
 		objects.append(building)
-	TerrainPainter.populate(map, objects)
+	var rules := world.island_generation
+	TerrainPainter.populate(map, objects, rules, rules.soil_seed)
 	var level := AuthoredLevel.new()
 	level.title = "Пять земель"
 	level.description = "Плодородные долины, сухие возвышенности и каменистые месторождения. Влажные берега расширяют соседние муравейники; песчаные пляжи удорожают дороги. Нарисованные почвы сохраняются вместе с картой."

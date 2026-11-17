@@ -4,9 +4,9 @@ func _world(test: Node) -> World:
 	var tiles: Array = []
 	for x in range(9):
 		for y in range(5): tiles.append([x, y, 3, 0, 0, 0])
-	var world: World = LevelLayout.create_world({"version": 1, "tiles": tiles, "objects": [[0, 2, "build/base_nest"], [0, 3, "Food"]]})
+	var world: World = LevelLayout.create_world({"version": 1, "tiles": tiles, "objects": [[0, 2, "build/base_nest"], [0, 1, "Food"]]})
 	world.auto_start = false
-	world.prices.task_deck = null
+	world.task_deck = null
 	test.add_child(world)
 	return world
 
@@ -24,7 +24,7 @@ func run(test: Node) -> void:
 	var option: SceneBuildOption = load("res://game/building/options/house.tres").duplicate(true)
 	option.costs = [test.entry(wood, 4), test.entry(stone, 2)]
 	option.construction_seconds = 2.0
-	controller.options.append(option)
+	controller.unlock_option(option)
 	var cell := Vector2i(3, 2)
 	var before: int = world.inventory.quantity(wood)
 	test.expect(controller.try_build(option, cell), "ordinary construction accepts a funded order")
@@ -47,7 +47,7 @@ func run(test: Node) -> void:
 	controller = world.build_controller
 	service = controller.construction
 	option = option.duplicate(true)
-	controller.options.append(option)
+	controller.unlock_option(option)
 	before = world.inventory.quantity(wood)
 	controller.try_build(option, cell)
 	site = service.at(cell)
@@ -79,7 +79,7 @@ func run(test: Node) -> void:
 	world = _world(test)
 	controller = world.build_controller
 	service = controller.construction
-	controller.options.append(option)
+	controller.unlock_option(option)
 	controller.try_build(option, cell)
 	site = service.at(cell)
 	for item in site.required: site.delivered[item.type.id] = item.amount
@@ -114,8 +114,8 @@ func run(test: Node) -> void:
 			for y in range(5):
 				tiles.append([x, y, 3, 0, 0, 0])
 	world = LevelLayout.create_world({"version": 1, "tiles": tiles, "objects": [
-		[0, 2, "build/base_nest"], [0, 3, "Food"],
-		[12, 2, "build/base_nest"], [12, 3, "Food"],
+		[0, 2, "build/base_nest"], [0, 1, "Food"],
+		[12, 2, "build/base_nest"], [12, 1, "Food"],
 	]})
 	world.auto_start = false
 	test.add_child(world)
@@ -153,7 +153,7 @@ func run(test: Node) -> void:
 	stock.try_spend_all([test.entry(food, stock.available(food))])
 	var food_order: SceneBuildOption = load("res://game/building/options/apple_tree.tres").duplicate(true)
 	food_order.costs = [test.entry(food, 1)]
-	controller.options.append(food_order)
+	controller.unlock_option(food_order)
 	test.expect(stock.available(food) == 0 and controller.try_build(food_order, Vector2i(2, 2)), "construction can pay with berries promised for meals")
 	test.expect(stock.available(food) == -1, "committed meal balance may be negative after building")
 	var missed := 0

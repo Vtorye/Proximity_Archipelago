@@ -41,7 +41,7 @@ func _run() -> void:
 	# Only this fixture changes a price and funds it; shipped definitions keep their balance.
 	var nest: SceneBuildOption = load("res://game/building/options/house.tres").duplicate(true)
 	nest.costs = [_entry(stone, 5), _entry(food, 20)]
-	world.build_controller.options[2] = nest
+	world.build_controller.unlock_option(nest, world.build_controller.options[2])
 	world.inventory.add(food, 10)
 	screen.camera.position = Vector2(400, 464)
 	screen.camera.force_update_scroll()
@@ -95,7 +95,7 @@ func _run() -> void:
 	await capture("06-applied-road-and-nest")
 	var expensive: TileBuildOption = world.build_controller.options[0].duplicate(true)
 	expensive.costs = [_entry(wood, 10000)]
-	world.build_controller.options[0] = expensive
+	world.build_controller.unlock_option(expensive, world.build_controller.options[0])
 	await key(KEY_B)
 	menu = Router.top_overlay() as ConstructionMenu
 	await click_at(cell_point(Vector2i(30, 28)))
@@ -277,7 +277,7 @@ func _check_tutorial_and_backdrop() -> void:
 func _check_requested_features() -> void:
 	var world: World = screen.world
 	var road: TileBuildOption = load("res://game/building/options/road.tres")
-	world.build_controller.options[0] = road
+	world.build_controller.unlock_option(road, world.build_controller.options[0])
 	await key(KEY_SPACE)
 	var menu: ConstructionMenu = Router.top_overlay() as ConstructionMenu
 	expect(menu != null and get_tree().paused and not screen.hud.controls.has(&"pause"), "Space opens construction without a separate HUD pause button")
