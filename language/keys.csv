@@ -6,6 +6,21 @@ ui.menu.tutorial,Tutorial,Обучение
 ui.common.main_menu,Main menu,В меню
 ui.common.back,Back,Назад
 ui.common.next,Next,Далее
+ui.story.demo,Interactive story demo,Демо сюжета
+ui.story.queen,Queen,Королева
+ui.story.protagonist,Protagonist,Муравей
+ui.story.continue,Continue,Далее
+ui.story.waiting,Waiting for your action…,Ждём вашего действия…
+ui.story.skip_to_action,Skip to action,К действию
+ui.story.skip_tutorial,Skip tutorial,Пропустить урок
+ui.story.demo.queen_intro,"The colony needs your help. I will guide you through two first steps.",«Колонии нужна твоя помощь. Я подскажу первые два шага.»
+ui.story.demo.protagonist_intro,"I am ready. Tell me what to do first.",«Я готов. С чего начать?»
+ui.story.demo.road_prompt,"Open construction with B, choose Road, draw a short path on the map, then apply the plan.",«Нажми B, выбери «Дорога», проложи короткий путь по карте и примени план.»
+ui.story.demo.road_complete,"Good. Roads help ants travel between the nest and their workplaces.",«Хорошо. По дорогам муравьи быстрее ходят между гнездом и работой.»
+ui.story.demo.build_prompt,"I should place a building near the resources it will use.",«Здание лучше поставить рядом с ресурсом, который оно будет использовать.»
+ui.story.demo.build_task,"Choose any available building in the construction panel, place it on the island, then apply the plan.",«Выбери любую доступную постройку, размести её на острове и примени план.»
+ui.story.demo.done,Well done,Отлично
+ui.story.demo.done_text,"The game reported your build action, so the story continued.",«Игра сообщила о постройке, и сюжет продолжился.»
 ui.settings.volume,Volume,Громкость
 ui.settings.fullscreen,Fullscreen,Полный экран
 ui.settings.grid,Tile grid,Сетка клеток

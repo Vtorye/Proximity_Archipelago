@@ -100,6 +100,13 @@ text = "ui.menu.play"
 theme_override_colors/font_color = Color(0.8745, 0.7765, 0.5451, 1)
 size_flags_horizontal = 3
 
+[node name="StoryDemo" type="Button" parent="Center/Dialog/WindowContents/Margin/Content/Actions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 28)
+mouse_default_cursor_shape = 2
+text = "ui.story.demo"
+size_flags_horizontal = 3
+
 [node name="Counter" type="Label" parent="Center/Dialog/WindowContents/Margin/Content"]
 theme_type_variation = &"Caption"
 unique_name_in_owner = true

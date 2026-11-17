@@ -25,6 +25,9 @@ func _ready() -> void:
 	controls[&"play"] = %Play
 	%Play.pressed.connect(AppSettings.play_click)
 	%Play.pressed.connect(func(): Router.goto(&"match"))
+	controls[&"story_demo"] = %StoryDemo
+	%StoryDemo.pressed.connect(AppSettings.play_click)
+	%StoryDemo.pressed.connect(func(): Router.goto(&"match", {"story_demo": true}))
 	_show_page(0)
 
 func _show_page(page: int) -> void:

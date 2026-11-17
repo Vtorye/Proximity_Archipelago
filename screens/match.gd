@@ -11,6 +11,7 @@ var world: World
 @onready var hud: MatchHud = $Interface/Hud
 const CONSTRUCTION_PANEL := preload("res://overlays/construction_menu.tscn")
 const NEST_POPUP := preload("res://overlays/nest_menu.tscn")
+const STORY_DEMO := preload("res://story/demo_episode.tres")
 
 var nest_popup: NestMenu
 var _construction: ConstructionMenu
@@ -68,6 +69,20 @@ func _ready() -> void:
 func on_focus() -> void:
 	_active = true
 	world.start()
+	if payload is Dictionary and payload.get("story_demo", false):
+		var story := Router.push_overlay(&"story", STORY_DEMO) as StoryOverlay
+		if story != null:
+			var build_callback := func(option: BuildOption, _cell: Vector2i):
+				if option is TileBuildOption:
+					if option.placement_kind == BuildOption.PlacementKind.ROAD:
+						story.complete_action(&"place_road")
+				elif option is SceneBuildOption:
+					story.complete_action(&"place_building")
+			world.build_controller.built.connect(build_callback)
+			story.tree_exiting.connect(func():
+				if is_instance_valid(world.build_controller) and world.build_controller.built.is_connected(build_callback):
+					world.build_controller.built.disconnect(build_callback)
+			)
 	if payload is Dictionary and payload.has("journey"): SessionSave.write(world)
 	if debug_show_result:
 		_on_completed(MatchSummary.capture(true, &"target_reached", 83.0, world.inventory))
@@ -91,7 +106,8 @@ func _input(event: InputEvent) -> void:
 		return
 	if event is InputEventMouseMotion: _pointer = event.position
 	var top: MenuBase = Router.top_overlay()
-	if top != null or _building_active():
+	var story_accepts_input := top is StoryOverlay and (top as StoryOverlay).awaiting_action
+	if (top != null and not story_accepts_input) or _building_active():
 		camera.dragging = false
 	if top == null and event.is_action_pressed(&"ui_cancel") and _dismiss_visible_nest_popup():
 		get_viewport().set_input_as_handled()
@@ -121,6 +137,7 @@ func _input(event: InputEvent) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if not _active or Router.is_navigating(): return
 	var top: MenuBase = Router.top_overlay()
+	var story_accepts_input := top is StoryOverlay and (top as StoryOverlay).awaiting_action
 	if top == null and event.is_action_pressed(&"ui_cancel") and not _building_active() and not campaign_panel.visible:
 		_open_settings()
 		get_viewport().set_input_as_handled()
@@ -134,7 +151,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			_inspect_building(_cell_at(event.position))
 			get_viewport().set_input_as_handled()
 			return
-	if top == null and event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_B:
+	if (top == null or story_accepts_input) and event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_B:
 		hud.construction_requested.emit()
 		get_viewport().set_input_as_handled()
 
@@ -142,7 +159,8 @@ func _process(_delta: float) -> void:
 	if camera == null:
 		return
 	var top: MenuBase = Router.top_overlay()
-	var can_use_map: bool = top == null and not campaign_panel.visible
+	var story_accepts_input := top is StoryOverlay and (top as StoryOverlay).awaiting_action
+	var can_use_map: bool = (top == null or story_accepts_input) and not campaign_panel.visible
 	if is_instance_valid(_construction):
 		_construction.visible = can_use_map
 	camera.enabled_input = can_use_map and not _building_active()

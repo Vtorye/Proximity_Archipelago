@@ -14,6 +14,7 @@
 [ext_resource type="PackedScene" path="res://screens/level_editor.tscn" id="level_editor"]
 
 [ext_resource type="PackedScene" path="res://overlays/nest_menu.tscn" id="nest"]
+[ext_resource type="PackedScene" path="res://story/story_overlay.tscn" id="story_overlay"]
 
 [resource]
 resource_name = "Manifest"
@@ -30,6 +31,7 @@ overlays = Dictionary[StringName, PackedScene]({
 &"nest": ExtResource("nest"),
 &"match_result": ExtResource("match_result"),
 &"pause": ExtResource("1_oj60a"),
-&"settings": ExtResource("settings")
+&"settings": ExtResource("settings"),
+&"story": ExtResource("story_overlay")
 })
 metadata/_custom_type_script = "uid://bo82larywjxfv"

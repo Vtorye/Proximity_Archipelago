@@ -1,0 +1,9 @@
+Queen: ui.story.demo.queen_intro [#portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_thinking.png]
+Protagonist: ui.story.demo.protagonist_intro [#portrait=res://game/assets/sprites/visual_novel/protagonist/protagonist_ant.png]
+Queen: ui.story.demo.road_prompt [#action, portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_thinking.png]
+do wait_for_action("place_road")
+Queen: ui.story.demo.road_complete [#portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_pleased.png]
+Protagonist: ui.story.demo.build_prompt [#portrait=res://game/assets/sprites/visual_novel/protagonist/protagonist_ant.png]
+Queen: ui.story.demo.build_task [#action, portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_thinking.png]
+do wait_for_action("place_building")
+Queen: ui.story.demo.done_text [#portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_pleased.png]

@@ -6,5 +6,10 @@
 *.log
 roadmap_11-24_nov_corrected.pptx
 Регистрация и баллы.xlsx
-/addons
+# Keep the installed dialogue editor with this project; ignore other local addons.
+/addons/
+!/addons/
+/addons/*
+!/addons/dialogue_manager/
+!/addons/dialogue_manager/**
 /.presentation_work

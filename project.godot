@@ -20,6 +20,7 @@ config/icon="res://icon.svg"
 AppSettings="*res://_shell/autoload/app_settings.gd"
 Router="*uid://cceg31tomp2nw"
 PauseController="*uid://ctxcixgrja6c"
+DialogueManager="*res://addons/dialogue_manager/dialogue_manager.gd"
 
 [display]
 
@@ -33,7 +34,7 @@ window/size/min_height=360
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/level_validation/plugin.cfg")
+enabled=PackedStringArray("res://addons/level_validation/plugin.cfg", "res://addons/dialogue_manager/plugin.cfg")
 
 [file_customization]
 
@@ -63,6 +64,7 @@ pause={
 [internationalization]
 
 locale/translations=PackedStringArray("res://language/keys.en.po", "res://language/keys.ru.po")
+locale/translations_pot_files=PackedStringArray("res://story/demo.dialogue")
 
 [physics]
 

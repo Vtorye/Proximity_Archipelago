@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="StoryEpisode" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://story/story_episode.gd" id="1"]
+[ext_resource type="Resource" path="res://story/demo.dialogue" id="2"]
+
+[resource]
+resource_name = "Interactive Story Demo"
+script = ExtResource("1")
+episode_id = &"interactive_demo"
+dialogue = ExtResource("2")
+pause_simulation = false
