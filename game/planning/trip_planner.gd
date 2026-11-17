@@ -191,6 +191,7 @@ func _on_building_removed(building: Building) -> void:
 	if building is House:
 		for cell in building.entry_cells():
 			_work_fields.erase(cell)
+			_home_fields.erase(cell)
 	_on_workplace_membership_changed(building)
 
 func queue_workplace_refresh() -> void:
@@ -223,16 +224,13 @@ func _work_return_energy(work_seconds: float, delivery_cost: float, food_after_d
 	return work_seconds * satiety_rules.work_rate + travel_energy(delivery_cost, speed * carry_speed_ratio) + food_after_delivery
 
 func prepare_home(home: Building) -> void:
-	if _revision != navigation.revision:
+	if _revision != navigation.field_epoch:
 		_home_fields.clear()
-		_revision = navigation.revision
+		_revision = navigation.field_epoch
 	var cell: Vector2i = accessible_entry(home)
 	if not navigation.walkable(cell):
 		return
-	if not _home_fields.has(cell):
-		if _home_fields.size() >= 8:
-			_home_fields.erase(_home_fields.keys()[0])
-		_home_fields[cell] = navigation.reverse_field([cell])
+	_home_fields[cell] = navigation.reverse_field([cell], _home_fields.get(cell))
 
 func home_route(home: Building, from_cell: Vector2i) -> Route:
 	prepare_home(home)
@@ -242,17 +240,16 @@ func home_route(home: Building, from_cell: Vector2i) -> Route:
 	return navigation.make_route(_home_fields[cell].path(from_cell))
 
 func _work_field(home_cell: Vector2i) -> NavigationField:
-	if not _work_fields.has(home_cell):
-		_work_fields[home_cell] = navigation.distances_from(home_cell)
+	_work_fields[home_cell] = navigation.distances_from(home_cell, _work_fields.get(home_cell))
 	return _work_fields[home_cell]
 
 ## Work selection starts at the home entrance, so one forward field serves every
-## reachable workplace. Keep it until the navigation snapshot changes.
+## reachable workplace. Only graph invalidation requires a new component index.
 func prepare_workplaces() -> void:
-	if not _workplaces_dirty and _workplace_revision == navigation.revision:
+	if not _workplaces_dirty and _workplace_revision == navigation.field_epoch:
 		return
 	var grid: TileGrid = navigation.snapshot()
-	if _workplace_revision != navigation.revision:
+	if _workplace_revision != navigation.field_epoch:
 		_work_fields.clear()
 	_workplace_components.clear()
 	for workplace in registry.workplaces():
@@ -264,7 +261,7 @@ func prepare_workplaces() -> void:
 				_workplace_components[component] = []
 			if not _workplace_components[component].has(workplace):
 				_workplace_components[component].append(workplace)
-	_workplace_revision = navigation.revision
+	_workplace_revision = navigation.field_epoch
 	_workplaces_dirty = false
 
 func _reachable_workplaces(node_id: int) -> Array:

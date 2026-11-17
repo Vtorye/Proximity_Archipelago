@@ -11,7 +11,6 @@ var spiders: Array[SpiderAgent] = []
 var traps: Dictionary[Vector2i, SpiderTrap] = {}
 var _health: Dictionary[Building, int] = {}
 var _fields: Dictionary[Building, NavigationField] = {}
-var _revision := -1
 var _time := 0.0
 var _bolts: Array[Dictionary] = []
 
@@ -121,12 +120,12 @@ func can_melee(from: Vector2, target: Node2D) -> bool:
 func approach(target: Node2D, from: Vector2i) -> Route:
 	if not alive(target): return Route.invalid()
 	if target is Building:
-		if _revision != world.route_service.revision:
-			_fields.clear()
-			_revision = world.route_service.revision
 		var building := target as Building
-		if not _fields.has(building): _fields[building] = world.route_service.reverse_field(building.entry_cells())
-		return world.route_service.make_route(_fields[building].path(from))
+		var field: NavigationField = _fields.get(building)
+		if field == null or field.revision != world.route_service.revision:
+			field = world.route_service.reverse_field(building.entry_cells(), field)
+			_fields[building] = field
+		return world.route_service.make_route(field.path(from))
 	return world.route_service.request_route(from, world.route_service.world_to_cell(target.global_position))
 
 func is_spider_target(building: Variant) -> bool:

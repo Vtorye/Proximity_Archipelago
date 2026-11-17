@@ -29,6 +29,11 @@ func _ready() -> void:
 	_run.call_deferred()
 
 func _run() -> void:
+	if OS.get_cmdline_user_args().has("navigation-only"):
+		_test_navigation()
+		print("NAV REGRESSION ", JSON.stringify({"assertions": assertions, "failures": failures}))
+		get_tree().quit(0 if failures.is_empty() else 1)
+		return
 	seed(20261025)
 	await preload("res://tests/voyage_regressions.gd").new().run(self)
 	await _test_translations()
@@ -136,8 +141,9 @@ func _test_navigation() -> void:
 		var grid := TileGrid.new()
 		var costs := PackedFloat32Array()
 		for index in range(81):
-			costs.append(0.0 if rng.randf() < 0.2 else [0.5, 1.0, 2.0][rng.randi_range(0, 2)])
+			costs.append(0.0 if rng.randf() < 0.2 else [0.35, 1.0, 2.0][rng.randi_range(0, 2)])
 		grid.configure(Rect2i(-2, -3, 9, 9), costs)
+		_check_road_field_repair(grid)
 		var astar: PathAlgorithm = ASTAR.new()
 		var dijkstra: PathAlgorithm = DIJKSTRA.new()
 		astar.build(grid)
@@ -183,6 +189,41 @@ func _test_navigation() -> void:
 	expect(service._fields.size() <= RouteService.MAX_CACHED_FIELDS, "navigation cache stays bounded")
 	metrics["navigation_100x100"] = {"cold_field_ms": cold_us / 1000.0, "10000_cached_reads_ms": hits_us / 1000.0, "field_bytes": field.costs.size() * 4 + field.parents.size(), "cache_limit": RouteService.MAX_CACHED_FIELDS}
 	service.free()
+
+func _check_road_field_repair(grid: TileGrid) -> void:
+	var cells := grid.walkable_cells()
+	if cells.is_empty(): return
+	var seeds: Array[Vector2i] = [cells.front(), cells.back()]
+	var next := grid
+	var changed := PackedInt32Array()
+	# Lower adjacent costs and costs on different components in one revision.
+	for id in range(0, cells.size(), 4):
+		next = next.with_cost(cells[id], next.cost(cells[id]) * 0.35)
+		changed.append(id)
+	for reverse in [false, true]:
+		var repaired := GridSearch.build(grid, seeds, reverse)
+		GridSearch.repair(repaired, next, changed)
+		var fresh := GridSearch.build(next, seeds, reverse)
+		var matches := true
+		for cell in cells:
+			var distance := fresh.cost(cell)
+			if is_inf(distance):
+				matches = matches and repaired.path(cell).is_empty()
+				continue
+			var path := repaired.path(cell)
+			if path.is_empty():
+				matches = false
+				continue
+			var path_cost := 0.0
+			for step in range(1, path.size()):
+				path_cost += next.cost(path[step])
+			matches = matches and is_equal_approx(repaired.cost(cell), distance)
+			matches = matches and is_equal_approx(path_cost, distance)
+			if reverse:
+				matches = matches and seeds.has(path.back()) and path.back() == repaired.destination(cell)
+			else:
+				matches = matches and seeds.has(path.front())
+		expect(matches, "road repair preserves optimal weighted routes and seed reachability")
 
 func _reference(grid: TileGrid, start: Vector2i, finish: Vector2i) -> float:
 	if not grid.walkable(start) or not grid.walkable(finish):

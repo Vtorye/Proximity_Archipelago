@@ -6,6 +6,8 @@ var costs := PackedFloat32Array()
 var parents := PackedByteArray()
 var seed_nodes := PackedInt32Array()
 var reverse := false
+## Revision assigned by RouteService to a complete cached field.
+var revision := -1
 var _grid: TileGrid
 var _offsets: Dictionary[int, int] = {}
 var _single_seed: Vector2i
@@ -28,6 +30,10 @@ func setup(grid: TileGrid, seeds: Array[Vector2i], backwards: bool) -> void:
 func node_index(id: int) -> int:
 	var component: int = _grid.component_id(id)
 	return id + _offsets[component] if _offsets.has(component) else -1
+
+## Cost-only edits preserve IDs, neighbors, and component storage.
+func use_cost_snapshot(grid: TileGrid) -> void:
+	_grid = grid
 func index(cell: Vector2i) -> int:
 	var id: int = _grid.index(cell)
 	return node_index(id) if id >= 0 else -1

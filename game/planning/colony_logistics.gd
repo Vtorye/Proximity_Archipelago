@@ -10,7 +10,6 @@ var inventory: WorldInventory
 var navigation: RouteService
 var _depots: Array[House] = []
 var _fields: Dictionary[House, NavigationField] = {}
-var _revision := -1
 
 func configure(stock: WorldInventory, routes: RouteService, registry: BuildingRegistry) -> void:
 	inventory = stock
@@ -214,9 +213,8 @@ func _nearest_order(from_cell: Vector2i, capacity: int, can_collect: Callable) -
 	return best
 
 func _field(house: House) -> NavigationField:
-	if _revision != navigation.revision:
-		_fields.clear()
-		_revision = navigation.revision
-	if not _fields.has(house):
-		_fields[house] = navigation.reverse_field(house.entry_cells())
-	return _fields[house]
+	var field: NavigationField = _fields.get(house)
+	if field == null or field.revision != navigation.revision:
+		field = navigation.reverse_field(house.entry_cells(), field)
+		_fields[house] = field
+	return field

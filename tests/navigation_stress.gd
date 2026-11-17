@@ -28,6 +28,8 @@ var road_cells: Array[Vector2i] = []
 var completed := 0
 var revision := 0
 var searches := 0
+var repairs := 0
+var repaired_nodes := 0
 var idle_frames: Array[float] = []
 var build_frames: Array[float] = []
 var road_frames: Array[float] = []
@@ -85,6 +87,8 @@ func _start() -> void:
 	world.process_mode = Node.PROCESS_MODE_PAUSABLE
 	revision = world.route_service.revision
 	searches = world.route_service.search_count
+	repairs = world.route_service.field_repairs
+	repaired_nodes = world.route_service.repaired_nodes
 	TIMING.enabled = profiling
 	last_tick = Time.get_ticks_usec()
 	start_tick = last_tick
@@ -216,6 +220,8 @@ func _report() -> void:
 		"live_couriers": world.population.agents().filter(func(ant: AntAgent) -> bool: return ant.role == AntAgent.Role.CARRIER).size(),
 		"paint_ms": setup_ms, "commit_ms": commit_ms, "navigation_revisions": world.route_service.revision - revision,
 		"searches": world.route_service.search_count - searches,
+		"field_repairs": world.route_service.field_repairs - repairs,
+		"repaired_nodes": world.route_service.repaired_nodes - repaired_nodes,
 		"idle_frames": _frame_stats(idle_frames), "build_frames": _frame_stats(build_frames),
 		"road_completion_frames": _frame_stats(road_frames),
 	}))

@@ -175,7 +175,12 @@ func _coalesced_updates(test: Node) -> void:
 	await test.get_tree().process_frame
 	var ant: AntAgent = world.population.agents()[0]
 	var stone: Workplace = _stone_only(world, ant)
+	var routes := world.route_service
+	var origin := world.planner.accessible_entry(ant.home)
+	var departure := routes.distances_from(origin)
+	var home := routes.reverse_field([origin])
 	var searches: int = world.route_service.search_count
+	var repairs: int = routes.field_repairs
 	var active_route: Route = ant.motion.route
 	var revision: int = world.route_service.revision
 	var road: BuildOption = load("res://game/building/options/road.tres")
@@ -185,13 +190,23 @@ func _coalesced_updates(test: Node) -> void:
 			cells.append(cell)
 			if cells.size() == 3: break
 	test.expect(cells.size() == 3, "fixture has three tiles that roads make cheaper")
+	var map := world.map as TerrainMap
+	var old_tile := map.key_at(cells.front())
 	for cell in cells:
 		test.expect(world.build_controller.try_build(road, cell), "several road edits can be committed in the same frame")
 	await test.get_tree().process_frame
 	test.expect(world.route_service.revision == revision + 3 and world.route_service.search_count == searches, "cheaper roads advance the revision without rebuilding fields immediately")
+	test.expect(routes.field_repairs == repairs, "a batch of roads does not repair fields until read")
+	test.expect(routes.distances_from(origin) == departure and routes.reverse_field([origin], home) == home
+		and routes.field_repairs == repairs + 2 and routes.search_count == searches,
+		"the next reads repair forward and reverse fields once for the complete batch")
 	test.expect(ant.work.workplace == stone and ant.motion.route == active_route, "cheaper roads preserve an active safe path")
 	var fresh := world.planner.plan_work(ant, ant.home, ant.needs, ant.speed, ant.work_time, ant._meal, stone)
 	test.expect(fresh != null and fresh.outward != null and fresh.outward.revision == world.route_service.revision, "the next departure uses the new road costs")
+	map.paint_tile(cells.front(), old_tile, true)
+	routes.update_cells([cells.front()], world.registry.blocked_cells())
+	test.expect(routes.distances_from(origin) != departure and routes.reverse_field([origin], home) != home,
+		"raising a tile cost invalidates complete fields in both directions")
 	world.free()
 	await test.get_tree().process_frame
 
