@@ -1,0 +1,35 @@
+~ intro
+Queen: ui.story.tutorial.wake [#portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_pleased.png]
+Queen: ui.story.tutorial.purpose [#portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_pleased.png]
+Protagonist: ui.story.tutorial.before [#portrait=res://game/assets/sprites/visual_novel/protagonist/protagonist_ant.png]
+Queen: ui.story.tutorial.my_fault [#portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_thinking.png]
+Queen: ui.story.tutorial.colony [#portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_thinking.png]
+Protagonist: ui.story.tutorial.delivery [#portrait=res://game/assets/sprites/visual_novel/protagonist/protagonist_ant.png]
+=> road
+
+~ road
+Queen: ui.story.tutorial.road_hint [#action=road]
+=> END
+
+~ after_road
+Queen: ui.story.tutorial.road_done [#portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_pleased.png]
+Queen: ui.story.tutorial.choice [#portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_eating_berries.png]
+Protagonist: ui.story.tutorial.choice_cost [#portrait=res://game/assets/sprites/visual_novel/protagonist/protagonist_ant.png]
+=> order
+
+~ order
+Queen: ui.story.tutorial.order_hint [#action=order]
+=> END
+
+~ ending_build
+Queen: ui.story.tutorial.feast [#portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_eating_berries.png]
+=> handoff
+
+~ ending_diversion
+Queen: ui.story.tutorial.statue [#portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_pleased.png]
+=> handoff
+
+~ handoff
+Protagonist: ui.story.tutorial.more_time [#portrait=res://game/assets/sprites/visual_novel/protagonist/protagonist_ant.png]
+Queen: ui.story.tutorial.farewell [#portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_pleased.png]
+=> END

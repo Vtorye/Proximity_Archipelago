@@ -9,9 +9,10 @@ var world: World
 @onready var selection: TileSelection = $Selection
 @onready var campaign_panel: CampaignPanel = $Interface/Campaign
 @onready var hud: MatchHud = $Interface/Hud
+@onready var story: StoryOverlay = $StoryLayer/Story
 const CONSTRUCTION_PANEL := preload("res://overlays/construction_menu.tscn")
 const NEST_POPUP := preload("res://overlays/nest_menu.tscn")
-const STORY_DEMO := preload("res://story/demo_episode.tres")
+const FIRST_ISLAND := preload("res://game/worlds/first_island.tscn")
 
 var nest_popup: NestMenu
 var _construction: ConstructionMenu
@@ -19,11 +20,19 @@ var _section: StringName
 var _active := false
 var _pointer := Vector2(-1, -1)
 var _camera_moved := false
+var _tutorial_start := false
+var _tutorial_checkpoint: Dictionary = {}
 
 func _ready() -> void:
 	var waves: bool = payload is Dictionary and payload.get("wave_mode", false)
+	_tutorial_start = payload is Dictionary and payload.get("tutorial", false) == true
+	var snapshot: Dictionary = payload.get("snapshot", {}) if payload is Dictionary else {}
+	if snapshot.get("tutorial") is Dictionary:
+		_tutorial_checkpoint = snapshot.tutorial
 	if payload is Dictionary and payload.has("tiles"):
 		world = LevelLayout.create_world(payload)
+	elif _tutorial_start:
+		world = FIRST_ISLAND.instantiate()
 	else:
 		var seed_generator := RandomNumberGenerator.new()
 		seed_generator.randomize()
@@ -40,6 +49,8 @@ func _ready() -> void:
 	world.waves.enabled = waves
 	world.name = "World"
 	world.auto_start = false
+	if _tutorial_start:
+		world.opening_order = story.episode.opening_order
 	add_child(world)
 	move_child(world, 0)
 	world.match_controller.completed.connect(_on_completed)
@@ -65,29 +76,22 @@ func _ready() -> void:
 	hud.zoom_in_requested.connect(func(): camera.set_level(camera.level + 1))
 	hud.zoom_out_requested.connect(func(): camera.set_level(camera.level - 1))
 	camera.zoom_changed.connect(hud.set_zoom)
+	if (_tutorial_start or not _tutorial_checkpoint.is_empty()) and world.tasks != null:
+		world.build_controller.built.connect(story.on_build_completed)
+		world.build_controller.order_completed.connect(story.on_order_completed)
+		story.modal_changed.connect(_on_story_modal_changed)
 
 func on_focus() -> void:
 	_active = true
 	world.start()
-	if payload is Dictionary and payload.get("story_demo", false):
-		var story := Router.push_overlay(&"story", STORY_DEMO) as StoryOverlay
-		if story != null:
-			var build_callback := func(option: BuildOption, _cell: Vector2i):
-				if option is TileBuildOption:
-					if option.placement_kind == BuildOption.PlacementKind.ROAD:
-						story.complete_action(&"place_road")
-				elif option is SceneBuildOption:
-					story.complete_action(&"place_building")
-			world.build_controller.built.connect(build_callback)
-			story.tree_exiting.connect(func():
-				if is_instance_valid(world.build_controller) and world.build_controller.built.is_connected(build_callback):
-					world.build_controller.built.disconnect(build_callback)
-			)
+	if (_tutorial_start or not _tutorial_checkpoint.is_empty()) and world.tasks != null:
+		story.start(_tutorial_checkpoint)
 	if payload is Dictionary and payload.has("journey"): SessionSave.write(world)
 	if debug_show_result:
 		_on_completed(MatchSummary.capture(true, &"target_reached", 83.0, world.inventory))
 
 func on_blur() -> void:
+	story.finish()
 	_close_nest_popup()
 	_active = false
 	world.stop()
@@ -97,6 +101,7 @@ func _on_completed(summary: MatchSummary) -> void:
 	if not _active or Router.is_navigating():
 		return
 	selection.clear()
+	story.finish()
 	if world.voyage != null and world.voyage.departed: return
 	if Router.push_overlay(&"match_result", summary) != null:
 		PauseController.acquire(&"result")
@@ -104,10 +109,12 @@ func _on_completed(summary: MatchSummary) -> void:
 func _input(event: InputEvent) -> void:
 	if not _active or Router.is_navigating():
 		return
+	if story.is_modal:
+		camera.dragging = false
+		return
 	if event is InputEventMouseMotion: _pointer = event.position
 	var top: MenuBase = Router.top_overlay()
-	var story_accepts_input := top is StoryOverlay and (top as StoryOverlay).awaiting_action
-	if (top != null and not story_accepts_input) or _building_active():
+	if top != null or _building_active():
 		camera.dragging = false
 	if top == null and event.is_action_pressed(&"ui_cancel") and _dismiss_visible_nest_popup():
 		get_viewport().set_input_as_handled()
@@ -135,9 +142,8 @@ func _input(event: InputEvent) -> void:
 		return
 
 func _unhandled_input(event: InputEvent) -> void:
-	if not _active or Router.is_navigating(): return
+	if not _active or Router.is_navigating() or story.is_modal: return
 	var top: MenuBase = Router.top_overlay()
-	var story_accepts_input := top is StoryOverlay and (top as StoryOverlay).awaiting_action
 	if top == null and event.is_action_pressed(&"ui_cancel") and not _building_active() and not campaign_panel.visible:
 		_open_settings()
 		get_viewport().set_input_as_handled()
@@ -151,7 +157,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			_inspect_building(_cell_at(event.position))
 			get_viewport().set_input_as_handled()
 			return
-	if (top == null or story_accepts_input) and event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_B:
+	if top == null and event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_B:
 		hud.construction_requested.emit()
 		get_viewport().set_input_as_handled()
 
@@ -159,15 +165,15 @@ func _process(_delta: float) -> void:
 	if camera == null:
 		return
 	var top: MenuBase = Router.top_overlay()
-	var story_accepts_input := top is StoryOverlay and (top as StoryOverlay).awaiting_action
-	var can_use_map: bool = (top == null or story_accepts_input) and not campaign_panel.visible
+	story.set_covered(top != null or campaign_panel.visible)
+	var can_use_map: bool = top == null and not story.is_modal and not campaign_panel.visible
 	if is_instance_valid(_construction):
 		_construction.visible = can_use_map
 	camera.enabled_input = can_use_map and not _building_active()
 	if is_instance_valid(nest_popup):
-		nest_popup.visible = (top == null or top is PauseMenu) and not campaign_panel.visible
+		nest_popup.visible = (top == null or top is PauseMenu) and not story.is_modal and not campaign_panel.visible
 		$PopupLayer.layer = 8
-	hud.lock_zoom(top != null)
+	hud.lock_zoom(top != null or story.is_modal)
 	if navigation_overlay.mode == 2 and _navigation_available():
 		if not selection.selected or selection.cell != navigation_overlay.origin: selection.select(navigation_overlay.origin)
 	elif _navigation_available() and hud.navigation_panel.inspected_cell != null:
@@ -181,6 +187,17 @@ func _process(_delta: float) -> void:
 		if navigation_overlay.hover_active or not panel.is_visible_in_tree():
 			navigation_overlay.hovered = _cell_at(_pointer)
 
+func _on_story_modal_changed(modal: bool) -> void:
+	if modal:
+		camera.dragging = false
+		camera.enabled_input = false
+		if is_instance_valid(_construction):
+			_construction.hide()
+		if is_instance_valid(nest_popup):
+			nest_popup.hide()
+
+func save_game(path := SessionSave.PATH) -> Error:
+	return SessionSave.write(world, path, story.capture_checkpoint())
 
 func _cell_at(point: Vector2) -> Vector2i:
 	var map: TileMapLayer = world.map
@@ -221,7 +238,7 @@ func _inspect_secondary_cell(cell: Vector2i) -> void:
 	_inspect_building(cell)
 
 func _open_settings() -> void:
-	if campaign_panel.visible or Router.has_overlay():
+	if story.is_modal or campaign_panel.visible or Router.has_overlay():
 		return
 	hud.navigation_panel.inspect_cell(null)
 	selection.clear()
@@ -229,7 +246,7 @@ func _open_settings() -> void:
 		PauseController.acquire(&"menu")
 
 func _select_section(section: StringName) -> void:
-	if Router.has_overlay() or campaign_panel.visible:
+	if story.is_modal or Router.has_overlay() or campaign_panel.visible:
 		return
 	var already_open := _section == section
 	if section == &"build" and is_instance_valid(_construction):
@@ -267,6 +284,8 @@ func _create_construction_panel() -> void:
 	_update_construction_dock()
 
 func _begin_royal_order(task_id: StringName, variant_id: StringName) -> void:
+	if story.is_modal:
+		return
 	var order := world.tasks.start_order(task_id, variant_id)
 	if order == null:
 		return
@@ -302,13 +321,16 @@ func _update_construction_dock() -> void:
 
 func _construction_obstacles() -> Array[Rect2]:
 	var obstacles: Array[Rect2] = hud.build_obstacles()
+	var hint_bounds := story.hint_bounds()
+	if hint_bounds.has_area():
+		obstacles.append(hint_bounds)
 	if is_instance_valid(nest_popup) and nest_popup.is_visible_in_tree():
 		obstacles.append(nest_popup.panel_bounds())
 	return obstacles
 
 func _navigation_available() -> bool:
 	var top: MenuBase = Router.top_overlay()
-	return _active and not Router.is_navigating() and (top == null or top is PauseMenu)
+	return _active and not story.is_modal and not Router.is_navigating() and (top == null or top is PauseMenu)
 
 func _toggle_navigation() -> void:
 	if not _navigation_available(): return

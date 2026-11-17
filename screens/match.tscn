@@ -5,6 +5,7 @@
 [ext_resource type="Script" path="res://game/ui/tile_selection.gd" id="selection"]
 [ext_resource type="PackedScene" path="res://game/ui/match_hud.tscn" id="hud"]
 [ext_resource type="PackedScene" path="res://game/campaign/campaign_panel.tscn" id="campaign"]
+[ext_resource type="PackedScene" path="res://story/story_overlay.tscn" id="story"]
 
 [node name="Match" type="Control"]
 layout_mode = 3
@@ -47,3 +48,8 @@ anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 mouse_filter = 2
+
+[node name="StoryLayer" type="CanvasLayer" parent="."]
+layer = 9
+
+[node name="Story" parent="StoryLayer" instance=ExtResource("story")]

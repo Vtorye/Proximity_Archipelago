@@ -16,7 +16,7 @@ func _ready() -> void:
 	%Maps.pressed.connect(func(): Router.goto(&"level_editor"))
 	controls[&"tutorial"] = %Tutorial
 	%Tutorial.pressed.connect(AppSettings.play_click)
-	%Tutorial.pressed.connect(func(): Router.goto(&"tutorial"))
+	%Tutorial.pressed.connect(func(): Router.goto(&"match", {"tutorial": true}))
 	controls[&"settings"] = %Settings
 	%Settings.pressed.connect(AppSettings.play_click)
 	%Settings.pressed.connect(func(): Router.push_overlay(&"settings"))
@@ -32,6 +32,9 @@ func _ready() -> void:
 
 func _start_match(waves: bool) -> void:
 	var layout: Dictionary = LevelStore.load_level(LevelStore.starting_level(waves))
+	if not waves and layout.is_empty():
+		Router.goto(&"match", {"tutorial": true})
+		return
 	layout["wave_mode"] = waves
 	Router.goto(&"match", layout)
 

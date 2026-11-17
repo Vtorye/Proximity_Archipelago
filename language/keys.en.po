@@ -259,7 +259,7 @@ msgid "ui.building.canteen"
 msgstr "Canteen"
 
 msgid "ui.building.statue_placeholder"
-msgstr "Placeholder statue"
+msgstr "Statue of the Queen"
 
 msgid "ui.building.feast"
 msgstr "Royal feast"
@@ -285,30 +285,6 @@ msgstr "Build requested"
 msgid "ui.task.diversion"
 msgstr "Arrange a diversion"
 
-msgid "ui.tutorial.lesson1.title"
-msgstr "Colony requests"
-
-msgid "ui.tutorial.lesson1.body"
-msgstr "Three resource requests are available at a time.\nDeliver resources to gain time and regalia.\nIf the timer reaches zero, the colony loses.\n\nYou need the same stock for requests and building.\nAnts pick nearby jobs with free slots."
-
-msgid "ui.tutorial.lesson2.title"
-msgstr "Paths and food"
-
-msgid "ui.tutorial.lesson2.body"
-msgstr "Paths speed up trips to work and home.\nTrees provide wood, quarries stone, and bushes food.\n\nAnts need food and a safe route to the canteen.\nA new nest adds five residents; they also need food.\nWorkplace load shows working+en route / slots."
-
-msgid "ui.tutorial.lesson3.title"
-msgstr "Build while paused"
-
-msgid "ui.tutorial.lesson3.body"
-msgstr "Press B to open construction. Space pauses or resumes the simulation independently.\nChoose a building and drag across tiles. A road and a building can share a tile.\nRight-click removes the latest addition on the selected tile. Ctrl+Z undoes a stroke. The cross cancels the whole plan. The triangle applies it."
-
-msgid "ui.tutorial.lesson4.title"
-msgstr "Camera and demolition"
-
-msgid "ui.tutorial.lesson4.body"
-msgstr "Use the wheel to zoom, and MMB, arrows or WASD to pan.\nIn construction, the Move tool lets you pan with LMB.\n\nThe Demolish tool marks buildings and roads for removal.\nRemoval happens when you apply the plan, with no refund.\nDemolishing a nest kills residents and needs confirmation.\nThe top menu offers settings, restart, and exit."
-
 msgid "ui.menu.language"
 msgstr "Language: English"
 
@@ -323,12 +299,6 @@ msgstr "This terrain cannot be built on"
 
 msgid "ui.placement.impassable"
 msgstr "Tile is impassable"
-
-msgid "ui.tutorial.progress.title"
-msgstr "Rewards and upgrades"
-
-msgid "ui.tutorial.progress.body"
-msgstr "Each level has five requests in random order.\nSkipping usually costs one third and gives no reward.\nHover over Skip to see its price.\n\nClosing a level grants faster paths, cheaper building or faster ants.\nSpend regalia on new canteens."
 
 msgid "ui.menu.maps"
 msgstr "Maps"
@@ -1074,9 +1044,6 @@ msgstr "Fertile valleys alternate with dry hills and rocky deposits. Wet banks e
 msgid "ui.window.close"
 msgstr "Close"
 
-msgid "ui.tutorial.previous"
-msgstr "Previous page"
-
 msgid "ui.hud.pause"
 msgstr "Pause [Space]"
 
@@ -1148,3 +1115,60 @@ msgstr "Remove trap"
 
 msgid "ui.task.building_variant"
 msgstr "Under construction: %s"
+
+msgid "ui.story.queen"
+msgstr "Queen"
+
+msgid "ui.story.protagonist"
+msgstr "Steward"
+
+msgid "ui.story.continue"
+msgstr "Continue"
+
+msgid "ui.story.skip_tutorial"
+msgstr "Skip tutorial"
+
+msgid "ui.story.tutorial.wake"
+msgstr "Oh, good. You're awake. Come closer. I want to see if I got your eyes right."
+
+msgid "ui.story.tutorial.purpose"
+msgstr "I made you to build me statues and throw me feasts. The kingdom came with the job."
+
+msgid "ui.story.tutorial.before"
+msgstr "Who was running it before me?"
+
+msgid "ui.story.tutorial.my_fault"
+msgstr "Me. That's why you have a job. I'd offer you a tour, but you've already seen my best feature."
+
+msgid "ui.story.tutorial.colony"
+msgstr "The nest has residents. There's a canteen, wood, stone, and berries. I started a road to the canteen before I remembered I was queen."
+
+msgid "ui.story.tutorial.delivery"
+msgstr "I'll draw the road and apply the plan. The ants will deliver the materials and build it. Then they'll get to the canteen faster."
+
+msgid "ui.story.tutorial.road_hint"
+msgstr "Build (B) → Road. Draw a path and choose Start construction."
+
+msgid "ui.story.tutorial.road_done"
+msgstr "We have a road! Now I can stop telling everyone the shortcut is a secret."
+
+msgid "ui.story.tutorial.choice"
+msgstr "First royal order. A feast, because I'm hungry. Or a statue, because I'm vain. Pick whichever makes you think of me more fondly."
+
+msgid "ui.story.tutorial.choice_cost"
+msgstr "A feast takes food and wood. A statue takes stone and wood. I'll pick one in Tasks and apply the plan."
+
+msgid "ui.story.tutorial.order_hint"
+msgstr "Tasks → Requests → first order. Place a feast or statue and choose Start construction."
+
+msgid "ui.story.tutorial.feast"
+msgstr "I saved you a seat next to me. And the last berry. The seat's still free."
+
+msgid "ui.story.tutorial.statue"
+msgstr "You even made me taller. Now I'll have to stand on tiptoe whenever you look at me."
+
+msgid "ui.story.tutorial.more_time"
+msgstr "Finishing orders adds time. I'll check Tasks for the next one."
+
+msgid "ui.story.tutorial.farewell"
+msgstr "If you pull this off, it was my brilliant plan. If you don't, come find me. We'll think of someone to blame."

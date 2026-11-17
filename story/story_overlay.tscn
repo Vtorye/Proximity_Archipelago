@@ -1,66 +1,105 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" path="res://story/story_overlay.gd" id="1"]
-[ext_resource type="StyleBox" path="res://game/ui/dialog_panel.tres" id="2"]
-[ext_resource type="Texture2D" path="res://game/assets/sprites/visual_novel/ant_queen/ant_queen_thinking.png" id="3_queen"]
-[ext_resource type="Texture2D" path="res://game/assets/sprites/visual_novel/protagonist/protagonist_ant.png" id="4_ant"]
+[ext_resource type="Script" path="res://story/story_overlay.gd" id="script"]
+[ext_resource type="StyleBox" path="res://game/ui/dialog_panel.tres" id="panel"]
+[ext_resource type="Resource" path="res://story/tutorial_episode.tres" id="episode"]
 
 [node name="StoryOverlay" type="Control"]
+visible = false
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
 mouse_filter = 2
-script = ExtResource("1")
-default_focus = NodePath("BottomPanel/Content/Controls/Continue")
-character_portraits = {&"Protagonist": ExtResource("4_ant"), &"Queen": ExtResource("3_queen")}
+script = ExtResource("script")
+episode = ExtResource("episode")
 
-[node name="BottomPanel" type="PanelContainer" parent="."]
+[node name="Shade" type="ColorRect" parent="."]
+unique_name_in_owner = true
 layout_mode = 1
-anchors_preset = 12
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.08, 0.06, 0.04, 0.55)
+
+[node name="DialoguePanel" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = -116.0
+offset_left = 12.0
+offset_top = -200.0
+offset_right = -12.0
+offset_bottom = -12.0
 grow_vertical = 0
-theme_override_styles/panel = ExtResource("2")
+theme_override_styles/panel = ExtResource("panel")
 
-[node name="Content" type="HBoxContainer" parent="BottomPanel"]
-theme_override_constants/separation = 10
+[node name="Content" type="HBoxContainer" parent="DialoguePanel"]
+theme_override_constants/separation = 12
 
-[node name="Portrait" type="TextureRect" parent="BottomPanel/Content"]
+[node name="Portrait" type="TextureRect" parent="DialoguePanel/Content"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(92, 92)
+custom_minimum_size = Vector2(120, 120)
 expand_mode = 1
 stretch_mode = 5
 
-[node name="TextAndControls" type="VBoxContainer" parent="BottomPanel/Content"]
+[node name="Text" type="VBoxContainer" parent="DialoguePanel/Content"]
 size_flags_horizontal = 3
-theme_override_constants/separation = 5
+theme_override_constants/separation = 4
 
-[node name="Speaker" type="Label" parent="BottomPanel/Content/TextAndControls"]
+[node name="Speaker" type="Label" parent="DialoguePanel/Content/Text"]
 unique_name_in_owner = true
 theme_type_variation = &"Heading"
+theme_override_colors/font_color = Color(0.94, 0.78, 0.49, 1)
 
-[node name="Dialogue" type="Label" parent="BottomPanel/Content/TextAndControls"]
+[node name="Scroll" type="ScrollContainer" parent="DialoguePanel/Content/Text"]
 unique_name_in_owner = true
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="Dialogue" type="Label" parent="DialoguePanel/Content/Text/Scroll"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
 size_flags_vertical = 3
 autowrap_mode = 3
 vertical_alignment = 1
 
-[node name="Controls" type="HBoxContainer" parent="BottomPanel/Content/TextAndControls"]
-theme_override_constants/separation = 6
+[node name="Actions" type="HBoxContainer" parent="DialoguePanel/Content/Text"]
+theme_override_constants/separation = 8
+alignment = 2
 
-[node name="SkipToAction" type="Button" parent="BottomPanel/Content/TextAndControls/Controls"]
-unique_name_in_owner = true
-text = "ui.story.skip_to_action"
-
-[node name="SkipEpisode" type="Button" parent="BottomPanel/Content/TextAndControls/Controls"]
+[node name="SkipDialogue" type="Button" parent="DialoguePanel/Content/Text/Actions"]
 unique_name_in_owner = true
 text = "ui.story.skip_tutorial"
 
-[node name="Continue" type="Button" parent="BottomPanel/Content/TextAndControls/Controls"]
+[node name="Continue" type="Button" parent="DialoguePanel/Content/Text/Actions"]
 unique_name_in_owner = true
 text = "ui.story.continue"
+
+[node name="HintPanel" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -156.0
+offset_right = 72.0
+offset_top = 52.0
+grow_horizontal = 2
+theme_override_styles/panel = ExtResource("panel")
+
+[node name="HintContent" type="HBoxContainer" parent="HintPanel"]
+theme_override_constants/separation = 6
+
+[node name="Hint" type="Label" parent="HintPanel/HintContent"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+autowrap_mode = 3
+vertical_alignment = 1
+
+[node name="SkipHint" type="Button" parent="HintPanel/HintContent"]
+unique_name_in_owner = true
+size_flags_vertical = 4
+text = "×"
+tooltip_text = "ui.story.skip_tutorial"
+accessibility_name = "ui.story.skip_tutorial"

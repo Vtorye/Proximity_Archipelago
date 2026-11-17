@@ -19,7 +19,7 @@ var _speed := 1.0
 var message := ""
 var _upgrade_message := ""
 
-func configure(colony: World, definitions: TaskDeck, random_seed: int = 0) -> void:
+func configure(colony: World, definitions: TaskDeck, random_seed: int = 0, opening_order: TaskSpec = null) -> void:
 	world = colony
 	deck = definitions
 	_rng.seed = random_seed
@@ -29,7 +29,7 @@ func configure(colony: World, definitions: TaskDeck, random_seed: int = 0) -> vo
 	world.build_controller.order_placed.connect(changed.emit)
 	world.build_controller.order_completed.connect(_on_order_completed)
 	world.construction_service.order_cancelled.connect(changed.emit)
-	_next_level()
+	_next_level(opening_order)
 
 func stage() -> TaskStage:
 	return deck.stages[mini(level - 1, deck.stages.size() - 1)]
@@ -130,7 +130,7 @@ func _increase_speed(factor: float) -> void:
 	for ant in world.population.agents(): ant.speed *= factor
 	world.planner.queue_workplace_refresh()
 
-func _next_level() -> void:
+func _next_level(opening_order: TaskSpec = null) -> void:
 	if level > 0: message = _upgrade_message
 	level += 1
 	closed = 0
@@ -140,6 +140,9 @@ func _next_level() -> void:
 		var temporary: TaskSpec = _pool[index]
 		_pool[index] = _pool[other]
 		_pool[other] = temporary
+	if opening_order != null and _pool.has(opening_order):
+		_pool.erase(opening_order)
+		_pool.append(opening_order)
 	slots.clear()
 	for index in range(3): slots.append(_pool.pop_back() if not _pool.is_empty() else null)
 	for building in world.registry.all(): _skin(building)

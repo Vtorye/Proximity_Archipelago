@@ -5,9 +5,12 @@ const PATH := "user://voyage.save"
 const VERSION := 1
 const LIMIT := 32 * 1024 * 1024
 
-static func write(world: World, path := PATH) -> Error:
+static func write(world: World, path := PATH, tutorial: Dictionary = {}) -> Error:
 	if world == null or not world.ready_for_play or (world.match_controller.is_finished() and (world.voyage == null or not world.voyage.departed)): return ERR_UNAVAILABLE
-	var bytes: PackedByteArray = var_to_bytes(capture(world))
+	var snapshot := capture(world)
+	if not tutorial.is_empty():
+		snapshot["tutorial"] = tutorial
+	var bytes: PackedByteArray = var_to_bytes(snapshot)
 	if bytes.size() > LIMIT: return ERR_OUT_OF_MEMORY
 	var file := FileAccess.open(path + ".tmp", FileAccess.WRITE)
 	if file == null: return FileAccess.get_open_error()

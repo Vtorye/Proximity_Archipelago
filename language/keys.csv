@@ -6,21 +6,10 @@ ui.menu.tutorial,Tutorial,Обучение
 ui.common.main_menu,Main menu,В меню
 ui.common.back,Back,Назад
 ui.common.next,Next,Далее
-ui.story.demo,Interactive story demo,Демо сюжета
 ui.story.queen,Queen,Королева
-ui.story.protagonist,Protagonist,Муравей
+ui.story.protagonist,Steward,Управляющая
 ui.story.continue,Continue,Далее
-ui.story.waiting,Waiting for your action…,Ждём вашего действия…
-ui.story.skip_to_action,Skip to action,К действию
-ui.story.skip_tutorial,Skip tutorial,Пропустить урок
-ui.story.demo.queen_intro,"The colony needs your help. I will guide you through two first steps.",«Колонии нужна твоя помощь. Я подскажу первые два шага.»
-ui.story.demo.protagonist_intro,"I am ready. Tell me what to do first.",«Я готов. С чего начать?»
-ui.story.demo.road_prompt,"Open construction with B, choose Road, draw a short path on the map, then apply the plan.",«Нажми B, выбери «Дорога», проложи короткий путь по карте и примени план.»
-ui.story.demo.road_complete,"Good. Roads help ants travel between the nest and their workplaces.",«Хорошо. По дорогам муравьи быстрее ходят между гнездом и работой.»
-ui.story.demo.build_prompt,"I should place a building near the resources it will use.",«Здание лучше поставить рядом с ресурсом, который оно будет использовать.»
-ui.story.demo.build_task,"Choose any available building in the construction panel, place it on the island, then apply the plan.",«Выбери любую доступную постройку, размести её на острове и примени план.»
-ui.story.demo.done,Well done,Отлично
-ui.story.demo.done_text,"The game reported your build action, so the story continued.",«Игра сообщила о постройке, и сюжет продолжился.»
+ui.story.skip_tutorial,Skip tutorial,Пропустить обучение
 ui.settings.volume,Volume,Громкость
 ui.settings.fullscreen,Fullscreen,Полный экран
 ui.settings.grid,Tile grid,Сетка клеток
@@ -99,21 +88,11 @@ ui.building.generic,Building,Строение
 ui.building.timber,Timber grove,Участок древесины
 ui.building.stone,Stone deposit,Каменная россыпь
 ui.building.canteen,Canteen,Столовая
-ui.tutorial.lesson1.title,Colony requests,Запросы колонии
-ui.tutorial.lesson1.body,"Three resource requests are available at a time.\nDeliver resources to gain time and regalia.\nIf the timer reaches zero, the colony loses.\n\nYou need the same stock for requests and building.\nAnts pick nearby jobs with free slots.","Одновременно доступны три запроса ресурсов.\nСдавайте ресурсы и получайте дополнительные секунды и регалии.\nЕсли таймер обнулится, партия закончится поражением.\n\nЗапасы нужны и для заданий, и для строительства.\nМуравьи выбирают близкую и свободную работу."
-ui.tutorial.lesson2.title,Paths and food,Дороги и пища
-ui.tutorial.lesson2.body,"Paths speed up trips to work and home.\nTrees provide wood, quarries stone, and bushes food.\n\nAnts need food and a safe route to the canteen.\nA new nest adds five residents; they also need food.\nWorkplace load shows working+en route / slots.","Тропинки ускоряют дорогу на работу и домой.\nДеревья дают древесину, каменоломни — камень, кусты — пищу.\n\nМуравьям нужны еда и безопасный путь к столовой.\nНовый муравейник даёт пять жителей; им тоже нужна пища.\nНагрузка предприятия показана как работают+идут / места."
-ui.tutorial.lesson3.title,Build while paused,Стройка на паузе
-ui.tutorial.lesson3.body,Press B to open construction. Space pauses or resumes the simulation independently.\nChoose a building and drag across tiles. A road and a building can share a tile.\nRight-click removes the latest addition on the selected tile. Ctrl+Z undoes a stroke. The cross cancels the whole plan. The triangle applies it.,B открывает стройку. Пробел отдельно ставит игру на паузу или продолжает её.\nВыберите постройку и проведите по клеткам. Дорога и здание помещаются на одной клетке.\nПКМ снимает последнее добавление на клетке. Ctrl+Z отменяет мазок. Крестик отменяет весь план. Треугольник применяет его.
-ui.tutorial.lesson4.title,Camera and demolition,Камера и снос
-ui.tutorial.lesson4.body,"Use the wheel to zoom, and MMB, arrows or WASD to pan.\nIn construction, the Move tool lets you pan with LMB.\n\nThe Demolish tool marks buildings and roads for removal.\nRemoval happens when you apply the plan, with no refund.\nDemolishing a nest kills residents and needs confirmation.\nThe top menu offers settings, restart, and exit.","Колесо меняет масштаб, СКМ, стрелки и WASD двигают камеру.\nВ стройке инструмент «Перемещение» включает перенос ЛКМ.\n\nИнструмент «Снос» отмечает здания и дороги для удаления.\nОтметки применяются вместе с планом, без возврата ресурсов.\nСнос муравейника убивает жителей и требует подтверждения.\nМеню вверху содержит настройки, перезапуск и выход."
 ui.menu.language,Language: English,Язык: Русский
 ui.hud.missing_inputs,Waiting for inputs: %d,Ждут сырья: %d
 ui.hud.storage_full,Base storage full: %d,Склады баз полны: %d
 ui.placement.unbuildable,This terrain cannot be built on,Это покрытие запрещает строительство
 ui.placement.impassable,Tile is impassable,Клетка непроходима
-ui.tutorial.progress.title,Rewards and upgrades,Награды и развитие
-ui.tutorial.progress.body,"Each level has five requests in random order.\nSkipping usually costs one third and gives no reward.\nHover over Skip to see its price.\n\nClosing a level grants faster paths, cheaper building or faster ants.\nSpend regalia on new canteens.","На уровне пять запросов в случайном порядке.\nОтказ обычно стоит треть цены, не даёт награды и закрывает запрос.\nЦена отказа видна в подсказке кнопки.\n\nЗакрытие уровня даёт быструю дорогу, скидку или скорость муравьёв.\nЗа регалии можно строить новые столовые."
 ui.menu.maps,Maps,Карты
 ui.map.new,New,Новая
 ui.map.name,Map name,Имя карты
@@ -311,13 +290,13 @@ ui.colony.focus_hint,Center the camera on this nest,Навести камеру 
 ui.world.generated_title,Island %d,Остров %d
 ui.result.level,Level: %d,Уровень: %d
 ui.result.task_counts,Completed: %d · declined: %d,Выполнено: %d · пропущено: %d
-ui.building.statue_placeholder,Placeholder statue,Статуя (плейсхолдер)
+ui.building.statue_placeholder,Statue of the Queen,Статуя королевы
 ui.building.feast,Royal feast,Королевский пир
 ui.construction.description.statue,"A passive monument that blocks movement. Placeholder art.","Пассивный монумент, преграждающий проход. Графика временная."
 ui.construction.description.feast,"A temporary royal feast. It disappears ten seconds after construction.","Временный королевский пир. Исчезает через 10 секунд после постройки."
-ui.task.request_statue,A royal monument is requested,Король требует установить монумент
+ui.task.request_statue,A royal monument is requested,Королева требует установить монумент
 ui.placement.instance_limit,Building limit reached,Достигнут лимит построек
-ui.task.request_feast,A royal feast is requested,Король требует устроить пир
+ui.task.request_feast,A royal feast is requested,Королева требует устроить пир
 ui.task.build,Build requested,Построить требуемое
 ui.task.diversion,Arrange a diversion,Отвлечь внимание
 ui.task.cancel,Decline,Отказ
@@ -371,7 +350,6 @@ ui.world.tidal_shards_description,Link the central islands with trails. Stone li
 ui.world.five_soils,Five Soils,Пять земель
 ui.world.five_soils_description,Fertile valleys alternate with dry hills and rocky deposits. Wet banks expand nearby nests. Sandy beaches make trails more expensive. Painted terrain is saved with the map.,"Плодородные долины, сухие возвышенности и каменистые месторождения. Влажные берега расширяют соседние муравейники; песчаные пляжи удорожают дороги. Нарисованные почвы сохраняются вместе с картой."
 ui.window.close,Close,Закрыть
-ui.tutorial.previous,Previous page,Предыдущая страница
 ui.hud.pause,Pause [Space],Пауза [Пробел]
 ui.hud.unpause,Resume [Space],Продолжить [Пробел]
 ui.hud.tab_build,Build,Стройка
@@ -396,3 +374,18 @@ ui.construction.source_target,Hover over a compatible source to see its output a
 ui.construction.speed_multiplier,Movement speed: ×%s of base,Скорость движения: ×%s от базовой
 ui.trap.clear_action,Remove trap,Убрать ловушку
 ui.task.building_variant,Under construction: %s,Строится: %s
+ui.story.tutorial.wake,"Oh, good. You're awake. Come closer. I want to see if I got your eyes right.","О, ты проснулась. Подойди. Хочу посмотреть, получились ли у тебя глаза, как я задумала."
+ui.story.tutorial.purpose,"I made you to build me statues and throw me feasts. The kingdom came with the job.","Я создала тебя, чтобы ты строила мне статуи и устраивала пиры. Королевство шло в комплекте."
+ui.story.tutorial.before,"Who was running it before me?","А кто управлял им до меня?"
+ui.story.tutorial.my_fault,"Me. That's why you have a job. I'd offer you a tour, but you've already seen my best feature.","Я. Поэтому у тебя есть работа. Я бы устроила экскурсию, но главную достопримечательность ты уже видишь."
+ui.story.tutorial.colony,"The nest has residents. There's a canteen, wood, stone, and berries. I started a road to the canteen before I remembered I was queen.","Муравейник заселён. Есть столовая, лес, камень и ягоды. Я начала прокладывать дорогу к столовой, а потом вспомнила, что я королева."
+ui.story.tutorial.delivery,"I'll draw the road and apply the plan. The ants will deliver the materials and build it. Then they'll get to the canteen faster.","Я проложу дорогу на плане и применю его. Муравьи доставят материалы и построят её. Тогда до столовой они будут добираться быстрее."
+ui.story.tutorial.road_hint,"Build (B) → Road. Draw a path and choose Start construction.","Стройка (B) → Дорога. Проложи путь и нажми «Начать строительство»."
+ui.story.tutorial.road_done,"We have a road! Now I can stop telling everyone the shortcut is a secret.","У нас есть дорога! Теперь можно перестать всем врать, что короткий путь засекречен."
+ui.story.tutorial.choice,"First royal order. A feast, because I'm hungry. Or a statue, because I'm vain. Pick whichever makes you think of me more fondly.","Первый королевский заказ. Пир, потому что я голодная. Или статуя, потому что я тщеславная. Выбирай то, от чего я тебе больше нравлюсь."
+ui.story.tutorial.choice_cost,"A feast takes food and wood. A statue takes stone and wood. I'll pick one in Tasks and apply the plan.","На пир уйдут еда и древесина, на статую — камень и древесина. Выберу один вариант в «Задачах» и применю план."
+ui.story.tutorial.order_hint,"Tasks → Requests → first order. Place a feast or statue and choose Start construction.","Задачи → Запросы → первый заказ. Поставь пир или статую и нажми «Начать строительство»."
+ui.story.tutorial.feast,"I saved you a seat next to me. And the last berry. The seat's still free.","Я приберегла тебе место рядом с собой. И последнюю ягоду. Место всё ещё свободно."
+ui.story.tutorial.statue,"You even made me taller. Now I'll have to stand on tiptoe whenever you look at me.","Ты даже сделала меня выше. Теперь мне придётся вставать на цыпочки, когда ты на меня смотришь."
+ui.story.tutorial.more_time,"Finishing orders adds time. I'll check Tasks for the next one.","За выполненные заказы дают время. Следующий заказ посмотрю в «Задачах»."
+ui.story.tutorial.farewell,"If you pull this off, it was my brilliant plan. If you don't, come find me. We'll think of someone to blame.","Если справишься, это был мой гениальный план. Если нет… приходи ко мне, придумаем, на кого свалить."

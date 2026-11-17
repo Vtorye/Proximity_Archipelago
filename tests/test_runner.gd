@@ -552,7 +552,7 @@ func _test_translations() -> void:
 		TranslationServer.set_locale(header[column])
 		for row in rows:
 			expect(TranslationServer.translate(row[0]) == row[column].c_unescape(), "translation matches CSV: %s / %s" % [header[column], row[0]])
-		for scene in ["screens/main_menu", "screens/tutorial", "overlays/settings_menu", "overlays/pause_menu", "overlays/match_result"]:
+		for scene in ["screens/main_menu", "story/story_overlay", "overlays/settings_menu", "overlays/pause_menu", "overlays/match_result"]:
 			var screen: Control = load("res://%s.tscn" % scene).instantiate()
 			add_child(screen)
 			await get_tree().process_frame

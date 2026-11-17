@@ -18,6 +18,7 @@ var voyage: Voyage
 @export var waves: CombatDirector
 var combat: CombatDirector
 var tasks: TaskDirector
+var opening_order: TaskSpec
 @export var prices: PriceService
 var terrain: TerrainRules
 @export var construction_service: ConstructionService
@@ -93,7 +94,7 @@ func _ready() -> void:
 			return
 		match_controller.task_mode = true
 		tasks = TaskDirector.new()
-		tasks.configure(self, task_deck, randi())
+		tasks.configure(self, task_deck, randi(), opening_order)
 		match_controller.completed.connect(func(summary: MatchSummary):
 			summary.development_level = tasks.level
 			summary.tasks_completed = tasks.completed_count
