@@ -27,8 +27,6 @@ extends Resource
 
 @export_group("Menu Backdrop")
 @export var backdrop_tile_size: float
-@export var backdrop_shore_radius_squared: float
-@export var backdrop_shore_variation: float
 @export var backdrop_ant_count: int
 @export var backdrop_ant_speed: float
 @export var backdrop_ant_stride_frequency: float

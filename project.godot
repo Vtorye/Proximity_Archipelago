@@ -11,15 +11,15 @@ config_version=5
 [application]
 
 config/name="archipelago"
-run/main_scene="uid://cmi2xupeb2itr"
+run/main_scene="res://boot.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
-config/icon="res://icon.svg"
+config/icon="res://game/assets/ui/project_icon.svg"
 
 [autoload]
 
 AppSettings="*res://_shell/autoload/app_settings.gd"
-Router="*uid://cceg31tomp2nw"
-PauseController="*uid://ctxcixgrja6c"
+Router="*res://_shell/autoload/router.gd"
+PauseController="*res://_shell/autoload/pause_controller.gd"
 DialogueManager="*res://addons/dialogue_manager/dialogue_manager.gd"
 
 [display]
@@ -64,7 +64,7 @@ pause={
 [internationalization]
 
 locale/translations=PackedStringArray("res://language/keys.en.po", "res://language/keys.ru.po")
-locale/translations_pot_files=PackedStringArray("res://story/tutorial.dialogue", "res://story/demo.dialogue")
+locale/translations_pot_files=PackedStringArray("res://game/assets/dialogue/tutorial.dialogue", "res://story/tutorial.dialogue")
 
 [physics]
 

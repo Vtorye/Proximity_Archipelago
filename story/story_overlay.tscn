@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://story/story_overlay.gd" id="script"]
 [ext_resource type="StyleBox" path="res://game/ui/dialog_panel.tres" id="panel"]
 [ext_resource type="Resource" path="res://story/tutorial_episode.tres" id="episode"]
-[ext_resource type="AudioStream" path="res://story/dialogue_blip.wav" id="blip"]
+[ext_resource type="AudioStream" path="res://game/assets/audio/dialogue_blip.wav" id="blip"]
 
 [sub_resource type="StyleBoxFlat" id="dialogue_style"]
 content_margin_left = 188.0

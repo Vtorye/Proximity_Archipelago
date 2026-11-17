@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://c1402wbj4li57"
-path="res://.godot/imported/pretty_preview_mask.png-3036487a3029b275e2ddabad44d30d47.ctex"
+uid="uid://dq6503uyadu3q"
+path="res://.godot/imported/main_menu_queen_throne_reclined.png-195391fa450d09514d869ea51727fa09.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://game/terrain/pretty_preview_mask.png"
-dest_files=["res://.godot/imported/pretty_preview_mask.png-3036487a3029b275e2ddabad44d30d47.ctex"]
+source_file="res://game/assets/sprites/visual_novel/ant_queen/main_menu_queen_throne_reclined.png"
+dest_files=["res://.godot/imported/main_menu_queen_throne_reclined.png-195391fa450d09514d869ea51727fa09.ctex"]
 
 [params]
 
