@@ -195,7 +195,7 @@ func test_physical_logistics(test: Node) -> void:
 	var stone: ResourceType = stock.type_by_id(&"stone")
 	var food: ResourceType = stock.type_by_id(&"food")
 	depot.storage_capacity = 5
-	job.output_amount = 5
+	job.output_per_second = 5.0
 	test.expect(world.logistics.main_nest == main and not world.build_controller.demolition_check(main.cell).allowed(), "the first nest is the single protected construction center")
 	var ant := depot.residents[0] as AntAgent
 	ant.global_position = world.route_service.cell_to_world(job.cell)

@@ -347,7 +347,7 @@ func _test_assignment_load() -> void:
 			if world.registry.at(cell) != null: continue
 			var workplace := Workplace.new()
 			workplace.output = world.inventory.type_by_id(&"wood")
-			workplace.output_amount = 2
+			workplace.output_per_second = 2.0
 			workplace.position = world.route_service.cell_to_world(cell)
 			workplace.setup(cell, null)
 			world.buildings.add_child(workplace)

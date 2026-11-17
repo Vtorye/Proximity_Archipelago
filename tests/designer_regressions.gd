@@ -81,7 +81,7 @@ func test_finite_sources(test: Node) -> void:
 	sprite.name = "Sprite"
 	sprite.texture = world.art.timber
 	workplace.add_child(sprite)
-	workplace.output_amount = 2
+	workplace.output_per_second = 2.0
 	workplace.work_slots = 2
 	workplace.finite_supply = true
 	workplace.remaining_supply = 3

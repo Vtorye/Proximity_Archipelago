@@ -66,7 +66,7 @@ func approach_energy(position: Vector2, cell: Vector2i, speed: float) -> float:
 func _approach_seconds(position: Vector2, cell: Vector2i, speed: float) -> float:
 	return position.distance_to(navigation.cell_to_world(cell)) * navigation.entry_cost(cell) / maxf(speed, 0.01)
 
-func plan_work(agent: Node2D, home: Building, needs: AntNeeds, speed: float, work_time: float, ticket: StockReservation, current: Workplace = null) -> WorkPlan:
+func plan_work(agent: Node2D, home: Building, needs: AntNeeds, speed: float, work_time: float, ticket: StockReservation, current: Workplace = null, carry_capacity: int = 2) -> WorkPlan:
 	if not is_instance_valid(home) or (agent is AntAgent and agent.role != AntAgent.Role.WORKER):
 		return null
 	if not logistics.accepts_home(home as House, 1):
@@ -109,11 +109,25 @@ func plan_work(agent: Node2D, home: Building, needs: AntNeeds, speed: float, wor
 				continue
 			var to_work: float = approach + travel_seconds(field.cost_at_node(from_node), speed)
 			var energy: float = to_work * satiety_rules.walk_rate
+			var delivery_cost: float = home_field.cost(entry) if not foodless else 0.0
+			var work_seconds := work_time
+			if workplace.recipe == null:
+				var rate: float = workplace.resource_rate()
+				if rate <= 0.0: continue
+				var capacity_seconds: float = float(carry_capacity) / rate
+				var hunger_budget: float
+				if foodless:
+					hunger_budget = needs.satiety - energy - 0.01
+				else:
+					var return_energy: float = travel_energy(delivery_cost, speed * carry_speed_ratio) + food_after_home + satiety_rules.travel_reserve + satiety_rules.safety_margin
+					hunger_budget = needs.satiety - energy - return_energy
+				work_seconds = minf(capacity_seconds, maxf(0.0, hunger_budget / satiety_rules.work_rate))
+				if floori(rate * work_seconds + 0.000001) <= 0: continue
 			if foodless:
-				if energy >= needs.satiety:
+				if energy + work_seconds * satiety_rules.work_rate >= needs.satiety:
 					continue
 			else:
-				energy += _work_return_energy(work_time, home_field.cost(entry), food_after_home, speed) + satiety_rules.travel_reserve
+				energy += _work_return_energy(work_seconds, delivery_cost, food_after_home, speed) + satiety_rules.travel_reserve
 				possible_after_meal = possible_after_meal or energy + satiety_rules.safety_margin <= needs.capacity
 				if not needs.can_afford(energy):
 					continue
@@ -131,6 +145,7 @@ func plan_work(agent: Node2D, home: Building, needs: AntNeeds, speed: float, wor
 				best.job_cell = entry
 				best.home_cell = home_cell
 				best.estimated_energy = energy
+				best.work_seconds = work_seconds
 				best.navigation_revision = navigation.revision
 	if not foodless and best == null and (feasible_busy or not possible_after_meal and needs.can_afford(food_after_home + satiety_rules.travel_reserve)):
 		best = WorkPlan.new()

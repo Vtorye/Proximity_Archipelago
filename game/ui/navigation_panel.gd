@@ -75,7 +75,7 @@ func refresh() -> void:
 		description = "%s\n%s" % [tr(building.display_title()), workload]
 		if building.recipe == null and building.output != null:
 			description += "\n" + (tr("ui.source.remaining") % building.remaining_supply if building.finite_supply else tr("ui.source.infinite"))
-			description += "\n" + tr("ui.construction.production_rate") % String.num(building.output_amount * building.terrain_yield_multiplier, 2)
+			description += "\n" + tr("ui.construction.production_rate") % String.num(building.resource_rate(), 2)
 			product = building.output
 		if show_routes:
 			description += "\n" + overlay.explanation(building)

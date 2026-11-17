@@ -92,7 +92,7 @@ func _read_source_template(option: BuildOption) -> void:
 
 func _append_source_parameters(details: PackedStringArray, source: Workplace, slots: int) -> void:
 	details.append(tr("ui.construction.production_slots") % slots)
-	var output: float = source.output_amount * source.terrain_yield_multiplier
+	var output: float = source.resource_rate()
 	details.append(tr("ui.construction.production_rate") % String.num(output, 2).trim_suffix(".0"))
 	details.append(tr("ui.source.remaining") % source.remaining_supply if source.finite_supply else tr("ui.source.infinite"))
 

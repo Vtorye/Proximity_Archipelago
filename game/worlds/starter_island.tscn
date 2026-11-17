@@ -238,7 +238,7 @@ script = ExtResource("workplace")
 colony_owned = false
 work_slots = 4
 output = ExtResource("wood")
-output_amount = 2
+output_per_second = 2.0
 title = "ui.building.timber"
 
 [node name="Sprite" type="Sprite2D" parent="Workplace" unique_id=303097433]
@@ -250,7 +250,7 @@ script = ExtResource("workplace")
 colony_owned = false
 work_slots = 4
 output = ExtResource("stone")
-output_amount = 2
+output_per_second = 2.0
 title = "ui.building.stone"
 
 [node name="Sprite" type="Sprite2D" parent="Workplace2" unique_id=587804168]

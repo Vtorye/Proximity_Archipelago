@@ -8,15 +8,14 @@ signal improvement_changed
 
 @export var recipe: WorkRecipe
 var terrain_yield_multiplier := 1.0
-var _yield_remainder := 0.0
 var inventory: WorldInventory
 signal worker_arrived(worker: Node2D)
 signal worker_left(worker: Node2D)
 
 @export_range(1, 1000) var work_slots: int = 1
-## Resource produced at the end of each work cycle. Leave empty for no output.
+## Raw resource output rate. The worker's work period determines the amount collected.
 @export var output: ResourceType
-@export var output_amount: int = 1
+@export_range(0.01, 1000.0, 0.01, "or_greater") var output_per_second := 1.0
 ## Finite sources count output units, not work cycles. Recipes use their input inventory.
 @export var finite_supply := false:
 	set(value):
@@ -151,9 +150,15 @@ func _on_setup() -> bool:
 	refresh_appearance()
 	return true
 
+func _ready() -> void:
+	_remove_if_depleted()
 
-## Called by the worker when a work cycle finishes. Runs work_complete() and emits produced() if output is set.
+
+## Completes one second of work for compatibility with one-shot workplace callers.
 func complete_cycle(human: Node2D, keep_output: bool = false) -> bool:
+	return complete_work_period(human, 1.0, keep_output)
+
+func _complete_recipe_cycle(human: Node2D, keep_output: bool) -> bool:
 	if not _workers.has(human):
 		return false
 	if keep_output and not _pending_output.is_empty():
@@ -169,14 +174,19 @@ func complete_cycle(human: Node2D, keep_output: bool = false) -> bool:
 		for entry in recipe.outputs: _produce(entry.type, entry.amount, keep_output)
 		inventory.end_update()
 		return true
+	return false
+
+func complete_work_period(human: Node2D, seconds: float, keep_output: bool = false) -> bool:
+	if recipe != null:
+		return _complete_recipe_cycle(human, keep_output)
+	if not _workers.has(human) or output == null or not can_run_recipe(): return false
 	work_complete(human)
-	if output != null:
-		var exact: float = output_amount * terrain_yield_multiplier + _yield_remainder
-		# Carry fractional debt into the next cycle; the first harvest still yields a whole berry.
-		var harvest: int = ceili(exact - 0.000001)
-		_yield_remainder = exact - harvest
-		if harvest > 0: _produce(output, harvest, keep_output)
+	var amount := floori(output_per_second * terrain_yield_multiplier * maxf(0.0, seconds) + 0.000001)
+	if amount > 0: _produce(output, amount, keep_output)
 	return true
+
+func resource_rate() -> float:
+	return output_per_second * terrain_yield_multiplier if recipe == null and output != null else 0.0
 
 func _produce(type: ResourceType, amount: int, keep_output: bool) -> void:
 	if finite_supply:
@@ -192,6 +202,7 @@ func _produce(type: ResourceType, amount: int, keep_output: bool) -> void:
 	produced.emit(type, amount)
 	if finite_supply:
 		supply_changed.emit()
+	_remove_if_depleted()
 
 func pending_output_amount() -> int:
 	return WorldInventory.cargo_size(_pending_output)
@@ -209,13 +220,18 @@ func take_output(limit: int) -> Array[ResourceAmount]:
 		limit -= amount
 		if pending.amount == 0:
 			_pending_output.pop_front()
+	_remove_if_depleted()
 	return cargo
+
+func _remove_if_depleted() -> void:
+	if finite_supply and remaining_supply <= 0 and _pending_output.is_empty() and is_inside_tree() and not is_queued_for_deletion():
+		queue_free()
 
 func validate_definition() -> Array[String]:
 	var errors: Array[String] = []
 	if recipe != null and not recipe.valid(): errors.append("Workplace has an invalid recipe")
-	if work_slots < 1 or output_amount < 1:
-		errors.append("Workplace needs positive slots and output")
+	if work_slots < 1 or output == null and recipe == null or not is_finite(output_per_second) or output_per_second <= 0:
+		errors.append("Workplace needs positive slots and a valid resource output rate")
 	if remaining_supply < 0 or finite_supply and recipe != null:
 		errors.append("Finite supply needs a nonnegative amount and a raw resource source")
 	if improvement != null and (not improvement.valid() or recipe != null or output == null or output.id != improvement.source_type.id):
@@ -239,10 +255,9 @@ func on_worker_left(_worker: Node2D) -> void:
 	pass
 
 func capture_production() -> Dictionary:
-	return {"_yield_remainder": _yield_remainder, "output": ResourceAmount.pack(_pending_output)}
+	return {"output": ResourceAmount.pack(_pending_output)}
 
 func restore_production(state: Dictionary, output_items: Array[ResourceAmount]) -> void:
-	_yield_remainder = state.get("_yield_remainder", 0.0)
 	_pending_output = output_items
 
 func _apply_default_appearance(sprite: Sprite2D, art: ArtCatalog) -> void:

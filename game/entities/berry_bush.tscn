@@ -9,7 +9,7 @@ script = ExtResource("1_workplace")
 colony_owned = false
 work_slots = 3
 output = ExtResource("3_food")
-output_amount = 3
+output_per_second = 3.0
 finite_supply = true
 remaining_supply = 100
 

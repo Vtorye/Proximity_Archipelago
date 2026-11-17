@@ -237,7 +237,7 @@ position = Vector2(344, 360)
 script = ExtResource("workplace")
 work_slots = 4
 output = ExtResource("wood")
-output_amount = 2
+output_per_second = 2.0
 colony_owned = false
 title = "ui.building.timber"
 
@@ -249,7 +249,7 @@ position = Vector2(472, 344)
 script = ExtResource("workplace")
 work_slots = 4
 output = ExtResource("stone")
-output_amount = 2
+output_per_second = 2.0
 colony_owned = false
 title = "ui.building.stone"
 
