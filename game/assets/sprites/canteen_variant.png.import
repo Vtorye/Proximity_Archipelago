@@ -10,7 +10,7 @@ metadata={
 
 [deps]
 
-source_file="res://game/assets/sprites/canteen2.png"
+source_file="res://game/assets/sprites/canteen_variant.png"
 dest_files=["res://.godot/imported/canteen2.png-ef2ce92ea2e31b3b4dd092c6308a97a3.ctex"]
 
 [params]

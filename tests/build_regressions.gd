@@ -13,7 +13,7 @@ func _composite_price(test: Node) -> void:
 	var world: World = test.make_world()
 	var stone: ResourceType = world.inventory.type_by_id(&"stone")
 	var food: ResourceType = world.inventory.type_by_id(&"food")
-	var nest: SceneBuildOption = load("res://game/building/options/house.tres").duplicate(true)
+	var nest: SceneBuildOption = load("res://game/building/options/barracks.tres").duplicate(true)
 	nest.costs = [test.entry(stone, 5), test.entry(food, 21)]
 	world.build_controller.unlock_option(nest)
 	var cell := Vector2i(30, 29)
@@ -42,7 +42,7 @@ func _composite_price(test: Node) -> void:
 func _draft_and_commit(test: Node) -> void:
 	var world: World = test.make_world()
 	var road: BuildOption = load("res://game/building/options/road.tres")
-	var berry: BuildOption = load("res://game/building/options/apple_tree.tres")
+	var berry: BuildOption = load("res://game/building/options/berry_bush.tres")
 	var wood: ResourceType = world.inventory.type_by_id(&"wood")
 	var draft := BuildDraft.new()
 	draft.controller = world.build_controller
@@ -116,7 +116,7 @@ func _invalid_batches(test: Node) -> void:
 func _construction_egress(test: Node) -> void:
 	var world: World = test.make_world()
 	var controller := world.build_controller
-	var statue: SceneBuildOption = load("res://game/building/options/statue.tres")
+	var statue: SceneBuildOption = load("res://game/building/options/queen_statue.tres")
 	var feast: SceneBuildOption = load("res://game/building/options/feast.tres")
 	var single_entry := statue.duplicate() as SceneBuildOption
 	single_entry.entry_offsets = [Vector2i.DOWN]
@@ -139,7 +139,7 @@ func _construction_egress(test: Node) -> void:
 	test.expect(is_finite(world.route_service.food_field().cost(exit)), "the relocated ant keeps its route to food")
 	world.free()
 	await test.get_tree().process_frame
-	world = load("res://game/worlds/world_1.tscn").instantiate()
+	world = load("res://game/worlds/starter_island.tscn").instantiate()
 	world.auto_start = false
 	world.task_deck = null
 	test.add_child(world)
@@ -160,7 +160,7 @@ func _construction_egress(test: Node) -> void:
 func _layered_plan(test: Node) -> void:
 	var world: World = test.make_world()
 	var road: BuildOption = load("res://game/building/options/road.tres")
-	var nest: BuildOption = load("res://game/building/options/house.tres")
+	var nest: BuildOption = load("res://game/building/options/barracks.tres")
 	var draft := BuildDraft.new()
 	draft.controller = world.build_controller
 	var cell := Vector2i(30, 29)
@@ -192,7 +192,7 @@ func _planned_demolition(test: Node) -> void:
 	var controller: BuildController = world.build_controller
 	var wood: ResourceType = world.inventory.type_by_id(&"wood")
 	var road: BuildOption = load("res://game/building/options/road.tres")
-	var berry: BuildOption = load("res://game/building/options/apple_tree.tres")
+	var berry: BuildOption = load("res://game/building/options/berry_bush.tres")
 	var cell := Vector2i(30, 29)
 	test.expect(controller.try_build_plan([BuildCommand.create(cell, road), BuildCommand.create(cell, berry)]), "demolition fixture has a road beneath a workplace")
 	var target: Building = world.registry.at(cell)

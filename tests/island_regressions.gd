@@ -94,7 +94,7 @@ func test_foodless_colonies(test: Node) -> void:
 	test.add_child(world)
 	var stock: WorldInventory = world.inventory
 	var wood: ResourceType = stock.type_by_id(&"wood")
-	var nest: BuildOption = preload("res://game/building/options/house.tres")
+	var nest: BuildOption = preload("res://game/building/options/barracks.tres")
 	var draft := BuildDraft.new()
 	draft.controller = world.build_controller
 	test.expect(draft.paint(nest, working_nest) and draft.budget_check().allowed() and draft.commit(), "build a nest on a dry island with work")
@@ -321,7 +321,7 @@ func test_multiple_bases(test: Node) -> void:
 	_step_until(courier, func() -> bool: return courier.transport.cargo.is_empty())
 	test.expect(stock.nest_quantity(base, main, wood) == 6 and stock.nest_quantity(main, main, wood) == initial and base.incoming.get(str(wood.id), 0) == 0, "base windows show separate stock and arrival clears the incoming count")
 	test.expect(stock.quantity(wood) == initial + 8 and stock.depot_quantity(barracks, wood) == 2, "delivery leaves the unshipped stock at the source")
-	var house_option: SceneBuildOption = load("res://game/building/options/house.tres")
+	var house_option: SceneBuildOption = load("res://game/building/options/barracks.tres")
 	var destination_cell := Vector2i(13, 1)
 	test.expect(world.build_controller.try_build(house_option, destination_cell), "redirect fixture builds an empty destination")
 	var destination := world.registry.at(destination_cell) as House
@@ -435,7 +435,7 @@ func _play_authored_map(test: Node, develop: bool) -> Dictionary:
 	test.add_child(world)
 	var road: BuildOption = load("res://game/building/options/road.tres")
 	if develop:
-		var camp: BuildOption = load("res://game/building/options/house.tres")
+		var camp: BuildOption = load("res://game/building/options/barracks.tres")
 		test.expect(world.build_controller.try_build(camp, Vector2i(64, 42)) and world.build_controller.try_build(camp, Vector2i(74, 40)), "the starter budget supports separate timber and stone camps")
 		for x in range(64, 76):
 			if world.build_controller.can_build(road, Vector2i(x, 44)): world.build_controller.try_build(road, Vector2i(x, 44))
@@ -525,7 +525,7 @@ func test_recruitment(test: Node) -> void:
 	test.expect(population.recruit(main, AntAgent.Role.CARRIER) and main.residents.size() == 20, "a killed resident frees one slot for recruitment")
 	var recruited := main.residents.back() as AntAgent
 	test.expect(recruited.home == main and recruited.role == AntAgent.Role.CARRIER and recruited.speed == 36.0 and recruited.carry_capacity == 6, "recruited carriers belong to the selected nest and retain their role parameters")
-	var nest: BuildOption = load("res://game/building/options/house.tres")
+	var nest: BuildOption = load("res://game/building/options/barracks.tres")
 	test.expect(world.build_controller.try_build(nest, Vector2i(30, 29)), "recruitment fixture creates a small nest")
 	var local := world.registry.at(Vector2i(30, 29)) as House
 	test.expect(local.resident_limit() == 5 and not population.recruit(local, AntAgent.Role.WORKER), "small nests preserve their five-resident capacity")

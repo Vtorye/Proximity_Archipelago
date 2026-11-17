@@ -29,7 +29,7 @@ func _second_nest_meal_return(test: Node) -> void:
 	world.task_deck = null
 	test.add_child(world)
 	var nest_cell := Vector2i(48, 1)
-	var built := world.build_controller.try_build(load("res://game/building/options/house.tres"), nest_cell)
+	var built := world.build_controller.try_build(load("res://game/building/options/barracks.tres"), nest_cell)
 	test.expect(built, "a second nest can be built beside the remote workplace")
 	if not built:
 		world.free()
@@ -119,7 +119,7 @@ func _new_workplace(test: Node) -> void:
 	var before_position: Vector2 = ant.global_position
 	test.expect(before_position != ant.home.global_position, "retarget fixture is already moving between cell centers")
 	var ticket: StockReservation = ant._meal
-	var berry: BuildOption = load("res://game/building/options/apple_tree.tres")
+	var berry: BuildOption = load("res://game/building/options/berry_bush.tres")
 	test.expect(world.build_controller.try_build(berry, Vector2i(25, 24)), "nearby berry bush is built through the normal command")
 	await test.get_tree().process_frame
 	var nearby: Workplace = world.registry.at(Vector2i(25, 24)) as Workplace
@@ -156,7 +156,7 @@ func _returning_cargo(test: Node) -> void:
 	ant.global_position = world.route_service.cell_to_world(Vector2i(27, 24))
 	ant.transport.carrying = true
 	ant._go_home()
-	var berry: BuildOption = load("res://game/building/options/apple_tree.tres")
+	var berry: BuildOption = load("res://game/building/options/berry_bush.tres")
 	test.expect(world.build_controller.try_build(berry, Vector2i(27, 23)), "new workplace can appear beside a loaded returning ant")
 	await test.get_tree().process_frame
 	test.expect(ant._destination == &"home" and ant.transport.carrying and ant.work.workplace == null, "new work does not interrupt delivery of an existing load")
@@ -188,7 +188,7 @@ func _active_work(test: Node) -> void:
 	ant.global_position = stone.global_position
 	ant._arrive()
 	test.expect(ant.status == AntAgent.Status.WORKING, "work cycle fixture has already reached its workplace")
-	test.expect(world.build_controller.try_build(load("res://game/building/options/apple_tree.tres"), Vector2i(29, 20)), "nearer alternative may appear during a work cycle")
+	test.expect(world.build_controller.try_build(load("res://game/building/options/berry_bush.tres"), Vector2i(29, 20)), "nearer alternative may appear during a work cycle")
 	await test.get_tree().process_frame
 	test.expect(ant.status == AntAgent.Status.WORKING and ant.work.workplace == stone and stone.workers.has(ant), "new alternatives do not discard a work cycle already in progress")
 	world.free()
@@ -201,7 +201,7 @@ func _hungry_retarget(test: Node) -> void:
 	for step in range(30): ant._physics_process(1.0 / 60.0)
 	var cell: Vector2i = world.route_service.world_to_cell(ant.global_position)
 	ant.needs.satiety = world.planner.escape_energy(cell, ant.speed) + ant.needs.safety_margin + 1.0
-	test.expect(world.build_controller.try_build(load("res://game/building/options/apple_tree.tres"), Vector2i(25, 24)), "new nearby work can appear beside a hungry walking ant")
+	test.expect(world.build_controller.try_build(load("res://game/building/options/berry_bush.tres"), Vector2i(25, 24)), "new nearby work can appear beside a hungry walking ant")
 	await test.get_tree().process_frame
 	test.expect(ant._destination == &"food" and ant.work.workplace == null and ant._meal.active, "hungry ant rejects even nearer work and keeps its meal reservation")
 	test.expect(ant.needs.can_afford(world.planner.escape_energy(cell, ant.speed)), "hungry retarget retains enough energy to reach food safely")

@@ -104,7 +104,7 @@ func _run() -> void:
 	await key(KEY_N)
 	world.units.process_mode = Node.PROCESS_MODE_INHERIT
 	var depot_cell := Vector2i(27, 27)
-	var nest: BuildOption = load("res://game/building/options/house.tres")
+	var nest: BuildOption = load("res://game/building/options/barracks.tres")
 	expect(world.build_controller.try_build(nest, depot_cell), "the carrier scenario builds a small depot")
 	var depot: House = world.registry.at(depot_cell) as House
 	if depot != null:

@@ -269,7 +269,7 @@ func _run() -> void:
 
 func _check_new_nest_popup(world: World) -> void:
 	var controller := world.build_controller
-	var house_option: SceneBuildOption = preload("res://game/building/options/house.tres")
+	var house_option: SceneBuildOption = preload("res://game/building/options/barracks.tres")
 	var cell := Vector2i(29, 26)
 	var placed := controller.try_build(house_option, cell)
 	var site := controller.construction.at(cell)

@@ -4,18 +4,18 @@
 [ext_resource type="Script" uid="uid://dohq4yj0b3afb" path="res://game/resources/resource_amount.gd" id="amount"]
 [ext_resource type="Texture2D" uid="uid://d2t5iecs5jy1a" path="res://game/assets/sprites/sawmill.svg" id="icon"]
 [ext_resource type="Script" uid="uid://h1ws6w2g6pxi" path="res://game/building/workplace_upgrade_option.gd" id="option"]
-[ext_resource type="Resource" uid="uid://dnvvlsc4kjs1t" path="res://game/resources/dot_treses/stone.tres" id="stone"]
-[ext_resource type="Resource" uid="uid://btsdqgmh3ee22" path="res://game/resources/dot_treses/wood.tres" id="wood"]
+[ext_resource type="Resource" uid="uid://dnvvlsc4kjs1t" path="res://game/resources/resource_types/stone.tres" id="stone"]
+[ext_resource type="Resource" uid="uid://btsdqgmh3ee22" path="res://game/resources/resource_types/wood.tres" id="wood"]
 
 [sub_resource type="Resource" id="cost_wood"]
 script = ExtResource("amount")
 type = ExtResource("wood")
-amount = 10
+amount = 12
 
 [sub_resource type="Resource" id="cost_stone"]
 script = ExtResource("amount")
 type = ExtResource("stone")
-amount = 5
+amount = 6
 
 [resource]
 script = ExtResource("option")

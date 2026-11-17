@@ -121,7 +121,7 @@ func test_finite_sources(test: Node) -> void:
 	test.expect(LevelLayout.create_world(layout) == null, "map import rejects fractional resource deposits")
 
 func test_resource_facilities(test: Node) -> void:
-	var world: World = load("res://game/worlds/world_1.tscn").instantiate()
+	var world: World = load("res://game/worlds/starter_island.tscn").instantiate()
 	world.auto_start = false
 	world.build_controller.physical_construction = false
 	test.add_child(world)
@@ -141,7 +141,7 @@ func test_resource_facilities(test: Node) -> void:
 	task.unlocks = [sawmill, quarry, farm]
 	var variant := TaskVariant.new()
 	variant.id = &"build"
-	variant.building = load("res://game/building/options/building.tres")
+	variant.building = load("res://game/building/options/placeholder_building.tres")
 	task.variants = [variant]
 	world.tasks.slots[0] = task
 	var order := world.tasks.start_order(task.id, variant.id)
@@ -195,8 +195,8 @@ func test_resource_facilities(test: Node) -> void:
 	source.remaining_supply = 1
 	test.expect((source.get_node("Sprite") as Sprite2D).visible, "replenishing a finite source restores its sprite")
 	world.free()
-	test.expect(LevelValidator.validate("res://game/worlds/world_1.tscn").is_empty(), "authored production level passes offline validation")
-	var invalid: World = load("res://game/worlds/world_1.tscn").instantiate()
+	test.expect(LevelValidator.validate("res://game/worlds/starter_island.tscn").is_empty(), "authored production level passes offline validation")
+	var invalid: World = load("res://game/worlds/starter_island.tscn").instantiate()
 	invalid.get_node("Workplace").work_slots = 0
 	var map: TileMapLayer = invalid.get_node("Map")
 	map.set_cell(Vector2i(28, 26), 3, Vector2i(3, 0))

@@ -1,6 +1,6 @@
 [gd_scene format=3]
 
-[ext_resource type="PackedScene" path="res://game/entities/house.tscn" id="house"]
+[ext_resource type="PackedScene" path="res://game/entities/nest.tscn" id="house"]
 
 [node name="BaseNest" instance=ExtResource("house")]
 is_main_nest = true

@@ -1,6 +1,6 @@
 extends Node
 ## Executable regressions: a failure changes the process exit code.
-const WORLD := preload("res://game/worlds/world_1.tscn")
+const WORLD := preload("res://game/worlds/starter_island.tscn")
 const ASTAR := preload("res://game/navigation/astar_path_finder.gd")
 const DIJKSTRA := preload("res://game/navigation/dijkstra_path_finder.gd")
 var failures: Array[String] = []
@@ -274,7 +274,7 @@ func _test_worlds() -> void:
 	plan = first.planner.plan_work(ant, ant.home, ant.needs, ant.speed, ant.work_time, ant._meal)
 	expect(plan != null and plan.estimated_energy + ant.needs.safety_margin <= ant.needs.satiety, "healthy ant receives a complete feasible plan")
 	if plan != null and plan.workplace != null: plan.workplace.release_worker(ant)
-	var nest: SceneBuildOption = load("res://game/building/options/house.tres").duplicate(true) as SceneBuildOption
+	var nest: SceneBuildOption = load("res://game/building/options/barracks.tres").duplicate(true) as SceneBuildOption
 	nest.blocks_movement = true
 	nest.costs = [entry(wood, 0)]
 	first.build_controller.unlock_option(nest)
@@ -302,7 +302,7 @@ func _test_worlds() -> void:
 	var stock_before: int = first.inventory.quantity(wood)
 	expect(not first.build_controller.try_build(invalid, Vector2i(28, 29)), "invalid nest setup fails")
 	expect(first.inventory.quantity(wood) == stock_before and first.registry.at(Vector2i(28, 29)) == null, "invalid setup leaves stock and world unchanged")
-	var far: BuildOption = load("res://game/building/options/house.tres")
+	var far: BuildOption = load("res://game/building/options/barracks.tres")
 	expect(first.build_controller.check(far, Vector2i(9, 10)).allowed(), "nest with unreachable feeding can be placed")
 	var slow: SceneBuildOption = far.duplicate(true) as SceneBuildOption
 	slow.spawn_speed = 1.0
@@ -450,7 +450,7 @@ func _test_simulation() -> void:
 				for y in range(item.y, item.z + 1): network.append(Vector2i(item.x, y))
 			for cell in network:
 				expect(world.build_controller.try_build(road, cell), "safe road network can be built from starting stock")
-			expect(world.build_controller.try_build(load("res://game/building/options/house.tres"), Vector2i(29, 22)), "player can place another nest near the stone workplace")
+			expect(world.build_controller.try_build(load("res://game/building/options/barracks.tres"), Vector2i(29, 22)), "player can place another nest near the stone workplace")
 		var deaths: Array[int] = [0]
 		var work: Array[int] = [0]
 		for ant in world.population.agents():

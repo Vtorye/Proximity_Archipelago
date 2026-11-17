@@ -149,7 +149,7 @@ func _traps_and_destruction(test: Node) -> void:
 	combat.damage(berries, combat.maximum_health(berries))
 	test.expect(world.registry.at(berries.cell) == berries and berries.improvement == null and berries.remaining_supply == supply, "destroying a farm preserves its wild berry bush")
 	var owned_cell := Vector2i(9, 4)
-	test.expect(world.build_controller.try_build(load("res://game/building/options/apple_tree.tres"), owned_cell), "the player can establish a berry bush")
+	test.expect(world.build_controller.try_build(load("res://game/building/options/berry_bush.tres"), owned_cell), "the player can establish a berry bush")
 	var spider := combat.spawn_spider(Vector2i(9, 3))
 	var worker_nearby := world.population.agents()[0]
 	worker_nearby.global_position = spider.global_position

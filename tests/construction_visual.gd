@@ -39,7 +39,7 @@ func _run() -> void:
 	var stone: ResourceType = world.inventory.type_by_id(&"stone")
 	var food: ResourceType = world.inventory.type_by_id(&"food")
 	# Only this fixture changes a price and funds it; shipped definitions keep their balance.
-	var nest: SceneBuildOption = load("res://game/building/options/house.tres").duplicate(true)
+	var nest: SceneBuildOption = load("res://game/building/options/barracks.tres").duplicate(true)
 	nest.costs = [_entry(stone, 5), _entry(food, 20)]
 	world.build_controller.unlock_option(nest, world.build_controller.options[2])
 	world.inventory.add(food, 10)

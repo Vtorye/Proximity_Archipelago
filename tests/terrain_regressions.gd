@@ -30,8 +30,8 @@ func _placement_and_prices(test: Node) -> void:
 	var world: World = _world(test)
 	var controller: BuildController = world.build_controller
 	var road: BuildOption = load("res://game/building/options/road.tres")
-	var berry: BuildOption = load("res://game/building/options/apple_tree.tres")
-	var house: BuildOption = load("res://game/building/options/house.tres")
+	var berry: BuildOption = load("res://game/building/options/berry_bush.tres")
+	var house: BuildOption = load("res://game/building/options/barracks.tres")
 	var matrix := [[true, true, true], [true, false, false], [true, true, true], [true, true, false], [true, false, false]]
 	for index in range(5):
 		for kind in range(3):
@@ -114,7 +114,7 @@ func _capacity(test: Node) -> void:
 	for cell in [Vector2i(1, 0), Vector2i(1, 1)]: map.paint_tile(cell, Vector4i(3, 0, 0, 0), true)
 	world.terrain.refresh_all()
 	test.expect(home.resident_limit() == 20 and home.residents.size() == 25 and not home.has_space(), "losing wet ground stops further recruitment without killing existing residents")
-	world.build_controller.try_build(load("res://game/building/options/house.tres"), Vector2i(7, 2))
+	world.build_controller.try_build(load("res://game/building/options/barracks.tres"), Vector2i(7, 2))
 	var barracks := world.registry.at(Vector2i(7, 2)) as House
 	test.expect(barracks != null and barracks.resident_limit() == 6 and barracks.residents.size() == 5, "a nearby wet tile increases barracks capacity without spawning free extra ants")
 	world.free()
@@ -150,7 +150,7 @@ func _underlays(test: Node) -> void:
 
 func _physical_build(test: Node) -> void:
 	var world: World = _world(test, true)
-	var house: BuildOption = load("res://game/building/options/house.tres")
+	var house: BuildOption = load("res://game/building/options/barracks.tres")
 	var cell := Vector2i(6, 2)
 	test.expect(world.build_controller.try_build(house, cell), "discounted ground accepts a physical construction order")
 	var site: ConstructionSite = world.build_controller.construction.at(cell)
