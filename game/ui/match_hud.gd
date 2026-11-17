@@ -1,6 +1,10 @@
 class_name MatchHud
 extends Control
 
+@export_group("Tutorial Hints")
+@export var control_highlight := Color(1.5, 1.25, 0.55)
+@export_range(0.1, 2.0, 0.05) var highlight_seconds := 0.45
+
 const PRESENTATION: UiPresentation = preload("res://game/ui/ui_presentation.tres")
 const ResourceChip = preload("res://game/ui/hud_resource_chip.gd")
 signal nest_selected(nest: House)
@@ -23,6 +27,8 @@ var progress: Dictionary[StringName, ProgressBar] = {}
 @onready var _toast: Label = %Toast
 var _toast_time := 0.0
 var _economy_visible := true
+var _highlighted_control: StringName
+var _highlight_tween: Tween
 @onready var _warning: Label = %Warning
 @onready var _waiting: Label = %Waiting
 var _zoom_level := 2
@@ -87,7 +93,11 @@ func _build_hud() -> void:
 	%ColonyTab.pressed.connect(AppSettings.play_click)
 	%ColonyTab.pressed.connect(func(): section_requested.emit(&"colony"))
 	%TasksTab.pressed.connect(AppSettings.play_click)
+	controls[&"tasks"] = %TasksTab
 	%TasksTab.pressed.connect(func(): section_requested.emit(&"tasks"))
+	controls[&"talk"] = %TalkTab
+	%TalkTab.pressed.connect(AppSettings.play_click)
+	%TalkTab.pressed.connect(func(): section_requested.emit(&"talk"))
 	_bottom.resized.connect(construction_bounds_changed.emit)
 	colony_summary.resized.connect(construction_bounds_changed.emit)
 	controls[&"zoom_out"] = %ZoomOut
@@ -126,7 +136,7 @@ func _build_hud() -> void:
 func refresh() -> void:
 	for type in world.inventory.registered_types():
 		if stock_chips.has(type.id):
-			stock_chips[type.id].set_amount(world.inventory.quantity(type))
+			stock_chips[type.id].set_display_amount(world.inventory.display_amount(type, world.inventory.quantity(type)))
 		if progress.has(type.id):
 			progress[type.id].value = world.inventory.quantity(type)
 	var agents: Array[AntAgent] = world.population.agents()
@@ -168,6 +178,20 @@ func _on_time_changed(seconds: int) -> void:
 
 func set_countdown_visible(enabled: bool) -> void:
 	_timer.visible = enabled
+
+func highlight_control(id: StringName) -> void:
+	if _highlighted_control == id:
+		return
+	if _highlight_tween != null and _highlight_tween.is_valid():
+		_highlight_tween.kill()
+	if controls.has(_highlighted_control):
+		controls[_highlighted_control].self_modulate = Color.WHITE
+	_highlighted_control = id
+	if controls.has(id):
+		var button := controls[id]
+		_highlight_tween = create_tween().set_loops()
+		_highlight_tween.tween_property(button, "self_modulate", control_highlight, highlight_seconds)
+		_highlight_tween.tween_property(button, "self_modulate", Color.WHITE, highlight_seconds)
 
 func set_economy_visible(enabled: bool) -> void:
 	_economy_visible = enabled
@@ -234,6 +258,7 @@ func set_section(section: StringName) -> void:
 	%Build.set_pressed_no_signal(section == &"build")
 	%ColonyTab.set_pressed_no_signal(section == &"colony")
 	%TasksTab.set_pressed_no_signal(section == &"tasks")
+	%TalkTab.set_pressed_no_signal(section == &"talk")
 	colony_summary.set_expanded(section == &"colony")
 	var goals_panel: Control = task_panel if task_panel != null else _objectives
 	goals_panel.visible = section == &"tasks"

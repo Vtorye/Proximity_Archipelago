@@ -5,10 +5,10 @@ var _controller: BuildController
 var _option: BuildOption
 var _cell: Vector2i
 var _source_parameters := PackedStringArray()
+@onready var header: WindowHeader = %WindowHeader
 
 func _ready() -> void:
-	%CloseDescription.pressed.connect(AppSettings.play_click)
-	%CloseDescription.pressed.connect(hide)
+	header.close_requested.connect(hide)
 	AppSettings.language_changed.connect(_refresh_language)
 
 func toggle(option: BuildOption, controller: BuildController, cell: Vector2i) -> void:
@@ -35,7 +35,7 @@ func _refresh_language() -> void:
 	refresh_at(_cell)
 
 func _refresh_description(option: BuildOption) -> void:
-	%BuildingName.text = tr(option.display_name)
+	header.set_title(option.display_name)
 	%Description.text = tr(option.description)
 	var price: Array[ResourceAmount] = _controller.price(option, _cell)
 	var details := PackedStringArray()
@@ -94,7 +94,7 @@ func _append_source_parameters(details: PackedStringArray, source: Workplace, sl
 	details.append(tr("ui.construction.production_slots") % slots)
 	var output: float = source.resource_rate()
 	details.append(tr("ui.construction.production_rate") % String.num(output, 2).trim_suffix(".0"))
-	details.append(tr("ui.source.remaining") % source.remaining_supply if source.finite_supply else tr("ui.source.infinite"))
+	details.append(tr("ui.source.remaining") % source.remaining_supply if source.finite_supply and _controller.inventory.quantities_known else tr("ui.source.infinite"))
 
 func _footprint_size(option: BuildOption) -> Vector2i:
 	var cells: Array[Vector2i] = _controller.footprint_at(option, Vector2i.ZERO)

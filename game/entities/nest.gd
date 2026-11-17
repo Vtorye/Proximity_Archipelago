@@ -1,5 +1,6 @@
 class_name House
 extends Building
+signal delivery_requested(resource_id: String, amount: int)
 
 const BARRACKS_TINT := Color("91b7df")
 @export var capacity: int = 5
@@ -15,7 +16,7 @@ const BARRACKS_TINT := Color("91b7df")
 @export var funds_construction := true
 ## Explicit orders keyed by resource id: {"min": int, "max": int}. Without one, the nest default applies.
 var orders: Dictionary = {}
-## One-time requests still owed to this nest, keyed by resource id.
+## Positive values request deliveries; negative values send goods to another nest.
 var requests: Dictionary = {}
 ## Units en route to this nest under an order or request, keyed by resource id.
 var incoming: Dictionary = {}
@@ -84,17 +85,26 @@ func set_order(id: String, field: String, value: int) -> void:
 
 ## One-time request: the total still owed to this nest for one resource. It shrinks as carriers deliver.
 func request(id: String, amount: int) -> void:
-	var owed: int = clampi(amount, 0, WorldInventory.order_limit())
-	if owed <= 0:
+	var owed: int = clampi(amount, -WorldInventory.order_limit(), WorldInventory.order_limit())
+	if owed == 0:
 		requests.erase(id)
 	else:
 		requests[id] = owed
+	delivery_requested.emit(id, owed)
 
 ## Called when a carrier delivers cargo to this nest under an order or request.
 func fulfil(id: String, amount: int) -> void:
-	if not requests.has(id):
+	if int(requests.get(id, 0)) <= 0:
 		return
 	requests[id] = maxi(0, int(requests[id]) - amount)
+	if requests[id] == 0:
+		requests.erase(id)
+
+## Export requests count down when a courier physically picks the goods up.
+func record_export(id: String, amount: int) -> void:
+	if int(requests.get(id, 0)) >= 0:
+		return
+	requests[id] = mini(0, int(requests[id]) + amount)
 	if requests[id] == 0:
 		requests.erase(id)
 

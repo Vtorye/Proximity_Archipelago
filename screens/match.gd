@@ -11,7 +11,7 @@ var world: World
 @onready var hud: MatchHud = $Interface/Hud
 @onready var story: StoryOverlay = $StoryLayer/Story
 @onready var chapter: FirstChapter = $Chapter
-@onready var chapter_panel: ChapterPanel = $Interface/ChapterPanel
+@onready var conversations: ConversationsMenu = $Interface/Conversations
 const CONSTRUCTION_PANEL := preload("res://overlays/construction_menu.tscn")
 const NEST_POPUP := preload("res://overlays/nest_menu.tscn")
 const FIRST_ISLAND := preload("res://game/worlds/first_island.tscn")
@@ -52,6 +52,8 @@ func _ready() -> void:
 	world.waves.enabled = waves or _chapter_active
 	world.name = "World"
 	world.auto_start = false
+	if _chapter_active:
+		world.opening_order = world.chapter_rules.opening_order
 	add_child(world)
 	move_child(world, 0)
 	world.match_controller.completed.connect(_on_completed)
@@ -63,9 +65,7 @@ func _ready() -> void:
 	hud.configure(world, navigation_overlay)
 	if _chapter_active:
 		chapter.configure(world, story)
-		chapter_panel.configure(chapter)
 		chapter.focus_requested.connect(_focus_chapter_cell)
-		chapter.demolition_requested.connect(_show_scripted_demolition)
 		chapter.checkpoint_requested.connect(save_game)
 		chapter.presentation_changed.connect(_refresh_chapter_ui)
 		story.modal_changed.connect(_on_story_modal_changed)
@@ -86,12 +86,18 @@ func _ready() -> void:
 	hud.zoom_in_requested.connect(func(): camera.set_level(camera.level + 1))
 	hud.zoom_out_requested.connect(func(): camera.set_level(camera.level - 1))
 	camera.zoom_changed.connect(hud.set_zoom)
+	var definitions: FirstChapterRules = world.chapter_rules if _chapter_active else load("res://story/first_chapter_rules.tres")
+	story.characters = definitions.characters
+	conversations.configure(definitions.characters, chapter.topic_available if _chapter_active else Callable())
+	conversations.character_selected.connect(_talk_character)
+	if _chapter_active:
+		camera.zoom_changed.connect(chapter.camera_zoomed)
+		camera.panned_by_player.connect(chapter.camera_panned)
 
 func on_focus() -> void:
 	_active = true
 	world.start()
 	if _chapter_active:
-		camera.set_level(1)
 		chapter.start(_chapter_checkpoint)
 	if payload is Dictionary and payload.has("journey"): SessionSave.write(world)
 	if debug_show_result:
@@ -175,12 +181,15 @@ func _process(_delta: float) -> void:
 	story.set_covered(top != null or campaign_panel.visible)
 	var can_use_map: bool = top == null and not story.is_modal and not campaign_panel.visible
 	if is_instance_valid(_construction):
-		_construction.visible = can_use_map
+		_construction.visible = can_use_map and _section != &"talk"
+	conversations.visible = can_use_map and _section == &"talk"
+	conversations.dock_above(hud.bottom_bar_height())
 	camera.enabled_input = can_use_map and not _building_active()
 	if is_instance_valid(nest_popup):
 		nest_popup.visible = (top == null or top is PauseMenu) and not story.is_modal and not campaign_panel.visible
 		$PopupLayer.layer = 8
 	hud.lock_zoom(top != null or story.is_modal)
+	hud.highlight_control(chapter.highlighted_control() if _chapter_active and not story.is_modal else &"")
 	if _chapter_active:
 		var target := chapter.guide_cell()
 		if can_use_map and world.map.get_used_rect().has_point(target):
@@ -205,10 +214,7 @@ func _refresh_chapter_ui() -> void:
 	_close_nest_popup()
 	hud.navigation_panel.inspect_cell(null)
 	hud.set_countdown_visible(false)
-	hud.set_economy_visible(chapter.economy_visible())
-	hud.get_node("%TasksTab").hide()
-	hud.get_node("%ColonyTab").visible = chapter.economy_visible()
-	hud.get_node("%Routes").visible = chapter.economy_visible()
+	hud.set_economy_visible(true)
 	hud.get_node("%WaveTimer").hide()
 	if is_instance_valid(_construction):
 		_close_construction_panel(_construction)
@@ -216,14 +222,21 @@ func _refresh_chapter_ui() -> void:
 	_section = &""
 
 func _focus_chapter_cell(cell: Vector2i) -> void:
-	camera.position = world.route_service.cell_to_world(cell) - Vector2(0, 14)
+	var viewport_size := get_viewport_rect().size
+	var target := (viewport_size * chapter.rules.camera_focus_ratio).round()
+	camera.position = world.route_service.cell_to_world(cell) + (viewport_size * 0.5 - target) / camera.zoom
 	camera.force_update_scroll()
 
-func _show_scripted_demolition(_cell: Vector2i) -> void:
-	if not is_instance_valid(_construction):
-		_create_construction_panel()
-	_construction.select_demolition()
-	_construction.set_palette_visible(true)
+func _talk_character(character: StoryCharacter) -> void:
+	if story.is_modal or Router.has_overlay():
+		return
+	conversations.hide()
+	_section = &""
+	hud.set_section(&"")
+	if _chapter_active:
+		chapter.talk(character)
+	else:
+		story.play(str(character.topic))
 
 func _on_story_modal_changed(modal: bool) -> void:
 	if modal:
@@ -257,6 +270,12 @@ func _inspect_building(cell: Vector2i) -> void:
 		story.flash_warning("ui.chapter.nest_secret")
 		return
 	var building: Building = world.registry.at(cell)
+	if _chapter_active and building is CargoShip:
+		if chapter.can_evacuate():
+			chapter.evacuate()
+		else:
+			story.flash_warning("ui.chapter.ship_not_ready")
+		return
 	hud.navigation_panel.inspect_cell(cell)
 	if building is House:
 		camera.dragging = false
@@ -331,9 +350,10 @@ func _create_construction_panel() -> void:
 	context.pan_button = hud.construction_pan_button()
 	context.obstacles = _construction_obstacles
 	context.dismiss_map_popup = _dismiss_visible_nest_popup
+	if hud.task_panel != null:
+		context.task_bounds = hud.task_panel.visible_bounds
 	if _chapter_active:
 		context.allow_tool = chapter.allows_tool
-	context.prices_visible = not _chapter_active or chapter.economy_visible()
 	_construction = CONSTRUCTION_PANEL.instantiate()
 	_construction.payload = context
 	_construction.map_inspection_requested.connect(_inspect_secondary_cell)
@@ -348,7 +368,7 @@ func _create_construction_panel() -> void:
 func _begin_royal_order(task_id: StringName, variant_id: StringName) -> void:
 	if story.is_modal:
 		return
-	if _chapter_active:
+	if _chapter_active and not chapter.allows_order(task_id, variant_id):
 		chapter.reprimand()
 		return
 	var order := world.tasks.start_order(task_id, variant_id)
@@ -386,8 +406,8 @@ func _update_construction_dock() -> void:
 
 func _construction_obstacles() -> Array[Rect2]:
 	var obstacles: Array[Rect2] = hud.build_obstacles()
-	if _chapter_active:
-		obstacles.append_array(chapter_panel.obstacles())
+	if conversations.is_visible_in_tree():
+		obstacles.append(conversations.panel_bounds())
 	var hint_bounds := story.hint_bounds()
 	if hint_bounds.has_area():
 		obstacles.append(hint_bounds)

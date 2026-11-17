@@ -109,7 +109,9 @@ func _layout_windows() -> void:
 	var margin: float = PRESENTATION.dock_clearance
 	var bottom: float = viewport.y - _bottom_inset
 	if _task_mode:
-		bottom -= floorf(viewport.y * PRESENTATION.task_strip_height_ratio) + margin
+		if context.task_bounds.is_valid():
+			for bounds: Rect2 in context.task_bounds.call():
+				bottom = minf(bottom, bounds.position.y - margin)
 	var fixed_height: float = panel.get_combined_minimum_size().y - _category_scroll.get_combined_minimum_size().y
 	var available_height: float = maxf(0.0, bottom - _top_edge - fixed_height)
 	_category_scroll.custom_minimum_size.y = minf(available_height, _category_list.get_combined_minimum_size().y)
@@ -119,20 +121,27 @@ func _layout_windows() -> void:
 	var left := margin
 	if _task_mode:
 		left = maxf(margin, viewport.x - panel.size.x - margin)
-	panel.position = Vector2(left, bottom - panel.size.y)
+	%CategoryHeader.place(Vector2(left, bottom - panel.size.y))
 	var strip_left: float = panel.position.x + panel.size.x + margin
 	var available_width: float = maxf(0.0, viewport.x - strip_left - margin)
 	if content.x > available_width:
 		content.y += _building_scroll.get_h_scroll_bar().get_combined_minimum_size().y
-	buildings_panel.size = Vector2(minf(content.x, available_width), minf(content.y, viewport.y / 6.0))
-	buildings_panel.position = Vector2(strip_left, bottom - buildings_panel.size.y)
+	var header_height: float = %BuildingsHeader.get_combined_minimum_size().y
+	header_height += %BuildingsHeader.get_parent().get_theme_constant(&"separation")
+	content.y += header_height
+	if %BuildingsHeader.collapsed:
+		content.y = header_height + frame.y
+	buildings_panel.size = Vector2(minf(content.x, available_width), minf(content.y, viewport.y / 6.0 + header_height))
+	%BuildingsHeader.place(Vector2(strip_left, bottom - buildings_panel.size.y))
 	description_panel.size = Vector2(minf(400.0, viewport.x - 2.0 * margin), 0.0)
-	description_panel.position = Vector2(viewport.x - description_panel.size.x - margin,
-		maxf(margin, buildings_panel.position.y - description_panel.size.y - margin))
+	description_panel.header.place(Vector2(viewport.x - description_panel.size.x - margin,
+		maxf(margin, buildings_panel.position.y - description_panel.size.y - margin)))
 
 func _ready() -> void:
 	%PreviewCategory.hide()
 	%PreviewCard.hide()
+	%CategoryHeader.collapsed_changed.connect(func(_collapsed: bool): _layout_windows())
+	%BuildingsHeader.collapsed_changed.connect(func(_collapsed: bool): _layout_windows())
 	_pointer = get_viewport().get_mouse_position()
 	dismissable = false
 	visibility_changed.connect(_on_visibility_changed)

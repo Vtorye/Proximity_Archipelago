@@ -1234,7 +1234,7 @@ msgid "ui.chapter.worker_hello"
 msgstr "Hi. I work, I eat, I go home. Where else would I go? My home's here."
 
 msgid "ui.chapter.free_intro"
-msgstr "Build me a statue, then upgrade the timber grove with a sawmill and the stone deposit with a quarry. Pick the spots yourself. And roads! Make it look like I planned it."
+msgstr "Now upgrade the timber grove with a sawmill and the stone deposit with a quarry. Pick the spots yourself. And roads! Make it look like I planned it."
 
 msgid "ui.chapter.wish_hint"
 msgstr "Build the queen's three wishes. Roads are optional."
@@ -1249,10 +1249,10 @@ msgid "ui.chapter.planner_reply"
 msgstr "The queen asked me to—"
 
 msgid "ui.chapter.planner_materials"
-msgstr "We can't afford this pace. If I leave these plans running, soon we'll have nothing to repair even the walls. I'm removing the new construction."
+msgstr "We can't afford this pace. Soon we won't have enough to repair even the walls. Stop building. You need to demolish the new structures. I'll show you which ones."
 
 msgid "ui.chapter.demolition_goal"
-msgstr "The planner is removing your new construction."
+msgstr "Open Build (B) → Demolish. Click the gold-marked structure, then apply the plan. Remove only the marked new construction."
 
 msgid "ui.chapter.queen_accuses"
 msgstr "Are you saying my kingdom cannot afford my plans?"
@@ -1267,7 +1267,7 @@ msgid "ui.chapter.execution_reaction"
 msgstr "She was trying to help us. The queen didn't even let her finish."
 
 msgid "ui.chapter.work_intro"
-msgstr "I'm the courier. Call me Logistics if it helps. Let's look at what the workers actually do. Watch her finish a job and carry the output home."
+msgstr "Rebuild the sawmill first. Then the workers can get back to producing wood."
 
 msgid "ui.chapter.observe_work"
 msgstr "Watch a worker gather resources and return to her own nest."
@@ -1303,7 +1303,7 @@ msgid "ui.chapter.berry"
 msgstr "Then I'll bring you a berry. Home, obviously."
 
 msgid "ui.chapter.explain_transport"
-msgstr "Workers bring output to their own nest. Carriers move supplies between warehouses and building sites. I've ordered six wood for the western barracks. Watch the delivery."
+msgstr "Workers bring output to their own nest. The barracks is full. In Orders, a negative One-time value sends goods elsewhere. Set wood to minus six first."
 
 msgid "ui.chapter.observe_transport"
 msgstr "Wait for six wood to arrive at the western barracks."
@@ -1427,3 +1427,120 @@ msgstr "I like horror stories about wasps. At least fictional wasps don't need t
 
 msgid "ui.chapter.worker_topic"
 msgstr "I like romance novels. The kind where both of them get to come home."
+
+msgid "ui.chapter.rebuild_sawmill"
+msgstr "Rebuild the sawmill on a timber grove. Let the workers complete it."
+
+msgid "ui.chapter.request_delivery"
+msgstr "Step 1: open the western barracks → Orders. Reduce the wood One-time field to −6."
+
+msgid "ui.chapter.place_base"
+msgstr "Open Build → Base nest. Place it on the gold tile. A crown pays for instant construction."
+
+msgid "ui.chapter.ship_not_ready"
+msgstr "Load at least 50 of each supply and complete the road, then click the ship to evacuate."
+
+msgid "ui.story.controls.pause_intro"
+msgstr "First, a royal privilege. Freeze time for me. Space, or the pause button up there."
+
+msgid "ui.story.controls.pause"
+msgstr "Press Space or the highlighted pause button."
+
+msgid "ui.story.controls.resume"
+msgstr "Time is stopped. Press Space or the pause button again to continue."
+
+msgid "ui.story.controls.move_intro"
+msgstr "Now move the camera. Drag the map, or use WASD or the arrows. I want you to see the whole place I leave you in charge of."
+
+msgid "ui.story.controls.move"
+msgstr "Move the camera. Drag with LMB or MMB, or hold WASD or an arrow key."
+
+msgid "ui.story.controls.zoom_intro"
+msgstr "And try the zoom. Mouse wheel, or the plus and minus buttons below. You may need a closer look at me."
+
+msgid "ui.story.controls.zoom"
+msgstr "Change the zoom with the wheel or the − / + buttons."
+
+msgid "ui.story.controls.talk"
+msgstr "Open Talk below and ask the courier about building roads."
+
+msgid "ui.story.road.ask_advice"
+msgstr "A road... Who can I ask how to build one?"
+
+msgid "ui.story.road.advice"
+msgstr "Open Build with B, choose Road, and draw a plan. Press Start construction. We'll deliver the materials and build it. Start with the gold tile by the nest."
+
+msgid "ui.story.road.why_build"
+msgstr "Wait. Why do couriers build things? Aren't you supposed to carry them?"
+
+msgid "ui.story.road.also_build"
+msgstr "I do carry them. To the building site. Then it turns out there's no one to build it either."
+
+msgid "ui.story.road.why_not_builders"
+msgstr "So why aren't you called builders?"
+
+msgid "ui.story.road.better_fed"
+msgstr "They'd feed builders better..."
+
+msgid "ui.chapter.board_ready"
+msgstr "Cargo loaded. Click the ship to start the evacuation."
+
+msgid "ui.chapter.statue_blocks"
+msgstr "And the statue? Can anyone walk through it?"
+
+msgid "ui.chapter.statue_whatever"
+msgstr "Of course not. It is a monument, not a doorway. Walk around. What can you do?"
+
+msgid "ui.chapter.feast_expires"
+msgstr "A feast disappears after a while. Then she asks for another one."
+
+msgid "ui.chapter.distraction"
+msgstr "They keep me entertained. You would not want a bored queen, would you?"
+
+msgid "ui.chapter.other_request"
+msgstr "Now give me whichever you did not choose. I require variety. Open Tasks again."
+
+msgid "ui.chapter.second_order"
+msgstr "Open Tasks and build %s on the gold tile. Choose the other option this time."
+
+msgid "ui.chapter.upgrade_request"
+msgstr "Worker! Come explain what to do with the timber grove."
+
+msgid "ui.chapter.worker_where"
+msgstr "I should ask the Worker what this improvement is for."
+
+msgid "ui.chapter.worker_called"
+msgstr "Here. Open Talk below. I can explain why we need a sawmill."
+
+msgid "ui.chapter.ask_worker"
+msgstr "Open Talk and ask the Worker what the improvement is for."
+
+msgid "ui.chapter.worker_improvements"
+msgstr "A sawmill adds workplaces at a wood source. More of us can work together and bring more home. A quarry does the same for stone. Neither creates a new deposit."
+
+msgid "ui.chapter.worker_info"
+msgstr "Each building card has an i tab. Open it for its description, price, extra workplaces and production. Read it before spending materials."
+
+msgid "ui.chapter.upgrade_reply"
+msgstr "An instruction manual? We have those?"
+
+msgid "ui.chapter.worker_upgrade_task"
+msgstr "Yes. Open Build, find the sawmill, check i, then improve a wood source."
+
+msgid "ui.storage.signed_request"
+msgstr "Positive: receive goods. Negative: send goods to another nest. Counts down toward zero."
+
+msgid "ui.chapter.wait_export"
+msgstr "Step 2: order accepted. Wait for couriers to pick up 6 wood and deliver it to another nest."
+
+msgid "ui.chapter.infinite_claim"
+msgstr "There is an infinity sign. Infinite materials, obviously. Build whatever I tell you."
+
+msgid "ui.chapter.infinite_question"
+msgstr "But she said the materials were infinite. The stock display even had an infinity sign."
+
+msgid "ui.chapter.finite_truth"
+msgstr "She ordered that sign put there. These are the real figures. Almost nothing is left. The island deposits are finite too."
+
+msgid "ui.storage.unlimited"
+msgstr "Supplies: ∞"

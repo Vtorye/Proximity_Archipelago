@@ -1,29 +1,44 @@
 [gd_resource type="Resource" script_class="DialogueResource" format=3]
 
-[ext_resource type="Script" uid="uid://dbs4435dsf3ry" path="res://addons/dialogue_manager/dialogue_resource.gd" id="1_h1xia"]
+[ext_resource type="Script" path="res://addons/dialogue_manager/dialogue_resource.gd" id="1_tj8gq"]
 
 [resource]
-script = ExtResource("1_h1xia")
+script = ExtResource("1_tj8gq")
 using_states = PackedStringArray()
 cues = {
-"attack": "70",
-"courier_topic": "111",
-"execution": "28",
-"farewell": "84",
-"first_reprimand": "94",
+"after_both": "83",
+"after_movement": "18",
+"after_pause": "13",
+"after_road": "44",
+"after_zoom": "23",
+"attack": "154",
+"build_advice": "95",
+"courier_topic": "195",
+"ending_build": "54",
+"ending_diversion": "60",
+"execution": "112",
+"farewell": "168",
+"first_reprimand": "178",
+"handoff": "66",
 "intro": "1",
-"logistics": "37",
-"magic": "59",
-"planner": "21",
-"planner_topic": "107",
-"queen_topic": "98",
-"recruit": "52",
-"shuti_topic": "103",
-"supplies": "64",
-"worker_hello": "14",
-"worker_topic": "115"
+"logistics": "121",
+"magic": "143",
+"order": "50",
+"planner": "103",
+"planner_topic": "191",
+"queen_topic": "182",
+"recruit": "136",
+"road": "32",
+"road_advice": "36",
+"second_feast": "71",
+"second_statue": "77",
+"shuti_topic": "187",
+"summon_worker": "88",
+"supplies": "148",
+"worker_advice_topic": "203",
+"worker_topic": "199"
 }
-character_names = PackedStringArray("Queen", "Protagonist", "Worker", "Planner", "Courier")
+character_names = PackedStringArray("Queen", "Protagonist", "Courier", "Worker", "Planner")
 first_cue = "0"
 lines = {
 "0": {
@@ -36,17 +51,16 @@ lines = {
 &"id": "1",
 &"next_id": "2",
 &"static_id": "",
+&"tags": PackedStringArray("portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_pleased.png"),
 &"text": "ui.story.tutorial.wake",
 &"type": "dialogue"
 },
 "10": {
-&"character": "Queen",
 &"id": "10",
-&"next_id": "11",
-&"static_id": "",
-&"tags": PackedStringArray("action=food"),
-&"text": "ui.chapter.observe_food",
-&"type": "dialogue"
+&"is_snippet": false,
+&"next_id": "end",
+&"next_id_after": "",
+&"type": "goto"
 },
 "100": {
 &"id": "100",
@@ -66,106 +80,124 @@ lines = {
 &"type": "cue"
 },
 "103": {
-&"character": "Protagonist",
+&"character": "Planner",
 &"id": "103",
 &"next_id": "104",
 &"static_id": "",
-&"text": "ui.chapter.shuti_topic",
+&"text": "ui.chapter.planner_shock",
 &"type": "dialogue"
 },
 "104": {
+&"character": "Protagonist",
 &"id": "104",
-&"is_snippet": false,
-&"next_id": "end",
-&"next_id_after": "",
-&"type": "goto"
+&"next_id": "105",
+&"static_id": "",
+&"text": "ui.chapter.planner_reply",
+&"type": "dialogue"
 },
 "105": {
+&"character": "Planner",
 &"id": "105",
 &"next_id": "106",
-&"type": ""
+&"static_id": "",
+&"text": "ui.chapter.planner_materials",
+&"type": "dialogue"
 },
 "106": {
+&"character": "Protagonist",
 &"id": "106",
 &"next_id": "107",
-&"type": "cue"
+&"static_id": "",
+&"text": "ui.chapter.infinite_question",
+&"type": "dialogue"
 },
 "107": {
 &"character": "Planner",
 &"id": "107",
 &"next_id": "108",
 &"static_id": "",
-&"text": "ui.chapter.planner_topic",
+&"text": "ui.chapter.finite_truth",
 &"type": "dialogue"
 },
 "108": {
+&"character": "Planner",
 &"id": "108",
-&"is_snippet": false,
-&"next_id": "end",
-&"next_id_after": "",
-&"type": "goto"
+&"next_id": "109",
+&"static_id": "",
+&"tags": PackedStringArray("action=demolish"),
+&"text": "ui.chapter.demolition_goal",
+&"type": "dialogue"
 },
 "109": {
 &"id": "109",
-&"next_id": "110",
-&"type": ""
-},
-"11": {
-&"id": "11",
 &"is_snippet": false,
 &"next_id": "end",
 &"next_id_after": "",
 &"type": "goto"
+},
+"11": {
+&"id": "11",
+&"next_id": "12",
+&"type": ""
 },
 "110": {
 &"id": "110",
 &"next_id": "111",
-&"type": "cue"
-},
-"111": {
-&"character": "Courier",
-&"id": "111",
-&"next_id": "112",
-&"static_id": "",
-&"text": "ui.chapter.courier_topic",
-&"type": "dialogue"
-},
-"112": {
-&"id": "112",
-&"is_snippet": false,
-&"next_id": "end",
-&"next_id_after": "",
-&"type": "goto"
-},
-"113": {
-&"id": "113",
-&"next_id": "114",
 &"type": ""
 },
-"114": {
-&"id": "114",
-&"next_id": "115",
+"111": {
+&"id": "111",
+&"next_id": "112",
 &"type": "cue"
 },
+"112": {
+&"character": "Queen",
+&"id": "112",
+&"next_id": "113",
+&"static_id": "",
+&"text": "ui.chapter.queen_accuses",
+&"type": "dialogue"
+},
+"113": {
+&"character": "Planner",
+&"id": "113",
+&"next_id": "114",
+&"static_id": "",
+&"text": "ui.chapter.planner_truth",
+&"type": "dialogue"
+},
+"114": {
+&"character": "Queen",
+&"id": "114",
+&"next_id": "115",
+&"static_id": "",
+&"text": "ui.chapter.execution",
+&"type": "dialogue"
+},
 "115": {
-&"character": "Worker",
+&"character": "Protagonist",
 &"id": "115",
 &"next_id": "116",
 &"static_id": "",
-&"text": "ui.chapter.worker_topic",
+&"text": "ui.chapter.execution_reaction",
 &"type": "dialogue"
 },
 "116": {
+&"character": "Courier",
 &"id": "116",
-&"is_snippet": false,
-&"next_id": "end",
-&"next_id_after": "",
-&"type": "goto"
+&"next_id": "117",
+&"static_id": "",
+&"text": "ui.chapter.work_intro",
+&"type": "dialogue"
 },
 "117": {
+&"character": "Worker",
 &"id": "117",
 &"next_id": "118",
-&"type": ""
+&"static_id": "",
+&"tags": PackedStringArray("action=work"),
+&"text": "ui.chapter.rebuild_sawmill",
+&"type": "dialogue"
 },
 "118": {
 &"id": "118",
@@ -174,221 +206,837 @@ lines = {
 &"next_id_after": "",
 &"type": "goto"
 },
+"119": {
+&"id": "119",
+&"next_id": "120",
+&"type": ""
+},
 "12": {
 &"id": "12",
 &"next_id": "13",
-&"type": ""
+&"type": "cue"
+},
+"120": {
+&"id": "120",
+&"next_id": "121",
+&"type": "cue"
+},
+"121": {
+&"character": "Courier",
+&"id": "121",
+&"next_id": "122",
+&"static_id": "",
+&"text": "ui.chapter.carry_command",
+&"type": "dialogue"
+},
+"122": {
+&"character": "Worker",
+&"id": "122",
+&"next_id": "123",
+&"static_id": "",
+&"text": "ui.chapter.no",
+&"type": "dialogue"
+},
+"123": {
+&"character": "Courier",
+&"id": "123",
+&"next_id": "124",
+&"static_id": "",
+&"text": "ui.chapter.not_question",
+&"type": "dialogue"
+},
+"124": {
+&"character": "Worker",
+&"id": "124",
+&"next_id": "125",
+&"static_id": "",
+&"text": "ui.chapter.home",
+&"type": "dialogue"
+},
+"125": {
+&"character": "Courier",
+&"id": "125",
+&"next_id": "126",
+&"static_id": "",
+&"text": "ui.chapter.always",
+&"type": "dialogue"
+},
+"126": {
+&"character": "Worker",
+&"id": "126",
+&"next_id": "127",
+&"static_id": "",
+&"text": "ui.chapter.find_me",
+&"type": "dialogue"
+},
+"127": {
+&"character": "Courier",
+&"id": "127",
+&"next_id": "128",
+&"static_id": "",
+&"text": "ui.chapter.job",
+&"type": "dialogue"
+},
+"128": {
+&"character": "Worker",
+&"id": "128",
+&"next_id": "129",
+&"static_id": "",
+&"text": "ui.chapter.coffee",
+&"type": "dialogue"
+},
+"129": {
+&"character": "Courier",
+&"id": "129",
+&"next_id": "130",
+&"static_id": "",
+&"text": "ui.chapter.no_coffee",
+&"type": "dialogue"
 },
 "13": {
+&"character": "Queen",
 &"id": "13",
 &"next_id": "14",
+&"static_id": "",
+&"text": "ui.story.controls.move_intro",
+&"type": "dialogue"
+},
+"130": {
+&"character": "Worker",
+&"id": "130",
+&"next_id": "131",
+&"static_id": "",
+&"text": "ui.chapter.berry",
+&"type": "dialogue"
+},
+"131": {
+&"character": "Courier",
+&"id": "131",
+&"next_id": "132",
+&"static_id": "",
+&"text": "ui.chapter.explain_transport",
+&"type": "dialogue"
+},
+"132": {
+&"character": "Courier",
+&"id": "132",
+&"next_id": "133",
+&"static_id": "",
+&"tags": PackedStringArray("action=transport"),
+&"text": "ui.chapter.request_delivery",
+&"type": "dialogue"
+},
+"133": {
+&"id": "133",
+&"is_snippet": false,
+&"next_id": "end",
+&"next_id_after": "",
+&"type": "goto"
+},
+"134": {
+&"id": "134",
+&"next_id": "135",
+&"type": ""
+},
+"135": {
+&"id": "135",
+&"next_id": "136",
 &"type": "cue"
+},
+"136": {
+&"character": "Courier",
+&"id": "136",
+&"next_id": "137",
+&"static_id": "",
+&"text": "ui.chapter.work_choice",
+&"type": "dialogue"
+},
+"137": {
+&"character": "Worker",
+&"id": "137",
+&"next_id": "138",
+&"static_id": "",
+&"text": "ui.chapter.work_return",
+&"type": "dialogue"
+},
+"138": {
+&"character": "Courier",
+&"id": "138",
+&"next_id": "139",
+&"static_id": "",
+&"text": "ui.chapter.recruit_intro",
+&"type": "dialogue"
+},
+"139": {
+&"character": "Courier",
+&"id": "139",
+&"next_id": "140",
+&"static_id": "",
+&"tags": PackedStringArray("action=recruit"),
+&"text": "ui.chapter.recruit_goal",
+&"type": "dialogue"
 },
 "14": {
 &"character": "Queen",
 &"id": "14",
 &"next_id": "15",
 &"static_id": "",
-&"text": "ui.chapter.worker_appears",
+&"tags": PackedStringArray("action=move_camera"),
+&"text": "ui.story.controls.move",
 &"type": "dialogue"
 },
-"15": {
-&"character": "Worker",
-&"id": "15",
-&"next_id": "16",
-&"static_id": "",
-&"text": "ui.chapter.worker_hello",
-&"type": "dialogue"
-},
-"16": {
-&"character": "Queen",
-&"id": "16",
-&"next_id": "17",
-&"static_id": "",
-&"text": "ui.chapter.free_intro",
-&"type": "dialogue"
-},
-"17": {
-&"character": "Queen",
-&"id": "17",
-&"next_id": "18",
-&"static_id": "",
-&"tags": PackedStringArray("action=free"),
-&"text": "ui.chapter.wish_hint",
-&"type": "dialogue"
-},
-"18": {
-&"id": "18",
+"140": {
+&"id": "140",
 &"is_snippet": false,
 &"next_id": "end",
 &"next_id_after": "",
 &"type": "goto"
 },
+"141": {
+&"id": "141",
+&"next_id": "142",
+&"type": ""
+},
+"142": {
+&"id": "142",
+&"next_id": "143",
+&"type": "cue"
+},
+"143": {
+&"character": "Queen",
+&"id": "143",
+&"next_id": "144",
+&"static_id": "",
+&"text": "ui.chapter.magic_intro",
+&"type": "dialogue"
+},
+"144": {
+&"character": "Queen",
+&"id": "144",
+&"next_id": "145",
+&"static_id": "",
+&"tags": PackedStringArray("action=magic"),
+&"text": "ui.chapter.place_base",
+&"type": "dialogue"
+},
+"145": {
+&"id": "145",
+&"is_snippet": false,
+&"next_id": "end",
+&"next_id_after": "",
+&"type": "goto"
+},
+"146": {
+&"id": "146",
+&"next_id": "147",
+&"type": ""
+},
+"147": {
+&"id": "147",
+&"next_id": "148",
+&"type": "cue"
+},
+"148": {
+&"character": "Courier",
+&"id": "148",
+&"next_id": "149",
+&"static_id": "",
+&"text": "ui.chapter.supplies_intro",
+&"type": "dialogue"
+},
+"149": {
+&"character": "Worker",
+&"id": "149",
+&"next_id": "150",
+&"static_id": "",
+&"text": "ui.chapter.supplies_worker",
+&"type": "dialogue"
+},
+"15": {
+&"id": "15",
+&"is_snippet": false,
+&"next_id": "end",
+&"next_id_after": "",
+&"type": "goto"
+},
+"150": {
+&"character": "Courier",
+&"id": "150",
+&"next_id": "151",
+&"static_id": "",
+&"tags": PackedStringArray("action=supplies"),
+&"text": "ui.chapter.stock_goal",
+&"type": "dialogue"
+},
+"151": {
+&"id": "151",
+&"is_snippet": false,
+&"next_id": "end",
+&"next_id_after": "",
+&"type": "goto"
+},
+"152": {
+&"id": "152",
+&"next_id": "153",
+&"type": ""
+},
+"153": {
+&"id": "153",
+&"next_id": "154",
+&"type": "cue"
+},
+"154": {
+&"character": "Courier",
+&"id": "154",
+&"next_id": "155",
+&"static_id": "",
+&"text": "ui.chapter.spiders_warning",
+&"type": "dialogue"
+},
+"155": {
+&"character": "Queen",
+&"id": "155",
+&"next_id": "156",
+&"static_id": "",
+&"text": "ui.chapter.defend",
+&"type": "dialogue"
+},
+"156": {
+&"character": "Worker",
+&"id": "156",
+&"next_id": "157",
+&"static_id": "",
+&"text": "ui.chapter.spiders_target",
+&"type": "dialogue"
+},
+"157": {
+&"character": "Courier",
+&"id": "157",
+&"next_id": "158",
+&"static_id": "",
+&"text": "ui.chapter.queen_target",
+&"type": "dialogue"
+},
+"158": {
+&"character": "Queen",
+&"id": "158",
+&"next_id": "159",
+&"static_id": "",
+&"text": "ui.chapter.queen_fear",
+&"type": "dialogue"
+},
+"159": {
+&"character": "Courier",
+&"id": "159",
+&"next_id": "160",
+&"static_id": "",
+&"text": "ui.chapter.ship_plan",
+&"type": "dialogue"
+},
+"16": {
+&"id": "16",
+&"next_id": "17",
+&"type": ""
+},
+"160": {
+&"character": "Worker",
+&"id": "160",
+&"next_id": "161",
+&"static_id": "",
+&"text": "ui.chapter.and_road",
+&"type": "dialogue"
+},
+"161": {
+&"character": "Queen",
+&"id": "161",
+&"next_id": "162",
+&"static_id": "",
+&"text": "ui.chapter.what_road",
+&"type": "dialogue"
+},
+"162": {
+&"character": "Courier",
+&"id": "162",
+&"next_id": "163",
+&"static_id": "",
+&"text": "ui.chapter.road_rule",
+&"type": "dialogue"
+},
+"163": {
+&"character": "Queen",
+&"id": "163",
+&"next_id": "164",
+&"static_id": "",
+&"text": "ui.chapter.royal_road",
+&"type": "dialogue"
+},
+"164": {
+&"character": "Courier",
+&"id": "164",
+&"next_id": "165",
+&"static_id": "",
+&"tags": PackedStringArray("action=attack"),
+&"text": "ui.chapter.build_ship",
+&"type": "dialogue"
+},
+"165": {
+&"id": "165",
+&"is_snippet": false,
+&"next_id": "end",
+&"next_id_after": "",
+&"type": "goto"
+},
+"166": {
+&"id": "166",
+&"next_id": "167",
+&"type": ""
+},
+"167": {
+&"id": "167",
+&"next_id": "168",
+&"type": "cue"
+},
+"168": {
+&"character": "Queen",
+&"id": "168",
+&"next_id": "169",
+&"static_id": "",
+&"text": "ui.chapter.strategic",
+&"type": "dialogue"
+},
+"169": {
+&"character": "Courier",
+&"id": "169",
+&"next_id": "170",
+&"static_id": "",
+&"text": "ui.chapter.of_course",
+&"type": "dialogue"
+},
+"17": {
+&"id": "17",
+&"next_id": "18",
+&"type": "cue"
+},
+"170": {
+&"character": "Worker",
+&"id": "170",
+&"next_id": "171",
+&"static_id": "",
+&"text": "ui.chapter.can_home",
+&"type": "dialogue"
+},
+"171": {
+&"character": "Courier",
+&"id": "171",
+&"next_id": "172",
+&"static_id": "",
+&"text": "ui.chapter.no_home",
+&"type": "dialogue"
+},
+"172": {
+&"character": "Worker",
+&"id": "172",
+&"next_id": "173",
+&"static_id": "",
+&"text": "ui.chapter.closer",
+&"type": "dialogue"
+},
+"173": {
+&"character": "Courier",
+&"id": "173",
+&"next_id": "174",
+&"static_id": "",
+&"text": "ui.chapter.board",
+&"type": "dialogue"
+},
+"174": {
+&"character": "Queen",
+&"id": "174",
+&"next_id": "175",
+&"static_id": "",
+&"tags": PackedStringArray("action=depart"),
+&"text": "ui.chapter.depart",
+&"type": "dialogue"
+},
+"175": {
+&"id": "175",
+&"is_snippet": false,
+&"next_id": "end",
+&"next_id_after": "",
+&"type": "goto"
+},
+"176": {
+&"id": "176",
+&"next_id": "177",
+&"type": ""
+},
+"177": {
+&"id": "177",
+&"next_id": "178",
+&"type": "cue"
+},
+"178": {
+&"character": "Queen",
+&"id": "178",
+&"next_id": "179",
+&"static_id": "",
+&"tags": PackedStringArray("portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_angry.png"),
+&"text": "ui.story.tutorial.first_reprimand",
+&"type": "dialogue"
+},
+"179": {
+&"id": "179",
+&"is_snippet": false,
+&"next_id": "end",
+&"next_id_after": "",
+&"type": "goto"
+},
+"18": {
+&"character": "Queen",
+&"id": "18",
+&"next_id": "19",
+&"static_id": "",
+&"text": "ui.story.controls.zoom_intro",
+&"type": "dialogue"
+},
+"180": {
+&"id": "180",
+&"next_id": "181",
+&"type": ""
+},
+"181": {
+&"id": "181",
+&"next_id": "182",
+&"type": "cue"
+},
+"182": {
+&"character": "Protagonist",
+&"id": "182",
+&"next_id": "183",
+&"static_id": "",
+&"text": "ui.chapter.resource_question",
+&"type": "dialogue"
+},
+"183": {
+&"character": "Queen",
+&"id": "183",
+&"next_id": "184",
+&"static_id": "",
+&"text": "ui.chapter.resource_answer",
+&"type": "dialogue"
+},
+"184": {
+&"id": "184",
+&"is_snippet": false,
+&"next_id": "end",
+&"next_id_after": "",
+&"type": "goto"
+},
+"185": {
+&"id": "185",
+&"next_id": "186",
+&"type": ""
+},
+"186": {
+&"id": "186",
+&"next_id": "187",
+&"type": "cue"
+},
+"187": {
+&"character": "Protagonist",
+&"id": "187",
+&"next_id": "188",
+&"static_id": "",
+&"text": "ui.chapter.shuti_topic",
+&"type": "dialogue"
+},
+"188": {
+&"id": "188",
+&"is_snippet": false,
+&"next_id": "end",
+&"next_id_after": "",
+&"type": "goto"
+},
+"189": {
+&"id": "189",
+&"next_id": "190",
+&"type": ""
+},
 "19": {
+&"character": "Queen",
 &"id": "19",
 &"next_id": "20",
+&"static_id": "",
+&"tags": PackedStringArray("action=zoom"),
+&"text": "ui.story.controls.zoom",
+&"type": "dialogue"
+},
+"190": {
+&"id": "190",
+&"next_id": "191",
+&"type": "cue"
+},
+"191": {
+&"character": "Planner",
+&"id": "191",
+&"next_id": "192",
+&"static_id": "",
+&"text": "ui.chapter.planner_topic",
+&"type": "dialogue"
+},
+"192": {
+&"id": "192",
+&"is_snippet": false,
+&"next_id": "end",
+&"next_id_after": "",
+&"type": "goto"
+},
+"193": {
+&"id": "193",
+&"next_id": "194",
 &"type": ""
+},
+"194": {
+&"id": "194",
+&"next_id": "195",
+&"type": "cue"
+},
+"195": {
+&"character": "Courier",
+&"id": "195",
+&"next_id": "196",
+&"static_id": "",
+&"text": "ui.chapter.courier_topic",
+&"type": "dialogue"
+},
+"196": {
+&"id": "196",
+&"is_snippet": false,
+&"next_id": "end",
+&"next_id_after": "",
+&"type": "goto"
+},
+"197": {
+&"id": "197",
+&"next_id": "198",
+&"type": ""
+},
+"198": {
+&"id": "198",
+&"next_id": "199",
+&"type": "cue"
+},
+"199": {
+&"character": "Worker",
+&"id": "199",
+&"next_id": "200",
+&"static_id": "",
+&"text": "ui.chapter.worker_topic",
+&"type": "dialogue"
 },
 "2": {
 &"character": "Queen",
 &"id": "2",
 &"next_id": "3",
 &"static_id": "",
-&"tags": PackedStringArray("name_input"),
+&"tags": PackedStringArray("name_input", "portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_thinking.png"),
 &"text": "ui.story.tutorial.ask_name",
 &"type": "dialogue"
 },
 "20": {
 &"id": "20",
-&"next_id": "21",
-&"type": "cue"
-},
-"21": {
-&"character": "Planner",
-&"id": "21",
-&"next_id": "22",
-&"static_id": "",
-&"text": "ui.chapter.planner_shock",
-&"type": "dialogue"
-},
-"22": {
-&"character": "Protagonist",
-&"id": "22",
-&"next_id": "23",
-&"static_id": "",
-&"text": "ui.chapter.planner_reply",
-&"type": "dialogue"
-},
-"23": {
-&"character": "Planner",
-&"id": "23",
-&"next_id": "24",
-&"static_id": "",
-&"text": "ui.chapter.planner_materials",
-&"type": "dialogue"
-},
-"24": {
-&"character": "Planner",
-&"id": "24",
-&"next_id": "25",
-&"static_id": "",
-&"tags": PackedStringArray("action=demolish"),
-&"text": "ui.chapter.demolition_goal",
-&"type": "dialogue"
-},
-"25": {
-&"id": "25",
 &"is_snippet": false,
 &"next_id": "end",
 &"next_id_after": "",
 &"type": "goto"
 },
-"26": {
-&"id": "26",
-&"next_id": "27",
+"200": {
+&"id": "200",
+&"is_snippet": false,
+&"next_id": "end",
+&"next_id_after": "",
+&"type": "goto"
+},
+"201": {
+&"id": "201",
+&"next_id": "202",
 &"type": ""
 },
-"27": {
-&"id": "27",
-&"next_id": "28",
+"202": {
+&"id": "202",
+&"next_id": "203",
 &"type": "cue"
 },
-"28": {
+"203": {
+&"character": "Worker",
+&"id": "203",
+&"next_id": "204",
+&"static_id": "",
+&"text": "ui.chapter.worker_info",
+&"type": "dialogue"
+},
+"204": {
+&"id": "204",
+&"is_snippet": false,
+&"next_id": "end",
+&"next_id_after": "",
+&"type": "goto"
+},
+"205": {
+&"id": "205",
+&"next_id": "206",
+&"type": ""
+},
+"206": {
+&"id": "206",
+&"is_snippet": false,
+&"next_id": "end",
+&"next_id_after": "",
+&"type": "goto"
+},
+"21": {
+&"id": "21",
+&"next_id": "22",
+&"type": ""
+},
+"22": {
+&"id": "22",
+&"next_id": "23",
+&"type": "cue"
+},
+"23": {
 &"character": "Queen",
+&"id": "23",
+&"next_id": "24",
+&"static_id": "",
+&"tags": PackedStringArray("portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_thinking.png"),
+&"text": "ui.story.tutorial.colony",
+&"type": "dialogue"
+},
+"24": {
+&"character": "Protagonist",
+&"id": "24",
+&"next_id": "25",
+&"static_id": "",
+&"text": "ui.chapter.resource_question",
+&"type": "dialogue"
+},
+"25": {
+&"character": "Queen",
+&"id": "25",
+&"next_id": "26",
+&"static_id": "",
+&"text": "ui.chapter.resource_answer",
+&"type": "dialogue"
+},
+"26": {
+&"character": "Queen",
+&"id": "26",
+&"next_id": "27",
+&"static_id": "",
+&"text": "ui.chapter.infinite_claim",
+&"type": "dialogue"
+},
+"27": {
+&"character": "Protagonist",
+&"id": "27",
+&"next_id": "28",
+&"static_id": "",
+&"tags": PackedStringArray("portrait=res://game/assets/sprites/visual_novel/protagonist/protagonist_ant.png"),
+&"text": "ui.story.road.ask_advice",
+&"type": "dialogue"
+},
+"28": {
+&"character": "Protagonist",
 &"id": "28",
 &"next_id": "29",
 &"static_id": "",
-&"text": "ui.chapter.queen_accuses",
+&"tags": PackedStringArray("action=talk"),
+&"text": "ui.story.controls.talk",
 &"type": "dialogue"
 },
 "29": {
-&"character": "Planner",
 &"id": "29",
-&"next_id": "30",
-&"static_id": "",
-&"text": "ui.chapter.planner_truth",
-&"type": "dialogue"
+&"is_snippet": false,
+&"next_id": "end",
+&"next_id_after": "",
+&"type": "goto"
 },
 "3": {
 &"character": "Queen",
 &"id": "3",
 &"next_id": "4",
 &"static_id": "",
+&"tags": PackedStringArray("portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_pleased.png"),
 &"text": "ui.story.tutorial.never_mind",
 &"type": "dialogue"
 },
 "30": {
-&"character": "Queen",
 &"id": "30",
 &"next_id": "31",
-&"static_id": "",
-&"text": "ui.chapter.execution",
-&"type": "dialogue"
+&"type": ""
 },
 "31": {
-&"character": "Protagonist",
 &"id": "31",
 &"next_id": "32",
-&"static_id": "",
-&"text": "ui.chapter.execution_reaction",
-&"type": "dialogue"
+&"type": "cue"
 },
 "32": {
-&"character": "Courier",
+&"character": "Queen",
 &"id": "32",
 &"next_id": "33",
 &"static_id": "",
-&"text": "ui.chapter.work_intro",
+&"tags": PackedStringArray("action=road"),
+&"text": "ui.story.tutorial.road_hint",
 &"type": "dialogue"
 },
 "33": {
-&"character": "Worker",
 &"id": "33",
-&"next_id": "34",
-&"static_id": "",
-&"tags": PackedStringArray("action=work"),
-&"text": "ui.chapter.observe_work",
-&"type": "dialogue"
-},
-"34": {
-&"id": "34",
 &"is_snippet": false,
 &"next_id": "end",
 &"next_id_after": "",
 &"type": "goto"
 },
+"34": {
+&"id": "34",
+&"next_id": "35",
+&"type": ""
+},
 "35": {
 &"id": "35",
 &"next_id": "36",
-&"type": ""
-},
-"36": {
-&"id": "36",
-&"next_id": "37",
 &"type": "cue"
 },
-"37": {
+"36": {
 &"character": "Courier",
+&"id": "36",
+&"next_id": "37",
+&"static_id": "",
+&"text": "ui.story.road.advice",
+&"type": "dialogue"
+},
+"37": {
+&"character": "Protagonist",
 &"id": "37",
 &"next_id": "38",
 &"static_id": "",
-&"text": "ui.chapter.carry_command",
+&"text": "ui.story.road.why_build",
 &"type": "dialogue"
 },
 "38": {
-&"character": "Worker",
+&"character": "Courier",
 &"id": "38",
 &"next_id": "39",
 &"static_id": "",
-&"text": "ui.chapter.no",
+&"text": "ui.story.road.also_build",
 &"type": "dialogue"
 },
 "39": {
-&"character": "Courier",
+&"character": "Protagonist",
 &"id": "39",
 &"next_id": "40",
 &"static_id": "",
-&"text": "ui.chapter.not_question",
+&"text": "ui.story.road.why_not_builders",
 &"type": "dialogue"
 },
 "4": {
@@ -396,129 +1044,121 @@ lines = {
 &"id": "4",
 &"next_id": "5",
 &"static_id": "",
+&"tags": PackedStringArray("portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_pleased.png"),
 &"text": "ui.story.tutorial.given_name",
 &"type": "dialogue"
 },
 "40": {
-&"character": "Worker",
+&"character": "Courier",
 &"id": "40",
 &"next_id": "41",
 &"static_id": "",
-&"text": "ui.chapter.home",
+&"text": "ui.story.road.better_fed",
 &"type": "dialogue"
 },
 "41": {
-&"character": "Courier",
 &"id": "41",
-&"next_id": "42",
-&"static_id": "",
-&"text": "ui.chapter.always",
-&"type": "dialogue"
+&"is_snippet": false,
+&"next_id": "32",
+&"next_id_after": "",
+&"type": "goto"
 },
 "42": {
-&"character": "Worker",
 &"id": "42",
 &"next_id": "43",
-&"static_id": "",
-&"text": "ui.chapter.find_me",
-&"type": "dialogue"
+&"type": ""
 },
 "43": {
-&"character": "Courier",
 &"id": "43",
 &"next_id": "44",
-&"static_id": "",
-&"text": "ui.chapter.job",
-&"type": "dialogue"
+&"type": "cue"
 },
 "44": {
-&"character": "Worker",
+&"character": "Queen",
 &"id": "44",
 &"next_id": "45",
 &"static_id": "",
-&"text": "ui.chapter.coffee",
+&"tags": PackedStringArray("portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_pleased.png"),
+&"text": "ui.story.tutorial.road_done",
 &"type": "dialogue"
 },
 "45": {
-&"character": "Courier",
+&"character": "Queen",
 &"id": "45",
 &"next_id": "46",
 &"static_id": "",
-&"text": "ui.chapter.no_coffee",
+&"tags": PackedStringArray("portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_eating_berries.png"),
+&"text": "ui.story.tutorial.choice",
 &"type": "dialogue"
 },
 "46": {
-&"character": "Worker",
+&"character": "Protagonist",
 &"id": "46",
 &"next_id": "47",
 &"static_id": "",
-&"text": "ui.chapter.berry",
+&"tags": PackedStringArray("portrait=res://game/assets/sprites/visual_novel/protagonist/protagonist_ant.png"),
+&"text": "ui.story.tutorial.choice_cost",
 &"type": "dialogue"
 },
 "47": {
-&"character": "Courier",
 &"id": "47",
-&"next_id": "48",
-&"static_id": "",
-&"text": "ui.chapter.explain_transport",
-&"type": "dialogue"
+&"is_snippet": false,
+&"next_id": "50",
+&"next_id_after": "",
+&"type": "goto"
 },
 "48": {
-&"character": "Courier",
 &"id": "48",
 &"next_id": "49",
-&"static_id": "",
-&"tags": PackedStringArray("action=transport"),
-&"text": "ui.chapter.observe_transport",
-&"type": "dialogue"
+&"type": ""
 },
 "49": {
 &"id": "49",
-&"is_snippet": false,
-&"next_id": "end",
-&"next_id_after": "",
-&"type": "goto"
+&"next_id": "50",
+&"type": "cue"
 },
 "5": {
 &"character": "Queen",
 &"id": "5",
 &"next_id": "6",
 &"static_id": "",
+&"tags": PackedStringArray("portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_pleased.png"),
 &"text": "ui.story.tutorial.purpose",
 &"type": "dialogue"
 },
 "50": {
+&"character": "Queen",
 &"id": "50",
 &"next_id": "51",
-&"type": ""
+&"static_id": "",
+&"tags": PackedStringArray("action=order"),
+&"text": "ui.story.tutorial.order_hint",
+&"type": "dialogue"
 },
 "51": {
 &"id": "51",
-&"next_id": "52",
-&"type": "cue"
+&"is_snippet": false,
+&"next_id": "end",
+&"next_id_after": "",
+&"type": "goto"
 },
 "52": {
-&"character": "Courier",
 &"id": "52",
 &"next_id": "53",
-&"static_id": "",
-&"text": "ui.chapter.work_choice",
-&"type": "dialogue"
+&"type": ""
 },
 "53": {
-&"character": "Worker",
 &"id": "53",
 &"next_id": "54",
-&"static_id": "",
-&"text": "ui.chapter.work_return",
-&"type": "dialogue"
+&"type": "cue"
 },
 "54": {
-&"character": "Courier",
+&"character": "Queen",
 &"id": "54",
 &"next_id": "55",
 &"static_id": "",
-&"text": "ui.chapter.recruit_intro",
+&"tags": PackedStringArray("portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_eating_berries.png"),
+&"text": "ui.story.tutorial.feast",
 &"type": "dialogue"
 },
 "55": {
@@ -526,40 +1166,40 @@ lines = {
 &"id": "55",
 &"next_id": "56",
 &"static_id": "",
-&"tags": PackedStringArray("action=recruit"),
-&"text": "ui.chapter.recruit_goal",
+&"text": "ui.chapter.feast_expires",
 &"type": "dialogue"
 },
 "56": {
+&"character": "Queen",
 &"id": "56",
-&"is_snippet": false,
-&"next_id": "end",
-&"next_id_after": "",
-&"type": "goto"
+&"next_id": "57",
+&"static_id": "",
+&"text": "ui.chapter.distraction",
+&"type": "dialogue"
 },
 "57": {
 &"id": "57",
-&"next_id": "58",
-&"type": ""
+&"is_snippet": false,
+&"next_id": "66",
+&"next_id_after": "",
+&"type": "goto"
 },
 "58": {
 &"id": "58",
 &"next_id": "59",
-&"type": "cue"
+&"type": ""
 },
 "59": {
-&"character": "Queen",
 &"id": "59",
 &"next_id": "60",
-&"static_id": "",
-&"text": "ui.chapter.magic_intro",
-&"type": "dialogue"
+&"type": "cue"
 },
 "6": {
 &"character": "Protagonist",
 &"id": "6",
 &"next_id": "7",
 &"static_id": "",
+&"tags": PackedStringArray("portrait=res://game/assets/sprites/visual_novel/protagonist/protagonist_ant.png"),
 &"text": "ui.story.tutorial.before",
 &"type": "dialogue"
 },
@@ -568,147 +1208,143 @@ lines = {
 &"id": "60",
 &"next_id": "61",
 &"static_id": "",
-&"tags": PackedStringArray("action=magic"),
-&"text": "ui.chapter.magic_command",
+&"tags": PackedStringArray("portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_pleased.png"),
+&"text": "ui.story.tutorial.statue",
 &"type": "dialogue"
 },
 "61": {
+&"character": "Protagonist",
 &"id": "61",
-&"is_snippet": false,
-&"next_id": "end",
-&"next_id_after": "",
-&"type": "goto"
+&"next_id": "62",
+&"static_id": "",
+&"text": "ui.chapter.statue_blocks",
+&"type": "dialogue"
 },
 "62": {
+&"character": "Queen",
 &"id": "62",
 &"next_id": "63",
-&"type": ""
+&"static_id": "",
+&"text": "ui.chapter.statue_whatever",
+&"type": "dialogue"
 },
 "63": {
 &"id": "63",
-&"next_id": "64",
-&"type": "cue"
+&"is_snippet": false,
+&"next_id": "66",
+&"next_id_after": "",
+&"type": "goto"
 },
 "64": {
-&"character": "Courier",
 &"id": "64",
 &"next_id": "65",
-&"static_id": "",
-&"text": "ui.chapter.supplies_intro",
-&"type": "dialogue"
+&"type": ""
 },
 "65": {
-&"character": "Worker",
 &"id": "65",
 &"next_id": "66",
-&"static_id": "",
-&"text": "ui.chapter.supplies_worker",
-&"type": "dialogue"
+&"type": "cue"
 },
 "66": {
-&"character": "Courier",
+&"character": "Queen",
 &"id": "66",
 &"next_id": "67",
 &"static_id": "",
-&"tags": PackedStringArray("action=supplies"),
-&"text": "ui.chapter.stock_goal",
+&"text": "ui.chapter.other_request",
 &"type": "dialogue"
 },
 "67": {
+&"character": "Queen",
 &"id": "67",
+&"next_id": "68",
+&"static_id": "",
+&"tags": PackedStringArray("action=second_order"),
+&"text": "ui.chapter.second_order",
+&"type": "dialogue"
+},
+"68": {
+&"id": "68",
 &"is_snippet": false,
 &"next_id": "end",
 &"next_id_after": "",
 &"type": "goto"
-},
-"68": {
-&"id": "68",
-&"next_id": "69",
-&"type": ""
 },
 "69": {
 &"id": "69",
 &"next_id": "70",
-&"type": "cue"
+&"type": ""
 },
 "7": {
 &"character": "Queen",
 &"id": "7",
 &"next_id": "8",
 &"static_id": "",
+&"tags": PackedStringArray("portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_thinking.png"),
 &"text": "ui.story.tutorial.my_fault",
 &"type": "dialogue"
 },
 "70": {
-&"character": "Courier",
 &"id": "70",
 &"next_id": "71",
-&"static_id": "",
-&"text": "ui.chapter.spiders_warning",
-&"type": "dialogue"
+&"type": "cue"
 },
 "71": {
 &"character": "Queen",
 &"id": "71",
 &"next_id": "72",
 &"static_id": "",
-&"text": "ui.chapter.defend",
+&"tags": PackedStringArray("portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_eating_berries.png"),
+&"text": "ui.story.tutorial.feast",
 &"type": "dialogue"
 },
 "72": {
-&"character": "Worker",
+&"character": "Courier",
 &"id": "72",
 &"next_id": "73",
 &"static_id": "",
-&"text": "ui.chapter.spiders_target",
+&"text": "ui.chapter.feast_expires",
 &"type": "dialogue"
 },
 "73": {
-&"character": "Courier",
+&"character": "Queen",
 &"id": "73",
 &"next_id": "74",
 &"static_id": "",
-&"text": "ui.chapter.queen_target",
+&"text": "ui.chapter.distraction",
 &"type": "dialogue"
 },
 "74": {
-&"character": "Queen",
 &"id": "74",
-&"next_id": "75",
-&"static_id": "",
-&"text": "ui.chapter.queen_fear",
-&"type": "dialogue"
+&"is_snippet": false,
+&"next_id": "83",
+&"next_id_after": "",
+&"type": "goto"
 },
 "75": {
-&"character": "Courier",
 &"id": "75",
 &"next_id": "76",
-&"static_id": "",
-&"text": "ui.chapter.ship_plan",
-&"type": "dialogue"
+&"type": ""
 },
 "76": {
-&"character": "Worker",
 &"id": "76",
 &"next_id": "77",
-&"static_id": "",
-&"text": "ui.chapter.and_road",
-&"type": "dialogue"
+&"type": "cue"
 },
 "77": {
 &"character": "Queen",
 &"id": "77",
 &"next_id": "78",
 &"static_id": "",
-&"text": "ui.chapter.what_road",
+&"tags": PackedStringArray("portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_pleased.png"),
+&"text": "ui.story.tutorial.statue",
 &"type": "dialogue"
 },
 "78": {
-&"character": "Courier",
+&"character": "Protagonist",
 &"id": "78",
 &"next_id": "79",
 &"static_id": "",
-&"text": "ui.chapter.road_rule",
+&"text": "ui.chapter.statue_blocks",
 &"type": "dialogue"
 },
 "79": {
@@ -716,7 +1352,7 @@ lines = {
 &"id": "79",
 &"next_id": "80",
 &"static_id": "",
-&"text": "ui.chapter.royal_road",
+&"text": "ui.chapter.statue_whatever",
 &"type": "dialogue"
 },
 "8": {
@@ -724,81 +1360,74 @@ lines = {
 &"id": "8",
 &"next_id": "9",
 &"static_id": "",
-&"text": "ui.chapter.colony_intro",
+&"text": "ui.story.controls.pause_intro",
 &"type": "dialogue"
 },
 "80": {
-&"character": "Courier",
 &"id": "80",
-&"next_id": "81",
-&"static_id": "",
-&"tags": PackedStringArray("action=attack"),
-&"text": "ui.chapter.build_ship",
-&"type": "dialogue"
+&"is_snippet": false,
+&"next_id": "83",
+&"next_id_after": "",
+&"type": "goto"
 },
 "81": {
 &"id": "81",
-&"is_snippet": false,
-&"next_id": "end",
-&"next_id_after": "",
-&"type": "goto"
+&"next_id": "82",
+&"type": ""
 },
 "82": {
 &"id": "82",
 &"next_id": "83",
-&"type": ""
+&"type": "cue"
 },
 "83": {
+&"character": "Queen",
 &"id": "83",
 &"next_id": "84",
-&"type": "cue"
+&"static_id": "",
+&"tags": PackedStringArray("portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_pleased.png"),
+&"text": "ui.story.tutorial.farewell",
+&"type": "dialogue"
 },
 "84": {
 &"character": "Queen",
 &"id": "84",
 &"next_id": "85",
 &"static_id": "",
-&"text": "ui.chapter.strategic",
+&"text": "ui.chapter.free_intro",
 &"type": "dialogue"
 },
 "85": {
-&"character": "Courier",
 &"id": "85",
-&"next_id": "86",
-&"static_id": "",
-&"text": "ui.chapter.of_course",
-&"type": "dialogue"
+&"is_snippet": false,
+&"next_id": "88",
+&"next_id_after": "",
+&"type": "goto"
 },
 "86": {
-&"character": "Worker",
 &"id": "86",
 &"next_id": "87",
-&"static_id": "",
-&"text": "ui.chapter.can_home",
-&"type": "dialogue"
+&"type": ""
 },
 "87": {
-&"character": "Courier",
 &"id": "87",
 &"next_id": "88",
-&"static_id": "",
-&"text": "ui.chapter.no_home",
-&"type": "dialogue"
+&"type": "cue"
 },
 "88": {
-&"character": "Worker",
+&"character": "Queen",
 &"id": "88",
 &"next_id": "89",
 &"static_id": "",
-&"text": "ui.chapter.closer",
+&"text": "ui.chapter.upgrade_request",
 &"type": "dialogue"
 },
 "89": {
-&"character": "Courier",
+&"character": "Protagonist",
 &"id": "89",
 &"next_id": "90",
 &"static_id": "",
-&"text": "ui.chapter.board",
+&"text": "ui.chapter.worker_where",
 &"type": "dialogue"
 },
 "9": {
@@ -806,67 +1435,74 @@ lines = {
 &"id": "9",
 &"next_id": "10",
 &"static_id": "",
-&"text": "ui.chapter.food_intro",
+&"tags": PackedStringArray("action=pause"),
+&"text": "ui.story.controls.pause",
 &"type": "dialogue"
 },
 "90": {
-&"character": "Queen",
+&"character": "Worker",
 &"id": "90",
 &"next_id": "91",
 &"static_id": "",
-&"tags": PackedStringArray("action=depart"),
-&"text": "ui.chapter.depart",
+&"text": "ui.chapter.worker_called",
 &"type": "dialogue"
 },
 "91": {
+&"character": "Protagonist",
 &"id": "91",
+&"next_id": "92",
+&"static_id": "",
+&"tags": PackedStringArray("action=worker_advice"),
+&"text": "ui.chapter.ask_worker",
+&"type": "dialogue"
+},
+"92": {
+&"id": "92",
 &"is_snippet": false,
 &"next_id": "end",
 &"next_id_after": "",
 &"type": "goto"
-},
-"92": {
-&"id": "92",
-&"next_id": "93",
-&"type": ""
 },
 "93": {
 &"id": "93",
 &"next_id": "94",
-&"type": "cue"
-},
-"94": {
-&"character": "Queen",
-&"id": "94",
-&"next_id": "95",
-&"static_id": "",
-&"tags": PackedStringArray("portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_angry.png"),
-&"text": "ui.story.tutorial.first_reprimand",
-&"type": "dialogue"
-},
-"95": {
-&"id": "95",
-&"is_snippet": false,
-&"next_id": "end",
-&"next_id_after": "",
-&"type": "goto"
-},
-"96": {
-&"id": "96",
-&"next_id": "97",
 &"type": ""
 },
-"97": {
-&"id": "97",
-&"next_id": "98",
+"94": {
+&"id": "94",
+&"next_id": "95",
 &"type": "cue"
 },
-"98": {
+"95": {
+&"character": "Worker",
+&"id": "95",
+&"next_id": "96",
+&"static_id": "",
+&"text": "ui.chapter.worker_improvements",
+&"type": "dialogue"
+},
+"96": {
+&"character": "Worker",
+&"id": "96",
+&"next_id": "97",
+&"static_id": "",
+&"text": "ui.chapter.worker_info",
+&"type": "dialogue"
+},
+"97": {
 &"character": "Protagonist",
+&"id": "97",
+&"next_id": "98",
+&"static_id": "",
+&"text": "ui.chapter.upgrade_reply",
+&"type": "dialogue"
+},
+"98": {
+&"character": "Worker",
 &"id": "98",
 &"next_id": "99",
 &"static_id": "",
-&"text": "ui.chapter.resource_question",
+&"text": "ui.chapter.worker_upgrade_task",
 &"type": "dialogue"
 },
 "99": {
@@ -874,7 +1510,8 @@ lines = {
 &"id": "99",
 &"next_id": "100",
 &"static_id": "",
-&"text": "ui.chapter.resource_answer",
+&"tags": PackedStringArray("action=free"),
+&"text": "ui.chapter.wish_hint",
 &"type": "dialogue"
 }
 }

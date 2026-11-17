@@ -1,6 +1,7 @@
 class_name WorldCamera
 extends Camera2D
 signal zoom_changed(level: int)
+signal panned_by_player(distance: float)
 const MIN_LEVEL := -1
 const MAX_LEVEL := 4
 const ZOOMS := {-1: 0.25, 0: 0.5, 1: 1.0, 2: 2.0, 3: 4.0, 4: 6.0}
@@ -30,8 +31,11 @@ func pan(relative: Vector2) -> void:
 	if relative.is_zero_approx():
 		return
 	clear_nest_focus()
+	var before := position
 	position -= relative / zoom
 	_clamp()
+	if not position.is_equal_approx(before):
+		panned_by_player.emit(position.distance_to(before) * zoom.x)
 	force_update_scroll()
 
 func focus_nest(nest: House) -> void:
@@ -69,7 +73,10 @@ static func keyboard_direction() -> Vector2:
 	return Vector2(float(right) - float(left), float(down) - float(up))
 
 func set_level(value: int) -> void:
-	level = clampi(value, MIN_LEVEL, MAX_LEVEL)
+	var next := clampi(value, MIN_LEVEL, MAX_LEVEL)
+	if next == level:
+		return
+	level = next
 	zoom = Vector2.ONE * ZOOMS[level]
 	if is_instance_valid(_focused_nest):
 		_center_on_nest()

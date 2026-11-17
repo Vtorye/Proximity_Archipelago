@@ -1,5 +1,6 @@
 [gd_scene format=3]
 
+[ext_resource type="PackedScene" path="res://game/ui/window_header.tscn" id="window_header"]
 [ext_resource type="Script" path="res://game/ui/ui_text_binding.gd" id="binding"]
 [ext_resource type="Script" path="res://overlays/construction_menu.gd" id="script"]
 [ext_resource type="StyleBox" path="res://game/ui/dialog_panel.tres" id="style"]
@@ -11,6 +12,8 @@
 
 [sub_resource type="ButtonGroup" id="tools"]
 resource_local_to_scene = true
+
+
 
 [node name="ConstructionMenu" type="Control"]
 layout_mode = 3
@@ -26,24 +29,34 @@ script = ExtResource("script")
 unique_name_in_owner = true
 theme_override_styles/panel = ExtResource("style")
 
-[node name="CategoryContent" type="VBoxContainer" parent="Panel"]
+[node name="WindowContents" type="VBoxContainer" parent="Panel"]
+
+[node name="CategoryHeader" parent="Panel/WindowContents" node_paths=PackedStringArray("panel", "body") instance=ExtResource("window_header")]
+unique_name_in_owner = true
+title = "ui.hud.tab_build"
+action = 1
+external_layout = true
+panel = NodePath("../..")
+body = NodePath("../CategoryContent")
+
+[node name="CategoryContent" type="VBoxContainer" parent="Panel/WindowContents"]
 theme_override_constants/separation = 3
 
-[node name="CategoryScroll" type="ScrollContainer" parent="Panel/CategoryContent"]
+[node name="CategoryScroll" type="ScrollContainer" parent="Panel/WindowContents/CategoryContent"]
 unique_name_in_owner = true
 horizontal_scroll_mode = 0
 follow_focus = true
 
-[node name="CategoryList" type="VBoxContainer" parent="Panel/CategoryContent/CategoryScroll"]
+[node name="CategoryList" type="VBoxContainer" parent="Panel/WindowContents/CategoryContent/CategoryScroll"]
 unique_name_in_owner = true
 size_flags_horizontal = 3
 theme_override_constants/separation = 2
 
-[node name="PreviewCategory" type="Button" parent="Panel/CategoryContent/CategoryScroll/CategoryList"]
+[node name="PreviewCategory" type="Button" parent="Panel/WindowContents/CategoryContent/CategoryScroll/CategoryList"]
 unique_name_in_owner = true
 text = "ui.construction.category.defense"
 
-[node name="Cost" type="RichTextLabel" parent="Panel/CategoryContent"]
+[node name="Cost" type="RichTextLabel" parent="Panel/WindowContents/CategoryContent"]
 unique_name_in_owner = true
 mouse_filter = 2
 text = "Plan: 0 · —"
@@ -53,7 +66,7 @@ scroll_active = false
 autowrap_mode = 0
 horizontal_alignment = 1
 
-[node name="PlanReward" type="RichTextLabel" parent="Panel/CategoryContent"]
+[node name="PlanReward" type="RichTextLabel" parent="Panel/WindowContents/CategoryContent"]
 unique_name_in_owner = true
 visible = false
 mouse_filter = 2
@@ -62,7 +75,7 @@ scroll_active = false
 horizontal_alignment = 1
 theme_override_colors/default_color = Color(0.77, 0.9, 0.61, 1)
 
-[node name="Status" type="Label" parent="Panel/CategoryContent"]
+[node name="Status" type="Label" parent="Panel/WindowContents/CategoryContent"]
 theme_type_variation = &"Caption"
 unique_name_in_owner = true
 mouse_filter = 2
@@ -72,12 +85,12 @@ autowrap_mode = 3
 horizontal_alignment = 1
 visible = false
 
-[node name="Confirmation" type="HBoxContainer" parent="Panel/CategoryContent"]
+[node name="Confirmation" type="HBoxContainer" parent="Panel/WindowContents/CategoryContent"]
 unique_name_in_owner = true
 theme_override_constants/separation = 4
 visible = false
 
-[node name="ConfirmLabel" type="Label" parent="Panel/CategoryContent/Confirmation"]
+[node name="ConfirmLabel" type="Label" parent="Panel/WindowContents/CategoryContent/Confirmation"]
 theme_type_variation = &"Caption"
 unique_name_in_owner = true
 mouse_filter = 2
@@ -87,7 +100,7 @@ size_flags_horizontal = 3
 autowrap_mode = 3
 horizontal_alignment = 1
 
-[node name="Confirm" type="Button" parent="Panel/CategoryContent/Confirmation"]
+[node name="Confirm" type="Button" parent="Panel/WindowContents/CategoryContent/Confirmation"]
 unique_name_in_owner = true
 theme_type_variation = &"CompactButton"
 custom_minimum_size = Vector2(0, 27)
@@ -95,7 +108,7 @@ size_flags_vertical = 4
 mouse_default_cursor_shape = 2
 text = "ui.build.confirm"
 
-[node name="KeepResidents" type="Button" parent="Panel/CategoryContent/Confirmation"]
+[node name="KeepResidents" type="Button" parent="Panel/WindowContents/CategoryContent/Confirmation"]
 unique_name_in_owner = true
 theme_type_variation = &"CompactButton"
 custom_minimum_size = Vector2(27, 27)
@@ -107,10 +120,10 @@ icon = ExtResource("cancel_icon")
 expand_icon = true
 theme_override_constants/icon_max_width = 14
 
-[node name="PlanActions" type="VBoxContainer" parent="Panel/CategoryContent"]
+[node name="PlanActions" type="VBoxContainer" parent="Panel/WindowContents/CategoryContent"]
 theme_override_constants/separation = 2
 
-[node name="Demolish" type="Button" parent="Panel/CategoryContent/PlanActions"]
+[node name="Demolish" type="Button" parent="Panel/WindowContents/CategoryContent/PlanActions"]
 unique_name_in_owner = true
 theme_type_variation = &"CompactButton"
 text = "ui.construction.demolish_short"
@@ -118,14 +131,14 @@ tooltip_text = "ui.construction.demolish"
 toggle_mode = true
 mouse_default_cursor_shape = 2
 
-[node name="Apply" type="Button" parent="Panel/CategoryContent/PlanActions"]
+[node name="Apply" type="Button" parent="Panel/WindowContents/CategoryContent/PlanActions"]
 unique_name_in_owner = true
 theme_type_variation = &"CompactButton"
 text = "ui.construction.apply"
 disabled = true
 mouse_default_cursor_shape = 2
 
-[node name="Cancel" type="Button" parent="Panel/CategoryContent/PlanActions"]
+[node name="Cancel" type="Button" parent="Panel/WindowContents/CategoryContent/PlanActions"]
 unique_name_in_owner = true
 theme_type_variation = &"CompactButton"
 text = "ui.construction.cancel"
@@ -136,17 +149,28 @@ unique_name_in_owner = true
 visible = false
 theme_override_styles/panel = ExtResource("strip_style")
 
-[node name="Buildings" type="ScrollContainer" parent="BuildingsPanel"]
+[node name="WindowContents" type="VBoxContainer" parent="BuildingsPanel"]
+
+[node name="BuildingsHeader" parent="BuildingsPanel/WindowContents" node_paths=PackedStringArray("panel", "body") instance=ExtResource("window_header")]
 unique_name_in_owner = true
+title = "ui.hud.tab_build"
+action = 1
+external_layout = true
+panel = NodePath("../..")
+body = NodePath("../Buildings")
+
+[node name="Buildings" type="ScrollContainer" parent="BuildingsPanel/WindowContents"]
+unique_name_in_owner = true
+size_flags_vertical = 3
 horizontal_scroll_mode = 1
 vertical_scroll_mode = 0
 
-[node name="Choices" type="HBoxContainer" parent="BuildingsPanel/Buildings"]
+[node name="Choices" type="HBoxContainer" parent="BuildingsPanel/WindowContents/Buildings"]
 unique_name_in_owner = true
 alignment = 1
 theme_override_constants/separation = 4
 
-[node name="PreviewCard" parent="BuildingsPanel/Buildings/Choices" instance=ExtResource("card")]
+[node name="PreviewCard" parent="BuildingsPanel/WindowContents/Buildings/Choices" instance=ExtResource("card")]
 unique_name_in_owner = true
 button_group = SubResource("tools")
 

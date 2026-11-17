@@ -1,5 +1,6 @@
 [gd_scene format=3]
 
+[ext_resource type="PackedScene" path="res://game/ui/window_header.tscn" id="window_header"]
 [ext_resource type="Script" path="res://story/story_overlay.gd" id="script"]
 [ext_resource type="StyleBox" path="res://game/ui/dialog_panel.tres" id="panel"]
 [ext_resource type="Resource" path="res://game/assets/dialogue/first_chapter.tres" id="dialogue"]
@@ -16,6 +17,8 @@ border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
 border_color = Color(0.82, 0.67, 0.42, 0.59)
+
+
 
 [node name="StoryOverlay" type="Control"]
 visible = false
@@ -35,7 +38,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 color = Color(0.08, 0.06, 0.04, 0.22)
 
-[node name="DialoguePanel" type="PanelContainer" parent="."]
+[node name="DialogueWindow" type="Control" parent="."]
 unique_name_in_owner = true
 layout_mode = 1
 anchor_top = 1.0
@@ -45,24 +48,41 @@ offset_left = 12.0
 offset_top = -163.0
 offset_right = -12.0
 offset_bottom = -12.0
-grow_vertical = 0
+mouse_filter = 2
+
+[node name="DialoguePanel" type="PanelContainer" parent="DialogueWindow"]
+unique_name_in_owner = true
+layout_mode = 1
+anchor_right = 1.0
+anchor_bottom = 1.0
 theme_override_styles/panel = SubResource("dialogue_style")
 
-[node name="Text" type="VBoxContainer" parent="DialoguePanel"]
+[node name="WindowContents" type="VBoxContainer" parent="DialogueWindow/DialoguePanel"]
+
+[node name="DialogueHeader" parent="DialogueWindow/DialoguePanel/WindowContents" node_paths=PackedStringArray("panel", "body") instance=ExtResource("window_header")]
+unique_name_in_owner = true
+title = "ui.chapter.conversations"
+action = 1
+external_layout = true
+panel = NodePath("../../..")
+body = NodePath("../Text")
+
+[node name="Text" type="VBoxContainer" parent="DialogueWindow/DialoguePanel/WindowContents"]
+custom_minimum_size = Vector2(0, 100)
 size_flags_horizontal = 3
 theme_override_constants/separation = 4
 
-[node name="Speaker" type="Label" parent="DialoguePanel/Text"]
+[node name="Speaker" type="Label" parent="DialogueWindow/DialoguePanel/WindowContents/Text"]
 unique_name_in_owner = true
 theme_type_variation = &"Heading"
 theme_override_colors/font_color = Color(0.94, 0.78, 0.49, 1)
 
-[node name="Scroll" type="ScrollContainer" parent="DialoguePanel/Text"]
+[node name="Scroll" type="ScrollContainer" parent="DialogueWindow/DialoguePanel/WindowContents/Text"]
 unique_name_in_owner = true
 size_flags_vertical = 3
 horizontal_scroll_mode = 0
 
-[node name="Dialogue" type="Label" parent="DialoguePanel/Text/Scroll"]
+[node name="Dialogue" type="Label" parent="DialogueWindow/DialoguePanel/WindowContents/Text/Scroll"]
 unique_name_in_owner = true
 auto_translate_mode = 2
 size_flags_horizontal = 3
@@ -70,30 +90,30 @@ size_flags_vertical = 3
 autowrap_mode = 3
 vertical_alignment = 1
 
-[node name="Actions" type="HBoxContainer" parent="DialoguePanel/Text"]
+[node name="Actions" type="HBoxContainer" parent="DialogueWindow/DialoguePanel/WindowContents/Text"]
 theme_override_constants/separation = 8
 alignment = 2
 
-[node name="SkipDialogue" type="Button" parent="DialoguePanel/Text/Actions"]
+[node name="SkipDialogue" type="Button" parent="DialogueWindow/DialoguePanel/WindowContents/Text/Actions"]
 unique_name_in_owner = true
 text = "ui.story.skip_tutorial"
 
-[node name="Continue" type="Button" parent="DialoguePanel/Text/Actions"]
+[node name="Continue" type="Button" parent="DialogueWindow/DialoguePanel/WindowContents/Text/Actions"]
 unique_name_in_owner = true
 text = "ui.story.continue"
 
-[node name="PortraitMount" type="Control" parent="."]
+[node name="PortraitMount" type="Control" parent="DialogueWindow"]
 unique_name_in_owner = true
 layout_mode = 1
 anchor_top = 1.0
 anchor_bottom = 1.0
-offset_left = 13.0
-offset_top = -276.0
-offset_right = 193.0
-offset_bottom = -15.0
+offset_left = 1.0
+offset_top = -264.0
+offset_right = 181.0
+offset_bottom = -3.0
 mouse_filter = 2
 
-[node name="Portrait" type="TextureRect" parent="PortraitMount"]
+[node name="Portrait" type="TextureRect" parent="DialogueWindow/PortraitMount"]
 unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 15
@@ -115,16 +135,28 @@ visible = false
 grow_horizontal = 2
 theme_override_styles/panel = ExtResource("panel")
 
-[node name="HintContent" type="HBoxContainer" parent="HintPanel"]
+[node name="WindowContents" type="VBoxContainer" parent="HintPanel"]
+
+[node name="HintHeader" parent="HintPanel/WindowContents" node_paths=PackedStringArray("panel", "body") instance=ExtResource("window_header")]
+unique_name_in_owner = true
+title = "ui.window.tasks"
+action = 1
+dock = 5
+panel_width = 228.0
+inset = Vector2(8, 52)
+panel = NodePath("../..")
+body = NodePath("../HintContent")
+
+[node name="HintContent" type="HBoxContainer" parent="HintPanel/WindowContents"]
 theme_override_constants/separation = 6
 
-[node name="Hint" type="Label" parent="HintPanel/HintContent"]
+[node name="Hint" type="Label" parent="HintPanel/WindowContents/HintContent"]
 unique_name_in_owner = true
 size_flags_horizontal = 3
 autowrap_mode = 3
 vertical_alignment = 1
 
-[node name="SkipHint" type="Button" parent="HintPanel/HintContent"]
+[node name="SkipHint" type="Button" parent="HintPanel/WindowContents/HintContent"]
 unique_name_in_owner = true
 size_flags_vertical = 4
 text = "×"
@@ -137,6 +169,7 @@ wait_time = 2.8
 one_shot = true
 
 [node name="NameWindow" type="Control" parent="."]
+custom_minimum_size = Vector2(312, 90)
 unique_name_in_owner = true
 visible = false
 layout_mode = 1
@@ -157,13 +190,23 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 theme_override_styles/panel = ExtResource("panel")
 
-[node name="Content" type="VBoxContainer" parent="NameWindow/Panel"]
+[node name="WindowContents" type="VBoxContainer" parent="NameWindow/Panel"]
+
+[node name="NameHeader" parent="NameWindow/Panel/WindowContents" node_paths=PackedStringArray("panel", "body") instance=ExtResource("window_header")]
+unique_name_in_owner = true
+title = "ui.story.name.title"
+action = 1
+panel_width = 312.0
+panel = NodePath("../../..")
+body = NodePath("../Content")
+
+[node name="Content" type="VBoxContainer" parent="NameWindow/Panel/WindowContents"]
 theme_override_constants/separation = 8
 
-[node name="Title" type="Label" parent="NameWindow/Panel/Content"]
+[node name="Title" type="Label" parent="NameWindow/Panel/WindowContents/Content"]
 text = "ui.story.name.title"
 
-[node name="NameInput" type="LineEdit" parent="NameWindow/Panel/Content"]
+[node name="NameInput" type="LineEdit" parent="NameWindow/Panel/WindowContents/Content"]
 unique_name_in_owner = true
 placeholder_text = "ui.story.name.placeholder"
 keep_editing_on_text_submit = true
@@ -175,7 +218,7 @@ unique_name_in_owner = true
 stream = ExtResource("blip")
 volume_db = -12.0
 
-[node name="PaperHat" type="Polygon2D" parent="PortraitMount/Portrait"]
+[node name="PaperHat" type="Polygon2D" parent="DialogueWindow/PortraitMount/Portrait"]
 unique_name_in_owner = true
 visible = false
 position = Vector2(88, 80)

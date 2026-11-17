@@ -89,12 +89,12 @@ func _run() -> void:
 	var categories: PanelContainer = panel.get_node("%Categories")
 	var task_strip: PanelContainer = panel.get_node("%TaskStrip")
 	var task_scroll: ScrollContainer = panel.get_node("%Scroll")
-	expect(categories.find_children("*", "Button", true, false).size() == 1 and not task_strip.visible, "tasks open with a single construction category")
+	expect(categories.get_node("WindowContents/Content").find_children("*", "Button", true, false).size() == 1 and not task_strip.visible, "tasks open with a single construction category and a separate window toggle")
 	await click(panel.get_node("%Category"))
 	var strip_rect := task_strip.get_global_rect()
 	var categories_rect := categories.get_global_rect()
 	expect(task_strip.visible and is_equal_approx(strip_rect.end.y, build_strip_bottom) and is_equal_approx(categories_rect.end.y, strip_rect.end.y), "the task strip uses the ordinary construction strip's bottom alignment")
-	expect(strip_rect.position.x > categories_rect.end.x and strip_rect.size.y <= get_viewport().get_visible_rect().size.y / 5.0, "the separated task strip is beside the category and at most one fifth of the screen")
+	expect(strip_rect.position.x > categories_rect.end.x and task_scroll.size.y <= get_viewport().get_visible_rect().size.y / 5.0, "the task content stays beside its category and within one fifth of the screen below the title bar")
 	var task: TaskSpec = world.tasks.slots[0]
 	var choice: TaskVariant = task.variant_by_id(&"diversion")
 	for index in range(world.tasks.slots.size()):
@@ -109,7 +109,7 @@ func _run() -> void:
 	AppSettings.apply()
 	await frames(7)
 	var large_card := _offer_card(panel, 0, 1)
-	expect(get_viewport().get_visible_rect().encloses(task_strip.get_global_rect()) and task_strip.size.y <= get_viewport().get_visible_rect().size.y / 5.0, "the task strip keeps its height limit at maximum text size")
+	expect(get_viewport().get_visible_rect().encloses(task_strip.get_global_rect()) and task_scroll.size.y <= get_viewport().get_visible_rect().size.y / 5.0, "task content keeps its height limit at maximum text size")
 	expect(large_card.get_global_rect().encloses(large_card._cost.get_global_rect()), "the price fits inside the card at maximum text size")
 	expect(large_card._cost.get_theme_font_size(&"normal_font_size") == AppSettings.minimum_text_size(), "compact task prices respect the larger text setting")
 	AppSettings.text_size = AppSettings.TYPOGRAPHY.default_index

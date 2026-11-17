@@ -7,7 +7,7 @@
 [ext_resource type="PackedScene" path="res://game/campaign/campaign_panel.tscn" id="campaign"]
 [ext_resource type="PackedScene" path="res://story/story_overlay.tscn" id="story"]
 [ext_resource type="Script" path="res://story/first_chapter.gd" id="chapter"]
-[ext_resource type="PackedScene" path="res://story/chapter_panel.tscn" id="chapter_panel"]
+[ext_resource type="PackedScene" path="res://game/ui/conversations.tscn" id="conversations"]
 
 [node name="Match" type="Control"]
 layout_mode = 3
@@ -59,4 +59,5 @@ layer = 9
 [node name="Chapter" type="Node" parent="."]
 script = ExtResource("chapter")
 
-[node name="ChapterPanel" parent="Interface" instance=ExtResource("chapter_panel")]
+[node name="Conversations" parent="Interface" instance=ExtResource("conversations")]
+

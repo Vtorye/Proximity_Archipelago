@@ -74,7 +74,7 @@ func refresh() -> void:
 		var workload: String = tr("ui.hud.workload") % [building.working_count(), building.incoming_count(), building.work_slots]
 		description = "%s\n%s" % [tr(building.display_title()), workload]
 		if building.recipe == null and building.output != null:
-			description += "\n" + (tr("ui.source.remaining") % building.remaining_supply if building.finite_supply else tr("ui.source.infinite"))
+			description += "\n" + (tr("ui.source.remaining") % building.remaining_supply if building.finite_supply and overlay.world.inventory.quantities_known else tr("ui.source.infinite"))
 			description += "\n" + tr("ui.construction.production_rate") % String.num(building.resource_rate(), 2)
 			product = building.output
 		if show_routes:
@@ -134,12 +134,12 @@ func _append_stock(house: House) -> void:
 		var id: String = str(type.id)
 		var count: int = inventory.nest_quantity(house, overlay.world.logistics.main_nest, type)
 		_detail.add_text("\n")
-		BuildCostText.append_resource(_detail, type, str(count))
+		BuildCostText.append_resource(_detail, type, inventory.display_amount(type, count))
 		var order: Dictionary = house.order_of(id)
 		if not order.is_empty():
 			_detail.add_text("\n  " + tr("ui.order.range") % [order.min, order.max])
 		var owed: int = int(house.requests.get(id, 0))
-		if owed > 0:
+		if owed != 0:
 			_detail.add_text("\n  " + tr("ui.order.owed") % owed)
 		var arriving: int = int(house.incoming.get(id, 0))
 		if arriving > 0:

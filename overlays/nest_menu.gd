@@ -56,6 +56,8 @@ func _ready() -> void:
 		var owed: SpinBox = row.get_node("Owed")
 		for spin in [minimum, maximum, owed]:
 			spin.max_value = WorldInventory.order_limit()
+		owed.min_value = -WorldInventory.order_limit()
+		owed.tooltip_text = "ui.storage.signed_request"
 		minimum.value_changed.connect(_set_order.bind(str(type.id), "min"))
 		maximum.value_changed.connect(_set_order.bind(str(type.id), "max"))
 		owed.value_changed.connect(_set_owed.bind(str(type.id)))
@@ -120,7 +122,7 @@ func refresh() -> void:
 	var main: bool = house.is_main_nest
 	var used: int = world.inventory.storage_load(null if house == world.logistics.main_nest else house) if main else world.inventory.depot_fill(house)
 	var capacity: int = WorldInventory.base_capacity() if main else house.storage_capacity
-	_capacity.text = tr("ui.storage.fill") % [used, capacity]
+	_capacity.text = tr("ui.storage.fill") % [used, capacity] if world.inventory.quantities_known else tr("ui.storage.unlimited")
 	for type in world.inventory.registered_types():
 		if not _stock_labels.has(type.id):
 			continue
@@ -160,7 +162,7 @@ func refresh() -> void:
 
 func _show_stock(label: RichTextLabel, type: ResourceType, amount: int) -> void:
 	label.clear()
-	BuildCostText.append_resource(label, type, str(amount))
+	BuildCostText.append_resource(label, type, world.inventory.display_amount(type, amount))
 	label.tooltip_text = type.display_name
 
 func _control_key(action: String, role: int) -> StringName:

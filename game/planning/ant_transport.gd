@@ -11,6 +11,7 @@ var delivery_nest: Building
 var order_target: Building
 var _order_type: ResourceType
 var _order_amount := 0
+var _export_source: House
 
 func decide_pickup(foodless: bool) -> void:
 	var cell: Vector2i = ant.route_service.world_to_cell(ant.global_position)
@@ -52,6 +53,9 @@ func load_pickup() -> void:
 	if _order_still_valid(source, target, type, amount):
 		cargo = ant.planner.inventory.take_for_order(ant.logistics.store_of(source), type, amount)
 		shipment = not cargo.is_empty()
+		if shipment:
+			_export_source = source if int(source.requests.get(str(type.id), 0)) < 0 else null
+			source.record_export(str(type.id), WorldInventory.cargo_size(cargo))
 	if cargo.is_empty():
 		# Stock or need changed while this carrier was en route.
 		order_target = null
@@ -131,8 +135,7 @@ func _order_still_valid(source: House, target: Building, type: ResourceType, amo
 		type != null and amount > 0
 		and is_instance_valid(source) and source.is_inside_tree() and ant.logistics.owns(source)
 		and is_instance_valid(target) and ant.logistics.owns(target)
-		and ant.logistics.order_surplus(source, type) >= amount
-		and ant.logistics.order_need(target, type) >= amount
+		and ant.logistics.transfer_amount(source, target, type) >= amount
 	)
 
 ## Units en route to the order target count toward its minimum, so no second trip is sent for them.
@@ -148,6 +151,7 @@ func unload() -> void:
 			if ant.logistics.owns(delivery_nest) and delivery_nest.receive(cargo, ant.planner.inventory):
 				_set_incoming(-WorldInventory.cargo_size(cargo))
 				ant.logistics.shipment_delivered.emit(delivery_nest, cargo[0].type, WorldInventory.cargo_size(cargo))
+				_notify_export()
 				_clear_cargo()
 				ant._go_home()
 			else:
@@ -158,6 +162,7 @@ func unload() -> void:
 				order_target.fulfil(str(cargo[0].type.id), WorldInventory.cargo_size(cargo))
 			_set_incoming(-WorldInventory.cargo_size(cargo))
 			ant.logistics.shipment_delivered.emit(delivery_nest, cargo[0].type, WorldInventory.cargo_size(cargo))
+			_notify_export()
 			_clear_cargo()
 			ant._set_waiting_reason(WorkPlan.WaitReason.NONE)
 			ant._go_home()
@@ -173,11 +178,16 @@ func unload() -> void:
 	ant._go_home()
 
 func _clear_cargo() -> void:
+	_export_source = null
 	cargo.clear()
 	shipment = false
 	order_target = null
 	delivery_nest = null
 	carrying = false
+
+func _notify_export() -> void:
+	if is_instance_valid(_export_source):
+		ant.logistics.export_delivered.emit(_export_source, cargo[0].type, WorldInventory.cargo_size(cargo))
 
 func discard() -> void:
 	if shipment:
@@ -191,6 +201,7 @@ func capture_state(state: Dictionary, buildings: Array[Building]) -> void:
 	state["cargo"] = ResourceAmount.pack(cargo)
 	state["pickup"] = buildings.find(pickup_source)
 	state["delivery"] = buildings.find(delivery_nest)
+	state["export_source"] = buildings.find(_export_source)
 	if is_instance_valid(order_target):
 		state["order_target"] = buildings.find(order_target)
 		state["order_type"] = str(_order_type.id) if _order_type != null else ""
@@ -202,6 +213,8 @@ func restore_state(state: Dictionary, buildings: Array[Building]) -> void:
 	delivery_nest = buildings[state.delivery] if state.delivery >= 0 else null
 	carrying = state._carrying
 	shipment = state._shipment
+	var export_index: int = int(state.get("export_source", -1))
+	_export_source = buildings[export_index] as House if export_index >= 0 and export_index < buildings.size() else null
 	if int(state.get("order_target", -1)) >= 0:
 		order_target = buildings[state.order_target]
 		_order_type = ant.planner.inventory.type_by_id(StringName(state.get("order_type", "")))

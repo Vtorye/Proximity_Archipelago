@@ -12,6 +12,7 @@ const PAUSE_REASON := &"tutorial_dialogue"
 @export_range(0.0, 24.0, 1.0) var portrait_bob_height := 8.0
 @export_range(0.05, 0.5, 0.01) var portrait_bob_seconds := 0.22
 @export_range(0.05, 0.6, 0.01) var name_swipe_seconds := 0.24
+@export var dialogue_inset := Vector2(12, 12)
 var characters: Array[StoryCharacter] = []
 var is_modal := false
 var _active := false
@@ -41,6 +42,11 @@ var _name_dismissing := false
 @onready var _name_input: LineEdit = %NameInput
 
 func _ready() -> void:
+	%DialogueHeader.collapsed_changed.connect(func(_collapsed: bool):
+		_layout_dialogue()
+		_refresh_visibility())
+	_dialogue_panel.minimum_size_changed.connect(_layout_dialogue.call_deferred)
+	get_viewport().size_changed.connect(_layout_dialogue)
 	_continue.pressed.connect(_advance)
 	for button: Button in [%SkipDialogue, _continue]:
 		button.pressed.connect(AppSettings.play_click)
@@ -50,6 +56,11 @@ func _ready() -> void:
 	_name_input.text_changed.connect(_on_name_changed)
 	set_process(false)
 	hide()
+
+func _layout_dialogue() -> void:
+	var window: Control = %DialogueWindow
+	window.size = Vector2(get_viewport_rect().size.x - dialogue_inset.x * 2.0, _dialogue_panel.get_combined_minimum_size().y)
+	%DialogueHeader.place(Vector2(dialogue_inset.x, get_viewport_rect().size.y - window.size.y - dialogue_inset.y))
 
 func play(title: String) -> void:
 	if _loading:
@@ -63,6 +74,7 @@ func show_hint(key: String) -> void:
 	_active = true
 	_hint_key = key
 	_clear_warning()
+	%HintHeader.queue_layout()
 	_refresh_visibility()
 
 func set_covered(covered: bool) -> void:
@@ -123,6 +135,7 @@ func _request_line(id: String, skip := false) -> void:
 			character = definition
 			break
 	_speaker.text = character.display_name if character != null else _line.character
+	%DialogueHeader.set_collapsed(false)
 	_voice.pitch_scale = character.voice_pitch if character != null else 1.0
 	_line_speed = character.characters_per_second if character != null else characters_per_second
 	_spoken_text = tr(_line.text)
@@ -172,6 +185,10 @@ func _reveal_line() -> void:
 	_dialogue.visible_characters = -1
 	_voice.stop()
 	if _active and _line != null and _line.has_tag("name_input") and not _name_window.visible:
+		_name_dismissing = false
+		_name_window.modulate.a = 1.0
+		_name_input.editable = true
+		%NameHeader.set_collapsed(false)
 		_name_window.show()
 		_continue.disabled = true
 		_name_input.grab_focus()
@@ -219,7 +236,8 @@ func _refresh_visibility() -> void:
 	visible = _active and not _covered
 	_shade.visible = is_modal
 	_dialogue_panel.visible = is_modal
-	%PortraitMount.visible = is_modal
+	%PortraitMount.visible = is_modal and not %DialogueHeader.collapsed
+	_layout_dialogue()
 	_hint_panel.visible = not is_modal and not _hint_key.is_empty()
 	if visible and is_modal:
 		if _name_window.visible and not _name_dismissing:

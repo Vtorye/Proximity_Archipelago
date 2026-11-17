@@ -1,5 +1,6 @@
 [gd_scene format=3]
 
+[ext_resource type="PackedScene" path="res://game/ui/window_header.tscn" id="window_header"]
 [ext_resource type="Script" path="res://game/tasks/task_panel.gd" id="script"]
 [ext_resource type="PackedScene" path="res://game/ui/palette_entry.tscn" id="entry"]
 [ext_resource type="StyleBox" path="res://game/ui/dialog_panel.tres" id="category_style"]
@@ -27,6 +28,8 @@ HScrollBar/styles/grabber = SubResource("scroll_thumb")
 HScrollBar/styles/grabber_highlight = SubResource("scroll_thumb_hover")
 HScrollBar/styles/grabber_pressed = SubResource("scroll_thumb_hover")
 
+
+
 [node name="TaskPanel" type="Control"]
 anchors_preset = 15
 anchor_right = 1.0
@@ -39,29 +42,39 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(124, 0)
 theme_override_styles/panel = ExtResource("category_style")
 
-[node name="Content" type="VBoxContainer" parent="Categories"]
+[node name="WindowContents" type="VBoxContainer" parent="Categories"]
+
+[node name="CategoryHeader" parent="Categories/WindowContents" node_paths=PackedStringArray("panel", "body") instance=ExtResource("window_header")]
+unique_name_in_owner = true
+title = "ui.window.tasks"
+action = 1
+external_layout = true
+panel = NodePath("../..")
+body = NodePath("../Content")
+
+[node name="Content" type="VBoxContainer" parent="Categories/WindowContents"]
 theme_override_constants/separation = 3
 
-[node name="Category" parent="Categories/Content" instance=ExtResource("entry")]
+[node name="Category" parent="Categories/WindowContents/Content" instance=ExtResource("entry")]
 unique_name_in_owner = true
 toggle_mode = true
 text = "ui.window.tasks"
 
-[node name="Heading" type="Label" parent="Categories/Content"]
+[node name="Heading" type="Label" parent="Categories/WindowContents/Content"]
 unique_name_in_owner = true
 theme_type_variation = &"Caption"
 mouse_filter = 2
 horizontal_alignment = 1
 theme_override_colors/font_color = Color(0.8745, 0.7765, 0.5451, 1)
 
-[node name="Message" type="Label" parent="Categories/Content"]
+[node name="Message" type="Label" parent="Categories/WindowContents/Content"]
 unique_name_in_owner = true
 theme_type_variation = &"Caption"
 mouse_filter = 2
 autowrap_mode = 3
 visible = false
 
-[node name="Waiting" type="Label" parent="Categories/Content"]
+[node name="Waiting" type="Label" parent="Categories/WindowContents/Content"]
 unique_name_in_owner = true
 theme_type_variation = &"Caption"
 mouse_filter = 2
@@ -73,12 +86,23 @@ unique_name_in_owner = true
 visible = false
 theme_override_styles/panel = ExtResource("strip_style")
 
-[node name="Scroll" type="ScrollContainer" parent="TaskStrip"]
+[node name="WindowContents" type="VBoxContainer" parent="TaskStrip"]
+
+[node name="StripHeader" parent="TaskStrip/WindowContents" node_paths=PackedStringArray("panel", "body") instance=ExtResource("window_header")]
 unique_name_in_owner = true
+title = "ui.window.tasks"
+action = 1
+external_layout = true
+panel = NodePath("../..")
+body = NodePath("../Scroll")
+
+[node name="Scroll" type="ScrollContainer" parent="TaskStrip/WindowContents"]
+unique_name_in_owner = true
+size_flags_vertical = 3
 theme = SubResource("strip_scroll_theme")
 follow_focus = true
 
-[node name="Requests" type="HBoxContainer" parent="TaskStrip/Scroll"]
+[node name="Requests" type="HBoxContainer" parent="TaskStrip/WindowContents/Scroll"]
 unique_name_in_owner = true
 size_flags_vertical = 0
 theme_override_constants/separation = 6

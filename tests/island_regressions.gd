@@ -414,6 +414,30 @@ func test_orders(test: Node) -> void:
 	var order := world.logistics.nearest_order(origin, 3, func(pickup_cost: float, delivery_cost: float, start: Vector2i, target: Vector2i) -> bool:
 		return start == origin and target == main.cell and pickup_cost > 0.0 and delivery_cost > pickup_cost)
 	test.expect(order != null and order.source == barracks and order.target == main and order.amount == 3 and order.pickup.cells.front() == origin and order.pickup.cells.back() == barracks.cell, "courier order scoring resolves both endpoints and creates the selected pickup route")
+	main.request(key, 0)
+	main.set_order(key, "min", 0)
+	main.set_order(key, "max", 0)
+	barracks.set_order(key, "min", 8)
+	barracks.request(key, -6)
+	test.expect(world.logistics.order_need(barracks, wood) == 0 and world.logistics.transfer_amount(barracks, main, wood) == 6, "negative requests export the requested stock despite standing minimums")
+	order = world.logistics.nearest_order(origin, 3, func(_a: float, _b: float, _c: Vector2i, _d: Vector2i) -> bool: return true)
+	test.expect(order != null and order.source == barracks and order.target == main and order.amount == 3, "an export finds a warehouse with room without a positive receiving order")
+	var worker := world.population.agents()[0]
+	worker.transport.pickup_source = barracks
+	worker.transport.order_target = main
+	worker.transport._order_type = wood
+	worker.transport._order_amount = 3
+	worker.transport.load_pickup()
+	test.expect(barracks.requests[key] == -3 and stock.stock_of(barracks, wood) == 5, "physical pickup reduces a negative request toward zero")
+	worker.transport.delivery_nest = main
+	worker.transport.unload()
+	test.expect(stock.stock_of(null, wood) == have + 3 and worker.transport.cargo.is_empty(), "exported goods arrive through the existing shipment ledger")
+	var settings := barracks.capture_storage_settings()
+	barracks.request(key, 0)
+	barracks.restore_storage_settings(settings)
+	test.expect(barracks.requests[key] == -3, "negative requests survive saving storage settings")
+	barracks.record_export(key, 3)
+	test.expect(not barracks.requests.has(key), "completed exports clear at zero")
 	world.free()
 
 func test_authored_map(test: Node) -> void:

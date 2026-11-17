@@ -7,3 +7,6 @@ func configure(type: ResourceType) -> void:
 
 func set_amount(amount: int) -> void:
 	$Amount.text = str(amount)
+
+func set_display_amount(amount: String) -> void:
+	$Amount.text = amount

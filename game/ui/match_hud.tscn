@@ -187,6 +187,14 @@ theme_type_variation = &"CompactButton"
 tooltip_text = "ui.construction.undo"
 mouse_default_cursor_shape = 2
 
+[node name="TalkTab" type="Button" parent="Bottom/Actions" index="3"]
+unique_name_in_owner = true
+theme_type_variation = &"CompactButton"
+custom_minimum_size = Vector2(0, 28)
+text = "ui.chapter.conversations"
+toggle_mode = true
+mouse_default_cursor_shape = 2
+
 [node name="Move" type="Button" parent="Bottom/Actions"]
 disabled = true
 unique_name_in_owner = true

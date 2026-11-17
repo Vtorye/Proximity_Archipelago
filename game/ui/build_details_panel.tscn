@@ -3,6 +3,8 @@
 [ext_resource type="Script" path="res://game/ui/build_details_panel.gd" id="script"]
 [ext_resource type="StyleBox" path="res://game/ui/dialog_panel.tres" id="style"]
 
+[ext_resource type="PackedScene" path="res://game/ui/window_header.tscn" id="header"]
+
 [node name="DescriptionPanel" type="PanelContainer"]
 script = ExtResource("script")
 custom_minimum_size = Vector2(340, 132)
@@ -12,27 +14,12 @@ theme_override_styles/panel = ExtResource("style")
 [node name="DescriptionContent" type="VBoxContainer" parent="."]
 theme_override_constants/separation = 4
 
-[node name="DescriptionHeader" type="HBoxContainer" parent="DescriptionContent"]
-theme_override_constants/separation = 6
-
-[node name="Spacer" type="Control" parent="DescriptionContent/DescriptionHeader"]
-custom_minimum_size = Vector2(27, 0)
-mouse_filter = 2
-
-[node name="BuildingName" type="Label" parent="DescriptionContent/DescriptionHeader"]
-theme_type_variation = &"Heading"
+[node name="WindowHeader" parent="DescriptionContent" node_paths=PackedStringArray("panel", "body") instance=ExtResource("header")]
 unique_name_in_owner = true
-size_flags_horizontal = 3
-text = ""
-horizontal_alignment = 1
-theme_override_colors/font_color = Color(0.8745, 0.7765, 0.5451, 1)
-
-[node name="CloseDescription" type="Button" parent="DescriptionContent/DescriptionHeader"]
-unique_name_in_owner = true
-theme_type_variation = &"CompactButton"
-custom_minimum_size = Vector2(27, 27)
-text = "×"
-
+action = 2
+external_layout = true
+panel = NodePath("../..")
+body = NodePath("../Description")
 [node name="Description" type="Label" parent="DescriptionContent"]
 unique_name_in_owner = true
 autowrap_mode = 3

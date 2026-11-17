@@ -2,6 +2,15 @@ class_name WorldInventory
 extends Node
 
 signal changed
+## Chapter presentation only; transactions always use the finite physical ledger.
+var quantities_known := true:
+	set(value):
+		if quantities_known != value:
+			quantities_known = value
+			_notify()
+
+func display_amount(type: ResourceType, amount: int) -> String:
+	return str(amount) if quantities_known or type.id == CURRENCY_ID else "∞"
 
 const CURRENCY_ID := &"royal"
 

@@ -12,6 +12,7 @@ var navigation: RouteService
 var _depots: Array[House] = []
 var _fields: Dictionary[Building, NavigationField] = {}
 signal shipment_delivered(target: Building, type: ResourceType, amount: int)
+signal export_delivered(source: House, type: ResourceType, amount: int)
 
 func configure(stock: WorldInventory, routes: RouteService, registry: BuildingRegistry) -> void:
 	inventory = stock
@@ -141,6 +142,8 @@ func order_need(house: Building, type: ResourceType) -> int:
 	if not owns(house):
 		return 0
 	var id: String = str(type.id)
+	if int(house.requests.get(id, 0)) < 0:
+		return 0
 	var order: Dictionary = order_for(house, type)
 	var have: int = inventory.stock_of(store_of(house), type) + int(house.incoming.get(id, 0))
 	var wanted := 0
@@ -153,7 +156,20 @@ func order_need(house: Building, type: ResourceType) -> int:
 ## Units a nest can give away without dropping below its own order minimum.
 func order_surplus(house: House, type: ResourceType) -> int:
 	var minimum: int = int(order_for(house, type).get("min", 0))
-	return inventory.stock_of(store_of(house), type) - minimum
+	var stock := inventory.stock_of(store_of(house), type)
+	var export_amount := maxi(0, -int(house.requests.get(str(type.id), 0)))
+	return mini(stock, maxi(stock - minimum, export_amount))
+
+## A negative one-time request may use spare capacity even without a receiving order.
+func transfer_amount(source: House, target: Building, type: ResourceType) -> int:
+	if source == target or not owns(source) or not owns(target):
+		return 0
+	var wanted := order_need(target, type)
+	var exported := maxi(0, -int(source.requests.get(str(type.id), 0)))
+	if exported > 0 and target is House and int(target.requests.get(str(type.id), 0)) >= 0:
+		var room := inventory.free_space(store_of(target)) - _incoming_total(target)
+		wanted = maxi(wanted, mini(exported, room))
+	return maxi(0, mini(order_surplus(source, type), wanted))
 
 ## Base nests that fund construction keep their stock while a site still lacks materials.
 func construction_pending() -> bool:
@@ -203,12 +219,12 @@ func _nearest_order(from_cell: Vector2i, capacity: int, can_collect: Callable) -
 		if not sources.is_empty(): surplus_by_type[type] = sources
 	for target in targets:
 		for type in surplus_by_type:
-			var need: int = mini(order_need(target, type), capacity)
-			if need <= 0:
-				continue
 			var sources: Dictionary[House, int] = surplus_by_type[type]
 			for source in sources:
 				if source == target: continue
+				var need := mini(transfer_amount(source, target, type), capacity)
+				if need <= 0:
+					continue
 				var source_field: NavigationField = _field(source)
 				var pickup_cost: float = source_field.cost(from_cell)
 				if not is_finite(pickup_cost):

@@ -1,20 +1,102 @@
 ~ intro
-Queen: ui.story.tutorial.wake
-Queen: ui.story.tutorial.ask_name [#name_input]
-Queen: ui.story.tutorial.never_mind
-Queen: ui.story.tutorial.given_name
-Queen: ui.story.tutorial.purpose
-Protagonist: ui.story.tutorial.before
-Queen: ui.story.tutorial.my_fault
-Queen: ui.chapter.colony_intro
-Queen: ui.chapter.food_intro
-Queen: ui.chapter.observe_food [#action=food]
+Queen: ui.story.tutorial.wake [#portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_pleased.png]
+Queen: ui.story.tutorial.ask_name [#name_input, portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_thinking.png]
+Queen: ui.story.tutorial.never_mind [#portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_pleased.png]
+Queen: ui.story.tutorial.given_name [#portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_pleased.png]
+Queen: ui.story.tutorial.purpose [#portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_pleased.png]
+Protagonist: ui.story.tutorial.before [#portrait=res://game/assets/sprites/visual_novel/protagonist/protagonist_ant.png]
+Queen: ui.story.tutorial.my_fault [#portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_thinking.png]
+Queen: ui.story.controls.pause_intro
+Queen: ui.story.controls.pause [#action=pause]
 => END
 
-~ worker_hello
-Queen: ui.chapter.worker_appears
-Worker: ui.chapter.worker_hello
+~ after_pause
+Queen: ui.story.controls.move_intro
+Queen: ui.story.controls.move [#action=move_camera]
+=> END
+
+~ after_movement
+Queen: ui.story.controls.zoom_intro
+Queen: ui.story.controls.zoom [#action=zoom]
+=> END
+
+~ after_zoom
+Queen: ui.story.tutorial.colony [#portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_thinking.png]
+Protagonist: ui.chapter.resource_question
+Queen: ui.chapter.resource_answer
+Queen: ui.chapter.infinite_claim
+Protagonist: ui.story.road.ask_advice [#portrait=res://game/assets/sprites/visual_novel/protagonist/protagonist_ant.png]
+Protagonist: ui.story.controls.talk [#action=talk]
+=> END
+
+~ road
+Queen: ui.story.tutorial.road_hint [#action=road]
+=> END
+
+~ road_advice
+Courier: ui.story.road.advice
+Protagonist: ui.story.road.why_build
+Courier: ui.story.road.also_build
+Protagonist: ui.story.road.why_not_builders
+Courier: ui.story.road.better_fed
+=> road
+
+~ after_road
+Queen: ui.story.tutorial.road_done [#portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_pleased.png]
+Queen: ui.story.tutorial.choice [#portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_eating_berries.png]
+Protagonist: ui.story.tutorial.choice_cost [#portrait=res://game/assets/sprites/visual_novel/protagonist/protagonist_ant.png]
+=> order
+
+~ order
+Queen: ui.story.tutorial.order_hint [#action=order]
+=> END
+
+~ ending_build
+Queen: ui.story.tutorial.feast [#portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_eating_berries.png]
+Courier: ui.chapter.feast_expires
+Queen: ui.chapter.distraction
+=> handoff
+
+~ ending_diversion
+Queen: ui.story.tutorial.statue [#portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_pleased.png]
+Protagonist: ui.chapter.statue_blocks
+Queen: ui.chapter.statue_whatever
+=> handoff
+
+~ handoff
+Queen: ui.chapter.other_request
+Queen: ui.chapter.second_order [#action=second_order]
+=> END
+
+~ second_feast
+Queen: ui.story.tutorial.feast [#portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_eating_berries.png]
+Courier: ui.chapter.feast_expires
+Queen: ui.chapter.distraction
+=> after_both
+
+~ second_statue
+Queen: ui.story.tutorial.statue [#portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_pleased.png]
+Protagonist: ui.chapter.statue_blocks
+Queen: ui.chapter.statue_whatever
+=> after_both
+
+~ after_both
+Queen: ui.story.tutorial.farewell [#portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_pleased.png]
 Queen: ui.chapter.free_intro
+=> summon_worker
+
+~ summon_worker
+Queen: ui.chapter.upgrade_request
+Protagonist: ui.chapter.worker_where
+Worker: ui.chapter.worker_called
+Protagonist: ui.chapter.ask_worker [#action=worker_advice]
+=> END
+
+~ build_advice
+Worker: ui.chapter.worker_improvements
+Worker: ui.chapter.worker_info
+Protagonist: ui.chapter.upgrade_reply
+Worker: ui.chapter.worker_upgrade_task
 Queen: ui.chapter.wish_hint [#action=free]
 => END
 
@@ -22,6 +104,8 @@ Queen: ui.chapter.wish_hint [#action=free]
 Planner: ui.chapter.planner_shock
 Protagonist: ui.chapter.planner_reply
 Planner: ui.chapter.planner_materials
+Protagonist: ui.chapter.infinite_question
+Planner: ui.chapter.finite_truth
 Planner: ui.chapter.demolition_goal [#action=demolish]
 => END
 
@@ -31,7 +115,7 @@ Planner: ui.chapter.planner_truth
 Queen: ui.chapter.execution
 Protagonist: ui.chapter.execution_reaction
 Courier: ui.chapter.work_intro
-Worker: ui.chapter.observe_work [#action=work]
+Worker: ui.chapter.rebuild_sawmill [#action=work]
 => END
 
 ~ logistics
@@ -46,7 +130,7 @@ Worker: ui.chapter.coffee
 Courier: ui.chapter.no_coffee
 Worker: ui.chapter.berry
 Courier: ui.chapter.explain_transport
-Courier: ui.chapter.observe_transport [#action=transport]
+Courier: ui.chapter.request_delivery [#action=transport]
 => END
 
 ~ recruit
@@ -58,7 +142,7 @@ Courier: ui.chapter.recruit_goal [#action=recruit]
 
 ~ magic
 Queen: ui.chapter.magic_intro
-Queen: ui.chapter.magic_command [#action=magic]
+Queen: ui.chapter.place_base [#action=magic]
 => END
 
 ~ supplies
@@ -114,4 +198,8 @@ Courier: ui.chapter.courier_topic
 
 ~ worker_topic
 Worker: ui.chapter.worker_topic
+=> END
+
+~ worker_advice_topic
+Worker: ui.chapter.worker_info
 => END
