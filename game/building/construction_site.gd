@@ -25,11 +25,18 @@ func supplied() -> bool:
 	return true
 
 func route(from_cell: Vector2i) -> Route:
+	var navigation := service.controller.route_service
+	if option is TileBuildOption and _revision != navigation.revision:
+		# A tile has one entrance. Reuse a source field when available, with native A* as fallback.
+		return navigation.request_route(from_cell, cell)
+	return navigation.make_route(flow_field().path(from_cell))
+
+func flow_field() -> NavigationField:
 	var navigation: RouteService = service.controller.route_service
 	if _revision != navigation.revision:
 		_field = navigation.reverse_field(entry_cells())
 		_revision = navigation.revision
-	return navigation.make_route(_field.path(from_cell))
+	return _field
 
 func display_title() -> String:
 	return TranslationServer.translate("ui.site.title") % TranslationServer.translate(option.display_name)

@@ -16,5 +16,10 @@ const PATH := "res://game/resources/nest_defaults.tres"
 @export_range(0, 100000) var barracks_min := 0
 @export_range(0, 100000) var barracks_max := 0
 
+static var _defaults: NestDefaults
+
 static func load_defaults() -> NestDefaults:
-	return load(PATH) as NestDefaults
+	# Keep the authored resource alive across hot stock and capacity queries.
+	if _defaults == null:
+		_defaults = load(PATH) as NestDefaults
+	return _defaults

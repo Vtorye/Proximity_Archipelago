@@ -35,10 +35,13 @@ func configure(region: Rect2i, costs: PackedFloat32Array) -> void:
 
 func configure_sparse(region: Rect2i, values: Dictionary[Vector2i, float]) -> void:
 	_rect = region
-	_ids.clear()
-	_cells.clear()
-	_starts.clear()
-	_sizes.clear()
+	_ids = {}
+	_cells = []
+	_starts = PackedInt32Array()
+	_sizes = PackedInt32Array()
+	_neighbors = PackedInt32Array()
+	_components = PackedInt32Array()
+	_costs = PackedFloat32Array()
 	# Group adjacent land into contiguous ranges. Fields share this immutable index.
 	for seed in values:
 		if _ids.has(seed) or not _valid(values[seed]) or not region.has_point(seed): continue
@@ -103,7 +106,7 @@ func neighbors(cell: Vector2i) -> Array[Vector2i]:
 			if next >= 0: result.append(_cells[next])
 	return result
 func packed_costs() -> PackedFloat32Array:
-	# Packed arrays use copy-on-write; a caller cannot mutate this snapshot through the returned value.
+	# Search algorithms read these arrays without mutating the snapshot.
 	return _costs
 func packed_neighbors() -> PackedInt32Array:
 	return _neighbors
@@ -130,6 +133,29 @@ func with_cost(cell: Vector2i, value: float) -> TileGrid:
 	return with_costs({cell: value})
 ## A construction plan copies the grid once, regardless of the number of painted cells.
 func with_costs(values: Dictionary[Vector2i, float]) -> TileGrid:
+	var topology_changed := false
+	var changed_costs: Dictionary[int, float] = {}
+	for cell in values:
+		if not in_bounds(cell): continue
+		var id := index(cell)
+		if (id >= 0) != _valid(values[cell]):
+			topology_changed = true
+			break
+		if id >= 0 and not is_equal_approx(_costs[id], values[cell]):
+			changed_costs[id] = values[cell]
+	if not topology_changed:
+		if changed_costs.is_empty(): return self
+		var result := TileGrid.new()
+		result._rect = _rect
+		result._ids = _ids
+		result._cells = _cells
+		result._costs = _costs.duplicate()
+		result._neighbors = _neighbors
+		result._components = _components
+		result._starts = _starts
+		result._sizes = _sizes
+		for id in changed_costs: result._costs[id] = changed_costs[id]
+		return result
 	var changed: Dictionary[Vector2i, float] = {}
 	for id in range(_cells.size()): changed[_cells[id]] = _costs[id]
 	for cell in values:

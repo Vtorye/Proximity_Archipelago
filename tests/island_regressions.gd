@@ -27,6 +27,9 @@ func run(test: Node) -> void:
 	var split: TileGrid = joined.with_cost(Vector2i(0, -1), 0.0)
 	test.expect(split.component_count() == 2 and not split.connected(Vector2i(-2, -1), Vector2i(2, -1)), "closing a bridge splits components")
 	test.expect(GridSearch.build(joined, [Vector2i(-2, -1)]).cost(Vector2i(2, -1)) == 3.25, "a new cheap bridge preserves entry costs")
+	var cheaper := joined.with_cost(Vector2i(1, -1), 0.5)
+	test.expect(joined.cost(Vector2i(1, -1)) == 1.0 and cheaper.cost(Vector2i(1, -1)) == 0.5 and cheaper.index(Vector2i(1, -1)) == joined.index(Vector2i(1, -1)), "cost-only edits preserve the old snapshot and reuse node indices")
+	test.expect(reverse.destination(Vector2i.ZERO) == Vector2i(31, 31) and reverse.destination(Vector2i(1000000, 1000000)) == Vector2i(1000031, 1000031), "flow endpoints match the selected seed on each island")
 	var routes := RouteService.new()
 	routes.configure_grid(bridge)
 	var registry := BuildingRegistry.new()
@@ -35,27 +38,29 @@ func run(test: Node) -> void:
 	planner.configure(registry, routes, stock, null, null, SatietyRules.new())
 	var a := Workplace.new()
 	var b := Workplace.new()
+	a.output = test.resource(&"wood")
+	b.output = a.output
 	a.setup(Vector2i(-2, -1), null)
 	b.setup(Vector2i(2, -1), null)
 	registry.register(a)
 	registry.register(b)
 	test.expect(planner._reachable_workplaces(routes.snapshot().index(a.cell)) == [a], "assignment candidates exclude another island")
-	var field_a: NavigationField = planner._work_fields[a.cell]
-	var field_b: NavigationField = planner._work_fields[b.cell]
-	test.expect(field_a.costs.size() == 2 and field_b.costs.size() == 2 and is_inf(field_b.cost_at_node(bridge.index(a.cell))), "each job stores distances only for its connected island")
+	test.expect(planner._work_fields.is_empty(), "indexing jobs does not run path searches")
+	var field_a: NavigationField = planner._work_field(a.cell)
+	test.expect(field_a.costs.size() == 2 and is_inf(field_a.cost(b.cell)), "a departure field stores only its connected island")
 	routes.configure_grid(joined)
 	test.expect(planner._reachable_workplaces(routes.snapshot().index(a.cell)).size() == 2, "opening a bridge refreshes assignment component membership")
-	field_b = planner._work_fields[b.cell]
-	test.expect(is_equal_approx(field_b.cost_at_node(joined.index(a.cell)), 3.25) and field_b.path(a.cell).back() == b.cell, "a workplace field returns the weighted approach cost and route from the querying node")
+	field_a = planner._work_field(a.cell)
+	test.expect(is_equal_approx(field_a.cost(b.cell), 3.25) and field_a.path(b.cell).front() == a.cell, "a departure field returns weighted paths from the nest")
 	routes.configure_grid(split)
 	test.expect(planner._reachable_workplaces(routes.snapshot().index(a.cell)) == [a], "closing a bridge removes disconnected candidates")
-	field_a = planner._work_fields[a.cell]
+	field_a = planner._work_field(a.cell)
 	var searches_before: int = routes.search_count
 	var removed_cell: Vector2i = b.cell
 	b.demolish()
 	b.free()
 	test.expect(planner._reachable_workplaces(routes.snapshot().index(removed_cell)).is_empty(), "workplace removal invalidates candidate lists immediately")
-	test.expect(planner._work_fields[a.cell] == field_a and not planner._work_fields.has(removed_cell) and routes.search_count == searches_before, "removing a job releases its field without rebuilding existing job fields")
+	test.expect(planner._work_field(a.cell) == field_a and routes.search_count == searches_before, "removing a job does not rebuild departure fields")
 	a.demolish()
 	a.free()
 	planner.free()
@@ -394,6 +399,11 @@ func test_orders(test: Node) -> void:
 	barracks.set_order(key, "min", 5)
 	barracks.set_order(key, "max", 5)
 	test.expect(world.logistics.order_surplus(barracks, wood) == 3, "a source gives away only what stays above its own minimum")
+	main.request(key, 3)
+	var origin := Vector2i(5, 1)
+	var order := world.logistics.nearest_order(origin, 3, func(pickup_cost: float, delivery_cost: float, start: Vector2i, target: Vector2i) -> bool:
+		return start == origin and target == main.cell and pickup_cost > 0.0 and delivery_cost > pickup_cost)
+	test.expect(order != null and order.source == barracks and order.target == main and order.amount == 3 and order.pickup.cells.front() == origin and order.pickup.cells.back() == barracks.cell, "courier order scoring resolves both endpoints and creates the selected pickup route")
 	world.free()
 
 func test_authored_map(test: Node) -> void:

@@ -5,11 +5,15 @@ extends Node
 signal navigation_changed
 signal food_sources_changed
 
-const MAX_CACHED_FIELDS := 8
+const MAX_CACHED_FIELDS := 64
+# Forward fields use one float32 and one parent byte per reachable cell.
+const FORWARD_CACHE_BYTES := 1024 * 1024
 var revision := 0
 var search_count := 0
 var cache_hits := 0
 var last_changed: Array[Vector2i] = []
+## Existing paths stay walkable and cost no more after this revision.
+var last_change_only_cheaper := false
 var _map: TileMapLayer
 var _grid := TileGrid.new()
 var _algorithm: PathAlgorithm
@@ -36,6 +40,7 @@ func rebuild(blocked_cells: Array[Vector2i] = []) -> void:
 		return
 	_grid = next
 	_algorithm.build(_grid)
+	last_change_only_cheaper = false
 	revision += 1
 	_fields.clear()
 	_order.clear()
@@ -46,6 +51,7 @@ func configure_grid(grid: TileGrid, algorithm: PathAlgorithm = null) -> void:
 	_grid = grid
 	_algorithm = algorithm if algorithm != null else preload("res://game/navigation/astar_path_finder.gd").new()
 	_algorithm.build(_grid)
+	last_change_only_cheaper = false
 	_fields.clear()
 	_order.clear()
 	_food_field = null
@@ -85,7 +91,8 @@ func distances_from(cell: Vector2i) -> NavigationField:
 	var field: NavigationField = GridSearch.build(_grid, [cell])
 	_fields[cell] = field
 	_order.append(cell)
-	if _order.size() > MAX_CACHED_FIELDS:
+	var limit := clampi(FORWARD_CACHE_BYTES / maxi(1, _grid.node_count() * 5), 1, MAX_CACHED_FIELDS)
+	if _order.size() > limit:
 		_fields.erase(_order.pop_front())
 	return field
 
@@ -139,6 +146,8 @@ func update_cells(cells: Array[Vector2i], blocked: Array[Vector2i]) -> void:
 			last_changed.append(cell)
 	if last_changed.is_empty():
 		return
+	last_change_only_cheaper = last_changed.all(func(cell: Vector2i) -> bool:
+		return _grid.walkable(cell) and next.cost(cell) < _grid.cost(cell))
 	_grid = next
 	_algorithm.update_grid(_grid, last_changed)
 	revision += 1

@@ -82,7 +82,6 @@ func _ready() -> void:
 		construction.configure(build_controller, art)
 		build_controller.construction = construction
 		logistics.construction = construction
-		construction.changed.connect(planner.queue_workplace_refresh)
 		population.construction = construction
 	build_controller.changed.connect(func(): _navigation_update_queued = false)
 	_register_initial_buildings()

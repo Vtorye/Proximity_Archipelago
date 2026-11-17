@@ -39,6 +39,8 @@ func check(commands: Array[BuildCommand], candidates: Array[Building], removed: 
 			for cell in candidate.footprint():
 				values[cell] = 0.0
 				needs_escape_check = needs_escape_check or grid.walkable(cell)
+	if not needs_escape_check and candidates.is_empty():
+		return PlacementCheck.Code.OK
 	var preview := grid.with_costs(values) if not values.is_empty() else grid
 	for candidate in candidates:
 		if not candidate.entry_cells().any(preview.walkable):

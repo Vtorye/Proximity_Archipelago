@@ -1,5 +1,7 @@
 class_name ConstructionService
 extends Node
+
+const TIMING := preload("res://game/navigation/navigation_timing.gd")
 ## Orders reserve space immediately; carriers deliver crates and assemble buildings. Workers only gather resources.
 signal changed
 signal order_cancelled
@@ -62,37 +64,55 @@ func instantiate_site() -> ConstructionSite:
 	return site
 
 func claim(ant: AntAgent) -> ConstructionJob:
-	if _servicing: return null
+	if not TIMING.enabled: return _claim(ant)
+	TIMING.begin(&"construction_claim")
+	var result := _claim(ant)
+	TIMING.end()
+	return result
+
+func _claim(ant: AntAgent) -> ConstructionJob:
+	if _servicing or ant.role != AntAgent.Role.CARRIER: return null
 	_servicing = true
 	var best: ConstructionJob
 	var lowest := INF
 	var cell: Vector2i = controller.route_service.world_to_cell(ant.global_position)
 	for site in sites:
 		if not site.active: continue
-		if ant.role != AntAgent.Role.CARRIER: continue
-		_replenish(site)
-		var delivery: Route = site.route(cell)
-		if not delivery.is_valid(): continue
 		if site.supplied():
 			if is_instance_valid(site.builder): continue
-			var energy: float = ant.planner.travel_energy(delivery.cost, ant.speed) + (site.option.construction_seconds - site.progress) * ant.needs.rules.work_rate
-			if not ant._is_foodless(): energy += ant.planner.escape_energy(delivery.cells.back(), ant.speed)
-			if not ant.needs.can_afford(energy) or delivery.cost >= lowest: continue
+			var field := site.flow_field()
+			var cost := field.cost(cell)
+			if cost >= lowest: continue
+			var energy: float = ant.planner.travel_energy(cost, ant.speed) + (site.option.construction_seconds - site.progress) * ant.needs.rules.work_rate
+			if not ant._is_foodless(): energy += ant.planner.escape_energy(field.destination(cell), ant.speed)
+			if not ant.needs.can_afford(energy): continue
 			best = ConstructionJob.new()
 			best.site = site
 			best.assembly = true
-			lowest = delivery.cost
+			lowest = cost
 		else:
+			_replenish(site)
 			for source: House in site.crates:
 				if not is_instance_valid(source) or not source.is_inside_tree() or site.crates[source].is_empty(): continue
-				var pickup: Route = controller.logistics.route_to(source, cell)
-				if not pickup.is_valid():
-					continue
-				var outward: Route = site.route(pickup.cells.back())
-				if not ant.transport.can_start_pickup(pickup, outward):
-					continue
-				var cost: float = pickup.cost + outward.cost
+				var pickup := controller.logistics.field_to(source)
+				if pickup == null: continue
+				var pickup_cost := pickup.cost(cell)
+				if not is_finite(pickup_cost): continue
+				var pickup_end := pickup.destination(cell)
+				# Road cells share one forward field from the warehouse entrance.
+				# Multi-entry buildings keep their established reverse flow and tie order.
+				var outward: NavigationField
+				var delivery_end: Vector2i
+				if site.option is TileBuildOption:
+					outward = controller.route_service.distances_from(pickup_end)
+					delivery_end = site.cell
+				else:
+					outward = site.flow_field()
+				var delivery_cost := outward.cost(delivery_end if site.option is TileBuildOption else pickup_end)
+				var cost := pickup_cost + delivery_cost
 				if cost >= lowest: continue
+				if outward.reverse: delivery_end = outward.destination(pickup_end)
+				if not ant.transport.can_start_pickup(pickup_cost, delivery_cost, cell, delivery_end): continue
 				best = ConstructionJob.new()
 				best.site = site
 				best.source = source
@@ -150,6 +170,13 @@ func assemble(job: ConstructionJob, delta: float) -> bool:
 
 ## Completion rechecks today's navigation and occupants, not the placement-time snapshot.
 func complete(site: ConstructionSite) -> bool:
+	if not TIMING.enabled: return _complete(site)
+	TIMING.begin(&"construction_complete")
+	var result := _complete(site)
+	TIMING.end()
+	return result
+
+func _complete(site: ConstructionSite) -> bool:
 	if controller._committing or not site.active: return false
 	var command := BuildCommand.create(site.cell, site.option)
 	var candidates: Array[Building] = []
@@ -193,7 +220,8 @@ func complete(site: ConstructionSite) -> bool:
 	if site.order != null: controller.order_completed.emit(site.order)
 	if option is SceneBuildOption and option.lifetime_seconds > 0.0:
 		controller._start_lifetime(controller.registry.at(cell), option.lifetime_seconds)
-	controller.population.planner.queue_workplace_refresh()
+	if option is WorkplaceUpgradeOption:
+		controller.population.planner.queue_workplace_refresh()
 	controller.changed.emit()
 	return true
 
@@ -215,10 +243,12 @@ func finished(site: ConstructionSite) -> void:
 
 func _replenish(site: ConstructionSite) -> void:
 	# A killed courier loses its load. Replacement materials must be paid for again.
-	var sources: Array[House] = controller.logistics.construction_sources(site.entry_cells())
+	var entries := site.entry_cells()
+	var grid := controller.route_service.snapshot()
 	# Old saves can contain crates paid for by a base on a different island.
 	for source: House in site.crates.keys():
-		if sources.has(source):
+		if controller.logistics.owns(source) and source.funds_construction and entries.any(func(entry: Vector2i) -> bool:
+			return source.entry_cells().any(func(cell: Vector2i) -> bool: return grid.connected(cell, entry))):
 			continue
 		var materials: Array = site.crates[source]
 		site.crates.erase(source)
@@ -233,6 +263,7 @@ func _replenish(site: ConstructionSite) -> void:
 		if accounted < required.amount: missing.append(_item(required.type, required.amount - accounted))
 	if missing.is_empty() or not controller.inventory.can_afford_all(missing, true, true):
 		return
+	var sources := controller.logistics.construction_sources(entries)
 	var primary: House = controller.logistics.main_nest
 	var replacements: Variant = controller.inventory.allocate_build_materials(missing, primary, sources, {})
 	if replacements == null:

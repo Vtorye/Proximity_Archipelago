@@ -1,5 +1,6 @@
 # Godot 4+ specific ignores
 .godot/
+/native/navigation/bin/
 /android/
 # Validation media belongs outside the source tree.
 *.log

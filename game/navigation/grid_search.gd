@@ -1,8 +1,17 @@
 class_name GridSearch
 extends RefCounted
+
+const TIMING := preload("res://game/navigation/navigation_timing.gd")
 ## Dijkstra with a binary min-heap. No per-cell Dictionary or Node allocations.
 
 static func build(grid: TileGrid, seeds: Array[Vector2i], reverse: bool = false, stop: Vector2i = Vector2i(2147483647, 2147483647)) -> NavigationField:
+	if not TIMING.enabled: return _build(grid, seeds, reverse, stop)
+	TIMING.begin(&"dijkstra")
+	var result := _build(grid, seeds, reverse, stop)
+	TIMING.end()
+	return result
+
+static func _build(grid: TileGrid, seeds: Array[Vector2i], reverse: bool = false, stop: Vector2i = Vector2i(2147483647, 2147483647)) -> NavigationField:
 	var field := NavigationField.new()
 	field.setup(grid, seeds, reverse)
 	if field.costs.is_empty(): return field
@@ -16,6 +25,10 @@ static func build(grid: TileGrid, seeds: Array[Vector2i], reverse: bool = false,
 			field.costs[field.index(seed)] = 0.0
 			_push(heap, Vector2(0.0, grid.index(seed)))
 	var stop_id: int = grid.index(stop)
+	var track_seed := not field.seed_nodes.is_empty()
+	if track_seed:
+		for seed in seeds:
+			if grid.walkable(seed): field.seed_nodes[field.index(seed)] = grid.index(seed)
 	while not heap.is_empty():
 		var item: Vector2 = _pop(heap)
 		var id: int = int(item.y)
@@ -35,6 +48,7 @@ static func build(grid: TileGrid, seeds: Array[Vector2i], reverse: bool = false,
 			if not settled[target] and candidate < field.costs[target]:
 				field.costs[target] = candidate
 				field.parents[target] = direction ^ 1
+				if track_seed: field.seed_nodes[target] = field.seed_nodes[current]
 				_push(heap, Vector2(candidate, next))
 	return field
 

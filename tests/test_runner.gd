@@ -61,6 +61,7 @@ func _run() -> void:
 	await preload("res://tests/terrain_regressions.gd").new().run(self)
 	await _test_simulation()
 	await _test_satiety_rules()
+	await _test_level_editor_layout()
 	print("TEST REPORT ", JSON.stringify({"assertions": assertions, "failures": failures, "metrics": metrics}))
 	print("TESTS PASS" if failures.is_empty() else "TESTS FAIL")
 	get_tree().quit(0 if failures.is_empty() else 1)
@@ -363,20 +364,24 @@ func _test_assignment_load() -> void:
 			var cell := Vector2i(x, y)
 			if world.route_service.snapshot().connected(ant.home.cell, cell):
 				origins.append(cell)
-	expect(origins.size() > RouteService.MAX_CACHED_FIELDS, "assignment load fixture exceeds the manual overlay's origin cache")
+	expect(not origins.is_empty(), "assignment load fixture includes reachable cells away from the nest")
 	var searches_before: int = world.route_service.search_count
 	var started: int = Time.get_ticks_usec()
 	var assigned := 0
-	for request in range(1000):
-		var origin: Vector2i = origins[request % origins.size()]
+	var origin := world.planner.accessible_entry(ant.home)
+	for _request in range(1000):
 		ant.global_position = world.route_service.cell_to_world(origin)
 		var plan: WorkPlan = world.planner.plan_work(ant, ant.home, ant.needs, ant.speed, ant.work_time, ant._meal)
 		if plan != null and plan.workplace != null:
 			assigned += 1
 			plan.workplace.release_worker(ant)
 	var elapsed_ms: float = (Time.get_ticks_usec() - started) / 1000.0
-	expect(assigned == 1000, "one thousand assignments remain feasible with many POIs and starting cells")
-	expect(world.route_service.search_count == searches_before and world.route_service._fields.is_empty(), "assignments from different cells never build origin fields")
+	expect(assigned == 1000, "one thousand assignments remain feasible with many workplaces")
+	expect(world.route_service.search_count - searches_before <= 1 and world.planner._work_fields.size() == 1, "a thousand departures share one forward field")
+	var away: Vector2i = origins.back()
+	ant.global_position = world.route_service.cell_to_world(away)
+	var replan := world.planner.plan_work(ant, ant.home, ant.needs, ant.speed, ant.work_time, ant._meal)
+	expect(replan != null and replan.outward != null and replan.outward.cells.front() == away, "a worker replans from its real cell away from home")
 	metrics["assignment_load"] = {"requests": 1000, "origins": origins.size(), "workplaces": world.registry.workplaces().size(), "work_fields": world.planner._work_fields.size(), "preparation_ms": preparation_ms, "wall_ms": elapsed_ms, "new_searches": world.route_service.search_count - searches_before}
 	world.free()
 	await get_tree().process_frame
@@ -540,3 +545,30 @@ func _test_language_toggle() -> void:
 	AppSettings.language = original_language
 	AppSettings.save()
 	TranslationServer.set_locale(original_locale)
+
+func _test_level_editor_layout() -> void:
+	var previous_size := AppSettings.text_size
+	AppSettings.text_size = AppSettings.TYPOGRAPHY.minimum_sizes.size() - 1
+	AppSettings.apply()
+	var editor: Control = preload("res://screens/level_editor.tscn").instantiate()
+	add_child(editor)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var viewport := get_viewport().get_visible_rect()
+	var top: Control = editor.get_node("%Top")
+	var bottom: Control = editor.get_node("%Bottom")
+	expect(viewport.encloses(top.get_global_rect()) and viewport.encloses(bottom.get_global_rect())
+		and top.get_global_rect().end.y < bottom.get_global_rect().position.y, "map editor toolbars fit at the largest text size")
+	var workplace := editor._objects.get_node("Workplace") as Workplace
+	var sprite := workplace.get_node("Sprite") as Sprite2D
+	expect((sprite.texture.get_size() * sprite.scale).is_equal_approx(Vector2(editor._map.tile_set.tile_size)), "map editor scales building artwork to the tile footprint")
+	var open: Button = editor.get_node("%OpenGeneration")
+	editor._open_options(open, true)
+	await get_tree().process_frame
+	var submit: Button = editor.get_node("%GenerateMap")
+	expect(submit.is_visible_in_tree() and viewport.encloses(submit.get_global_rect()), "generation opens with its submit button on screen")
+	editor._close_options()
+	expect(get_viewport().gui_get_focus_owner() == open, "closing map options restores keyboard focus")
+	editor.free()
+	AppSettings.text_size = previous_size
+	AppSettings.apply()

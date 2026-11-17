@@ -1,5 +1,7 @@
 class_name ColonyLogistics
 extends Node
+
+const TIMING := preload("res://game/navigation/navigation_timing.gd")
 ## Owns warehouse membership and routes. WorldInventory owns the stock ledger.
 
 var main_nest: House
@@ -89,7 +91,10 @@ func construction_sources(entries: Array[Vector2i], removed: Array[Building] = [
 	return sources
 
 func route_to(house: House, cell: Vector2i) -> Route:
-	return navigation.make_route(_field(house).path(cell)) if is_instance_valid(house) and (house == main_nest or _depots.has(house)) else Route.invalid()
+	return navigation.make_route(_field(house).path(cell)) if owns(house) else Route.invalid()
+
+func field_to(house: House) -> NavigationField:
+	return _field(house) if owns(house) else null
 
 func deposit(house: House, cargo: Array[ResourceAmount]) -> bool:
 	return owns(house) and inventory.deposit(null if house == main_nest else house, cargo)
@@ -147,9 +152,6 @@ func order_surplus(house: House, type: ResourceType) -> int:
 func construction_pending() -> bool:
 	return construction != null and construction.sites.any(func(site) -> bool: return site.active and not site.supplied())
 
-func _source_allowed(house: House) -> bool:
-	return not (house.funds_construction and construction_pending())
-
 class StockOrder:
 	var source: House
 	var target: House
@@ -164,30 +166,51 @@ class StockOrder:
 		amount = quantity
 		pickup = approach
 
-## Best (source, target) pair for one trip. A trip carries what the target needs, up to the carrier's
-## capacity and the source's surplus. can_collect(pickup, delivery) checks the carrier's energy.
+## Best (source, target) pair for one trip. Flow fields score candidates in constant time;
+## only the winning pickup route is reconstructed. can_collect receives pickup and delivery costs,
+## the carrier's start cell, and the target entrance cell.
 func nearest_order(from_cell: Vector2i, capacity: int, can_collect: Callable) -> StockOrder:
+	if not TIMING.enabled: return _nearest_order(from_cell, capacity, can_collect)
+	TIMING.begin(&"carrier_order")
+	var result := _nearest_order(from_cell, capacity, can_collect)
+	TIMING.end()
+	return result
+
+func _nearest_order(from_cell: Vector2i, capacity: int, can_collect: Callable) -> StockOrder:
 	var best: StockOrder
 	var lowest := INF
-	for target in nests():
-		for type in _order_types():
+	var houses := nests()
+	var types := _order_types()
+	var pending := construction_pending()
+	var surplus_by_type: Dictionary[ResourceType, Dictionary] = {}
+	for type in types:
+		var sources: Dictionary[House, int] = {}
+		for house in houses:
+			if pending and house.funds_construction: continue
+			var surplus := order_surplus(house, type)
+			if surplus > 0: sources[house] = surplus
+		if not sources.is_empty(): surplus_by_type[type] = sources
+	for target in houses:
+		for type in surplus_by_type:
 			var need: int = mini(order_need(target, type), capacity)
 			if need <= 0:
 				continue
-			for source in nests():
-				var amount: int = mini(need, order_surplus(source, type))
-				if source == target or not _source_allowed(source) or amount <= 0:
+			var sources: Dictionary[House, int] = surplus_by_type[type]
+			for source in sources:
+				if source == target: continue
+				var source_field: NavigationField = _field(source)
+				var pickup_cost: float = source_field.cost(from_cell)
+				if not is_finite(pickup_cost):
 					continue
-				var pickup: Route = route_to(source, from_cell)
-				if not pickup.is_valid():
-					continue
-				var delivery: Route = route_to(target, pickup.cells.back())
-				if not delivery.is_valid() or not can_collect.call(pickup, delivery):
-					continue
-				var cost: float = pickup.cost + delivery.cost
-				if cost < lowest:
+				var pickup_end := source_field.destination(from_cell)
+				var target_field: NavigationField = _field(target)
+				var delivery_cost: float = target_field.cost(pickup_end)
+				var cost: float = pickup_cost + delivery_cost
+				if cost < lowest and can_collect.call(pickup_cost, delivery_cost, from_cell, target_field.destination(pickup_end)):
 					lowest = cost
-					best = StockOrder.new(source, target, type, amount, pickup)
+					best = StockOrder.new(source, target, type, mini(need, sources[source]), null)
+	if best != null:
+		best.pickup = route_to(best.source, from_cell)
 	return best
 
 func _field(house: House) -> NavigationField:

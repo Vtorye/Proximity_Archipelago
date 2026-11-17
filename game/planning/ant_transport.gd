@@ -35,16 +35,13 @@ func decide_pickup(foodless: bool) -> void:
 	else:
 		ant._wander()
 
-func can_start_pickup(pickup: Route, delivery: Route) -> bool:
-	if not delivery.is_valid():
-		return false
-	var cell: Vector2i = pickup.cells.front()
-	var approach := ant.planner.approach_energy(ant.global_position, cell, ant.speed)
-	var energy: float = approach + ant.planner.travel_energy(pickup.cost, ant.speed)
-	energy += ant.planner.travel_energy(delivery.cost, ant.speed * ant.planner.carry_speed_ratio)
+func can_start_pickup(pickup_cost: float, delivery_cost: float, start_cell: Vector2i, delivery_end: Vector2i) -> bool:
+	var approach := ant.planner.approach_energy(ant.global_position, start_cell, ant.speed)
+	var energy: float = approach + ant.planner.travel_energy(pickup_cost, ant.speed)
+	energy += ant.planner.travel_energy(delivery_cost, ant.speed * ant.planner.carry_speed_ratio)
 	if ant._is_foodless():
 		return ant.needs.satiety > energy
-	return ant.needs.can_afford(energy + ant.planner.escape_energy(delivery.cells.back(), ant.speed))
+	return ant.needs.can_afford(energy + ant.planner.escape_energy(delivery_end, ant.speed))
 
 func load_pickup() -> void:
 	var source: House = pickup_source as House
