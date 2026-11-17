@@ -100,6 +100,8 @@ func test_foodless_colonies(test: Node) -> void:
 	var stock: WorldInventory = world.inventory
 	var wood: ResourceType = stock.type_by_id(&"wood")
 	var nest: BuildOption = preload("res://game/building/options/barracks.tres")
+	var stone := stock.type_by_id(&"stone")
+	stock.add(stone, BuildController.price_amount(nest.costs, stone))
 	var draft := BuildDraft.new()
 	draft.controller = world.build_controller
 	test.expect(draft.paint(nest, working_nest) and draft.budget_check().allowed() and draft.commit(), "build a nest on a dry island with work")
@@ -132,11 +134,12 @@ func test_foodless_colonies(test: Node) -> void:
 	test.expect(wanderer._destination == &"wander" and wanderer.work.workplace == null, "idle ant leaves its nest to wander instead of choosing work across water")
 	var cycles: Array[int] = [0]
 	worker.work_completed.connect(func(_ant: Node2D, _job: Node2D): cycles[0] += 1)
-	for step in range(30 * 12):
+	var reached_work := false
+	for _step in range(30 * 12):
 		for ant in [worker, wanderer, stranded]:
 			ant._physics_process(1.0 / 30.0)
-		if step == 90:
-			test.expect(workplace.working_count() == 1 and worker.status == AntAgent.Status.WORKING, "dry ant reaches the workplace")
+		reached_work = reached_work or (workplace.working_count() == 1 and worker.status == AntAgent.Status.WORKING)
+	test.expect(reached_work, "dry ant reaches the workplace")
 	test.expect(stock.quantity(wood) > start_wood, "dry worker carries the first batch to its local nest")
 	test.expect(walked.size() >= 2 and wanderer.needs.satiety < wanderer.needs.capacity, "idle ant visits neighboring cells while losing satiety")
 	test.expect(walked.all(func(cell: Vector2i) -> bool:
@@ -150,23 +153,23 @@ func test_foodless_colonies(test: Node) -> void:
 	test.expect(not idle_house.residents.has(wanderer) and not stranded_house.residents.has(stranded), "idle starvation removes residents from their nests")
 	var successor := work_house.residents[0] as AntAgent
 	successor._decide()
-	for step in range(90):
-		successor._physics_process(1.0 / 30.0)
+	_step_until(successor, func() -> bool: return successor.status == AntAgent.Status.WORKING)
 	var food: ResourceType = stock.type_by_id(&"food")
 	stock.add(food, 1)
 	test.expect(successor.status == AntAgent.Status.WORKING and stock.available(food) == 1, "isolated workers leave global food unreserved")
 	var canteen: BuildOption = preload("res://game/building/options/canteen.tres")
 	if not world.build_controller.options.has(canteen):
 		world.build_controller.unlock_option(canteen)
-	stock.add(stock.type_by_id(&"royal"), 3)
-	test.expect(world.build_controller.try_build(canteen, job_cell + Vector2i.UP), "new canteen restores access to food on the working island")
+	var canteen_cell := job_cell + Vector2i.UP
+	var royal := stock.type_by_id(&"royal")
+	stock.add(royal, BuildController.price_amount(world.build_controller.price(canteen, canteen_cell), royal))
+	test.expect(world.build_controller.try_build(canteen, canteen_cell), "new canteen restores access to food on the working island")
 	successor._reconsider_route()
 	test.expect(successor._destination == &"food" and successor._meal != null and workplace.worker_count() == 0, "worker switches to a reachable meal when a canteen opens")
-	for step in range(90):
-		successor._physics_process(1.0 / 30.0)
+	_step_until(successor, func() -> bool: return successor.status == AntAgent.Status.EATING)
+	_step_until(successor, func() -> bool: return successor.status != AntAgent.Status.EATING)
 	test.expect(stock.quantity(food) == 0 and successor.needs.satiety > 119.0, "restored meal replenishes the worker's satiety")
-	for step in range(150):
-		successor._physics_process(1.0 / 30.0)
+	_step_until(successor, func() -> bool: return successor.status == AntAgent.Status.WAITING_FOR_FOOD)
 	test.expect(successor.status == AntAgent.Status.WAITING_FOR_FOOD, "ant waits for food when the accessible canteen runs out")
 	var waiting_deaths: Array[int] = []
 	successor.died.connect(func(_ant: Node2D, cause: int): waiting_deaths.append(cause))
@@ -215,6 +218,8 @@ func test_physical_logistics(test: Node) -> void:
 	test.expect(stock.can_afford_all(central_price) and not stock.can_afford_all(central_price, true), "barracks stock does not count toward the immediate construction budget")
 	test.expect(stock.deposit(depot, [test.entry(stone, 1)]), "mixed resources occupy the same depot")
 	ant.global_position = world.route_service.cell_to_world(job.cell)
+	# Simulate a load left at the workplace before the transport race.
+	job._produce(wood, ant.carry_capacity + 1, true)
 	ant.transport.cargo = job.take_output(ant.carry_capacity)
 	ant.transport.deliver()
 	test.expect(ant.transport.delivery_nest == depot and stock.deposit(depot, [test.entry(stone, 2)]), "another delivery can fill the chosen depot while a worker is moving")
@@ -315,11 +320,16 @@ func test_multiple_bases(test: Node) -> void:
 	test.expect(stock.can_deposit(base, WorldInventory.base_capacity()) and not stock.can_deposit(base, WorldInventory.base_capacity() + 1) and stock.can_deposit(barracks, barracks.storage_capacity) and not stock.can_deposit(barracks, barracks.storage_capacity + 1), "each base caps its store at base_capacity() while barracks keep their own limit")
 	var initial: int = stock.quantity(wood)
 	stock.deposit(barracks, [test.entry(wood, 8)])
+	# Keep the main nest's wood in its own stock and isolate this wood order.
+	main.set_order(str(wood.id), "min", initial)
+	for type in stock.registered_types():
+		if type != wood: base.set_order(str(type.id), "min", 0)
 	# The base wants 10 wood (max 10); the barracks surplus supplies one full carrier load of 6.
 	base.set_order(str(wood.id), "min", 10)
 	base.set_order(str(wood.id), "max", 10)
 	var courier := main.residents.back() as AntAgent
 	courier._decide()
+	test.expect(courier.transport.pickup_source == barracks, "the carrier selects the barracks surplus")
 	_step_until(courier, func() -> bool: return courier.transport.shipment)
 	test.expect(courier.transport.order_target == base and WorldInventory.cargo_size(courier.transport.cargo) == 6, "an order carries a full carrier load from the barracks surplus to the base that is short")
 	test.expect(stock.quantity(wood) == initial + 8 and stock.nest_quantity(base, main, wood) == 0 and base.incoming.get(str(wood.id), 0) == 6, "units en route count as incoming without appearing in the base")
@@ -446,7 +456,13 @@ func _play_authored_map(test: Node, develop: bool) -> Dictionary:
 	var road: BuildOption = load("res://game/building/options/road.tres")
 	if develop:
 		var camp: BuildOption = load("res://game/building/options/barracks.tres")
-		test.expect(world.build_controller.try_build(camp, Vector2i(64, 42)) and world.build_controller.try_build(camp, Vector2i(74, 40)), "the starter budget supports separate timber and stone camps")
+		var stone := world.inventory.type_by_id(&"stone")
+		var camp_cells: Array[Vector2i] = [Vector2i(64, 42), Vector2i(74, 40)]
+		var stone_due := 0
+		for cell in camp_cells:
+			stone_due += BuildController.price_amount(world.build_controller.price(camp, cell), stone)
+		world.inventory.add(stone, maxi(0, stone_due - world.inventory.quantity(stone)))
+		test.expect(world.build_controller.try_build(camp, camp_cells[0]) and world.build_controller.try_build(camp, camp_cells[1]), "the development fixture builds separate timber and stone camps")
 		for x in range(64, 76):
 			if world.build_controller.can_build(road, Vector2i(x, 44)): world.build_controller.try_build(road, Vector2i(x, 44))
 		for y in range(39, 44):

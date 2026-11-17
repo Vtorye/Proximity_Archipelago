@@ -20,5 +20,5 @@ func _ready() -> void:
 	extra.free()
 	for resident in fillers:
 		resident.free()
-	print("HOUSE TEST ", "PASS" if passed else "FAIL")
+	print("NEST TEST ", "PASS" if passed else "FAIL")
 	get_tree().quit(0 if passed else 1)

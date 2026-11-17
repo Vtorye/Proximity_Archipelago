@@ -25,6 +25,6 @@ fi
 if ! "$godot_binary" --headless --path "$check_root/project" --fixed-fps 60 res://tests/test_runner.tscn > "$check_root/tests.log" 2>&1; then cat "$check_root/tests.log"; exit 1; fi
 cat "$check_root/tests.log"
 if rg -qi '(script error|error):|leaked|tests fail' "$check_root/tests.log" || ! rg -q '^TESTS PASS$' "$check_root/tests.log"; then exit 1; fi
-if ! "$godot_binary" --headless --path "$check_root/project" res://game/test/house_test.tscn > "$check_root/house.log" 2>&1; then cat "$check_root/house.log"; exit 1; fi
-cat "$check_root/house.log"
-if rg -qi '(script error|error):|leaked|house test fail' "$check_root/house.log" || ! rg -q '^HOUSE TEST PASS$' "$check_root/house.log"; then exit 1; fi
+if ! "$godot_binary" --headless --path "$check_root/project" res://game/test/nest_test.tscn > "$check_root/nest.log" 2>&1; then cat "$check_root/nest.log"; exit 1; fi
+cat "$check_root/nest.log"
+if rg -qi '(script error|error):|leaked|nest test fail' "$check_root/nest.log" || ! rg -q '^NEST TEST PASS$' "$check_root/nest.log"; then exit 1; fi

@@ -77,13 +77,16 @@ func _draft_and_commit(test: Node) -> void:
 	draft.begin_stroke()
 	draft.paint(berry, Vector2i(30, 29))
 	draft.end_stroke()
+	var food: ResourceType = world.inventory.type_by_id(&"food")
+	world.inventory.add(food, BuildController.price_amount(draft.costs(), food))
+	var wood_due := BuildController.price_amount(draft.costs(), wood)
 	var updates: Array[int] = [0]
 	var notifications: Array[int] = [0]
 	world.route_service.navigation_changed.connect(func(): updates[0] += 1)
 	world.inventory.changed.connect(func(): notifications[0] += 1)
 	test.expect(draft.commit(), "valid multi-option draft commits")
 	test.expect(updates[0] == 1 and world.route_service.revision == revision + 1 and world.route_service.last_changed.size() == 6, "road stroke updates navigation once with the complete changed footprint")
-	test.expect(notifications[0] == 1 and world.inventory.quantity(wood) == 54 and world.registry.at(Vector2i(30, 29)) is Workplace, "batch charges once and creates its workplace")
+	test.expect(notifications[0] == 1 and world.inventory.quantity(wood) == 60 - wood_due and world.registry.at(Vector2i(30, 29)) is Workplace, "batch charges once and creates its workplace")
 	test.expect(draft.size() == 0 and not draft.can_undo(), "successful commit retires the draft")
 	world.free()
 	await test.get_tree().process_frame
@@ -180,10 +183,17 @@ func _layered_plan(test: Node) -> void:
 	draft.paint(road, cell)
 	draft.paint(road, cell)
 	test.expect(draft.size() == 2, "repeated painting does not duplicate a layer or its cost")
-	var before: int = world.inventory.quantity(world.inventory.type_by_id(&"wood"))
+	var wood := world.inventory.type_by_id(&"wood")
+	var stone := world.inventory.type_by_id(&"stone")
+	var wood_before := world.inventory.quantity(wood)
+	var stone_before := world.inventory.quantity(stone)
+	var cost := draft.costs()
 	test.expect(draft.commit(), "layered plan commits regardless of painting order")
 	test.expect(world.registry.at(cell) is House and world.build_controller.map.get_cell_atlas_coords(cell) == Vector2i(2, 0), "committed road remains underneath its nest")
-	test.expect(world.population.count() == 10 and world.inventory.quantity(world.inventory.type_by_id(&"wood")) == before - 11 and world.inventory.quantity(world.inventory.type_by_id(&"stone")) == 20, "layered commit charges both resources and spawns once")
+	test.expect(world.population.count() == 10
+		and world.inventory.quantity(wood) == wood_before - BuildController.price_amount(cost, wood)
+		and world.inventory.quantity(stone) == stone_before - BuildController.price_amount(cost, stone),
+		"layered commit charges both resources and spawns once")
 	world.free()
 	await test.get_tree().process_frame
 
@@ -194,6 +204,8 @@ func _planned_demolition(test: Node) -> void:
 	var road: BuildOption = load("res://game/building/options/road.tres")
 	var berry: BuildOption = load("res://game/building/options/berry_bush.tres")
 	var cell := Vector2i(30, 29)
+	var food := world.inventory.type_by_id(&"food")
+	world.inventory.add(food, BuildController.price_amount(controller.price(berry, cell), food) * 2)
 	test.expect(controller.try_build_plan([BuildCommand.create(cell, road), BuildCommand.create(cell, berry)]), "demolition fixture has a road beneath a workplace")
 	var target: Building = world.registry.at(cell)
 	var revision: int = world.route_service.revision

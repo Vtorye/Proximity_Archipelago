@@ -180,6 +180,7 @@ func complete_work_period(human: Node2D, seconds: float, keep_output: bool = fal
 	if recipe != null:
 		return _complete_recipe_cycle(human, keep_output)
 	if not _workers.has(human) or output == null or not can_run_recipe(): return false
+	if keep_output and not _pending_output.is_empty(): return true
 	work_complete(human)
 	var amount := floori(output_per_second * terrain_yield_multiplier * maxf(0.0, seconds) + 0.000001)
 	if amount > 0: _produce(output, amount, keep_output)

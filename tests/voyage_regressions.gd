@@ -72,8 +72,15 @@ func run(test: Node) -> void:
 		test.expect(world.tasks.choose_reward(level % 3), "a valid reward advances the task ladder")
 		test.expect(not world.tasks.choose_reward(0), "reward cannot be claimed twice")
 	test.expect(world.tasks.level == 5 and world.build_controller.options.has(world.voyage_rules.ship), "reaching level five unlocks ship construction")
-	var site_cell: Vector2i = home.cell + Vector2i(-2, -1)
 	var berry_option: BuildOption = load("res://game/building/options/berry_bush.tres")
+	var site_cell := home.cell
+	var best_distance := INF
+	var grid := world.route_service.snapshot()
+	for cell in grid.walkable_cells():
+		var distance := Vector2(cell - home.cell).length_squared()
+		if distance < best_distance and grid.connected(home.cell, cell) and world.build_controller.can_build(berry_option, cell):
+			site_cell = cell
+			best_distance = distance
 	test.expect(world.build_controller.try_build(berry_option, site_cell), "a paid unfinished building exists in the save fixture")
 	var site: ConstructionSite = world.build_controller.construction.at(site_cell)
 	test.expect(site != null, "saved building is a real construction site")

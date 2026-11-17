@@ -131,6 +131,7 @@ func run(test: Node) -> void:
 	site = controller.construction.at(remote, true)
 	var legacy_crate: Array[ResourceAmount] = []
 	legacy_crate.assign(site.crates[depot])
+	var road_wood := BuildController.price_amount(legacy_crate, wood)
 	site.crates.erase(depot)
 	site.crates[primary] = legacy_crate
 	world.inventory.deposit(depot, legacy_crate)
@@ -140,7 +141,9 @@ func run(test: Node) -> void:
 	waiting._timer = 0.0
 	waiting._physics_process(1.0 / 30.0)
 	test.expect(waiting._destination == &"site_pickup", "a carrier waiting for food rechecks funded construction")
-	test.expect(world.inventory.nest_quantity(primary, primary, wood) == before and world.inventory.nest_quantity(depot, primary, wood) == 2, "a stuck saved order refunds unreachable crates and funds them from the connected base")
+	test.expect(world.inventory.nest_quantity(primary, primary, wood) == before
+		and world.inventory.nest_quantity(depot, primary, wood) == 3 - road_wood,
+		"a stuck saved order refunds unreachable crates and funds them from the connected base")
 	await _advance(test, world, 15)
 	test.expect(controller.construction.at(remote, true) == null, "the second island finishes its own construction")
 	world.free()

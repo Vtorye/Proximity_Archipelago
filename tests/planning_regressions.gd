@@ -69,7 +69,7 @@ func _tile_inspector(test: Node) -> void:
 	map.paint_tile(wet_cell, map.catalog.by_id(&"wet").tile, true)
 	panel.inspect_cell(dry_cell)
 	await test.get_tree().process_frame
-	test.expect(panel.visible and panel._detail.get_parsed_text().contains(TranslationServer.translate("ui.terrain.nest_price") % 70), "selecting dry ground displays its build rules and discount")
+	test.expect(panel.visible and panel._detail.get_parsed_text().contains(TranslationServer.translate("ui.terrain.build_price") % 50), "selecting dry ground displays its build rules and discount")
 	var press := InputEventMouseButton.new()
 	press.button_index = MOUSE_BUTTON_LEFT
 	press.pressed = true

@@ -41,13 +41,13 @@ func _placement_and_prices(test: Node) -> void:
 	var stone: ResourceType = world.inventory.type_by_id(&"stone")
 	var dry := Vector2i(6, 2)
 	var sand := Vector2i(10, 2)
-	test.expect(BuildController.price_amount(controller.price(house, dry), wood) == 7 and BuildController.price_amount(controller.price(house, dry), stone) == 14, "dry ground discounts both nest materials by thirty percent")
-	test.expect(BuildController.price_amount(controller.price(road, sand), wood) == 2, "sand multiplies the road price before rounding whole materials up")
+	test.expect(BuildController.price_amount(controller.price(house, dry), wood) == 6 and BuildController.price_amount(controller.price(house, dry), stone) == 12, "dry ground halves the cost of both nest materials")
+	test.expect(BuildController.price_amount(controller.price(road, sand), wood) == 3, "sand multiplies the road price before rounding whole materials up")
 	var draft := BuildDraft.new()
 	draft.controller = controller
 	draft.paint(house, dry)
 	draft.paint(road, sand)
-	test.expect(BuildController.price_amount(draft.costs(), wood) == 9 and BuildController.price_amount(draft.costs(), stone) == 14, "the plan shares cell-specific prices with individual construction checks")
+	test.expect(BuildController.price_amount(draft.costs(), wood) == 9 and BuildController.price_amount(draft.costs(), stone) == 12, "the plan shares cell-specific prices with individual construction checks")
 	var before: int = world.inventory.quantity(wood)
 	test.expect(draft.commit() and world.inventory.quantity(wood) == before - 9 and world.registry.at(dry) is House, "one committed plan charges each terrain modifier exactly once")
 	var map := world.get_node("Map") as TerrainMap
@@ -74,13 +74,12 @@ func _yield(test: Node) -> void:
 	for sample in [[Vector2i(2, 2), 6], [Vector2i(6, 2), 3], [Vector2i(4, 2), 4]]:
 		var source: Workplace = _source(world, sample[0], food)
 		source.reserve_worker(worker)
-		var produced := 0
-		for cycle in range(4):
-			source.complete_cycle(worker, true)
-			var batch: Array[ResourceAmount] = source.take_output(100)
-			if cycle == 0: test.expect(not batch.is_empty(), "even dry-soil bushes yield on their first complete cycle")
-			produced += WorldInventory.cargo_size(batch)
-		test.expect(produced == sample[1], "fractional soil yield is exact across four cycles")
+		if source.cell == Vector2i(6, 2):
+			test.expect(source.complete_cycle(worker, true) and source.pending_output_amount() == 0,
+				"a dry-soil harvest shorter than one whole unit produces no cargo")
+		source.complete_work_period(worker, 4.0, true)
+		test.expect(WorldInventory.cargo_size(source.take_output(100)) == sample[1],
+			"four seconds of work apply the soil's resource rate")
 	var timber: Workplace = _source(world, Vector2i(2, 3), world.inventory.type_by_id(&"wood"))
 	(world.get_node("Map") as TerrainMap).paint_tile(timber.cell, Vector4i(5, 0, 0, 0), true)
 	world.terrain.refresh_all()
@@ -91,7 +90,7 @@ func _yield(test: Node) -> void:
 	finite.finite_supply = true
 	finite.remaining_supply = 2
 	finite.reserve_worker(worker)
-	finite.complete_cycle(worker, true)
+	finite.complete_work_period(worker, 2.0, true)
 	test.expect(finite.remaining_supply == 0 and WorldInventory.cargo_size(finite.take_output(100)) == 2, "a boosted finite harvest conserves the last physical berries")
 	worker.free()
 	world.free()
@@ -156,12 +155,14 @@ func _physical_build(test: Node) -> void:
 	var site: ConstructionSite = world.build_controller.construction.at(cell)
 	var wood: ResourceType = world.inventory.type_by_id(&"wood")
 	var stone: ResourceType = world.inventory.type_by_id(&"stone")
-	test.expect(BuildController.price_amount(site.required, wood) == 7 and BuildController.price_amount(site.required, stone) == 14, "couriers receive the same discounted material requirements quoted in the plan")
+	test.expect(site != null and BuildController.price_amount(site.required, wood) == 6
+		and BuildController.price_amount(site.required, stone) == 12,
+		"couriers receive the same discounted material requirements quoted in the plan")
 	for frame in range(1800):
 		for ant in world.population.agents(): ant._physics_process(1.0 / 30.0)
 		if frame % 30 == 0: await test.get_tree().process_frame
 		if world.registry.at(cell) is House: break
-	test.expect(world.registry.at(cell) is House and world.inventory.quantity(wood) == 53 and world.inventory.quantity(stone) == 26, "real delivery and assembly preserve the discounted payment")
+	test.expect(world.registry.at(cell) is House and world.inventory.quantity(wood) == 54 and world.inventory.quantity(stone) == 28, "real delivery and assembly preserve the discounted payment")
 	world.free()
 	await test.get_tree().process_frame
 

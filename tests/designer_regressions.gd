@@ -156,12 +156,13 @@ func test_resource_facilities(test: Node) -> void:
 	var worker: AntAgent = world.population.agents()[0]
 	workplace.reserve_worker(worker)
 	var before: int = world.inventory.quantity(wood)
+	var sawmill_wood := BuildController.price_amount(world.build_controller.price(sawmill, workplace.cell), wood)
 	var draft := BuildDraft.new()
 	draft.controller = world.build_controller
 	test.expect(draft.paint(sawmill, workplace.cell) and draft.commit(), "a facility can be planned and built on an occupied resource cell")
 	test.expect(world.registry.at(workplace.cell) == workplace and workplace.work_slots == slots_before + 2 and workplace.has_worker(worker), "installing a facility adds two slots without replacing the source or evicting its worker")
-	test.expect(workplace.remaining_supply == 3 and workplace.pending_output_amount() == 2 and world.inventory.quantity(wood) == before - 10, "installing a facility preserves supply and pending cargo and charges its price once")
-	test.expect(not world.build_controller.try_build(sawmill, workplace.cell) and world.inventory.quantity(wood) == before - 10, "a second facility cannot stack on the same resource cell")
+	test.expect(workplace.remaining_supply == 3 and workplace.pending_output_amount() == 2 and world.inventory.quantity(wood) == before - sawmill_wood, "installing a facility preserves supply and pending cargo and charges its price once")
+	test.expect(not world.build_controller.try_build(sawmill, workplace.cell) and world.inventory.quantity(wood) == before - sawmill_wood, "a second facility cannot stack on the same resource cell")
 	test.expect((workplace.get_node("Sprite") as Sprite2D).texture == sawmill.icon and sawmill.icon.get_size() == Vector2(16, 16), "a sawmill uses its own sixteen-pixel sprite")
 	sawmill.added_slots = 3
 	test.expect(world.build_controller.demolish_at(workplace.cell) and world.registry.at(workplace.cell) == workplace and workplace.improvement == null and workplace.work_slots == slots_before, "demolition removes the facility while preserving the source")
