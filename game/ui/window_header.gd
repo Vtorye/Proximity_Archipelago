@@ -22,6 +22,7 @@ enum Dock { CENTER, BOTTOM_LEFT, BOTTOM_RIGHT, TOP_LEFT, TOP_RIGHT, TOP_CENTER }
 var collapsed := false
 var _dragging := false
 var _floating := false
+var _floating_position := Vector2.ZERO
 var _layout_pending := false
 
 @onready var handle: Label = %Handle
@@ -93,6 +94,8 @@ func _layout() -> void:
 			Dock.TOP_LEFT: panel.position = Vector2(area.x, inset.y)
 			Dock.TOP_RIGHT: panel.position = Vector2(far.x, inset.y)
 			Dock.TOP_CENTER: panel.position = Vector2(mid.x, inset.y)
+	else:
+		panel.position = _floating_position
 	_clamp_panel()
 
 func _notification(what: int) -> void:
@@ -120,4 +123,5 @@ func _input(event: InputEvent) -> void:
 		_floating = true
 		panel.position += event.relative
 		_clamp_panel()
+		_floating_position = panel.position
 		get_viewport().set_input_as_handled()

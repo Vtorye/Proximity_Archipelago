@@ -217,6 +217,7 @@ static func _restore_objects(world: World, map: TileMapLayer, objects: Array[Lev
 				return false
 			building = instance as Building
 			building.option = catalog[kind]
+			building.colony_owned = true
 		else:
 			building = originals[kind].duplicate()
 			# Legacy Home rows mean a starter nest followed by small local nests.

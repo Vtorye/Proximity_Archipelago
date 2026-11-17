@@ -6,6 +6,8 @@ signal demolished(building: Building)
 var cell: Vector2i
 ## May be null for buildings placed in the scene from the start.
 @export var option: BuildOption
+## Natural map objects can remain neutral. Buildings placed by the player belong to the colony.
+@export var colony_owned := true
 var _is_setup := false
 var _is_demolished := false
 var _appearance_texture: Texture2D

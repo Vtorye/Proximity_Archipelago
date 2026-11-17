@@ -63,8 +63,19 @@ func _configure_ant(ant: AntAgent) -> void:
 
 func _register(building: Building) -> void:
 	_health[building] = maximum_health(building)
+	if building is Workplace and not building.colony_owned:
+		building.improvement_changed.connect(_reset_improvement_health.bind(building))
+
+func _reset_improvement_health(building: Building) -> void:
+	if _health.has(building):
+		_health[building] = maximum_health(building)
+		changed.emit()
 
 func _unregister(building: Building) -> void:
+	if building is Workplace:
+		var reset := _reset_improvement_health.bind(building)
+		if building.improvement_changed.is_connected(reset):
+			building.improvement_changed.disconnect(reset)
 	_health.erase(building)
 	_fields.erase(building)
 
@@ -118,22 +129,19 @@ func approach(target: Node2D, from: Vector2i) -> Route:
 		return world.route_service.make_route(_fields[building].path(from))
 	return world.route_service.request_route(from, world.route_service.world_to_cell(target.global_position))
 
-func prey(cell: Vector2i) -> Node2D:
-	var target: Node2D
+func is_spider_target(building: Variant) -> bool:
+	if not alive(building) or not building is Building:
+		return false
+	if building is Workplace:
+		return building.improvement != null or (building.colony_owned and (not building.finite_supply or building.remaining_supply > 0))
+	return building.colony_owned
+
+func prey(cell: Vector2i) -> Building:
+	var target: Building
 	var best := INF
-	var point: Vector2 = world.route_service.cell_to_world(cell)
-	for ant in world.population.agents():
-		var distance: float = point.distance_to(ant.global_position) / world.route_service.cell_size()
-		if distance > rules.detection_cells: continue
-		var route: Route = approach(ant, cell)
-		if not route.is_valid(): continue
-		var score: float = route.cost * (0.5 if ant.role == AntAgent.Role.WARRIOR else 1.0)
-		if score < best:
-			best = score
-			target = ant
-	if target != null: return target
 	for building in world.registry.all():
-		if building is Workplace and building.finite_supply and building.remaining_supply <= 0 and building.improvement == null: continue
+		if not is_spider_target(building):
+			continue
 		var route: Route = approach(building, cell)
 		if route.is_valid() and route.cost < best:
 			best = route.cost
@@ -158,12 +166,21 @@ func damage(target: Node2D, amount: int) -> void:
 		target.take_damage(amount)
 	elif target is Building:
 		var building := target as Building
+		if not is_spider_target(building):
+			return
 		_health[building] -= amount
 		if _health[building] <= 0: _destroy(building)
 	queue_redraw()
 	changed.emit()
 
 func _destroy(building: Building) -> void:
+	if building is Workplace and not building.colony_owned:
+		var improvement_id: StringName = building.improvement.id
+		building.remove_improvement()
+		world.planner.queue_workplace_refresh()
+		world.prices.record(GameEvents.Kind.BUILDING_DEMOLISHED, improvement_id)
+		world.build_controller.changed.emit()
+		return
 	var cells: Array[Vector2i] = building.footprint()
 	if building is ConstructionSite:
 		world.build_controller._remove_site(building)
@@ -195,15 +212,6 @@ func clear_trap(cell: Vector2i) -> bool:
 	traps[cell].queue_free()
 	traps.erase(cell)
 	changed.emit()
-	return true
-
-func ruin_road(cell: Vector2i) -> bool:
-	if world.route_service.entry_cost(cell) <= 0 or world.route_service.entry_cost(cell) >= 0.5 or rules.ruined_road == null: return false
-	var ground: TileBuildOption = rules.ruined_road
-	var map: TileMapLayer = world.map
-	world.build_controller.apply_surface(ground, cell)
-	world.route_service.update_cells([cell], world.registry.blocked_cells())
-	world.prices.record(GameEvents.Kind.TERRAIN_CHANGED, ground.id)
 	return true
 
 func _physics_process(delta: float) -> void:

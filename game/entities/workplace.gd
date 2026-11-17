@@ -4,6 +4,7 @@ extends Building
 signal produced(type: ResourceType, amount: int)
 signal load_changed
 signal supply_changed
+signal improvement_changed
 
 @export var recipe: WorkRecipe
 var terrain_yield_multiplier := 1.0
@@ -116,6 +117,7 @@ func install_improvement(definition: WorkplaceUpgradeOption) -> bool:
 	work_slots += _improvement_slots
 	refresh_appearance()
 	load_changed.emit()
+	improvement_changed.emit()
 	return true
 
 func remove_improvement() -> void:
@@ -126,6 +128,7 @@ func remove_improvement() -> void:
 	improvement = null
 	refresh_appearance()
 	load_changed.emit()
+	improvement_changed.emit()
 
 func refresh_appearance(source: Texture2D = null) -> void:
 	var sprite := get_node_or_null("Sprite") as Sprite2D

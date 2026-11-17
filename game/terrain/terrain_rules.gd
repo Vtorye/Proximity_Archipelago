@@ -78,8 +78,11 @@ static func describe(type: TerrainType) -> String:
 	var yes: String = TranslationServer.translate("ui.terrain.allowed")
 	var no: String = TranslationServer.translate("ui.terrain.forbidden")
 	var lines := PackedStringArray([TranslationServer.translate(type.display_name)])
-	if type.kind == TerrainType.Kind.WATER: return lines[0]
-	lines.append(TranslationServer.translate("ui.terrain.permissions") % [yes if type.roads_allowed else no, yes if type.berries_allowed else no, yes if type.nests_allowed else no])
+	lines.append(TranslationServer.translate("ui.terrain.permissions") % [
+		yes if supports(type, BuildOption.PlacementKind.ROAD) else no,
+		yes if supports(type, BuildOption.PlacementKind.BERRY) else no,
+		yes if supports(type, BuildOption.PlacementKind.NEST) else no])
+	if type.kind == TerrainType.Kind.WATER: return "\n".join(lines)
 	if not is_equal_approx(type.berry_multiplier, 1): lines.append(TranslationServer.translate("ui.terrain.harvest") % roundi(type.berry_multiplier * 100))
 	if not is_equal_approx(type.nest_price_multiplier, 1): lines.append(TranslationServer.translate("ui.terrain.nest_price") % roundi(type.nest_price_multiplier * 100))
 	if not is_equal_approx(type.road_price_multiplier, 1): lines.append(TranslationServer.translate("ui.terrain.road_price") % roundi(type.road_price_multiplier * 100))

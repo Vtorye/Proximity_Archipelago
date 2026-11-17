@@ -7,6 +7,7 @@ func run(test: Node) -> void:
 	await _load_scoring(test)
 	await _slot_race(test)
 	await _workload_ui(test)
+	await _tile_inspector(test)
 	await _new_workplace(test)
 	await _road_updates(test)
 	await _returning_cargo(test)
@@ -51,6 +52,43 @@ func _second_nest_meal_return(test: Node) -> void:
 		if cycles[0] > 0:
 			break
 	test.expect(cycles[0] > 0, "after eating, the empty-handed worker returns to the second nest and resumes production")
+	world.free()
+	await test.get_tree().process_frame
+
+func _tile_inspector(test: Node) -> void:
+	var world: World = test.make_world()
+	var overlay := NavigationOverlay.new()
+	overlay.world = world
+	var panel := preload("res://game/ui/navigation_panel.tscn").instantiate() as NavigationPanel
+	panel.overlay = overlay
+	test.add_child(panel)
+	var map := world.map as TerrainMap
+	var dry_cell := Vector2i(24, 25)
+	var wet_cell := Vector2i(25, 25)
+	map.paint_tile(dry_cell, map.catalog.by_id(&"dry").tile, true)
+	map.paint_tile(wet_cell, map.catalog.by_id(&"wet").tile, true)
+	panel.inspect_cell(dry_cell)
+	await test.get_tree().process_frame
+	test.expect(panel.visible and panel._detail.get_parsed_text().contains(TranslationServer.translate("ui.terrain.nest_price") % 70), "selecting dry ground displays its build rules and discount")
+	var press := InputEventMouseButton.new()
+	press.button_index = MOUSE_BUTTON_LEFT
+	press.pressed = true
+	panel._header._drag_input(press)
+	var drag := InputEventMouseMotion.new()
+	drag.button_mask = MOUSE_BUTTON_MASK_LEFT
+	drag.relative = Vector2(-40, -20)
+	panel._header._input(drag)
+	press.pressed = false
+	panel._header._input(press)
+	var position := panel.position
+	panel._header.toggle.pressed.emit()
+	panel.inspect_cell(wet_cell)
+	await test.get_tree().process_frame
+	test.expect(panel._header.collapsed and panel.position == position, "a new tile keeps the moved inspector folded in place")
+	panel._header.toggle.pressed.emit()
+	test.expect(panel._detail.get_parsed_text().contains(TranslationServer.translate("ui.terrain.adjacency") % [25, 1]), "opening the inspector shows the newly selected tile's bonus")
+	panel.free()
+	overlay.free()
 	world.free()
 	await test.get_tree().process_frame
 

@@ -28,7 +28,7 @@ var _zoom_level := 2
 var _active_section: StringName
 @onready var _objectives: PanelContainer = %Objectives
 var navigation: NavigationOverlay
-var navigation_panel: NavigationPanel
+@onready var navigation_panel: NavigationPanel = %NavigationPanel
 var task_panel: TaskPanel
 @onready var _bottom: PanelContainer = %Bottom
 @onready var _task_details: BuildDetailsPanel = %TaskDetails
@@ -110,10 +110,7 @@ func _build_hud() -> void:
 		get_viewport().size_changed.connect(_layout_task_panel)
 		_layout_task_panel.call_deferred()
 	if navigation != null:
-		navigation_panel = preload("res://game/ui/navigation_panel.tscn").instantiate()
-		navigation_panel.process_mode = Node.PROCESS_MODE_ALWAYS
-		navigation_panel.overlay = navigation
-		add_child(navigation_panel)
+		navigation_panel.configure(navigation)
 	if world.combat != null:
 		%WaveTimer.show()
 		world.combat.changed.connect(_refresh_wave_timer)
@@ -210,6 +207,9 @@ func toast(message: String, danger: bool = false) -> void:
 
 func construction_undo_button() -> Button:
 	return %Undo
+
+func construction_pan_button() -> Button:
+	return %Move
 
 func bottom_bar_height() -> float:
 	return _bottom.size.y

@@ -4,6 +4,9 @@
 [ext_resource type="Script" path="res://game/ui/match_hud.gd" id="script"]
 
 [ext_resource type="Texture2D" path="res://game/assets/ui/menu_dots.svg" id="menu_icon"]
+[ext_resource type="Texture2D" path="res://game/assets/ui/build_undo.svg" id="undo_icon"]
+[ext_resource type="Texture2D" path="res://game/assets/ui/build_move.svg" id="pan_icon"]
+[ext_resource type="PackedScene" path="res://game/ui/navigation_panel.tscn" id="navigation_panel"]
 
 [ext_resource type="PackedScene" path="res://game/ui/colony_summary.tscn" id="summary"]
 [ext_resource type="PackedScene" path="res://game/ui/build_details_panel.tscn" id="details"]
@@ -177,10 +180,22 @@ mouse_default_cursor_shape = 2
 [node name="Undo" type="Button" parent="Bottom/Actions"]
 disabled = true
 unique_name_in_owner = true
-custom_minimum_size = Vector2(58, 34)
-text = "Ctrl+Z"
+custom_minimum_size = Vector2(34, 34)
+icon = ExtResource("undo_icon")
+icon_alignment = 1
 theme_type_variation = &"CompactButton"
 tooltip_text = "ui.construction.undo"
+mouse_default_cursor_shape = 2
+
+[node name="Move" type="Button" parent="Bottom/Actions"]
+disabled = true
+unique_name_in_owner = true
+custom_minimum_size = Vector2(34, 34)
+icon = ExtResource("pan_icon")
+icon_alignment = 1
+theme_type_variation = &"CompactButton"
+tooltip_text = "ui.construction.inspect_hint"
+toggle_mode = true
 mouse_default_cursor_shape = 2
 
 [node name="Spacer" type="Control" parent="Bottom/Actions"]
@@ -235,6 +250,10 @@ offset_left = -348.0
 offset_right = -8.0
 offset_top = 78.0
 offset_bottom = 78.0
+
+[node name="NavigationPanel" parent="." instance=ExtResource("navigation_panel")]
+unique_name_in_owner = true
+visible = false
 
 [node name="UiText" type="Node" parent="." node_paths=PackedStringArray("target")]
 script = ExtResource("ui_text_binding")

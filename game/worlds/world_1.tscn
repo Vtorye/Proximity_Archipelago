@@ -235,6 +235,7 @@ option = ExtResource("nest_option")
 [node name="Workplace" type="Node2D" parent="." unique_id=1831052793]
 position = Vector2(344, 360)
 script = ExtResource("workplace")
+colony_owned = false
 work_slots = 4
 output = ExtResource("wood")
 output_amount = 2
@@ -246,6 +247,7 @@ texture = ExtResource("timber_art")
 [node name="Workplace2" type="Node2D" parent="." unique_id=2072253973]
 position = Vector2(472, 344)
 script = ExtResource("workplace")
+colony_owned = false
 work_slots = 4
 output = ExtResource("stone")
 output_amount = 2

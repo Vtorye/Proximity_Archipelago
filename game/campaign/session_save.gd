@@ -177,6 +177,7 @@ static func apply(world: World, data: Dictionary) -> void:
 		var candidate: Building
 		if option is SceneBuildOption:
 			candidate = option.scene.instantiate()
+			candidate.colony_owned = true
 			candidate.setup(state.cell, option)
 		var site: ConstructionSite = world.build_controller.construction.instantiate_site()
 		site.order = order
