@@ -12,6 +12,8 @@ enum PlacementKind { ANY, ROAD, BERRY, NEST }
 @export var icon: Texture2D
 ## Internal terrain actions can stay available to demolition without appearing in the palette.
 @export var show_in_palette := true
+## Excludes this construction from terrain-based price modifiers.
+@export var terrain_price_exempt := false
 ## Empty means free. Each entry pairs a resource with its required quantity.
 @export var costs: Array[ResourceAmount] = []
 @export_range(0.1, 120.0, 0.1) var construction_seconds := 4.0

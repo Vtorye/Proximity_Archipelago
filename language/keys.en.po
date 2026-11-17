@@ -618,6 +618,9 @@ msgstr "Roads: %s · berries: %s\nNests: %s"
 msgid "ui.terrain.harvest"
 msgstr "Berry yield: %d%%"
 
+msgid "ui.terrain.build_price"
+msgstr "Construction price: %d%%"
+
 msgid "ui.terrain.nest_price"
 msgstr "Nest price: %d%%"
 

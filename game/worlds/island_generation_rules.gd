@@ -38,7 +38,7 @@ extends Resource
 @export_range(0, 100000) var extra_supply_loss_per_island := 12
 
 @export_group("Biome Bias")
-@export_range(0.0, 1.0, 0.01) var fertile_bias := 0.22
+@export_range(0.0, 1.0, 0.01) var fertile_bias := 0.06
 @export_range(0.0, 1.0, 0.01) var dry_bias := 0.22
 @export_range(0.0, 1.0, 0.01) var rocky_bias := 0.08
 @export_enum("Wood", "Stone", "Berries") var fertile_favored_deposit := 2
@@ -56,7 +56,7 @@ extends Resource
 @export_range(0.0, 10.0, 0.01) var quarry_soil_radius := sqrt(2.0)
 @export_range(-1.0, 1.0, 0.01) var sand_threshold := 0.1
 @export_range(-1.0, 1.0, 0.01) var dry_threshold := 0.08
-@export_range(-1.0, 1.0, 0.01) var fertile_threshold := -0.04
+@export_range(-1.0, 1.0, 0.01) var fertile_threshold := -0.45
 
 func is_valid() -> bool:
 	return (

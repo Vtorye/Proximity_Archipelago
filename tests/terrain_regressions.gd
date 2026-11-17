@@ -32,7 +32,7 @@ func _placement_and_prices(test: Node) -> void:
 	var road: BuildOption = load("res://game/building/options/road.tres")
 	var berry: BuildOption = load("res://game/building/options/berry_bush.tres")
 	var house: BuildOption = load("res://game/building/options/barracks.tres")
-	var matrix := [[true, true, true], [true, false, false], [true, true, true], [true, true, false], [true, false, false]]
+	var matrix := [[true, true, true], [true, false, false], [true, false, true], [true, true, false], [true, false, false]]
 	for index in range(5):
 		for kind in range(3):
 			var option: BuildOption = [road, berry, house][kind]

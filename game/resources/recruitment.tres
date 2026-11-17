@@ -3,8 +3,8 @@
 [ext_resource type="Script" uid="uid://dohq4yj0b3afb" path="res://game/resources/resource_amount.gd" id="amount"]
 [ext_resource type="Script" uid="uid://daa0e541gk7nm" path="res://game/resources/recruitment_catalog.gd" id="catalog"]
 [ext_resource type="Resource" uid="uid://bc4vd8o7qyldd" path="res://game/resources/resource_types/food.tres" id="food"]
-[ext_resource type="Resource" path="res://game/resources/resource_types/stone.tres" id="stone"]
-[ext_resource type="Resource" path="res://game/resources/resource_types/wood.tres" id="wood"]
+[ext_resource type="Resource" uid="uid://dnvvlsc4kjs1t" path="res://game/resources/resource_types/stone.tres" id="stone"]
+[ext_resource type="Resource" uid="uid://btsdqgmh3ee22" path="res://game/resources/resource_types/wood.tres" id="wood"]
 
 [sub_resource type="Resource" id="carrier"]
 script = ExtResource("amount")

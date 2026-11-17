@@ -40,9 +40,6 @@ stages = Array[ExtResource("stage")]([SubResource("stage_1"), SubResource("stage
 choose_upgrades = true
 unlocked_road = ExtResource("road_plus")
 replaced_road = ExtResource("road")
-discount_reward_factor = 0.9
-speed_reward_factor = 1.15
-satiety_reward_factor = 1.2
 development_tints = PackedColorArray(1, 1, 1, 1, 0.937255, 0.827451, 0.556863, 1, 0.658824, 0.831373, 0.913725, 1, 0.823529, 0.701961, 0.929412, 1)
 legacy_task_ids = Dictionary[String, String]({
 "stage_1_task_0": "statue_feast",

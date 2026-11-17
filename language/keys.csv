@@ -195,6 +195,7 @@ ui.terrain.allowed,yes,да
 ui.terrain.forbidden,no,нет
 ui.terrain.permissions,Roads: %s · berries: %s\nNests: %s,Дороги: %s · кусты: %s\nМуравейники: %s
 ui.terrain.harvest,Berry yield: %d%%,Урожай ягод: %d%%
+ui.terrain.build_price,Construction price: %d%%,Стоимость строительства: %d%%
 ui.terrain.nest_price,Nest price: %d%%,Цена муравейника: %d%%
 ui.terrain.road_price,Road price: %d%%,Цена дороги: %d%%
 ui.terrain.adjacency,Adjacent nest capacity: +%d%%\nRadius: %d; does not stack,Вместимость рядом: +%d%%\nРадиус: %d; не суммируется

@@ -618,6 +618,9 @@ msgstr "Дороги: %s · кусты: %s\nМуравейники: %s"
 msgid "ui.terrain.harvest"
 msgstr "Урожай ягод: %d%%"
 
+msgid "ui.terrain.build_price"
+msgstr "Стоимость строительства: %d%%"
+
 msgid "ui.terrain.nest_price"
 msgstr "Цена муравейника: %d%%"
 
