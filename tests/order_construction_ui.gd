@@ -65,6 +65,12 @@ func _run() -> void:
 	for key in [&"apply", &"cancel", &"demolish"]:
 		expect(not menu.controls[key].is_visible_in_tree(), "plan action closes with the palette")
 	expect(menu.controls[&"undo"].is_visible_in_tree(), "stroke undo stays on the HUD")
+	var undo_button: Button = menu.controls[&"undo"]
+	var pan_button: Button = menu.controls[&"move"]
+	expect(pan_button.get_parent() == undo_button.get_parent() and pan_button.get_index() == undo_button.get_index() + 1 and pan_button.icon != null and undo_button.icon != null, "icon-only pan and undo sit together on the HUD")
+	await click(undo_button)
+	expect(menu.draft.size() == 0, "the HUD undo icon removes the stroke")
+	await click_at(cell_point(start))
 	var undo := InputEventKey.new()
 	undo.physical_keycode = KEY_Z
 	undo.ctrl_pressed = true
@@ -263,7 +269,7 @@ func _run() -> void:
 
 func _check_new_nest_popup(world: World) -> void:
 	var controller := world.build_controller
-	var house_option: SceneBuildOption = preload("res://game/building/options/house.tres")
+	var house_option: SceneBuildOption = preload("res://game/building/options/barracks.tres")
 	var cell := Vector2i(29, 26)
 	var placed := controller.try_build(house_option, cell)
 	var site := controller.construction.at(cell)

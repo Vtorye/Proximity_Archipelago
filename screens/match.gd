@@ -170,14 +170,11 @@ func _cell_at(point: Vector2) -> Vector2i:
 
 func _inspect_building(cell: Vector2i) -> void:
 	var building: Building = world.registry.at(cell)
+	hud.navigation_panel.inspect_cell(cell)
 	if building is House:
-		hud.navigation_panel.inspect_cell(null)
-		selection.clear()
 		camera.dragging = false
 		if Router.top_overlay() == null:
 			_open_nest_popup(building)
-	else:
-		hud.navigation_panel.inspect_cell(cell)
 
 func _open_nest_popup(house: House) -> void:
 	camera.clear_nest_focus()
@@ -240,6 +237,7 @@ func _create_construction_panel() -> void:
 	context.art = world.art
 	context.camera = camera
 	context.undo_button = hud.construction_undo_button()
+	context.pan_button = hud.construction_pan_button()
 	context.obstacles = _construction_obstacles
 	context.dismiss_map_popup = _dismiss_visible_nest_popup
 	_construction = CONSTRUCTION_PANEL.instantiate()
@@ -268,7 +266,7 @@ func _close_construction_panel(menu: MenuBase) -> void:
 	if menu != _construction:
 		return
 	_construction.hide()
-	_construction.detach_undo()
+	_construction.detach_toolbar()
 	_construction.queue_free()
 	_construction = null
 	hud.set_task_selection(null)

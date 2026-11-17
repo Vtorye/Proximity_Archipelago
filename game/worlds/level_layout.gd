@@ -4,7 +4,7 @@ extends RefCounted
 ## Load lazily because world components also use level layout APIs.
 static var DEFAULT_WORLD: PackedScene:
 	get:
-		return load("res://game/worlds/world_1.tscn") as PackedScene
+		return load("res://game/worlds/starter_island.tscn") as PackedScene
 const VERSION := 1
 const CELL_LIMIT := 32768
 const TILE_LIMIT := 262144
@@ -22,7 +22,7 @@ static func editor_prototypes(world: World) -> Dictionary[String, Building]:
 	for building in result.values():
 		if building is House:
 			building.is_main_nest = false
-			building.option = load("res://game/building/options/house.tres")
+			building.option = load("res://game/building/options/barracks.tres")
 	for option in world.build_controller.initial_options():
 		if not option is SceneBuildOption or option.scene == null:
 			continue
@@ -217,12 +217,13 @@ static func _restore_objects(world: World, map: TileMapLayer, objects: Array[Lev
 				return false
 			building = instance as Building
 			building.option = catalog[kind]
+			building.colony_owned = true
 		else:
 			building = originals[kind].duplicate()
 			# Legacy Home rows mean a starter nest followed by small local nests.
 			if building is House:
 				building.is_main_nest = false
-				building.option = load("res://game/building/options/house.tres")
+				building.option = load("res://game/building/options/barracks.tres")
 		if placement.remaining_supply >= 0:
 			var workplace := building as Workplace
 			if workplace == null:

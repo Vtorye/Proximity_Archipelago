@@ -1,5 +1,7 @@
 @tool
 extends Node2D
+
+const TIMING := preload("res://game/navigation/navigation_timing.gd")
 ## Rasterizes the map's visual data at one texel per cell. The TileMapLayer owns all gameplay data.
 
 const PATCH := preload("res://game/terrain/terrain_surface_patch.tscn")
@@ -29,6 +31,14 @@ func _queue_rebuild() -> void:
 	_rebuild.call_deferred()
 
 func _rebuild() -> void:
+	if not TIMING.enabled:
+		_rebuild_surface()
+		return
+	TIMING.begin(&"terrain_surface")
+	_rebuild_surface()
+	TIMING.end()
+
+func _rebuild_surface() -> void:
 	_queued = false
 	if not is_inside_tree():
 		return

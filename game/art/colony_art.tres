@@ -1,6 +1,6 @@
 [gd_resource type="Resource" script_class="ArtCatalog" format=3 uid="uid://d2kl5l2u8nls1"]
 
-[ext_resource type="Texture2D" path="res://game/assets/sprites/canteen2.png" id="2_dmlrr"]
+[ext_resource type="Texture2D" uid="uid://cp4ej45kgubvy" path="res://game/assets/sprites/canteen_variant.png" id="2_dmlrr"]
 [ext_resource type="Texture2D" uid="uid://d31fehkeqbli4" path="res://game/assets/sprites/berries.svg" id="berries"]
 [ext_resource type="Texture2D" uid="uid://c46nj7ke08ktq" path="res://game/assets/tiles/grass.png" id="grass"]
 [ext_resource type="Texture2D" uid="uid://c3svnje4dj580" path="res://game/assets/sprites/nest.svg" id="nest"]

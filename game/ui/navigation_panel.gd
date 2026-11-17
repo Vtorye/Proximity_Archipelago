@@ -8,15 +8,21 @@ var inspected_cell: Variant = null
 @onready var _source: Label = %Source
 @onready var _detail: RichTextLabel = %Detail
 @onready var _clear_trap: Button = %ClearTrap
+@onready var _header: WindowHeader = %WindowHeader
 var _trap_cell := Vector2i.ZERO
 var _elapsed := 0.0
 func _ready() -> void:
-	%Formula.text = tr("ui.nav.formula") % str(overlay.world.planner.load_penalty_seconds)
 	_clear_trap.pressed.connect(AppSettings.play_click)
 	_clear_trap.pressed.connect(func():
 		if overlay.world.combat != null:
 			overlay.world.combat.clear_trap(_trap_cell)
 		refresh())
+	if overlay != null:
+		configure(overlay)
+
+func configure(routes: NavigationOverlay) -> void:
+	overlay = routes
+	%Formula.text = tr("ui.nav.formula") % str(overlay.world.planner.load_penalty_seconds)
 	refresh()
 
 func _process(delta: float) -> void:
@@ -29,6 +35,8 @@ func inspect_cell(cell: Variant) -> void:
 	refresh()
 
 func refresh() -> void:
+	if overlay == null:
+		return
 	var show_routes: bool = overlay.mode > 0
 	var cell: Vector2i = inspected_cell if inspected_cell != null else overlay.hovered
 	var map: TileMapLayer = overlay.world.map
@@ -48,6 +56,7 @@ func refresh() -> void:
 	visible = show_routes or building != null or has_trap or (inspected_cell != null and terrain != null)
 	if not visible:
 		return
+	_header.set_title("ui.nav.terrain" if inspected_cell != null and terrain != null else "ui.window.navigation")
 	_legend.visible = show_routes
 	if show_routes:
 		_heading.text = "ui.nav.entry" if overlay.mode == 1 else "ui.nav.priority"
@@ -66,7 +75,7 @@ func refresh() -> void:
 		description = "%s\n%s" % [tr(building.display_title()), workload]
 		if building.recipe == null and building.output != null:
 			description += "\n" + (tr("ui.source.remaining") % building.remaining_supply if building.finite_supply else tr("ui.source.infinite"))
-			description += "\n" + tr("ui.construction.production_rate") % String.num(building.output_amount * building.terrain_yield_multiplier, 2)
+			description += "\n" + tr("ui.construction.production_rate") % String.num(building.resource_rate(), 2)
 			product = building.output
 		if show_routes:
 			description += "\n" + overlay.explanation(building)
@@ -87,8 +96,16 @@ func refresh() -> void:
 		description += "\n" + tr("ui.terrain.harvest") % roundi(building.terrain_yield_multiplier * 100)
 	if building is House and building.terrain_capacity_multiplier > 1:
 		description += "\n" + tr("ui.terrain.capacity_bonus") % roundi((building.terrain_capacity_multiplier - 1) * 100)
-	if combat != null and building != null and combat.health(building) > 0:
+	if combat != null and building != null and combat.is_spider_target(building):
 		description += "\n" + tr("ui.combat.health") % [combat.health(building), combat.maximum_health(building)]
+	if inspected_cell != null and terrain != null and map is TerrainMap:
+		var ground: TerrainType = map.ground_at(cell)
+		var surface: TerrainType = map.surface_at(cell)
+		var soil := TerrainRules.describe(ground)
+		if surface != null and surface != ground:
+			soil = tr(surface.display_name) + "\n" + soil
+		if not soil.is_empty():
+			description += "\n\n" + soil
 	_detail.clear()
 	_detail.add_text(description)
 	if not has_trap and building is House:
@@ -101,7 +118,6 @@ func refresh() -> void:
 		_detail.add_text("\n" + tr("ui.construction.production_resource") + " ")
 		BuildCostText.append_resource(_detail, product)
 	_detail.add_theme_color_override("default_color", value.get("color", ColonyStyle.color(&"text")))
-	size.y = get_combined_minimum_size().y
 
 func _stock_header(house: House) -> String:
 	var inventory: WorldInventory = overlay.world.inventory

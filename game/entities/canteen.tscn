@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://brf42b54ugjtv"]
 
-[ext_resource type="Texture2D" path="res://game/assets/sprites/canteen2.png" id="art"]
+[ext_resource type="Texture2D" path="res://game/assets/sprites/canteen_variant.png" id="art"]
 [ext_resource type="Script" uid="uid://61u1015oq8mh" path="res://game/entities/canteen.gd" id="script"]
 
 [node name="Canteen" type="Node2D" unique_id=1819773372]

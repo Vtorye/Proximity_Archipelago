@@ -195,6 +195,7 @@ ui.terrain.allowed,yes,да
 ui.terrain.forbidden,no,нет
 ui.terrain.permissions,Roads: %s · berries: %s\nNests: %s,Дороги: %s · кусты: %s\nМуравейники: %s
 ui.terrain.harvest,Berry yield: %d%%,Урожай ягод: %d%%
+ui.terrain.build_price,Construction price: %d%%,Стоимость строительства: %d%%
 ui.terrain.nest_price,Nest price: %d%%,Цена муравейника: %d%%
 ui.terrain.road_price,Road price: %d%%,Цена дороги: %d%%
 ui.terrain.adjacency,Adjacent nest capacity: +%d%%\nRadius: %d; does not stack,Вместимость рядом: +%d%%\nРадиус: %d; не суммируется
@@ -375,7 +376,7 @@ ui.construction.price_partial_add,Part of the price increases by %s after each b
 ui.construction.next_price,Next build: %s,Следующая постройка: %s
 ui.construction.production_resource,Resource:,Ресурс:
 ui.construction.production_slots,Work slots: %d,Рабочие места: %d
-ui.construction.production_rate,Output per work cycle: %s,Добыча за рабочий цикл: %s
+ui.construction.production_rate,Output per second: %s,Добыча в секунду: %s
 ui.construction.source_target,Hover over a compatible source to see its output and supply.,"Наведите курсор на подходящий источник, чтобы увидеть добычу и запас."
 ui.construction.speed_multiplier,Movement speed: ×%s of base,Скорость движения: ×%s от базовой
 ui.trap.clear_action,Remove trap,Убрать ловушку

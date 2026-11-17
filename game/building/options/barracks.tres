@@ -3,19 +3,19 @@
 [ext_resource type="Script" uid="uid://clwif6xxyitqt" path="res://game/economy/price_rule.gd" id="4_jgd4o"]
 [ext_resource type="Script" uid="uid://dohq4yj0b3afb" path="res://game/resources/resource_amount.gd" id="amount"]
 [ext_resource type="Script" uid="uid://bdsukqwfreh8j" path="res://game/building/nest_build_option.gd" id="option"]
-[ext_resource type="PackedScene" path="res://game/entities/house.tscn" id="scene"]
-[ext_resource type="Resource" uid="uid://dnvvlsc4kjs1t" path="res://game/resources/dot_treses/stone.tres" id="stone"]
-[ext_resource type="Resource" uid="uid://btsdqgmh3ee22" path="res://game/resources/dot_treses/wood.tres" id="wood"]
+[ext_resource type="PackedScene" path="res://game/entities/nest.tscn" id="scene"]
+[ext_resource type="Resource" uid="uid://dnvvlsc4kjs1t" path="res://game/resources/resource_types/stone.tres" id="stone"]
+[ext_resource type="Resource" uid="uid://btsdqgmh3ee22" path="res://game/resources/resource_types/wood.tres" id="wood"]
 
 [sub_resource type="Resource" id="cost"]
 script = ExtResource("amount")
 type = ExtResource("wood")
-amount = 10
+amount = 12
 
 [sub_resource type="Resource" id="stone_cost"]
 script = ExtResource("amount")
 type = ExtResource("stone")
-amount = 20
+amount = 24
 
 [resource]
 script = ExtResource("option")

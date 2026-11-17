@@ -254,6 +254,7 @@ func try_build_plan(commands: Array[BuildCommand]) -> bool:
 				last_result = PlacementCheck.result(PlacementCheck.Code.INVALID_BUILDING)
 				break
 			var building: Building = candidate as Building
+			building.colony_owned = true
 			candidates.append(building)
 			if not building.setup(cell, option):
 				last_result = PlacementCheck.result(PlacementCheck.Code.INVALID_BUILDING)

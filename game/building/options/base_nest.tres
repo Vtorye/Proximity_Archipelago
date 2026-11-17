@@ -3,7 +3,7 @@
 [ext_resource type="Script" uid="uid://dohq4yj0b3afb" path="res://game/resources/resource_amount.gd" id="amount"]
 [ext_resource type="Script" uid="uid://bdsukqwfreh8j" path="res://game/building/nest_build_option.gd" id="option"]
 [ext_resource type="Script" uid="uid://clwif6xxyitqt" path="res://game/economy/price_rule.gd" id="price_rule"]
-[ext_resource type="Resource" path="res://game/resources/dot_treses/royal.tres" id="royal"]
+[ext_resource type="Resource" path="res://game/resources/resource_types/royal.tres" id="royal"]
 [ext_resource type="PackedScene" path="res://game/entities/base_nest.tscn" id="scene"]
 
 [sub_resource type="Resource" id="cost"]

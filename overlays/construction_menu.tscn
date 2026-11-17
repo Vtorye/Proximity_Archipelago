@@ -43,14 +43,6 @@ theme_override_constants/separation = 2
 unique_name_in_owner = true
 text = "ui.construction.category.defense"
 
-[node name="Move" type="Button" parent="Panel/CategoryContent/CategoryScroll/CategoryList"]
-unique_name_in_owner = true
-theme_type_variation = &"CompactButton"
-text = "ui.construction.drag"
-tooltip_text = "ui.construction.inspect_hint"
-toggle_mode = true
-mouse_default_cursor_shape = 2
-
 [node name="Cost" type="RichTextLabel" parent="Panel/CategoryContent"]
 unique_name_in_owner = true
 mouse_filter = 2

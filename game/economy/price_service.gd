@@ -1,6 +1,7 @@
 class_name PriceService
 extends Node
 ## Prices derive from immutable base definitions and event history, never from prior quotes.
+const ROYAL_CURRENCY_ID: StringName = &"royal"
 signal changed
 
 @export_range(0.1, 10.0, 0.1, "or_greater") var reload_interval_seconds := 1.0
@@ -82,7 +83,8 @@ func quote(option: BuildOption, pending: Dictionary[String, int] = {}, local_mul
 		if totals[type] < 0 or not is_finite(totals[type]) or totals[type] > 2147483647: return [null]
 		var entry := ResourceAmount.new()
 		entry.type = types[type]
-		entry.amount = ceili(totals[type] * _global_multiplier * local_multiplier - 0.000001)
+		var terrain_factor: float = 1.0 if type == ROYAL_CURRENCY_ID else local_multiplier
+		entry.amount = ceili(totals[type] * _global_multiplier * terrain_factor - 0.000001)
 		result.append(entry)
 	return result
 

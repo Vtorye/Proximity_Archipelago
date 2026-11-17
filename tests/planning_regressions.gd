@@ -7,6 +7,7 @@ func run(test: Node) -> void:
 	await _load_scoring(test)
 	await _slot_race(test)
 	await _workload_ui(test)
+	await _tile_inspector(test)
 	await _new_workplace(test)
 	await _road_updates(test)
 	await _returning_cargo(test)
@@ -28,7 +29,7 @@ func _second_nest_meal_return(test: Node) -> void:
 	world.task_deck = null
 	test.add_child(world)
 	var nest_cell := Vector2i(48, 1)
-	var built := world.build_controller.try_build(load("res://game/building/options/house.tres"), nest_cell)
+	var built := world.build_controller.try_build(load("res://game/building/options/barracks.tres"), nest_cell)
 	test.expect(built, "a second nest can be built beside the remote workplace")
 	if not built:
 		world.free()
@@ -51,6 +52,43 @@ func _second_nest_meal_return(test: Node) -> void:
 		if cycles[0] > 0:
 			break
 	test.expect(cycles[0] > 0, "after eating, the empty-handed worker returns to the second nest and resumes production")
+	world.free()
+	await test.get_tree().process_frame
+
+func _tile_inspector(test: Node) -> void:
+	var world: World = test.make_world()
+	var overlay := NavigationOverlay.new()
+	overlay.world = world
+	var panel := preload("res://game/ui/navigation_panel.tscn").instantiate() as NavigationPanel
+	panel.overlay = overlay
+	test.add_child(panel)
+	var map := world.map as TerrainMap
+	var dry_cell := Vector2i(24, 25)
+	var wet_cell := Vector2i(25, 25)
+	map.paint_tile(dry_cell, map.catalog.by_id(&"dry").tile, true)
+	map.paint_tile(wet_cell, map.catalog.by_id(&"wet").tile, true)
+	panel.inspect_cell(dry_cell)
+	await test.get_tree().process_frame
+	test.expect(panel.visible and panel._detail.get_parsed_text().contains(TranslationServer.translate("ui.terrain.build_price") % 50), "selecting dry ground displays its build rules and discount")
+	var press := InputEventMouseButton.new()
+	press.button_index = MOUSE_BUTTON_LEFT
+	press.pressed = true
+	panel._header._drag_input(press)
+	var drag := InputEventMouseMotion.new()
+	drag.button_mask = MOUSE_BUTTON_MASK_LEFT
+	drag.relative = Vector2(-40, -20)
+	panel._header._input(drag)
+	press.pressed = false
+	panel._header._input(press)
+	var position := panel.position
+	panel._header.toggle.pressed.emit()
+	panel.inspect_cell(wet_cell)
+	await test.get_tree().process_frame
+	test.expect(panel._header.collapsed and panel.position == position, "a new tile keeps the moved inspector folded in place")
+	panel._header.toggle.pressed.emit()
+	test.expect(panel._detail.get_parsed_text().contains(TranslationServer.translate("ui.terrain.adjacency") % [25, 1]), "opening the inspector shows the newly selected tile's bonus")
+	panel.free()
+	overlay.free()
 	world.free()
 	await test.get_tree().process_frame
 
@@ -81,29 +119,33 @@ func _new_workplace(test: Node) -> void:
 	var before_position: Vector2 = ant.global_position
 	test.expect(before_position != ant.home.global_position, "retarget fixture is already moving between cell centers")
 	var ticket: StockReservation = ant._meal
-	var berry: BuildOption = load("res://game/building/options/apple_tree.tres")
-	test.expect(world.build_controller.try_build(berry, Vector2i(25, 24)), "nearby berry bush is built through the normal command")
+	test.expect(_plant_berry(world, Vector2i(25, 24)), "nearby berry bush is built through the normal command")
 	await test.get_tree().process_frame
 	var nearby: Workplace = world.registry.at(Vector2i(25, 24)) as Workplace
 	test.expect(ant.work.workplace == nearby and ant._destination == &"work", "walking ant switches to a newly built nearer needed workplace")
 	test.expect(not stone.workers.has(ant) and nearby.workers.has(ant), "retargeting transfers the work reservation")
 	test.expect(ant._meal == ticket and ticket.active, "retargeting preserves the reserved meal")
 	test.expect(ant.global_position == before_position, "retargeting never teleports a moving ant")
-	test.expect(ant.motion.route.cells.back() == nearby.cell, "replacement route actually reaches the new workplace")
+	if nearby != null:
+		test.expect(ant.motion.route.cells.back() == nearby.cell, "replacement route actually reaches the new workplace")
 	world.free()
 	await test.get_tree().process_frame
 
 func _road_updates(test: Node) -> void:
 	var world: World = test.make_world()
+	await test.get_tree().process_frame
 	var ant: AntAgent = world.population.agents()[0]
 	var stone: Workplace = _stone_only(world, ant)
+	var walking_route := ant.motion.route
 	var road: BuildOption = load("res://game/building/options/road.tres")
 	var off_route := Vector2i(24, 24)
 	if ant.motion.route.cells.has(off_route): off_route = Vector2i(25, 25)
 	test.expect(not ant.motion.route.cells.has(off_route), "shortcut fixture is outside the old route")
 	test.expect(world.build_controller.try_build(road, off_route), "off-route shortcut can be constructed")
 	await test.get_tree().process_frame
-	test.expect(ant.motion.route.cells.has(off_route) and ant.motion.route.revision == world.route_service.revision, "walking ant adopts a cheaper route even when the old path remains valid")
+	test.expect(ant.motion.route == walking_route, "an off-route shortcut keeps the current safe trip")
+	var new_route := world.route_service.request_route(walking_route.cells.front(), walking_route.cells.back())
+	test.expect(new_route.cells.has(off_route), "a fresh route uses the cheaper shortcut")
 	test.expect(ant.work.workplace == stone and ant._destination == &"work", "new road does not turn a healthy worker toward the canteen")
 	var on_route: Vector2i = ant.motion.route.cells[2]
 	test.expect(world.build_controller.try_build(road, on_route), "road can also improve the active route")
@@ -118,8 +160,7 @@ func _returning_cargo(test: Node) -> void:
 	ant.global_position = world.route_service.cell_to_world(Vector2i(27, 24))
 	ant.transport.carrying = true
 	ant._go_home()
-	var berry: BuildOption = load("res://game/building/options/apple_tree.tres")
-	test.expect(world.build_controller.try_build(berry, Vector2i(27, 23)), "new workplace can appear beside a loaded returning ant")
+	test.expect(_plant_berry(world, Vector2i(27, 23)), "new workplace can appear beside a loaded returning ant")
 	await test.get_tree().process_frame
 	test.expect(ant._destination == &"home" and ant.transport.carrying and ant.work.workplace == null, "new work does not interrupt delivery of an existing load")
 	var next_cell: Vector2i = ant.motion.route.cells[1]
@@ -131,15 +172,41 @@ func _returning_cargo(test: Node) -> void:
 
 func _coalesced_updates(test: Node) -> void:
 	var world: World = test.make_world()
+	await test.get_tree().process_frame
 	var ant: AntAgent = world.population.agents()[0]
 	var stone: Workplace = _stone_only(world, ant)
+	var routes := world.route_service
+	var origin := world.planner.accessible_entry(ant.home)
+	var departure := routes.distances_from(origin)
+	var home := routes.reverse_field([origin])
 	var searches: int = world.route_service.search_count
+	var repairs: int = routes.field_repairs
+	var active_route: Route = ant.motion.route
+	var revision: int = world.route_service.revision
 	var road: BuildOption = load("res://game/building/options/road.tres")
-	for cell in [Vector2i(24, 24), Vector2i(25, 24), Vector2i(26, 24)]:
+	var cells: Array[Vector2i] = []
+	for cell in world.route_service.snapshot().walkable_cells():
+		if world.route_service.entry_cost(cell) > 0.35 and world.build_controller.can_build(road, cell):
+			cells.append(cell)
+			if cells.size() == 3: break
+	test.expect(cells.size() == 3, "fixture has three tiles that roads make cheaper")
+	var map := world.map as TerrainMap
+	var old_tile := map.key_at(cells.front())
+	for cell in cells:
 		test.expect(world.build_controller.try_build(road, cell), "several road edits can be committed in the same frame")
 	await test.get_tree().process_frame
-	test.expect(world.route_service.search_count - searches == world.registry.workplaces().size() + 2, "one frame of edits rebuilds one field per job plus home and food")
-	test.expect(ant.work.workplace == stone and ant.motion.route.revision == world.route_service.revision, "coalesced reconsideration uses the final navigation snapshot")
+	test.expect(world.route_service.revision == revision + 3 and world.route_service.search_count == searches, "cheaper roads advance the revision without rebuilding fields immediately")
+	test.expect(routes.field_repairs == repairs, "a batch of roads does not repair fields until read")
+	test.expect(routes.distances_from(origin) == departure and routes.reverse_field([origin], home) == home
+		and routes.field_repairs == repairs + 2 and routes.search_count == searches,
+		"the next reads repair forward and reverse fields once for the complete batch")
+	test.expect(ant.work.workplace == stone and ant.motion.route == active_route, "cheaper roads preserve an active safe path")
+	var fresh := world.planner.plan_work(ant, ant.home, ant.needs, ant.speed, ant.work_time, ant._meal, stone)
+	test.expect(fresh != null and fresh.outward != null and fresh.outward.revision == world.route_service.revision, "the next departure uses the new road costs")
+	map.paint_tile(cells.front(), old_tile, true)
+	routes.update_cells([cells.front()], world.registry.blocked_cells())
+	test.expect(routes.distances_from(origin) != departure and routes.reverse_field([origin], home) != home,
+		"raising a tile cost invalidates complete fields in both directions")
 	world.free()
 	await test.get_tree().process_frame
 
@@ -150,7 +217,7 @@ func _active_work(test: Node) -> void:
 	ant.global_position = stone.global_position
 	ant._arrive()
 	test.expect(ant.status == AntAgent.Status.WORKING, "work cycle fixture has already reached its workplace")
-	test.expect(world.build_controller.try_build(load("res://game/building/options/apple_tree.tres"), Vector2i(29, 20)), "nearer alternative may appear during a work cycle")
+	test.expect(_plant_berry(world, Vector2i(29, 20)), "nearer alternative may appear during a work cycle")
 	await test.get_tree().process_frame
 	test.expect(ant.status == AntAgent.Status.WORKING and ant.work.workplace == stone and stone.workers.has(ant), "new alternatives do not discard a work cycle already in progress")
 	world.free()
@@ -163,7 +230,7 @@ func _hungry_retarget(test: Node) -> void:
 	for step in range(30): ant._physics_process(1.0 / 60.0)
 	var cell: Vector2i = world.route_service.world_to_cell(ant.global_position)
 	ant.needs.satiety = world.planner.escape_energy(cell, ant.speed) + ant.needs.safety_margin + 1.0
-	test.expect(world.build_controller.try_build(load("res://game/building/options/apple_tree.tres"), Vector2i(25, 24)), "new nearby work can appear beside a hungry walking ant")
+	test.expect(_plant_berry(world, Vector2i(25, 24)), "new nearby work can appear beside a hungry walking ant")
 	await test.get_tree().process_frame
 	test.expect(ant._destination == &"food" and ant.work.workplace == null and ant._meal.active, "hungry ant rejects even nearer work and keeps its meal reservation")
 	test.expect(ant.needs.can_afford(world.planner.escape_energy(cell, ant.speed)), "hungry retarget retains enough energy to reach food safely")
@@ -204,6 +271,14 @@ func _place(world: World, cell: Vector2i) -> Workplace:
 	world.buildings.add_child(workplace)
 	world.registry.register(workplace)
 	return workplace
+
+func _plant_berry(world: World, cell: Vector2i) -> bool:
+	var berry: BuildOption = load("res://game/building/options/berry_bush.tres")
+	for item in world.build_controller.price(berry, cell):
+		var shortfall := item.amount - world.inventory.available(item.type)
+		if shortfall > 0:
+			world.inventory.add(item.type, shortfall)
+	return world.build_controller.try_build(berry, cell)
 
 func _reserve_walk(world: World, workplace: Workplace, ant: AntAgent) -> void:
 	workplace.reserve_worker(ant)

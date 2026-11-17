@@ -2,7 +2,7 @@ extends Node2D
 ## Standalone regression: local world services populate a nest without global groups.
 
 func _ready() -> void:
-	var world: World = load("res://game/worlds/world_1.tscn").instantiate() as World
+	var world: World = load("res://game/worlds/starter_island.tscn").instantiate() as World
 	world.auto_start = false
 	add_child(world)
 	var house: House = world.get_node("Home") as House
@@ -20,5 +20,5 @@ func _ready() -> void:
 	extra.free()
 	for resident in fillers:
 		resident.free()
-	print("HOUSE TEST ", "PASS" if passed else "FAIL")
+	print("NEST TEST ", "PASS" if passed else "FAIL")
 	get_tree().quit(0 if passed else 1)

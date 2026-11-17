@@ -1,5 +1,7 @@
 class_name AntAgent
 extends Node2D
+
+const TIMING := preload("res://game/navigation/navigation_timing.gd")
 ## Executes plans; needs, route execution, and assignment policy are separate objects.
 
 enum Role { WORKER, CARRIER, WARRIOR }
@@ -162,6 +164,14 @@ func _physics_process(delta: float) -> void:
 	_refresh_visual()
 
 func _decide() -> void:
+	if not TIMING.enabled:
+		_decide_inner()
+		return
+	TIMING.begin(&"ant_decide")
+	_decide_inner()
+	TIMING.end()
+
+func _decide_inner() -> void:
 	if combat != null and role == Role.WARRIOR:
 		combat.decide()
 		return
@@ -293,13 +303,14 @@ func step_clear_of_construction(cell: Vector2i) -> void:
 	cell_changed.emit(previous, cell)
 
 func _on_navigation_changed() -> void:
-	_queue_reconsideration(true)
+	if not route_service.last_change_only_cheaper:
+		_queue_reconsideration(true)
 
 func _on_food_sources_changed() -> void:
 	if status == Status.WALKING and _destination == &"food" or status == Status.EATING:
 		_seek_food()
 	else:
-		_on_navigation_changed()
+		_queue_reconsideration(true)
 
 func _on_work_opportunities_changed() -> void:
 	if status == Status.WANDERING or (status == Status.HOME and work.waiting_for_work):

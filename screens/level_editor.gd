@@ -12,6 +12,9 @@ var _map: TileMapLayer
 @onready var _starting_maps: Array[OptionButton] = [%StartingStandard, %StartingWaves]
 @onready var _title: LineEdit = %MapTitle
 @onready var _status: Label = %Status
+@onready var _options: Control = %MapOptions
+@onready var _options_status: Label = %OptionsStatus
+var _options_trigger: Button
 var _brushes: Array[Variant] = []
 var _dirty := false
 var _discard_action := ""
@@ -48,8 +51,6 @@ func _exit_tree() -> void:
 		_template.free()
 
 func _configure_controls() -> void:
-
-
 	%Back.pressed.connect(_back)
 	%Back.pressed.connect(AppSettings.play_click)
 	%NewMap.pressed.connect(_new_map)
@@ -66,6 +67,11 @@ func _configure_controls() -> void:
 	%GenerateSoils.pressed.connect(AppSettings.play_click)
 	%GenerateMap.pressed.connect(_generate_map)
 	%GenerateMap.pressed.connect(AppSettings.play_click)
+	%OpenGeneration.pressed.connect(_open_options.bind(%OpenGeneration, true))
+	%OpenStartingMaps.pressed.connect(_open_options.bind(%OpenStartingMaps, false))
+	%CloseOptions.pressed.connect(_close_options)
+	for button: Button in [%OpenGeneration, %OpenStartingMaps, %CloseOptions]:
+		button.pressed.connect(AppSettings.play_click)
 	_title.text_changed.connect(func(_value: String): _mark_dirty())
 	for index in range(_starting_maps.size()):
 		var choice: OptionButton = _starting_maps[index]
@@ -96,8 +102,36 @@ func _configure_controls() -> void:
 		if is_instance_valid(_selected_source):
 			_selected_source.remaining_supply = int(value)
 			_mark_dirty())
-	_brush.item_selected.connect(func(_index: int): _pending_move = null)
+	_brush.item_selected.connect(func(index: int):
+		_pending_move = null
+		_brush.tooltip_text = _brush.get_item_text(index))
 	_populate_brushes()
+
+func _open_options(trigger: Button, generation: bool) -> void:
+	_options_trigger = trigger
+	%OptionsTitle.text = trigger.text
+	%Generation.visible = generation
+	%StartingMaps.visible = not generation
+	_options_status.hide()
+	_drag_button = MOUSE_BUTTON_NONE
+	%Top.focus_behavior_recursive = Control.FOCUS_BEHAVIOR_DISABLED
+	%Bottom.focus_behavior_recursive = Control.FOCUS_BEHAVIOR_DISABLED
+	_options.show()
+	%CloseOptions.grab_focus()
+
+func _close_options() -> void:
+	_options.hide()
+	%Top.focus_behavior_recursive = Control.FOCUS_BEHAVIOR_INHERITED
+	%Bottom.focus_behavior_recursive = Control.FOCUS_BEHAVIOR_INHERITED
+	if is_instance_valid(_options_trigger):
+		_options_trigger.grab_focus()
+
+func _set_status(message: String) -> void:
+	_status.text = message
+	_status.visible = not message.is_empty()
+	if _options.visible:
+		_options_status.text = message
+		_options_status.visible = _status.visible
 
 func _populate_brushes() -> void:
 	_add_brush("ui.map.move_object", &"move")
@@ -148,7 +182,7 @@ func _show_world(world: World) -> void:
 			if child.owner == world:
 				child.owner = null
 		building.reparent(_objects)
-		building.global_position = _map.to_global(_map.map_to_local(building.cell))
+		_position_preview(building)
 	world.free()
 	_pending_move = null
 	_selection.map = _map
@@ -166,20 +200,15 @@ func _refresh_saved() -> void:
 	_fill_map_choices(_saved, levels)
 	for index in range(_starting_maps.size()):
 		var waves: bool = index == 1
-		var label: String = tr("ui.menu.waves" if waves else "ui.map.normal_mode")
-		_fill_map_choices(_starting_maps[index], levels, LevelStore.starting_level(waves), label)
+		_fill_map_choices(_starting_maps[index], levels, LevelStore.starting_level(waves))
 
-func _fill_map_choices(menu: OptionButton, levels: Array[Dictionary], selected := "", mode := "") -> void:
+func _fill_map_choices(menu: OptionButton, levels: Array[Dictionary], selected := "") -> void:
 	menu.clear()
-	var starting: bool = not mode.is_empty()
-	var default_title: String = tr("ui.map.default")
-	menu.add_item(tr("ui.map.mode_title") % [mode, default_title] if starting else default_title)
+	menu.add_item(tr("ui.map.default"))
 	menu.set_item_metadata(0, "")
 	for data in levels:
 		var title: String = data.title
-		if starting:
-			title = tr("ui.map.mode_title") % [mode, title]
-		elif LevelStore.BUILT_IN_LEVELS.has(data.file):
+		if LevelStore.BUILT_IN_LEVELS.has(data.file):
 			title += " · " + tr("ui.map.bundled")
 		menu.add_item(title)
 		var index: int = menu.item_count - 1
@@ -193,7 +222,7 @@ func _set_starting_map(waves: bool, choice: OptionButton, index: int) -> void:
 		var data: Dictionary = LevelStore.load_level(filename)
 		var world: World = LevelLayout.create_world(data)
 		if world == null:
-			_status.text = "ui.map.load_failed"
+			_set_status("ui.map.load_failed")
 			_refresh_saved()
 			return
 		world.waves.enabled = waves
@@ -202,29 +231,29 @@ func _set_starting_map(waves: bool, choice: OptionButton, index: int) -> void:
 			errors.append(tr("ui.map.starting_requires_nest"))
 		world.free()
 		if not errors.is_empty():
-			_status.text = errors[0]
+			_set_status(errors[0])
 			_status.tooltip_text = "\n".join(errors)
 			_refresh_saved()
 			return
 	var error: Error = LevelStore.set_starting_level(filename, waves)
 	if error != OK:
-		_status.text = tr("ui.map.save_failed") % error_string(error)
+		_set_status(tr("ui.map.save_failed") % error_string(error))
 		_refresh_saved()
 		return
-	_status.text = "ui.map.starting_saved"
+	_set_status("ui.map.starting_saved")
 	_status.tooltip_text = ""
 
 func _mark_dirty() -> void:
 	_dirty = true
 	_discard_action = ""
-	_status.text = "ui.map.dirty"
+	_set_status("ui.map.dirty")
 	_status.tooltip_text = ""
 
 func _confirm_discard(action: String) -> bool:
 	if not _dirty or _discard_action == action:
 		return true
 	_discard_action = action
-	_status.text = "ui.map.discard"
+	_set_status("ui.map.discard")
 	return false
 
 func _back() -> void:
@@ -251,32 +280,32 @@ func _load_map() -> void:
 		description = data.get("description", "")
 		var world: World = LevelLayout.create_world(data)
 		if world == null:
-			_status.text = "ui.map.load_failed"
+			_set_status("ui.map.load_failed")
 			return
 		_show_world(world)
 		_title.text = data.title
 	_dirty = false
 	_discard_action = ""
-	_status.text = "ui.map.loaded"
+	_set_status("ui.map.loaded")
 	_status.tooltip_text = ""
 	if not description.is_empty():
-		_status.text = description
+		_set_status(description)
 		_status.tooltip_text = description.replace(". ", ".\n")
 
 func _save_map() -> void:
 	var title: String = _title.text.strip_edges()
 	if title.is_empty():
-		_status.text = "ui.map.name_needed"
+		_set_status("ui.map.name_needed")
 		_title.grab_focus()
 		return
 	var layout: Dictionary = LevelLayout.capture(_map, _objects.get_children())
 	var error: Error = LevelStore.save_level(title, layout)
 	if error != OK:
-		_status.text = tr("ui.map.save_failed") % error_string(error)
+		_set_status(tr("ui.map.save_failed") % error_string(error))
 		return
 	_dirty = false
 	_discard_action = ""
-	_status.text = "ui.map.saved"
+	_set_status("ui.map.saved")
 	_refresh_saved()
 	var filename: String = title.sha256_text() + ".json"
 	for index in range(_saved.item_count):
@@ -286,25 +315,25 @@ func _save_map() -> void:
 
 func _play(waves := false) -> void:
 	if _dirty:
-		_status.text = "ui.map.save_first"
+		_set_status("ui.map.save_first")
 		return
 	var layout: Dictionary = LevelLayout.capture(_map, _objects.get_children())
 	var world: World = LevelLayout.create_world(layout)
 	if world == null:
-		_status.text = "ui.map.load_failed"
+		_set_status("ui.map.load_failed")
 		return
 	world.waves.enabled = waves
 	var errors: Array[String] = LevelValidator.validate_world(world, tr("ui.menu.maps"))
 	world.free()
 	if not errors.is_empty():
-		_status.text = errors[0]
+		_set_status(errors[0])
 		_status.tooltip_text = "\n".join(errors)
 		return
 	if waves: layout["wave_mode"] = true
 	Router.goto(&"match", layout)
 
 func _process(delta: float) -> void:
-	if not _active or get_viewport().gui_get_focus_owner() is LineEdit or _saved.get_popup().visible or _brush.get_popup().visible:
+	if not _active or _options.visible or get_viewport().gui_get_focus_owner() is LineEdit or _saved.get_popup().visible or _brush.get_popup().visible:
 		return
 	var direction: Vector2 = WorldCamera.keyboard_direction()
 	if not direction.is_zero_approx():
@@ -324,6 +353,11 @@ func _input(event: InputEvent) -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not _active:
+		return
+	if _options.visible:
+		if event.is_action_pressed(&"ui_cancel"):
+			_close_options()
+			get_viewport().set_input_as_handled()
 		return
 	if event.is_action_pressed(&"ui_cancel"):
 		_back()
@@ -356,7 +390,7 @@ func _paint(cell: Vector2i) -> void:
 		var underlying: TerrainType = (_map as TerrainMap).ground_at(cell)
 		var object: Building = _object_at(cell)
 		if next_type != null and ((next_type.kind == TerrainType.Kind.ROAD and underlying != null and not underlying.roads_allowed) or (object != null and not TerrainRules.supports(next_type, TerrainRules.building_kind(object)))):
-			_status.text = "ui.placement.soil_restricted"
+			_set_status("ui.placement.soil_restricted")
 			return
 		(_map as TerrainMap).paint_tile(cell, brush, true)
 		TerrainPainter.grow_wet_shore(_map, cell, _objects.get_children())
@@ -371,7 +405,7 @@ func _paint(cell: Vector2i) -> void:
 			_pending_move = _object_at(cell)
 			_select_source(_pending_move as Workplace)
 			if _pending_move != null:
-				_status.text = "ui.map.move_target"
+				_set_status("ui.map.move_target")
 	else:
 		var building: Building = _prototypes[brush].duplicate()
 		building.set_meta(&"layout_kind", brush)
@@ -386,36 +420,42 @@ func _place(building: Building, cell: Vector2i) -> bool:
 		var occupied: Building = _object_at(tile, building)
 		if data == null or not data.get_custom_data("walkable") or occupied != null or not _allows_object(building, tile):
 			building.cell = previous
-			_status.text = "ui.map.invalid_object_cell"
+			_set_status("ui.map.invalid_object_cell")
 			return false
 	if building.get_parent() == null:
 		_objects.add_child(building, true)
-	building.global_position = _map.to_global(_map.map_to_local(cell))
+	_position_preview(building)
 	_mark_dirty()
 	return true
+
+func _position_preview(building: Building) -> void:
+	building.global_position = _map.to_global(_map.map_to_local(building.cell))
+	building.configure_appearance(_template.art, float(_map.tile_set.tile_size.x))
 
 func _generate_map() -> void:
 	if _dirty and _discard_action != "generate":
 		_discard_action = "generate"
-		_status.text = "ui.voyage.generate_confirm"
+		_set_status("ui.voyage.generate_confirm")
 		return
 	var budgets := Vector3i(int(_wood_total.value), int(_stone_total.value), int(_food_total.value))
 	var layout := IslandGenerator.generate_data(_template, int(_generator_seed.value), 0, 0, _generator_size.get_selected_id(), budgets)
 	var generated: World = LevelLayout.instantiate_world(layout) if layout != null else null
 	if generated == null:
-		_status.text = "ui.map.load_failed"
+		_set_status("ui.map.load_failed")
 		return
 	_show_world(generated)
 	_title.text = layout.title
 	_mark_dirty()
 	_discard_action = ""
-	_status.text = "ui.voyage.generated"
+	_set_status("ui.voyage.generated")
+	if _options.visible:
+		_close_options()
 
 func _generate_soils() -> void:
 	var rules := _template.island_generation
 	var count := TerrainPainter.populate(_map, _objects.get_children(), rules, rules.soil_seed)
 	_mark_dirty()
-	_status.text = tr("ui.terrain.generated") % count
+	_set_status(tr("ui.terrain.generated") % count)
 
 func _allows_object(building: Building, cell: Vector2i) -> bool:
 	return TerrainRules.supports((_map as TerrainMap).ground_at(cell), TerrainRules.building_kind(building))

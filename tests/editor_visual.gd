@@ -51,7 +51,7 @@ func run(plugin: EditorPlugin) -> void:
 	plugin.controls[&"validate"].pressed.emit()
 	expect(plugin._output.text.begins_with("Уровень корректен"), "saved level validation is visible in the dock")
 	await capture(plugin, "04-level-validation")
-	var path := "res://game/building/options/house.tres"
+	var path := "res://game/building/options/barracks.tres"
 	var original: String = FileAccess.get_file_as_string(path)
 	FileAccess.open(path, FileAccess.WRITE).store_string(original.replace("amount = 10", "amount = -10"))
 	plugin.controls[&"validate"].pressed.emit()

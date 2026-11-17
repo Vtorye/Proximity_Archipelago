@@ -618,6 +618,9 @@ msgstr "Дороги: %s · кусты: %s\nМуравейники: %s"
 msgid "ui.terrain.harvest"
 msgstr "Урожай ягод: %d%%"
 
+msgid "ui.terrain.build_price"
+msgstr "Стоимость строительства: %d%%"
+
 msgid "ui.terrain.nest_price"
 msgstr "Цена муравейника: %d%%"
 
@@ -1132,7 +1135,7 @@ msgid "ui.construction.production_slots"
 msgstr "Рабочие места: %d"
 
 msgid "ui.construction.production_rate"
-msgstr "Добыча за рабочий цикл: %s"
+msgstr "Добыча в секунду: %s"
 
 msgid "ui.construction.source_target"
 msgstr "Наведите курсор на подходящий источник, чтобы увидеть добычу и запас."

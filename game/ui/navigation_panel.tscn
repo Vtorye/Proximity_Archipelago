@@ -14,8 +14,9 @@ theme_override_constants/separation = 3
 [node name="WindowHeader" parent="WindowContents" node_paths=PackedStringArray("panel", "body") instance=ExtResource("window_header")]
 unique_name_in_owner = true
 title = "ui.window.navigation"
+action = 1
 dock = 4
-panel_width = 190.0
+panel_width = 215.0
 inset = Vector2(8, 64)
 panel = NodePath("../..")
 body = NodePath("../Content")

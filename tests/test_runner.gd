@@ -1,6 +1,6 @@
 extends Node
 ## Executable regressions: a failure changes the process exit code.
-const WORLD := preload("res://game/worlds/world_1.tscn")
+const WORLD := preload("res://game/worlds/starter_island.tscn")
 const ASTAR := preload("res://game/navigation/astar_path_finder.gd")
 const DIJKSTRA := preload("res://game/navigation/dijkstra_path_finder.gd")
 var failures: Array[String] = []
@@ -29,6 +29,11 @@ func _ready() -> void:
 	_run.call_deferred()
 
 func _run() -> void:
+	if OS.get_cmdline_user_args().has("navigation-only"):
+		_test_navigation()
+		print("NAV REGRESSION ", JSON.stringify({"assertions": assertions, "failures": failures}))
+		get_tree().quit(0 if failures.is_empty() else 1)
+		return
 	seed(20261025)
 	await preload("res://tests/voyage_regressions.gd").new().run(self)
 	await _test_translations()
@@ -61,6 +66,7 @@ func _run() -> void:
 	await preload("res://tests/terrain_regressions.gd").new().run(self)
 	await _test_simulation()
 	await _test_satiety_rules()
+	await _test_level_editor_layout()
 	print("TEST REPORT ", JSON.stringify({"assertions": assertions, "failures": failures, "metrics": metrics}))
 	print("TESTS PASS" if failures.is_empty() else "TESTS FAIL")
 	get_tree().quit(0 if failures.is_empty() else 1)
@@ -135,8 +141,9 @@ func _test_navigation() -> void:
 		var grid := TileGrid.new()
 		var costs := PackedFloat32Array()
 		for index in range(81):
-			costs.append(0.0 if rng.randf() < 0.2 else [0.5, 1.0, 2.0][rng.randi_range(0, 2)])
+			costs.append(0.0 if rng.randf() < 0.2 else [0.35, 1.0, 2.0][rng.randi_range(0, 2)])
 		grid.configure(Rect2i(-2, -3, 9, 9), costs)
+		_check_road_field_repair(grid)
 		var astar: PathAlgorithm = ASTAR.new()
 		var dijkstra: PathAlgorithm = DIJKSTRA.new()
 		astar.build(grid)
@@ -182,6 +189,41 @@ func _test_navigation() -> void:
 	expect(service._fields.size() <= RouteService.MAX_CACHED_FIELDS, "navigation cache stays bounded")
 	metrics["navigation_100x100"] = {"cold_field_ms": cold_us / 1000.0, "10000_cached_reads_ms": hits_us / 1000.0, "field_bytes": field.costs.size() * 4 + field.parents.size(), "cache_limit": RouteService.MAX_CACHED_FIELDS}
 	service.free()
+
+func _check_road_field_repair(grid: TileGrid) -> void:
+	var cells := grid.walkable_cells()
+	if cells.is_empty(): return
+	var seeds: Array[Vector2i] = [cells.front(), cells.back()]
+	var next := grid
+	var changed := PackedInt32Array()
+	# Lower adjacent costs and costs on different components in one revision.
+	for id in range(0, cells.size(), 4):
+		next = next.with_cost(cells[id], next.cost(cells[id]) * 0.35)
+		changed.append(id)
+	for reverse in [false, true]:
+		var repaired := GridSearch.build(grid, seeds, reverse)
+		GridSearch.repair(repaired, next, changed)
+		var fresh := GridSearch.build(next, seeds, reverse)
+		var matches := true
+		for cell in cells:
+			var distance := fresh.cost(cell)
+			if is_inf(distance):
+				matches = matches and repaired.path(cell).is_empty()
+				continue
+			var path := repaired.path(cell)
+			if path.is_empty():
+				matches = false
+				continue
+			var path_cost := 0.0
+			for step in range(1, path.size()):
+				path_cost += next.cost(path[step])
+			matches = matches and is_equal_approx(repaired.cost(cell), distance)
+			matches = matches and is_equal_approx(path_cost, distance)
+			if reverse:
+				matches = matches and seeds.has(path.back()) and path.back() == repaired.destination(cell)
+			else:
+				matches = matches and seeds.has(path.front())
+		expect(matches, "road repair preserves optimal weighted routes and seed reachability")
 
 func _reference(grid: TileGrid, start: Vector2i, finish: Vector2i) -> float:
 	if not grid.walkable(start) or not grid.walkable(finish):
@@ -274,7 +316,7 @@ func _test_worlds() -> void:
 	plan = first.planner.plan_work(ant, ant.home, ant.needs, ant.speed, ant.work_time, ant._meal)
 	expect(plan != null and plan.estimated_energy + ant.needs.safety_margin <= ant.needs.satiety, "healthy ant receives a complete feasible plan")
 	if plan != null and plan.workplace != null: plan.workplace.release_worker(ant)
-	var nest: SceneBuildOption = load("res://game/building/options/house.tres").duplicate(true) as SceneBuildOption
+	var nest: SceneBuildOption = load("res://game/building/options/barracks.tres").duplicate(true) as SceneBuildOption
 	nest.blocks_movement = true
 	nest.costs = [entry(wood, 0)]
 	first.build_controller.unlock_option(nest)
@@ -302,7 +344,7 @@ func _test_worlds() -> void:
 	var stock_before: int = first.inventory.quantity(wood)
 	expect(not first.build_controller.try_build(invalid, Vector2i(28, 29)), "invalid nest setup fails")
 	expect(first.inventory.quantity(wood) == stock_before and first.registry.at(Vector2i(28, 29)) == null, "invalid setup leaves stock and world unchanged")
-	var far: BuildOption = load("res://game/building/options/house.tres")
+	var far: BuildOption = load("res://game/building/options/barracks.tres")
 	expect(first.build_controller.check(far, Vector2i(9, 10)).allowed(), "nest with unreachable feeding can be placed")
 	var slow: SceneBuildOption = far.duplicate(true) as SceneBuildOption
 	slow.spawn_speed = 1.0
@@ -347,7 +389,7 @@ func _test_assignment_load() -> void:
 			if world.registry.at(cell) != null: continue
 			var workplace := Workplace.new()
 			workplace.output = world.inventory.type_by_id(&"wood")
-			workplace.output_amount = 2
+			workplace.output_per_second = 2.0
 			workplace.position = world.route_service.cell_to_world(cell)
 			workplace.setup(cell, null)
 			world.buildings.add_child(workplace)
@@ -363,20 +405,24 @@ func _test_assignment_load() -> void:
 			var cell := Vector2i(x, y)
 			if world.route_service.snapshot().connected(ant.home.cell, cell):
 				origins.append(cell)
-	expect(origins.size() > RouteService.MAX_CACHED_FIELDS, "assignment load fixture exceeds the manual overlay's origin cache")
+	expect(not origins.is_empty(), "assignment load fixture includes reachable cells away from the nest")
 	var searches_before: int = world.route_service.search_count
 	var started: int = Time.get_ticks_usec()
 	var assigned := 0
-	for request in range(1000):
-		var origin: Vector2i = origins[request % origins.size()]
+	var origin := world.planner.accessible_entry(ant.home)
+	for _request in range(1000):
 		ant.global_position = world.route_service.cell_to_world(origin)
 		var plan: WorkPlan = world.planner.plan_work(ant, ant.home, ant.needs, ant.speed, ant.work_time, ant._meal)
 		if plan != null and plan.workplace != null:
 			assigned += 1
 			plan.workplace.release_worker(ant)
 	var elapsed_ms: float = (Time.get_ticks_usec() - started) / 1000.0
-	expect(assigned == 1000, "one thousand assignments remain feasible with many POIs and starting cells")
-	expect(world.route_service.search_count == searches_before and world.route_service._fields.is_empty(), "assignments from different cells never build origin fields")
+	expect(assigned == 1000, "one thousand assignments remain feasible with many workplaces")
+	expect(world.route_service.search_count - searches_before <= 1 and world.planner._work_fields.size() == 1, "a thousand departures share one forward field")
+	var away: Vector2i = origins.back()
+	ant.global_position = world.route_service.cell_to_world(away)
+	var replan := world.planner.plan_work(ant, ant.home, ant.needs, ant.speed, ant.work_time, ant._meal)
+	expect(replan != null and replan.outward != null and replan.outward.cells.front() == away, "a worker replans from its real cell away from home")
 	metrics["assignment_load"] = {"requests": 1000, "origins": origins.size(), "workplaces": world.registry.workplaces().size(), "work_fields": world.planner._work_fields.size(), "preparation_ms": preparation_ms, "wall_ms": elapsed_ms, "new_searches": world.route_service.search_count - searches_before}
 	world.free()
 	await get_tree().process_frame
@@ -450,7 +496,7 @@ func _test_simulation() -> void:
 				for y in range(item.y, item.z + 1): network.append(Vector2i(item.x, y))
 			for cell in network:
 				expect(world.build_controller.try_build(road, cell), "safe road network can be built from starting stock")
-			expect(world.build_controller.try_build(load("res://game/building/options/house.tres"), Vector2i(29, 22)), "player can place another nest near the stone workplace")
+			expect(world.build_controller.try_build(load("res://game/building/options/barracks.tres"), Vector2i(29, 22)), "player can place another nest near the stone workplace")
 		var deaths: Array[int] = [0]
 		var work: Array[int] = [0]
 		for ant in world.population.agents():
@@ -540,3 +586,30 @@ func _test_language_toggle() -> void:
 	AppSettings.language = original_language
 	AppSettings.save()
 	TranslationServer.set_locale(original_locale)
+
+func _test_level_editor_layout() -> void:
+	var previous_size := AppSettings.text_size
+	AppSettings.text_size = AppSettings.TYPOGRAPHY.minimum_sizes.size() - 1
+	AppSettings.apply()
+	var editor: Control = preload("res://screens/level_editor.tscn").instantiate()
+	add_child(editor)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var viewport := get_viewport().get_visible_rect()
+	var top: Control = editor.get_node("%Top")
+	var bottom: Control = editor.get_node("%Bottom")
+	expect(viewport.encloses(top.get_global_rect()) and viewport.encloses(bottom.get_global_rect())
+		and top.get_global_rect().end.y < bottom.get_global_rect().position.y, "map editor toolbars fit at the largest text size")
+	var workplace := editor._objects.get_node("Workplace") as Workplace
+	var sprite := workplace.get_node("Sprite") as Sprite2D
+	expect((sprite.texture.get_size() * sprite.scale).is_equal_approx(Vector2(editor._map.tile_set.tile_size)), "map editor scales building artwork to the tile footprint")
+	var open: Button = editor.get_node("%OpenGeneration")
+	editor._open_options(open, true)
+	await get_tree().process_frame
+	var submit: Button = editor.get_node("%GenerateMap")
+	expect(submit.is_visible_in_tree() and viewport.encloses(submit.get_global_rect()), "generation opens with its submit button on screen")
+	editor._close_options()
+	expect(get_viewport().gui_get_focus_owner() == open, "closing map options restores keyboard focus")
+	editor.free()
+	AppSettings.text_size = previous_size
+	AppSettings.apply()

@@ -83,10 +83,14 @@ func _update_mode() -> void:
 	description_panel.hide()
 	_update_buildings_visibility()
 
-func detach_undo() -> void:
+func detach_toolbar() -> void:
 	controls[&"undo"].pressed.disconnect(_undo)
 	controls[&"undo"].pressed.disconnect(AppSettings.play_click)
 	controls[&"undo"].disabled = true
+	context.pan_button.pressed.disconnect(AppSettings.play_click)
+	context.pan_button.toggled.disconnect(_set_map_drag)
+	context.pan_button.set_pressed_no_signal(false)
+	context.pan_button.disabled = true
 
 func dock_between(bar_height: float, top_edge: float) -> void:
 	_bottom_inset = bar_height + PRESENTATION.dock_clearance
@@ -141,14 +145,15 @@ func _ready() -> void:
 	controls[&"demolish"] = %Demolish
 	controls[&"apply"] = %Apply
 	controls[&"cancel"] = %Cancel
-	controls[&"move"] = %Move
+	controls[&"move"] = context.pan_button
+	context.pan_button.disabled = false
 	for action in [&"undo", &"apply", &"cancel", &"demolish", &"move"]:
 		controls[action].pressed.connect(AppSettings.play_click)
 	controls[&"undo"].pressed.connect(_undo)
 	controls[&"demolish"].pressed.connect(select_demolition)
 	controls[&"cancel"].pressed.connect(_cancel)
 	controls[&"apply"].pressed.connect(apply_plan)
-	%Move.toggled.connect(_set_map_drag)
+	context.pan_button.toggled.connect(_set_map_drag)
 	controls[&"confirm_demolish"] = %Confirm
 	%Confirm.pressed.connect(AppSettings.play_click)
 	%Confirm.pressed.connect(_commit)
@@ -180,7 +185,6 @@ func _populate_categories() -> void:
 	var remaining: Array[BuildOption] = context.controller.options.filter(
 		func(option: BuildOption) -> bool: return option != null and option.show_in_palette)
 	var catalog: BuildCatalog = context.controller.catalog
-	var production: Button
 	if catalog != null:
 		for category in catalog.categories:
 			if category == null:
@@ -194,12 +198,8 @@ func _populate_categories() -> void:
 						available.append(option)
 						remaining.erase(option)
 						break
-			var entry: Button = _add_category(category.title, available)
-			if category.title == "ui.construction.category.production":
-				production = entry
+			_add_category(category.title, available)
 	_add_category("ui.construction.category.other", remaining)
-	# Move starts before the generated categories, so the old index puts it directly after Production.
-	%CategoryList.move_child(%Move, production.get_index() if production != null else -1)
 
 func _add_category(title: String, options: Array[BuildOption]) -> Button:
 	if options.is_empty():
@@ -285,7 +285,7 @@ func _set_map_drag(enabled: bool) -> void:
 	context.camera.dragging = false
 	_map_drag = enabled
 	pan_mode_changed.emit(enabled)
-	%Move.set_pressed_no_signal(enabled)
+	context.pan_button.set_pressed_no_signal(enabled)
 	_update_buildings_visibility()
 	if enabled:
 		description_panel.hide()

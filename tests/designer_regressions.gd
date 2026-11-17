@@ -81,7 +81,7 @@ func test_finite_sources(test: Node) -> void:
 	sprite.name = "Sprite"
 	sprite.texture = world.art.timber
 	workplace.add_child(sprite)
-	workplace.output_amount = 2
+	workplace.output_per_second = 2.0
 	workplace.work_slots = 2
 	workplace.finite_supply = true
 	workplace.remaining_supply = 3
@@ -121,7 +121,7 @@ func test_finite_sources(test: Node) -> void:
 	test.expect(LevelLayout.create_world(layout) == null, "map import rejects fractional resource deposits")
 
 func test_resource_facilities(test: Node) -> void:
-	var world: World = load("res://game/worlds/world_1.tscn").instantiate()
+	var world: World = load("res://game/worlds/starter_island.tscn").instantiate()
 	world.auto_start = false
 	world.build_controller.physical_construction = false
 	test.add_child(world)
@@ -141,7 +141,7 @@ func test_resource_facilities(test: Node) -> void:
 	task.unlocks = [sawmill, quarry, farm]
 	var variant := TaskVariant.new()
 	variant.id = &"build"
-	variant.building = load("res://game/building/options/building.tres")
+	variant.building = load("res://game/building/options/placeholder_building.tres")
 	task.variants = [variant]
 	world.tasks.slots[0] = task
 	var order := world.tasks.start_order(task.id, variant.id)
@@ -156,12 +156,13 @@ func test_resource_facilities(test: Node) -> void:
 	var worker: AntAgent = world.population.agents()[0]
 	workplace.reserve_worker(worker)
 	var before: int = world.inventory.quantity(wood)
+	var sawmill_wood := BuildController.price_amount(world.build_controller.price(sawmill, workplace.cell), wood)
 	var draft := BuildDraft.new()
 	draft.controller = world.build_controller
 	test.expect(draft.paint(sawmill, workplace.cell) and draft.commit(), "a facility can be planned and built on an occupied resource cell")
 	test.expect(world.registry.at(workplace.cell) == workplace and workplace.work_slots == slots_before + 2 and workplace.has_worker(worker), "installing a facility adds two slots without replacing the source or evicting its worker")
-	test.expect(workplace.remaining_supply == 3 and workplace.pending_output_amount() == 2 and world.inventory.quantity(wood) == before - 10, "installing a facility preserves supply and pending cargo and charges its price once")
-	test.expect(not world.build_controller.try_build(sawmill, workplace.cell) and world.inventory.quantity(wood) == before - 10, "a second facility cannot stack on the same resource cell")
+	test.expect(workplace.remaining_supply == 3 and workplace.pending_output_amount() == 2 and world.inventory.quantity(wood) == before - sawmill_wood, "installing a facility preserves supply and pending cargo and charges its price once")
+	test.expect(not world.build_controller.try_build(sawmill, workplace.cell) and world.inventory.quantity(wood) == before - sawmill_wood, "a second facility cannot stack on the same resource cell")
 	test.expect((workplace.get_node("Sprite") as Sprite2D).texture == sawmill.icon and sawmill.icon.get_size() == Vector2(16, 16), "a sawmill uses its own sixteen-pixel sprite")
 	sawmill.added_slots = 3
 	test.expect(world.build_controller.demolish_at(workplace.cell) and world.registry.at(workplace.cell) == workplace and workplace.improvement == null and workplace.work_slots == slots_before, "demolition removes the facility while preserving the source")
@@ -195,8 +196,8 @@ func test_resource_facilities(test: Node) -> void:
 	source.remaining_supply = 1
 	test.expect((source.get_node("Sprite") as Sprite2D).visible, "replenishing a finite source restores its sprite")
 	world.free()
-	test.expect(LevelValidator.validate("res://game/worlds/world_1.tscn").is_empty(), "authored production level passes offline validation")
-	var invalid: World = load("res://game/worlds/world_1.tscn").instantiate()
+	test.expect(LevelValidator.validate("res://game/worlds/starter_island.tscn").is_empty(), "authored production level passes offline validation")
+	var invalid: World = load("res://game/worlds/starter_island.tscn").instantiate()
 	invalid.get_node("Workplace").work_slots = 0
 	var map: TileMapLayer = invalid.get_node("Map")
 	map.set_cell(Vector2i(28, 26), 3, Vector2i(3, 0))

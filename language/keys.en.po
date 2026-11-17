@@ -618,6 +618,9 @@ msgstr "Roads: %s · berries: %s\nNests: %s"
 msgid "ui.terrain.harvest"
 msgstr "Berry yield: %d%%"
 
+msgid "ui.terrain.build_price"
+msgstr "Construction price: %d%%"
+
 msgid "ui.terrain.nest_price"
 msgstr "Nest price: %d%%"
 
@@ -1132,7 +1135,7 @@ msgid "ui.construction.production_slots"
 msgstr "Work slots: %d"
 
 msgid "ui.construction.production_rate"
-msgstr "Output per work cycle: %s"
+msgstr "Output per second: %s"
 
 msgid "ui.construction.source_target"
 msgstr "Hover over a compatible source to see its output and supply."

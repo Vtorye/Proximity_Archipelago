@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cp4ej45kgubvy"
-path="res://.godot/imported/canteen2.png-ef2ce92ea2e31b3b4dd092c6308a97a3.ctex"
+path="res://.godot/imported/canteen_variant.png-dc665d9692030c191aa71bc14d415750.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://game/assets/sprites/canteen2.png"
-dest_files=["res://.godot/imported/canteen2.png-ef2ce92ea2e31b3b4dd092c6308a97a3.ctex"]
+source_file="res://game/assets/sprites/canteen_variant.png"
+dest_files=["res://.godot/imported/canteen_variant.png-dc665d9692030c191aa71bc14d415750.ctex"]
 
 [params]
 

@@ -20,19 +20,16 @@ extends Resource
 @export_range(1, 1000) var building_health := 8
 @export_range(1.0, 20.0) var tower_range_cells := 6.0
 @export_range(0.1, 10.0) var tower_shot_seconds := 0.8
-@export_range(1.0, 120.0) var sabotage_seconds := 10.0
 @export var trap_removal_costs: Array[ResourceAmount] = []
-@export var ruined_road: TileBuildOption
 @export var defenses: BuildCatalog
 
 func validate() -> Array[String]:
 	var errors: Array[String] = []
-	for field in ["first_wave_seconds", "wave_interval_seconds", "minimum_shore_distance_cells", "maximum_shore_approach_seconds", "initial_spiders", "maximum_spiders", "warrior_health", "spider_health", "attack_damage", "attack_seconds", "spider_speed", "detection_cells", "wall_health", "tower_health", "nest_health", "building_health", "tower_range_cells", "tower_shot_seconds", "sabotage_seconds"]:
+	for field in ["first_wave_seconds", "wave_interval_seconds", "minimum_shore_distance_cells", "maximum_shore_approach_seconds", "initial_spiders", "maximum_spiders", "warrior_health", "spider_health", "attack_damage", "attack_seconds", "spider_speed", "detection_cells", "wall_health", "tower_health", "nest_health", "building_health", "tower_range_cells", "tower_shot_seconds"]:
 		var value: float = float(get(field))
 		if not is_finite(value) or value <= 0: errors.append("%s must be finite and positive" % field)
 	if spiders_per_wave < 0 or maximum_spiders < initial_spiders: errors.append("invalid wave population limits")
 	if defenses == null or defenses.options.is_empty(): errors.append("missing defense catalog")
-	if ruined_road == null: errors.append("missing ruined-road terrain")
 	for item in trap_removal_costs:
 		if item == null or item.type == null or item.amount < 0: errors.append("invalid trap-removal price")
 	return errors

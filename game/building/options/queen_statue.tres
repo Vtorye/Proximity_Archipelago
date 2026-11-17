@@ -3,21 +3,21 @@
 [ext_resource type="Script" uid="uid://clwif6xxyitqt" path="res://game/economy/price_rule.gd" id="5_ao44l"]
 [ext_resource type="Script" uid="uid://dohq4yj0b3afb" path="res://game/resources/resource_amount.gd" id="amount"]
 [ext_resource type="Texture2D" uid="uid://cmkjrjevraoj0" path="res://game/assets/ui/royal.svg" id="appearance"]
+[ext_resource type="Resource" path="res://game/resources/queen_statue_variants.tres" id="appearance_variants"]
 [ext_resource type="Script" uid="uid://ctb7np3cfufgu" path="res://game/building/scene_build_option.gd" id="option"]
-[ext_resource type="PackedScene" path="res://game/entities/statue.tscn" id="scene"]
-[ext_resource type="Resource" uid="uid://dnvvlsc4kjs1t" path="res://game/resources/dot_treses/stone.tres" id="stone"]
-[ext_resource type="Resource" uid="uid://btsdqgmh3ee22" path="res://game/resources/dot_treses/wood.tres" id="wood"]
-[ext_resource type="Resource" path="res://game/resources/statue_variants.tres" id="appearance_variants"]
+[ext_resource type="PackedScene" path="res://game/entities/queen_statue.tscn" id="scene"]
+[ext_resource type="Resource" uid="uid://dnvvlsc4kjs1t" path="res://game/resources/resource_types/stone.tres" id="stone"]
+[ext_resource type="Resource" uid="uid://btsdqgmh3ee22" path="res://game/resources/resource_types/wood.tres" id="wood"]
 
 [sub_resource type="Resource" id="wood_cost"]
 script = ExtResource("amount")
 type = ExtResource("wood")
-amount = 8
+amount = 10
 
 [sub_resource type="Resource" id="stone_cost"]
 script = ExtResource("amount")
 type = ExtResource("stone")
-amount = 12
+amount = 15
 
 [resource]
 script = ExtResource("option")
