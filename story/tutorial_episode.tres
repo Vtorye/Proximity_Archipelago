@@ -3,8 +3,12 @@
 [ext_resource type="Script" path="res://story/story_episode.gd" id="episode"]
 [ext_resource type="Resource" path="res://story/tutorial.dialogue" id="dialogue"]
 [ext_resource type="Resource" path="res://game/tasks/request_statue_feast.tres" id="order"]
+[ext_resource type="Resource" path="res://game/building/options/road.tres" id="road"]
 
 [resource]
 script = ExtResource("episode")
 dialogue = ExtResource("dialogue")
 opening_order = ExtResource("order")
+road_option = ExtResource("road")
+road_cell = Vector2i(26, 26)
+order_cell = Vector2i(26, 25)

@@ -3,7 +3,7 @@ extends RefCounted
 
 static func text(code: PlacementCheck.Code) -> String:
 	match code:
-		PlacementCheck.Code.OK: return ""
+		PlacementCheck.Code.OK, PlacementCheck.Code.TUTORIAL_RESTRICTED: return ""
 		PlacementCheck.Code.INSTANCE_LIMIT: return TranslationServer.translate("ui.placement.instance_limit")
 		PlacementCheck.Code.BUSY: return TranslationServer.translate("ui.placement.busy")
 		PlacementCheck.Code.INVALID_OPTION: return TranslationServer.translate("ui.placement.invalid_option")

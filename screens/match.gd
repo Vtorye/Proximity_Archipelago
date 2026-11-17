@@ -21,6 +21,7 @@ var _active := false
 var _pointer := Vector2(-1, -1)
 var _camera_moved := false
 var _tutorial_start := false
+var _tutorial_enabled := false
 var _tutorial_checkpoint: Dictionary = {}
 
 func _ready() -> void:
@@ -60,6 +61,13 @@ func _ready() -> void:
 	navigation_overlay.configure(world)
 	selection.map = world.map
 	hud.configure(world, navigation_overlay)
+	_tutorial_enabled = (_tutorial_start or not _tutorial_checkpoint.is_empty()) and world.tasks != null
+	if _tutorial_enabled:
+		_set_tutorial_restrictions(true)
+		story.finished.connect(_set_tutorial_restrictions.bind(false))
+		world.build_controller.built.connect(story.on_build_completed)
+		world.build_controller.order_completed.connect(story.on_order_completed)
+		story.modal_changed.connect(_on_story_modal_changed)
 	camera.left_button_drag = false
 	if world.voyage != null:
 		if payload is Dictionary and payload.has("journey"): world.voyage.apply(payload.journey)
@@ -76,15 +84,11 @@ func _ready() -> void:
 	hud.zoom_in_requested.connect(func(): camera.set_level(camera.level + 1))
 	hud.zoom_out_requested.connect(func(): camera.set_level(camera.level - 1))
 	camera.zoom_changed.connect(hud.set_zoom)
-	if (_tutorial_start or not _tutorial_checkpoint.is_empty()) and world.tasks != null:
-		world.build_controller.built.connect(story.on_build_completed)
-		world.build_controller.order_completed.connect(story.on_order_completed)
-		story.modal_changed.connect(_on_story_modal_changed)
 
 func on_focus() -> void:
 	_active = true
 	world.start()
-	if (_tutorial_start or not _tutorial_checkpoint.is_empty()) and world.tasks != null:
+	if _tutorial_enabled:
 		story.start(_tutorial_checkpoint)
 	if payload is Dictionary and payload.has("journey"): SessionSave.write(world)
 	if debug_show_result:
@@ -174,7 +178,17 @@ func _process(_delta: float) -> void:
 		nest_popup.visible = (top == null or top is PauseMenu) and not story.is_modal and not campaign_panel.visible
 		$PopupLayer.layer = 8
 	hud.lock_zoom(top != null or story.is_modal)
-	if navigation_overlay.mode == 2 and _navigation_available():
+	var guide_section := story.guide_section()
+	if not guide_section.is_empty():
+		var target := story.guide_cell()
+		var waiting := world.construction_service.at(target, true) != null if guide_section == &"build" else world.tasks.placed_order(story.episode.opening_order) != null
+		story.set_waiting_for_workers(waiting)
+		if can_use_map and not waiting:
+			if not selection.selected or selection.cell != target:
+				selection.select(target, true)
+		elif selection.selected:
+			selection.clear()
+	elif navigation_overlay.mode == 2 and _navigation_available():
 		if not selection.selected or selection.cell != navigation_overlay.origin: selection.select(navigation_overlay.origin)
 	elif _navigation_available() and hud.navigation_panel.inspected_cell != null:
 		var cell: Vector2i = hud.navigation_panel.inspected_cell
@@ -186,6 +200,15 @@ func _process(_delta: float) -> void:
 		navigation_overlay.hover_active = _navigation_available() and hovered_control == null and get_viewport_rect().has_point(_pointer)
 		if navigation_overlay.hover_active or not panel.is_visible_in_tree():
 			navigation_overlay.hovered = _cell_at(_pointer)
+
+func _set_tutorial_restrictions(enabled: bool) -> void:
+	world.match_controller.countdown_suspended = enabled
+	hud.set_countdown_visible(not enabled)
+	if enabled:
+		world.build_controller.placement_allowed = story.allows_placement
+	else:
+		world.build_controller.placement_allowed = Callable()
+		selection.clear()
 
 func _on_story_modal_changed(modal: bool) -> void:
 	if modal:
@@ -204,6 +227,14 @@ func _cell_at(point: Vector2) -> Vector2i:
 	return map.local_to_map(map.get_global_transform_with_canvas().affine_inverse() * point)
 
 func _inspect_building(cell: Vector2i) -> void:
+	if story.is_active():
+		if cell != story.guide_cell():
+			story.reprimand(&"cell")
+		elif _section.is_empty():
+			_select_section(story.guide_section())
+		else:
+			story.reprimand()
+		return
 	var building: Building = world.registry.at(cell)
 	hud.navigation_panel.inspect_cell(cell)
 	if building is House:
@@ -248,6 +279,10 @@ func _open_settings() -> void:
 func _select_section(section: StringName) -> void:
 	if story.is_modal or Router.has_overlay() or campaign_panel.visible:
 		return
+	if story.is_active() and section != story.guide_section():
+		hud.set_section(_section)
+		story.reprimand()
+		return
 	var already_open := _section == section
 	if section == &"build" and is_instance_valid(_construction):
 		already_open = _section == &"build" and _construction.is_palette_open()
@@ -256,7 +291,7 @@ func _select_section(section: StringName) -> void:
 	if _section == &"build":
 		if not is_instance_valid(_construction):
 			_create_construction_panel()
-		_construction.show_catalog()
+		_construction.show_catalog(story.episode.road_option.id if story.is_active() else &"")
 		camera.dragging = false
 		camera.enabled_input = false
 		selection.clear()
@@ -275,16 +310,22 @@ func _create_construction_panel() -> void:
 	context.pan_button = hud.construction_pan_button()
 	context.obstacles = _construction_obstacles
 	context.dismiss_map_popup = _dismiss_visible_nest_popup
+	context.allow_tool = story.allows_tool
 	_construction = CONSTRUCTION_PANEL.instantiate()
 	_construction.payload = context
 	_construction.map_inspection_requested.connect(_inspect_secondary_cell)
 	_construction.pan_mode_changed.connect(hud.set_task_pan_mode)
+	_construction.restricted_action.connect(story.reprimand)
+	_construction.placement_drafted.connect(story.clear_reprimand)
 	_construction.close_requested.connect(_close_construction_panel)
 	$ConstructionLayer.add_child(_construction)
 	_update_construction_dock()
 
 func _begin_royal_order(task_id: StringName, variant_id: StringName) -> void:
 	if story.is_modal:
+		return
+	if not story.allows_order(task_id):
+		story.reprimand()
 		return
 	var order := world.tasks.start_order(task_id, variant_id)
 	if order == null:
@@ -334,6 +375,10 @@ func _navigation_available() -> bool:
 
 func _toggle_navigation() -> void:
 	if not _navigation_available(): return
+	if story.is_active():
+		hud.set_navigation_mode(navigation_overlay.mode)
+		story.reprimand()
+		return
 	navigation_overlay.cycle()
 	hud.set_navigation_mode(navigation_overlay.mode)
 	if Router.has_overlay(): return

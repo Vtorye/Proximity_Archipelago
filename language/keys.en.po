@@ -1120,7 +1120,7 @@ msgid "ui.story.queen"
 msgstr "Queen"
 
 msgid "ui.story.protagonist"
-msgstr "Steward"
+msgstr "Jesty"
 
 msgid "ui.story.continue"
 msgstr "Continue"
@@ -1147,7 +1147,7 @@ msgid "ui.story.tutorial.delivery"
 msgstr "I'll draw the road and apply the plan. The ants will deliver the materials and build it. Then they'll get to the canteen faster."
 
 msgid "ui.story.tutorial.road_hint"
-msgstr "Build (B) → Road. Draw a path and choose Start construction."
+msgstr "Build (B) → Road. Place it on the gold tile by the nest, then start construction."
 
 msgid "ui.story.tutorial.road_done"
 msgstr "We have a road! Now I can stop telling everyone the shortcut is a secret."
@@ -1159,7 +1159,7 @@ msgid "ui.story.tutorial.choice_cost"
 msgstr "A feast takes food and wood. A statue takes stone and wood. I'll pick one in Tasks and apply the plan."
 
 msgid "ui.story.tutorial.order_hint"
-msgstr "Tasks → Requests → first order. Place a feast or statue and choose Start construction."
+msgstr "Tasks → Requests → first order. Place a feast or statue on the gold tile, then start construction."
 
 msgid "ui.story.tutorial.feast"
 msgstr "I saved you a seat next to me. And the last berry. The seat's still free."
@@ -1168,7 +1168,40 @@ msgid "ui.story.tutorial.statue"
 msgstr "You even made me taller. Now I'll have to stand on tiptoe whenever you look at me."
 
 msgid "ui.story.tutorial.more_time"
-msgstr "Finishing orders adds time. I'll check Tasks for the next one."
+msgstr "The timer starts now. Finishing orders adds time. I'll check Tasks for the next one."
 
 msgid "ui.story.tutorial.farewell"
 msgstr "If you pull this off, it was my brilliant plan. If you don't, come find me. We'll think of someone to blame."
+
+msgid "ui.story.guided.wait"
+msgstr "The ants are delivering materials. Let them finish."
+
+msgid "ui.story.guided.impatient"
+msgstr "Queen: Let them finish! Shouting only works when I do it."
+
+msgid "ui.story.guided.road_only"
+msgstr "Queen: Excuse me, who ordered that? I asked for a road to the canteen."
+
+msgid "ui.story.guided.order_only"
+msgstr "Queen: Other orders can wait. I want the feast or my statue. The first request!"
+
+msgid "ui.story.guided.cell"
+msgstr "Queen: The gold tile. I even pointed it out for you!"
+
+msgid "ui.story.tutorial.first_reprimand"
+msgstr "Hey, eyes on the lesson! I go to all the trouble of creating a genius, and she gets distracted just like me. Come on, try again."
+
+msgid "ui.story.name.title"
+msgstr "Your name"
+
+msgid "ui.story.name.placeholder"
+msgstr "Enter your name…"
+
+msgid "ui.story.tutorial.ask_name"
+msgstr "Wait. What's your name?"
+
+msgid "ui.story.tutorial.never_mind"
+msgstr "Ah, never mind."
+
+msgid "ui.story.tutorial.given_name"
+msgstr "I'll call you Jesty. My very own jester. Now make your queen smile."

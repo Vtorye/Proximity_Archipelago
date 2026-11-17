@@ -165,6 +165,9 @@ func _on_time_changed(seconds: int) -> void:
 	_timer.text = tr("ui.hud.match_timer") % [seconds / 60, seconds % 60]
 	_timer.add_theme_color_override("font_color", ColonyStyle.color(&"danger") if seconds <= PRESENTATION.timer_warning_seconds else ColonyStyle.color(&"accent"))
 
+func set_countdown_visible(enabled: bool) -> void:
+	_timer.visible = enabled
+
 func set_zoom(value: int) -> void:
 	_zoom_level = value
 	_zoom.text = "%sx" % str(WorldCamera.ZOOMS[value])

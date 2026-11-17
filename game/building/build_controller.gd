@@ -26,6 +26,8 @@ var options: Array[BuildOption]:
 		return _options.duplicate()
 var _options: Array[BuildOption] = []
 var can_place_order: Callable
+## Optional session restriction for player-initiated building and demolition.
+var placement_allowed: Callable
 var _committing := false
 var last_result := PlacementCheck.new()
 
@@ -74,6 +76,8 @@ func check(option: BuildOption, cell: Vector2i) -> PlacementCheck:
 func placement_check(option: BuildOption, cell: Vector2i, removed: Array[Building] = [], order: TaskBuildOrder = null) -> PlacementCheck:
 	if _committing:
 		return PlacementCheck.result(PlacementCheck.Code.BUSY)
+	if placement_allowed.is_valid() and not placement_allowed.call(option, cell, order):
+		return PlacementCheck.result(PlacementCheck.Code.TUTORIAL_RESTRICTED)
 	if option == null:
 		return PlacementCheck.result(PlacementCheck.Code.INVALID_OPTION)
 	if order != null and (not can_place_order.is_valid() or not can_place_order.call(order) or order.variant.building != option):
@@ -199,6 +203,9 @@ func try_build_plan(commands: Array[BuildCommand]) -> bool:
 			last_result = PlacementCheck.result(PlacementCheck.Code.INVALID_OPTION)
 			return false
 		if command.is_removal():
+			if placement_allowed.is_valid() and not placement_allowed.call(null, command.cell, null):
+				last_result = PlacementCheck.result(PlacementCheck.Code.TUTORIAL_RESTRICTED)
+				return false
 			var building: Building = command.removed_building
 			if not is_instance_valid(building) or demolition_target(command.cell) != building or removed.has(building) or (building is Workplace and removed_improvements.has(building)):
 				last_result = PlacementCheck.result(PlacementCheck.Code.NO_BUILDING)
@@ -392,6 +399,8 @@ func demolition_target(cell: Vector2i) -> Building:
 func demolition_check(cell: Vector2i) -> PlacementCheck:
 	if _committing:
 		return PlacementCheck.result(PlacementCheck.Code.BUSY)
+	if placement_allowed.is_valid() and not placement_allowed.call(null, cell, null):
+		return PlacementCheck.result(PlacementCheck.Code.TUTORIAL_RESTRICTED)
 	var building: Building = demolition_target(cell)
 	if construction != null and (construction.at(cell) != null or construction.at(cell, true) != null): return PlacementCheck.new()
 	if building is House and logistics != null and not logistics.can_remove(building):

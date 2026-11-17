@@ -7,6 +7,8 @@ const CARD: PackedScene = preload("res://game/ui/construction_card.tscn")
 ## Construction editor. The draft owns edits; the controller commits the final plan.
 signal map_inspection_requested(cell: Vector2i)
 signal pan_mode_changed(enabled: bool)
+signal restricted_action(reason: StringName)
+signal placement_drafted
 var order: TaskBuildOrder
 
 var context: ConstructionContext
@@ -61,12 +63,16 @@ func set_palette_visible(shown: bool) -> void:
 func _update_buildings_visibility() -> void:
 	buildings_panel.visible = panel.visible and not _map_drag and not _task_mode and _active_category != null
 
-func show_catalog() -> void:
+func show_catalog(selected_id: StringName = &"") -> void:
 	if _task_mode:
 		_task_mode = false
 		_select(null)
 		_update_mode()
 	set_palette_visible(true)
+	var card := controls.get(selected_id) as ConstructionCard
+	if card != null:
+		show_category_for(selected_id)
+		_select(card.option)
 
 func select_order(task_order: TaskBuildOrder = null) -> void:
 	_task_mode = true
@@ -263,6 +269,13 @@ func _exit_tree() -> void:
 	if is_instance_valid(_preview): _preview.queue_free()
 
 func _select(option: BuildOption, task_order: TaskBuildOrder = null) -> void:
+	if option != null and not _tool_allowed(option, task_order):
+		var card: Button = controls.get(option.id)
+		if card != null:
+			card.set_pressed_no_signal(false)
+		if _selected != null and controls.has(_selected.id):
+			controls[_selected.id].set_pressed_no_signal(true)
+		return
 	if _map_drag: _set_map_drag(false)
 	_end_stroke()
 	if order == null and _selected != null and controls.has(_selected.id):
@@ -294,6 +307,9 @@ func _set_map_drag(enabled: bool) -> void:
 	_refresh()
 
 func select_demolition() -> void:
+	if not _tool_allowed(null, null):
+		controls[&"demolish"].set_pressed_no_signal(false)
+		return
 	if _map_drag: _set_map_drag(false)
 	if _tool == &"demolish":
 		if _selected != null:
@@ -311,6 +327,12 @@ func select_demolition() -> void:
 	_preview.demolishing = true
 	_preview.queue_redraw()
 	_refresh()
+
+func _tool_allowed(option: BuildOption, task_order: TaskBuildOrder) -> bool:
+	if context.allow_tool.is_valid() and not context.allow_tool.call(option, task_order):
+		restricted_action.emit(&"action")
+		return false
+	return true
 
 func _cancel_confirmation() -> void:
 	if _confirmation != null: _confirmation.hide()
@@ -338,7 +360,7 @@ func _refresh() -> void:
 	controls[&"apply"].disabled = draft.size() == 0 or not budget.allowed()
 	var reason: PlacementCheck = budget if not budget.allowed() else draft.last_result
 	_status.text = PlacementMessages.text(reason.code)
-	_status.visible = not reason.allowed()
+	_status.visible = not _status.text.is_empty()
 	_status.add_theme_color_override("font_color", ColonyStyle.color(&"danger") if not reason.allowed() else ColonyStyle.color(&"muted"))
 	description_panel.refresh_at(_pricing_cell)
 	_preview.queue_redraw()
@@ -486,7 +508,11 @@ func _paint_to(point: Vector2) -> void:
 
 func _paint_cell(cell: Vector2i) -> void:
 	if _tool == &"demolish": draft.demolish(cell)
-	elif _tool == &"build" and _selected != null: draft.paint(_selected, cell, order)
+	elif _tool == &"build" and _selected != null:
+		if draft.paint(_selected, cell, order):
+			placement_drafted.emit()
+		elif draft.last_result.code == PlacementCheck.Code.TUTORIAL_RESTRICTED:
+			restricted_action.emit(&"cell")
 
 func _end_stroke() -> void:
 	_painting = false

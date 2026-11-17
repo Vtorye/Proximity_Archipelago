@@ -1120,7 +1120,7 @@ msgid "ui.story.queen"
 msgstr "Королева"
 
 msgid "ui.story.protagonist"
-msgstr "Управляющая"
+msgstr "Шути"
 
 msgid "ui.story.continue"
 msgstr "Далее"
@@ -1147,7 +1147,7 @@ msgid "ui.story.tutorial.delivery"
 msgstr "Я проложу дорогу на плане и применю его. Муравьи доставят материалы и построят её. Тогда до столовой они будут добираться быстрее."
 
 msgid "ui.story.tutorial.road_hint"
-msgstr "Стройка (B) → Дорога. Проложи путь и нажми «Начать строительство»."
+msgstr "Стройка (B) → Дорога. Поставь её на золотую клетку у муравейника и начни строительство."
 
 msgid "ui.story.tutorial.road_done"
 msgstr "У нас есть дорога! Теперь можно перестать всем врать, что короткий путь засекречен."
@@ -1159,7 +1159,7 @@ msgid "ui.story.tutorial.choice_cost"
 msgstr "На пир уйдут еда и древесина, на статую — камень и древесина. Выберу один вариант в «Задачах» и применю план."
 
 msgid "ui.story.tutorial.order_hint"
-msgstr "Задачи → Запросы → первый заказ. Поставь пир или статую и нажми «Начать строительство»."
+msgstr "Задачи → Запросы → первый заказ. Поставь пир или статую на золотую клетку и начни строительство."
 
 msgid "ui.story.tutorial.feast"
 msgstr "Я приберегла тебе место рядом с собой. И последнюю ягоду. Место всё ещё свободно."
@@ -1168,7 +1168,40 @@ msgid "ui.story.tutorial.statue"
 msgstr "Ты даже сделала меня выше. Теперь мне придётся вставать на цыпочки, когда ты на меня смотришь."
 
 msgid "ui.story.tutorial.more_time"
-msgstr "За выполненные заказы дают время. Следующий заказ посмотрю в «Задачах»."
+msgstr "Теперь пойдёт отсчёт. За выполненные заказы дают время. Следующий посмотрю в «Задачах»."
 
 msgid "ui.story.tutorial.farewell"
 msgstr "Если справишься, это был мой гениальный план. Если нет… приходи ко мне, придумаем, на кого свалить."
+
+msgid "ui.story.guided.wait"
+msgstr "Муравьи несут материалы. Дай им закончить стройку."
+
+msgid "ui.story.guided.impatient"
+msgstr "Королева: Дай им достроить! Кричать на рабочих можно только мне."
+
+msgid "ui.story.guided.road_only"
+msgstr "Королева: И кто это заказал? Я просила дорогу к столовой."
+
+msgid "ui.story.guided.order_only"
+msgstr "Королева: Остальные дела подождут. Пир или моя статуя. Первый запрос!"
+
+msgid "ui.story.guided.cell"
+msgstr "Королева: На золотую клетку. Я же тебе её подсветила!"
+
+msgid "ui.story.tutorial.first_reprimand"
+msgstr "Эй, не отвлекайся! Столько сил потратила, чтобы создать гения, а ты отвлекаешься точь-в-точь как я. Ну-ка, попробуй ещё раз."
+
+msgid "ui.story.name.title"
+msgstr "Твоё имя"
+
+msgid "ui.story.name.placeholder"
+msgstr "Введи своё имя…"
+
+msgid "ui.story.tutorial.ask_name"
+msgstr "Погоди. А как тебя зовут?"
+
+msgid "ui.story.tutorial.never_mind"
+msgstr "А, неважно"
+
+msgid "ui.story.tutorial.given_name"
+msgstr "Будешь Шути. Моя личная шутиха. А теперь порадуй свою королеву."

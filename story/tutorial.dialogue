@@ -1,5 +1,8 @@
 ~ intro
 Queen: ui.story.tutorial.wake [#portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_pleased.png]
+Queen: ui.story.tutorial.ask_name [#name_input, portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_thinking.png]
+Queen: ui.story.tutorial.never_mind [#portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_pleased.png]
+Queen: ui.story.tutorial.given_name [#portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_pleased.png]
 Queen: ui.story.tutorial.purpose [#portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_pleased.png]
 Protagonist: ui.story.tutorial.before [#portrait=res://game/assets/sprites/visual_novel/protagonist/protagonist_ant.png]
 Queen: ui.story.tutorial.my_fault [#portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_thinking.png]
@@ -19,6 +22,10 @@ Protagonist: ui.story.tutorial.choice_cost [#portrait=res://game/assets/sprites/
 
 ~ order
 Queen: ui.story.tutorial.order_hint [#action=order]
+=> END
+
+~ first_reprimand
+Queen: ui.story.tutorial.first_reprimand [#portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_angry.png]
 => END
 
 ~ ending_build
