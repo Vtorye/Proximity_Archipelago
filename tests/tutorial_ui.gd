@@ -28,6 +28,10 @@ func _run() -> void:
 	await _dialogue()
 	await _practice_controls()
 	expect(_chapter.stage == FirstChapter.Stage.ROAD, "the original road dialogue leads to a mandatory road task")
+	if "--controls-only" in OS.get_cmdline_user_args():
+		print("TUTORIAL CONTROLS ", assertions, " assertions, ", failures.size(), " failures")
+		get_tree().quit(0 if failures.is_empty() else 1)
+		return
 	await _window_controls(screen.story.get_node("%HintHeader"), Vector2(-198, 40))
 	await frames(30)
 	expect(_chapter.stage == FirstChapter.Stage.ROAD, "waiting alone cannot complete the road task")
@@ -220,22 +224,24 @@ func _practice_controls() -> void:
 	await click(screen.hud.controls[&"pause"])
 	await _dialogue()
 	expect(_chapter.stage == FirstChapter.Stage.CAMERA_LESSON and not screen.story.is_modal, "resuming unlocks camera practice")
+	var camera_before: Vector2 = screen.camera.position
 	var press := InputEventMouseButton.new()
-	press.button_index = MOUSE_BUTTON_MIDDLE
+	press.button_index = MOUSE_BUTTON_LEFT
 	press.pressed = true
 	press.position = Vector2(450, 180)
-	press.button_mask = MOUSE_BUTTON_MASK_MIDDLE
+	press.button_mask = MOUSE_BUTTON_MASK_LEFT
 	get_viewport().push_input(press, true)
 	var motion := InputEventMouseMotion.new()
 	motion.position = Vector2(500, 180)
 	motion.relative = Vector2(50, 0)
-	motion.button_mask = MOUSE_BUTTON_MASK_MIDDLE
+	motion.button_mask = MOUSE_BUTTON_MASK_LEFT
 	get_viewport().push_input(motion, true)
 	press.pressed = false
 	press.position = motion.position
 	press.button_mask = 0
 	get_viewport().push_input(press, true)
 	await frames(2)
+	expect(not screen.camera.position.is_equal_approx(camera_before), "LMB dragging actually moves the tutorial camera")
 	await _dialogue()
 	expect(_chapter.stage == FirstChapter.Stage.ZOOM_LESSON, "dragging the map unlocks zoom practice")
 	await frames(20)
@@ -356,6 +362,7 @@ func _demolition_lesson() -> void:
 		if _chapter.stage != FirstChapter.Stage.DEMOLITION:
 			return
 		var cell: Vector2i = _chapter.created.front().cell
+		var road: bool = _chapter.created.front().id == str(_chapter.rules.road.id)
 		await key(KEY_B)
 		var menu: ConstructionMenu = screen._construction
 		await click(menu.controls[&"demolish"])
@@ -363,7 +370,10 @@ func _demolition_lesson() -> void:
 		await frames(2)
 		await click_at(cell_point(cell))
 		expect(menu.draft.size() == 1, "the player marks the highlighted structure for demolition")
+		await _capture("02-demolition-plan")
 		await click(menu.controls[&"apply"])
+		if road:
+			await _wait_building(cell, true)
 		await frames(3)
 	expect(false, "manual demolition reaches the execution")
 

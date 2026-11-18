@@ -13,6 +13,10 @@ const PAUSE_REASON := &"tutorial_dialogue"
 @export_range(0.05, 0.5, 0.01) var portrait_bob_seconds := 0.22
 @export_range(0.05, 0.6, 0.01) var name_swipe_seconds := 0.24
 @export var dialogue_inset := Vector2(12, 12)
+@export_range(0.3, 1.0, 0.05) var dialogue_max_height_ratio := 0.9
+@export_range(32.0, 200.0, 1.0) var dialogue_min_text_height := 88.0
+@export_range(0.0, 80.0, 1.0) var portrait_protrusion := 24.0
+@export_range(0.0, 32.0, 1.0) var portrait_bottom_inset := 3.0
 var characters: Array[StoryCharacter] = []
 var is_modal := false
 var _active := false
@@ -27,11 +31,16 @@ var _line_speed := 45.0
 var _portrait_tween: Tween
 var _name_tween: Tween
 var _name_dismissing := false
+var _dialogue_layout_pending := false
 
 @onready var _shade: ColorRect = %Shade
 @onready var _dialogue_panel: PanelContainer = %DialoguePanel
-@onready var _speaker: Label = %Speaker
+@onready var _dialogue_header: WindowHeader = %DialogueHeader
 @onready var _dialogue: Label = %Dialogue
+@onready var _dialogue_scroll: ScrollContainer = %Scroll
+@onready var _dialogue_text: VBoxContainer = %Text
+@onready var _dialogue_contents: VBoxContainer = %DialogueContents
+@onready var _dialogue_actions: HBoxContainer = %DialogueActions
 @onready var _portrait: TextureRect = %Portrait
 @onready var _continue: Button = %Continue
 @onready var _hint_panel: PanelContainer = %HintPanel
@@ -45,8 +54,11 @@ func _ready() -> void:
 	%DialogueHeader.collapsed_changed.connect(func(_collapsed: bool):
 		_layout_dialogue()
 		_refresh_visibility())
-	_dialogue_panel.minimum_size_changed.connect(_layout_dialogue.call_deferred)
-	get_viewport().size_changed.connect(_layout_dialogue)
+	_dialogue_panel.minimum_size_changed.connect(_queue_dialogue_layout)
+	_dialogue.minimum_size_changed.connect(_queue_dialogue_layout)
+	_dialogue.resized.connect(_queue_dialogue_layout)
+	get_viewport().size_changed.connect(_queue_dialogue_layout)
+	AppSettings.text_size_changed.connect(_queue_dialogue_layout)
 	_continue.pressed.connect(_advance)
 	for button: Button in [%SkipDialogue, _continue]:
 		button.pressed.connect(AppSettings.play_click)
@@ -57,10 +69,33 @@ func _ready() -> void:
 	set_process(false)
 	hide()
 
+func _queue_dialogue_layout() -> void:
+	if not _dialogue_layout_pending:
+		_dialogue_layout_pending = true
+		_layout_dialogue.call_deferred()
+
 func _layout_dialogue() -> void:
+	_dialogue_layout_pending = false
 	var window: Control = %DialogueWindow
-	window.size = Vector2(get_viewport_rect().size.x - dialogue_inset.x * 2.0, _dialogue_panel.get_combined_minimum_size().y)
+	var viewport_size := get_viewport_rect().size
+	window.size.x = viewport_size.x - dialogue_inset.x * 2.0
+	if not _dialogue_header.collapsed:
+		var chrome := _dialogue_panel.get_theme_stylebox(&"panel").get_minimum_size().y
+		chrome += _dialogue_header.get_combined_minimum_size().y + _dialogue_actions.get_combined_minimum_size().y
+		chrome += _dialogue_contents.get_theme_constant(&"separation") + _dialogue_text.get_theme_constant(&"separation")
+		var height_limit := minf(viewport_size.y * dialogue_max_height_ratio, viewport_size.y - dialogue_inset.y * 2.0)
+		# Native Label shaping measures the whole wrapped line, including unrevealed letters.
+		_dialogue_scroll.custom_minimum_size.y = minf(maxf(dialogue_min_text_height, _dialogue.get_minimum_size().y), maxf(0.0, height_limit - chrome))
+	window.size.y = _dialogue_panel.get_combined_minimum_size().y
 	%DialogueHeader.place(Vector2(dialogue_inset.x, get_viewport_rect().size.y - window.size.y - dialogue_inset.y))
+	var mount: Control = %PortraitMount
+	var portrait_top := window.size.y - mount.size.y - portrait_bottom_inset
+	if _portrait.texture != null:
+		var texture_size := _portrait.texture.get_size()
+		var drawn_height := texture_size.y * minf(mount.size.x / texture_size.x, mount.size.y / texture_size.y)
+		var letterbox := (mount.size.y - drawn_height) * 0.5
+		portrait_top = minf(portrait_top, -portrait_protrusion - letterbox)
+	mount.position.y = maxf(portrait_top, -window.position.y)
 
 func play(title: String) -> void:
 	if _loading:
@@ -134,7 +169,7 @@ func _request_line(id: String, skip := false) -> void:
 		if str(definition.id) == _line.character:
 			character = definition
 			break
-	_speaker.text = character.display_name if character != null else _line.character
+	_dialogue_header.set_title(character.display_name if character != null else _line.character)
 	%DialogueHeader.set_collapsed(false)
 	_voice.pitch_scale = character.voice_pitch if character != null else 1.0
 	_line_speed = character.characters_per_second if character != null else characters_per_second

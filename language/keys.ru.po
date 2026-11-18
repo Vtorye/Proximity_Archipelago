@@ -1198,10 +1198,10 @@ msgid "ui.story.name.placeholder"
 msgstr "Введи своё имя…"
 
 msgid "ui.story.tutorial.ask_name"
-msgstr "Погоди. А как тебя зовут?"
+msgstr "Так… как тебя назвать…"
 
 msgid "ui.story.tutorial.never_mind"
-msgstr "А, неважно"
+msgstr "О, придумала!"
 
 msgid "ui.story.tutorial.given_name"
 msgstr "Будешь Шути. Моя личная шутиха. А теперь порадуй свою королеву."
@@ -1544,3 +1544,6 @@ msgstr "Она велела поставить этот значок. А вот 
 
 msgid "ui.storage.unlimited"
 msgstr "Запасы: ∞"
+
+msgid "ui.chapter.demolition_wait"
+msgstr "Дождись завершения работ на отмеченной клетке. Затем убери следующую подсвеченную постройку."

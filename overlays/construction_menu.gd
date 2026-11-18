@@ -499,6 +499,13 @@ func _point_allowed(point: Vector2) -> bool:
 		if obstacle.has_point(point): return false
 	return true
 
+func visible_bounds() -> Array[Rect2]:
+	var bounds: Array[Rect2] = []
+	for window: Control in [panel, buildings_panel, description_panel]:
+		if window.is_visible_in_tree():
+			bounds.append(window.get_global_rect())
+	return bounds
+
 func _cell(point: Vector2) -> Vector2i:
 	var map: TileMapLayer = context.controller.map
 	return map.local_to_map(map.get_global_transform_with_canvas().affine_inverse() * point)

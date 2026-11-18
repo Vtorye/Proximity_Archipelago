@@ -9,6 +9,7 @@ enum Action { NONE, FOLD, CLOSE }
 enum Dock { CENTER, BOTTOM_LEFT, BOTTOM_RIGHT, TOP_LEFT, TOP_RIGHT, TOP_CENTER }
 
 @export var title: String
+@export var title_style: StringName = &"Caption"
 @export var action: Action = Action.NONE
 @export var draggable := true
 @export_range(0.0, 624.0, 1.0) var collapsed_width := 0.0
@@ -32,6 +33,7 @@ var _layout_pending := false
 
 func _ready() -> void:
 	handle.text = title
+	handle.theme_type_variation = title_style
 	if draggable:
 		handle.gui_input.connect(_drag_input)
 	else:

@@ -40,7 +40,7 @@ amount = 50
 [sub_resource type="Resource" id="revealed_food"]
 script = ExtResource("amount")
 type = ExtResource("food")
-amount = 40
+amount = 150
 [sub_resource type="Resource" id="revealed_wood"]
 script = ExtResource("amount")
 type = ExtResource("wood")

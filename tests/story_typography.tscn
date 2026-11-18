@@ -1,0 +1,9 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://tests/story_typography.gd" id="script"]
+[ext_resource type="PackedScene" path="res://story/story_overlay.tscn" id="story"]
+
+[node name="StoryTypography" type="Node"]
+script = ExtResource("script")
+
+[node name="Story" parent="." instance=ExtResource("story")]

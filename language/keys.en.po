@@ -1198,10 +1198,10 @@ msgid "ui.story.name.placeholder"
 msgstr "Enter your name…"
 
 msgid "ui.story.tutorial.ask_name"
-msgstr "Wait. What's your name?"
+msgstr "Now... what should I call you..."
 
 msgid "ui.story.tutorial.never_mind"
-msgstr "Ah, never mind."
+msgstr "Oh, I know!"
 
 msgid "ui.story.tutorial.given_name"
 msgstr "I'll call you Jesty. My very own jester. Now make your queen smile."
@@ -1544,3 +1544,6 @@ msgstr "She ordered that sign put there. These are the real figures. Almost noth
 
 msgid "ui.storage.unlimited"
 msgstr "Supplies: ∞"
+
+msgid "ui.chapter.demolition_wait"
+msgstr "Wait for the work on the marked tile to finish. Then remove the next highlighted structure."

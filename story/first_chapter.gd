@@ -48,6 +48,7 @@ func configure(colony: World, dialogue: StoryOverlay) -> void:
 	world.build_controller.built.connect(_on_built)
 	world.build_controller.order_completed.connect(_on_order_completed)
 	world.build_controller.changed.connect(_on_construction_changed)
+	world.registry.removed.connect(_on_building_removed)
 	world.population.spawned.connect(_on_spawned)
 	world.logistics.shipment_delivered.connect(_on_shipment_delivered)
 	world.logistics.export_delivered.connect(_on_export_delivered)
@@ -120,7 +121,7 @@ func allows_placement(option: BuildOption, cell: Vector2i, order: TaskBuildOrder
 	if _scripted:
 		return true
 	if stage == Stage.DEMOLITION:
-		return not story.is_modal and not created.is_empty() and cell == created.front().cell and _record_exists(created.front()) and (option == null or option == rules.ground and created.front().id == str(rules.road.id))
+		return not story.is_modal and not created.is_empty() and not _demolition_in_progress() and cell == created.front().cell and _record_exists(created.front()) and (option == null or option == rules.ground and created.front().id == str(rules.road.id))
 	if not allows_tool(option, order):
 		return false
 	if stage == Stage.ROAD:
@@ -278,7 +279,7 @@ func status_text() -> String:
 		Stage.TRANSPORT: return tr("ui.chapter.wait_export") if _transport_requested else tr("ui.chapter.request_delivery")
 		Stage.MAGIC: return tr("ui.chapter.place_base")
 		Stage.RECRUIT: return tr("ui.chapter.recruit_goal")
-		Stage.DEMOLITION: return tr("ui.chapter.demolition_goal")
+		Stage.DEMOLITION: return tr("ui.chapter.demolition_wait" if _demolition_in_progress() else "ui.chapter.demolition_goal")
 	return ""
 
 func landing_cell() -> Vector2i:
@@ -500,6 +501,9 @@ func _on_construction_changed() -> void:
 	if not _starting and stage == Stage.DEMOLITION:
 		_advance_demolition.call_deferred()
 
+func _on_building_removed(_building: Building) -> void:
+	_on_construction_changed()
+
 func _record_exists(record: Dictionary) -> bool:
 	if record.id == str(rules.road.id):
 		return _is_road(record.cell)
@@ -507,6 +511,9 @@ func _record_exists(record: Dictionary) -> bool:
 	if building is Workplace:
 		return building.improvement != null and str(building.improvement.id) == record.id
 	return building != null and building.option != null and str(building.option.id) == record.id
+
+func _demolition_in_progress() -> bool:
+	return not created.is_empty() and world.construction_service.at(created.front().cell, true) != null
 
 func _advance_demolition() -> void:
 	if stage != Stage.DEMOLITION:

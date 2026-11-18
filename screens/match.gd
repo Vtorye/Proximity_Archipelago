@@ -70,7 +70,6 @@ func _ready() -> void:
 		chapter.presentation_changed.connect(_refresh_chapter_ui)
 		story.modal_changed.connect(_on_story_modal_changed)
 		_refresh_chapter_ui()
-	camera.left_button_drag = false
 	if world.voyage != null:
 		if payload is Dictionary and payload.has("journey"): world.voyage.apply(payload.journey)
 	if payload is Dictionary and payload.has("snapshot"): SessionSave.apply(world, payload.snapshot)
@@ -222,8 +221,33 @@ func _refresh_chapter_ui() -> void:
 	_section = &""
 
 func _focus_chapter_cell(cell: Vector2i) -> void:
+	# Let native containers settle before choosing a clear map point between windows.
+	await get_tree().process_frame
 	var viewport_size := get_viewport_rect().size
-	var target := (viewport_size * chapter.rules.camera_focus_ratio).round()
+	var preferred := viewport_size * chapter.rules.camera_focus_ratio
+	var bounds := _construction_obstacles()
+	if is_instance_valid(_construction):
+		bounds.append_array(_construction.visible_bounds())
+	var clearance: float = world.route_service.cell_size() * camera.zoom.x * 0.5
+	var xs: Array[float] = [preferred.x, viewport_size.x * 0.5]
+	var ys: Array[float] = [preferred.y, viewport_size.y * 0.5]
+	for obstacle in bounds:
+		xs.append(obstacle.position.x - clearance)
+		xs.append(obstacle.end.x + clearance)
+		ys.append(obstacle.position.y - clearance)
+		ys.append(obstacle.end.y + clearance)
+	var target := preferred
+	var closest := INF
+	var view := Rect2(Vector2.ZERO, viewport_size).grow(-clearance)
+	for x in xs:
+		for y in ys:
+			var candidate := Vector2(x, y).round()
+			if not view.has_point(candidate) or bounds.any(func(rect: Rect2) -> bool: return rect.grow(clearance * 0.5).has_point(candidate)):
+				continue
+			var distance := candidate.distance_squared_to(preferred)
+			if distance < closest:
+				closest = distance
+				target = candidate
 	camera.position = world.route_service.cell_to_world(cell) + (viewport_size * 0.5 - target) / camera.zoom
 	camera.force_update_scroll()
 
@@ -380,6 +404,8 @@ func _begin_royal_order(task_id: StringName, variant_id: StringName) -> void:
 	hud.set_section(_section)
 	_construction.select_order(order)
 	hud.set_task_selection(order)
+	if _chapter_active:
+		_focus_chapter_cell(chapter.guide_cell())
 	camera.dragging = false
 	camera.enabled_input = false
 	selection.clear()
