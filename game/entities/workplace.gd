@@ -139,6 +139,7 @@ func refresh_appearance(source: Texture2D = null) -> void:
 		_source_texture = sprite.texture
 	sprite.texture = improvement.icon if improvement != null else _source_texture
 	sprite.visible = improvement != null or not finite_supply or remaining_supply > 0
+	_fit_appearance(sprite)
 
 func display_title() -> String:
 	return improvement.display_name if improvement != null else super.display_title()

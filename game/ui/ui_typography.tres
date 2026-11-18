@@ -10,3 +10,6 @@ caption_size = 10
 compact_button_size = 10
 body_size = 14
 heading_size = 20
+details_body_size = 12
+details_heading_size = 14
+details_size_step = 1

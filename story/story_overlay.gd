@@ -5,6 +5,7 @@ class_name StoryOverlay
 signal modal_changed(is_modal: bool)
 signal scene_finished
 signal action_requested(action: StringName)
+signal practice_done_requested
 const PAUSE_REASON := &"tutorial_dialogue"
 
 @export var dialogue_resource: DialogueResource
@@ -64,6 +65,8 @@ func _ready() -> void:
 		button.pressed.connect(AppSettings.play_click)
 	%SkipDialogue.pressed.connect(_skip_scene)
 	%SkipHint.hide()
+	%PracticeDone.pressed.connect(AppSettings.play_click)
+	%PracticeDone.pressed.connect(practice_done_requested.emit)
 	_warning.timeout.connect(_clear_warning)
 	_name_input.text_changed.connect(_on_name_changed)
 	set_process(false)
@@ -111,6 +114,11 @@ func show_hint(key: String) -> void:
 	_clear_warning()
 	%HintHeader.queue_layout()
 	_refresh_visibility()
+
+func set_practice_done(shown: bool, enabled: bool) -> void:
+	%PracticeDone.visible = shown
+	%PracticeDone.disabled = not enabled
+	%HintHeader.queue_layout()
 
 func set_covered(covered: bool) -> void:
 	if _covered != covered:
@@ -282,6 +290,7 @@ func _refresh_visibility() -> void:
 
 func finish() -> void:
 	_active = false
+	set_practice_done(false, false)
 	_close_name_input()
 	_warning.stop()
 	set_process(false)

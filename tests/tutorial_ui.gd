@@ -54,17 +54,21 @@ func _run() -> void:
 	expect(screen._construction.draft.size() == 1, "the first task has a drawn construction plan")
 	await click(screen._construction.controls[&"apply"])
 	await _until_stage(FirstChapter.Stage.SECOND_ORDER)
-	expect(_seen_lines.has("ui.story.tutorial.feast") == (first_id == &"feast") and _seen_lines.has("ui.story.tutorial.statue") == (first_id == &"statue"), "the original reaction matches the first completed building")
-	expect(_seen_lines.has("ui.chapter.feast_expires") == (first_id == &"feast") and _seen_lines.has("ui.chapter.statue_blocks") == (first_id == &"statue"), "the first explanation only discusses the building just completed")
+	expect(_saw_line("ui.story.tutorial.feast") == (first_id == &"feast") and _saw_line("ui.story.tutorial.statue") == (first_id == &"statue"), "the original reaction matches the first completed building")
+	expect(_saw_line("ui.chapter.feast_expires") == (first_id == &"feast") and _saw_line("ui.chapter.statue_blocks") == (first_id == &"statue"), "the first explanation only discusses the building just completed")
 	expect(screen.save_game("user://second-order.save") == OK, "the first royal choice saves")
 	await _reload("user://second-order.save")
 	var second_id: StringName = &"statue" if first_id == &"feast" else &"feast"
 	expect(_chapter._first_choice == first_id, "the second order remembers the first choice after loading")
-	for variant in _chapter.rules.followup_order.variants:
-		expect(_chapter.allows_order(_chapter.rules.followup_order.id, variant.id) == (variant.building.id == second_id), "the second task requires the opposite building")
-	await _order(_chapter.rules.followup_order, second_id, _chapter.rules.followup_cell)
+	for task in screen.world.tasks.slots:
+		if task == null:
+			continue
+		for variant in task.variants:
+			expect(_chapter.allows_order(task.id, variant.id) == (variant.building.id == second_id), "the opposite building is accepted from every current task card")
+	var second_task: TaskSpec = screen.world.tasks.slots[2 if first_id == &"feast" else 1]
+	await _order(second_task, second_id, _chapter.rules.followup_cell)
 	await _until_stage(FirstChapter.Stage.WORKER_ADVICE)
-	expect(_seen_lines.has("ui.story.tutorial.feast") and _seen_lines.has("ui.story.tutorial.statue") and _seen_lines.has("ui.story.tutorial.farewell"), "both original building reactions and the original farewell survive the two orders")
+	expect(_saw_line("ui.story.tutorial.feast") and _saw_line("ui.story.tutorial.statue"), "both original building reactions survive the two orders")
 	await frames(30)
 	expect(_chapter.stage == FirstChapter.Stage.WORKER_ADVICE, "the player must speak to the worker before improving buildings")
 	await _talk_to(&"Worker")
@@ -224,6 +228,10 @@ func _practice_controls() -> void:
 	await click(screen.hud.controls[&"pause"])
 	await _dialogue()
 	expect(_chapter.stage == FirstChapter.Stage.CAMERA_LESSON and not screen.story.is_modal, "resuming unlocks camera practice")
+	var done: Button = screen.story.get_node("%PracticeDone")
+	expect(done.is_visible_in_tree() and done.disabled, "Done is visible but requires the player to try moving the camera")
+	await click(done)
+	expect(_chapter.stage == FirstChapter.Stage.CAMERA_LESSON, "Done cannot skip camera practice before an actual movement")
 	var camera_before: Vector2 = screen.camera.position
 	var press := InputEventMouseButton.new()
 	press.button_index = MOUSE_BUTTON_LEFT
@@ -236,20 +244,39 @@ func _practice_controls() -> void:
 	motion.relative = Vector2(50, 0)
 	motion.button_mask = MOUSE_BUTTON_MASK_LEFT
 	get_viewport().push_input(motion, true)
+	await frames(2)
+	expect(not screen.camera.position.is_equal_approx(camera_before), "LMB dragging actually moves the tutorial camera")
+	expect(_chapter.stage == FirstChapter.Stage.CAMERA_LESSON and not screen.story.is_modal, "the first pan leaves time to practice")
+	expect(not done.disabled, "moving the camera enables Done")
+	await frames(80)
+	expect(_chapter.stage == FirstChapter.Stage.CAMERA_LESSON and not screen.story.is_modal, "dialogue does not interrupt a held camera gesture")
 	press.pressed = false
 	press.position = motion.position
 	press.button_mask = 0
 	get_viewport().push_input(press, true)
 	await frames(2)
-	expect(not screen.camera.position.is_equal_approx(camera_before), "LMB dragging actually moves the tutorial camera")
+	await frames(80)
+	expect(_chapter.stage == FirstChapter.Stage.CAMERA_LESSON and not screen.story.is_modal, "releasing the mouse and waiting never completes practice automatically")
+	await _capture("00-camera-done")
+	await click(done)
 	await _dialogue()
 	expect(_chapter.stage == FirstChapter.Stage.ZOOM_LESSON, "dragging the map unlocks zoom practice")
+	expect(done.is_visible_in_tree() and done.disabled, "zoom practice has its own disabled Done button until zoom changes")
 	await frames(20)
 	expect(_chapter.stage == FirstChapter.Stage.ZOOM_LESSON, "the zoom lesson waits for actual zoom input")
 	await click(screen.hud.controls[&"zoom_out"])
 	await frames(2)
+	expect(_chapter.stage == FirstChapter.Stage.ZOOM_LESSON and not screen.story.is_modal, "the first zoom leaves time to experiment")
+	expect(not done.disabled, "changing the zoom enables Done")
+	await click(screen.hud.controls[&"zoom_in"])
+	expect(_chapter.stage == FirstChapter.Stage.ZOOM_LESSON and not screen.story.is_modal, "the player can try both zoom directions before dialogue returns")
+	await frames(80)
+	expect(_chapter.stage == FirstChapter.Stage.ZOOM_LESSON and not screen.story.is_modal, "zoom practice waits indefinitely for Done")
+	await _capture("00-zoom-done")
+	await click(done)
 	await _dialogue()
 	expect(_chapter.stage == FirstChapter.Stage.TALK_LESSON, "Shuti asks who can explain roads")
+	expect(not done.is_visible_in_tree(), "Done is hidden after camera lessons")
 	await click(screen.hud.controls[&"talk"])
 	expect(screen.conversations.visible, "Talk opens from the real bottom bar")
 	await _capture("00-conversations")
@@ -317,12 +344,15 @@ func _window_controls(header: WindowHeader, movement: Vector2) -> void:
 	await frames(3)
 	expect(header.panel.position.is_equal_approx(moved), "window layout preserves its dragged position")
 
+func _saw_line(key: String) -> bool:
+	return _seen_lines.has(tr(key))
+
 func _dialogue() -> void:
 	for index in range(140):
 		if not screen.story.is_modal:
 			return
 		if screen.story._line != null:
-			_seen_lines.append(screen.story._line.text)
+			_seen_lines.append(screen.story.get_node("%Dialogue").text)
 		var entry: LineEdit = screen.story.get_node("%NameInput")
 		if screen.story.get_node("%NameWindow").visible:
 			entry.text = "A"

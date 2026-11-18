@@ -6,6 +6,8 @@ extends "res://tests/ui_runner.gd"
 func _run() -> void:
 	var rules: FirstChapterRules = load("res://story/first_chapter_rules.tres")
 	story.characters = rules.characters
+	# This matrix measures layout; the gameplay runner exercises dialogue audio.
+	story.get_node("%Voice").stream = null
 	var lines: Dictionary = story.dialogue_resource.lines
 	for locale: String in ["ru", "en"]:
 		AppSettings.language = locale
@@ -65,5 +67,7 @@ func _run() -> void:
 	await frames(25)
 	expect(story.get_node("%Dialogue").text == "О, придумала!" and not story.get_node("%NameWindow").visible, "the first typed character triggers the queen's naming idea")
 	story.finish()
+	story.queue_free()
+	await frames(8)
 	print("STORY TYPOGRAPHY ", assertions, " assertions, ", failures.size(), " failures")
 	get_tree().quit.call_deferred(0 if failures.is_empty() else 1)

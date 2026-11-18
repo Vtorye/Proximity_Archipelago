@@ -139,6 +139,22 @@ func _run() -> void:
 	expect(is_equal_approx(_offer_card(panel, 0, 0).get_global_rect().position.y, card.get_global_rect().position.y), "variants are arranged horizontally")
 	await click(card._info)
 	expect(screen.hud._task_details.visible and screen._construction == null, "the card info opens shared details without selecting the variant")
+	for text_size in [0, AppSettings.TYPOGRAPHY.minimum_sizes.size() - 1]:
+		AppSettings.text_size = text_size
+		AppSettings.apply()
+		await frames(5)
+		var details: BuildDetailsPanel = screen.hud._task_details
+		var description: Label = details.get_node("%Description")
+		var body_size := description.get_theme_font_size(&"font_size")
+		var ordinary_size := maxi(AppSettings.minimum_text_size(), AppSettings.TYPOGRAPHY.body_size)
+		expect(body_size < ordinary_size, "i descriptions use smaller text than the main interface")
+		expect(details.get_node("%Parameters").get_theme_font_size(&"font_size") == body_size and details.get_node("%Price").get_theme_font_size(&"normal_font_size") == body_size, "description, parameters and prices share compact typography")
+		if DisplayServer.get_name() != "headless":
+			await capture("details-text-%d" % text_size, 1)
+	AppSettings.text_size = AppSettings.TYPOGRAPHY.default_index
+	AppSettings.apply()
+	await frames(5)
+	card = _offer_card(panel, 0, 1)
 	await click(card)
 	menu = screen._construction
 	if menu != null: await click(menu.controls[&"cancel"])

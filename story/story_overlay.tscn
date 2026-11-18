@@ -145,7 +145,7 @@ inset = Vector2(8, 52)
 panel = NodePath("../..")
 body = NodePath("../HintContent")
 
-[node name="HintContent" type="HBoxContainer" parent="HintPanel/WindowContents"]
+[node name="HintContent" type="VBoxContainer" parent="HintPanel/WindowContents"]
 theme_override_constants/separation = 6
 
 [node name="Hint" type="Label" parent="HintPanel/WindowContents/HintContent"]
@@ -160,6 +160,14 @@ size_flags_vertical = 4
 text = "×"
 tooltip_text = "ui.story.skip_tutorial"
 accessibility_name = "ui.story.skip_tutorial"
+
+[node name="PracticeDone" type="Button" parent="HintPanel/WindowContents/HintContent"]
+unique_name_in_owner = true
+visible = false
+disabled = true
+theme_type_variation = &"CompactButton"
+text = "ui.story.controls.done"
+mouse_default_cursor_shape = 2
 
 [node name="Warning" type="Timer" parent="."]
 unique_name_in_owner = true

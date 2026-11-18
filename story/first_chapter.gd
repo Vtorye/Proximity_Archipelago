@@ -30,6 +30,7 @@ var _starting := true
 var _pause_tried := false
 var _pause_finished := false
 var _camera_distance := 0.0
+var _zoom_tried := false
 var _first_choice: StringName
 
 func configure(colony: World, dialogue: StoryOverlay) -> void:
@@ -45,6 +46,7 @@ func configure(colony: World, dialogue: StoryOverlay) -> void:
 	story.dialogue_resource = rules.dialogue
 	story.action_requested.connect(_on_action)
 	story.scene_finished.connect(_on_scene_finished)
+	story.practice_done_requested.connect(_on_practice_done)
 	world.build_controller.built.connect(_on_built)
 	world.build_controller.order_completed.connect(_on_order_completed)
 	world.build_controller.changed.connect(_on_construction_changed)
@@ -85,9 +87,9 @@ func allows_section(section: StringName) -> bool:
 func allows_order(task_id: StringName, variant_id: StringName) -> bool:
 	if stage == Stage.ROYAL_ORDER:
 		return task_id == rules.opening_order.id
-	if stage == Stage.SECOND_ORDER and task_id == rules.followup_order.id:
-		var variant := rules.followup_order.variant_by_id(variant_id)
-		return variant != null and variant.building.id != _first_choice
+	if stage == Stage.SECOND_ORDER:
+		var order := world.tasks.order_from_ids(task_id, variant_id)
+		return order != null and order.variant.building == _other_choice()
 	return false
 
 func allows_tool(option: BuildOption, _order: TaskBuildOrder = null) -> bool:
@@ -173,16 +175,36 @@ func _on_pause_changed(_paused: bool) -> void:
 		story.play.call_deferred("after_pause")
 
 func camera_panned(distance: float) -> void:
-	if stage == Stage.CAMERA_LESSON and not story.is_modal:
+	if stage == Stage.CAMERA_LESSON and not story.is_modal and distance > 0.0:
 		_camera_distance += distance
-		if _camera_distance >= rules.camera_pan_distance:
-			stage = Stage.INTRO
-			story.play.call_deferred("after_movement")
+		_refresh_practice_button()
 
 func camera_zoomed(_level: int) -> void:
 	if stage == Stage.ZOOM_LESSON and not story.is_modal:
-		stage = Stage.INTRO
-		story.play.call_deferred("after_zoom")
+		_zoom_tried = true
+		_refresh_practice_button()
+
+func _begin_camera_lesson(lesson: Stage) -> void:
+	stage = lesson
+	_camera_distance = 0.0
+	_zoom_tried = false
+
+func _refresh_practice_button() -> void:
+	var practicing := stage in [Stage.CAMERA_LESSON, Stage.ZOOM_LESSON]
+	var tried := _camera_distance >= rules.camera_pan_distance if stage == Stage.CAMERA_LESSON else _zoom_tried
+	story.set_practice_done(practicing, practicing and tried)
+
+func _on_practice_done() -> void:
+	if story.is_modal or stage not in [Stage.CAMERA_LESSON, Stage.ZOOM_LESSON]:
+		return
+	if stage == Stage.CAMERA_LESSON and _camera_distance < rules.camera_pan_distance:
+		return
+	if stage == Stage.ZOOM_LESSON and not _zoom_tried:
+		return
+	var next_scene := "after_movement" if stage == Stage.CAMERA_LESSON else "after_zoom"
+	stage = Stage.INTRO
+	_refresh_practice_button()
+	story.play.call_deferred(next_scene)
 
 func guide_cell() -> Vector2i:
 	if stage == Stage.ROAD:
@@ -325,9 +347,9 @@ func _on_action(action: StringName) -> void:
 		&"pause":
 			stage = Stage.PAUSE_LESSON
 		&"move_camera":
-			stage = Stage.CAMERA_LESSON
+			_begin_camera_lesson(Stage.CAMERA_LESSON)
 		&"zoom":
-			stage = Stage.ZOOM_LESSON
+			_begin_camera_lesson(Stage.ZOOM_LESSON)
 		&"talk":
 			stage = Stage.TALK_LESSON
 		&"road":
@@ -390,6 +412,7 @@ func _on_scene_finished() -> void:
 
 func _resume_hint() -> void:
 	story.show_hint(status_text())
+	_refresh_practice_button()
 
 func _on_built(option: BuildOption, cell: Vector2i) -> void:
 	if _starting or _scripted:
@@ -418,7 +441,7 @@ func _on_order_completed(order: TaskBuildOrder) -> void:
 		_first_choice = order.variant.building.id
 		created.append({"id": str(order.variant.building.id), "cell": rules.order_cell})
 		story.play("ending_" + str(order.variant.id))
-	elif stage == Stage.SECOND_ORDER and order.task == rules.followup_order:
+	elif stage == Stage.SECOND_ORDER and order.variant.building == _other_choice():
 		created.append({"id": str(order.variant.building.id), "cell": rules.followup_cell})
 		story.play("second_" + str(order.variant.building.id))
 
@@ -601,6 +624,7 @@ func capture_state() -> Dictionary:
 		"worked": _worked, "recruited": _recruited, "transport_delivered": _transport_delivered,
 		"transport_requested": _transport_requested,
 		"first_choice": str(_first_choice),
+		"camera_distance": _camera_distance, "zoom_tried": _zoom_tried,
 		"queen_position": world.queen.position, "queen_health": world.queen.health,
 		"queen_walking": world.queen.walking,
 	}
@@ -617,6 +641,8 @@ func restore_state(saved: Dictionary) -> void:
 	_transport_delivered = saved.get("transport_delivered", 0)
 	_transport_requested = saved.get("transport_requested", false)
 	_first_choice = StringName(saved.get("first_choice", "statue"))
+	_camera_distance = maxf(0.0, float(saved.get("camera_distance", 0.0)))
+	_zoom_tried = bool(saved.get("zoom_tried", false))
 	world.queen.position = saved.get("queen_position", world.queen.position)
 	world.queen.health = saved.get("queen_health", world.queen.maximum_health)
 

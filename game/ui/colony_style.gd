@@ -25,6 +25,10 @@ static func theme_for_text_size(index: int) -> Theme:
 	theme.set_font_size(&"font_size", &"TooltipLabel", caption)
 	theme.set_font_size(&"font_size", &"Heading", maxi(minimum, typography.heading_size))
 	theme.set_font_size(&"font_size", &"CompactButton", maxi(minimum, typography.compact_button_size))
+	var details_size := typography.details_body_size + index * typography.details_size_step
+	theme.set_font_size(&"font_size", &"DetailsText", details_size)
+	theme.set_font_size(&"normal_font_size", &"DetailsRichText", details_size)
+	theme.set_font_size(&"font_size", &"DetailsHeading", typography.details_heading_size + index * typography.details_size_step)
 	_text_themes[index] = theme
 	return theme
 

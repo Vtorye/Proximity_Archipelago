@@ -81,15 +81,12 @@ Queen: ui.chapter.statue_whatever
 => after_both
 
 ~ after_both
-Queen: ui.story.tutorial.farewell [#portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_pleased.png]
 Queen: ui.chapter.free_intro
 => summon_worker
 
 ~ summon_worker
 Queen: ui.chapter.upgrade_request
-Protagonist: ui.chapter.worker_where
-Worker: ui.chapter.worker_called
-Protagonist: ui.chapter.ask_worker [#action=worker_advice]
+Queen: ui.chapter.ask_worker [#action=worker_advice]
 => END
 
 ~ build_advice

@@ -164,8 +164,11 @@ func test_resource_facilities(test: Node) -> void:
 	test.expect(workplace.remaining_supply == 3 and workplace.pending_output_amount() == 2 and world.inventory.quantity(wood) == before - sawmill_wood, "installing a facility preserves supply and pending cargo and charges its price once")
 	test.expect(not world.build_controller.try_build(sawmill, workplace.cell) and world.inventory.quantity(wood) == before - sawmill_wood, "a second facility cannot stack on the same resource cell")
 	test.expect((workplace.get_node("Sprite") as Sprite2D).texture == sawmill.icon and sawmill.icon.get_size() == Vector2(16, 16), "a sawmill uses its own sixteen-pixel sprite")
+	var sawmill_sprite := workplace.get_node("Sprite") as Sprite2D
+	test.expect((sawmill_sprite.get_rect().size * sawmill_sprite.scale).is_equal_approx(Vector2.ONE * world.route_service.cell_size()), "the sixteen-pixel sawmill retains a full world cell when replacing larger source art")
 	sawmill.added_slots = 3
 	test.expect(world.build_controller.demolish_at(workplace.cell) and world.registry.at(workplace.cell) == workplace and workplace.improvement == null and workplace.work_slots == slots_before, "demolition removes the facility while preserving the source")
+	test.expect((sawmill_sprite.get_rect().size * sawmill_sprite.scale).is_equal_approx(Vector2.ONE * world.route_service.cell_size()), "removing the improvement restores the source at the same world size")
 	sawmill.added_slots = 2
 	test.expect(workplace.remaining_supply == 3 and workplace.pending_output_amount() == 2, "demolishing a facility cannot replenish the deposit or destroy waiting goods")
 	test.expect(world.build_controller.try_build(sawmill, workplace.cell) and draft.demolish(workplace.cell) and draft.commit() and workplace.improvement == null, "planned demolition also removes only the facility layer")
