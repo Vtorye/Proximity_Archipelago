@@ -10,9 +10,12 @@ var cargo_receiver: CargoShip
 var inventory: WorldInventory
 var navigation: RouteService
 var _depots: Array[House] = []
+var _canteens: Array[Canteen] = []
 var _fields: Dictionary[Building, NavigationField] = {}
 signal shipment_delivered(target: Building, type: ResourceType, amount: int)
 signal export_delivered(source: House, type: ResourceType, amount: int)
+signal stock_transferred(source: House, target: Building, type: ResourceType, amount: int)
+signal worker_deposited(house: House, type: ResourceType, amount: int)
 
 func configure(stock: WorldInventory, routes: RouteService, registry: BuildingRegistry) -> void:
 	inventory = stock
@@ -21,6 +24,9 @@ func configure(stock: WorldInventory, routes: RouteService, registry: BuildingRe
 	registry.removed.connect(_remove_building)
 
 func _add_building(building: Building) -> void:
+	if building is Canteen and building.colony_owned:
+		_canteens.append(building)
+		inventory.register_depot(building)
 	if not building is House:
 		return
 	var house: House = building as House
@@ -33,6 +39,10 @@ func _add_building(building: Building) -> void:
 	house.refresh_appearance()
 
 func _remove_building(building: Building) -> void:
+	if building is Canteen and _canteens.has(building):
+		_canteens.erase(building)
+		_fields.erase(building)
+		inventory.unregister_depot(building)
 	if not building is House:
 		return
 	var house: House = building as House
@@ -54,12 +64,14 @@ func _remove_building(building: Building) -> void:
 		_depots.erase(house)
 		inventory.unregister_depot(house)
 
-func owns(house: Building) -> bool:
-	if not is_instance_valid(house):
+func owns(building: Building) -> bool:
+	if not is_instance_valid(building):
 		return false
-	if house is CargoShip:
-		return house == cargo_receiver and house.is_inside_tree() and house.accepting_cargo
-	return is_instance_valid(house) and (house == main_nest or _depots.has(house))
+	if building is CargoShip:
+		return building == cargo_receiver and building.is_inside_tree() and building.accepting_cargo
+	if building is Canteen:
+		return _canteens.has(building)
+	return building is House and (building == main_nest or _depots.has(building))
 
 ## A worker's cargo goes only to the storage of the nest it lives in.
 func accepts_home(house: House, count: int) -> bool:
@@ -103,7 +115,11 @@ func field_to(house: House) -> NavigationField:
 	return _field(house) if owns(house) else null
 
 func deposit(house: House, cargo: Array[ResourceAmount]) -> bool:
-	return owns(house) and inventory.deposit(null if house == main_nest else house, cargo)
+	if not owns(house) or not inventory.deposit(store_of(house), cargo):
+		return false
+	for item in cargo:
+		worker_deposited.emit(house, item.type, item.amount)
+	return true
 
 ## Every owned nest; the first base is main_nest and is stored under the null key in WorldInventory.
 func nests() -> Array[House]:
@@ -141,6 +157,8 @@ func order_need(house: Building, type: ResourceType) -> int:
 		return house.need(type) if owns(house) else 0
 	if not owns(house):
 		return 0
+	if house is Canteen:
+		return house.food_needed(inventory.depot_quantity(house, type)) if type.id == WorldInventory.FOOD_ID else 0
 	var id: String = str(type.id)
 	if int(house.requests.get(id, 0)) < 0:
 		return 0
@@ -165,6 +183,8 @@ func transfer_amount(source: House, target: Building, type: ResourceType) -> int
 	if source == target or not owns(source) or not owns(target):
 		return 0
 	var wanted := order_need(target, type)
+	if target is Canteen:
+		wanted = mini(wanted, inventory.available(type))
 	var exported := maxi(0, -int(source.requests.get(str(type.id), 0)))
 	if exported > 0 and target is House and int(target.requests.get(str(type.id), 0)) >= 0:
 		var room := inventory.free_space(store_of(target)) - _incoming_total(target)
@@ -205,6 +225,7 @@ func _nearest_order(from_cell: Vector2i, capacity: int, can_collect: Callable) -
 	var houses := nests()
 	var targets: Array[Building] = []
 	targets.assign(houses)
+	targets.append_array(_canteens)
 	if owns(cargo_receiver):
 		targets.append(cargo_receiver)
 	var types := _order_types()

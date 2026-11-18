@@ -1,0 +1,9 @@
+[gd_scene format=3]
+
+[node name="Pause" type="Button"]
+custom_minimum_size = Vector2(32, 32)
+theme_type_variation = &"CompactButton"
+expand_icon = true
+theme_override_constants/icon_max_width = 16
+tooltip_text = "ui.hud.pause"
+mouse_default_cursor_shape = 2

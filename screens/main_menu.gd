@@ -1,5 +1,6 @@
 extends Screen
 
+var _delete_path := ""
 var controls: Dictionary[StringName, Button] = {}
 
 func _ready() -> void:
@@ -8,7 +9,7 @@ func _ready() -> void:
 	controls[&"settings"] = %Settings
 	controls[&"language"] = %Language
 	controls[&"quit"] = %Quit
-	for button: Button in [%Play, %Maps, %Settings, %Language, %Add, %Back, %Load, %Start, %CancelNew, %LoadIsland]:
+	for button: Button in [%Play, %Maps, %Settings, %Language, %Add, %Back, %Load, %Delete, %Start, %CancelNew, %LoadIsland]:
 		button.pressed.connect(AppSettings.play_click)
 	%Play.pressed.connect(_show_saves)
 	%Maps.pressed.connect(func(): Router.goto(&"level_editor"))
@@ -19,9 +20,13 @@ func _ready() -> void:
 	%Add.pressed.connect(_show_new_game)
 	%CancelNew.pressed.connect(_show_saves)
 	%Start.pressed.connect(_start_game)
-	%Mode.item_selected.connect(func(index: int): %EndlessOptions.visible = index == 1)
+	%Mode.item_selected.connect(func(index: int):
+		%EndlessOptions.visible = index == 1
+		%SkipLessons.visible = index == 0)
 	%SaveList.item_activated.connect(_load_save)
 	%Load.pressed.connect(_load_selected)
+	%Delete.pressed.connect(_confirm_delete)
+	%ConfirmDelete.confirmed.connect(_delete_save)
 	%SaveList.item_selected.connect(_select_save)
 	%IslandList.item_activated.connect(_load_island)
 	%LoadIsland.pressed.connect(_load_selected_island)
@@ -48,6 +53,7 @@ func _show_saves() -> void:
 		%SaveList.set_item_metadata(index, {"path": path, "campaign": saved.has("voyage")})
 	%Load.disabled = %SaveList.item_count == 0
 	%Load.hide()
+	%Delete.hide()
 	%Actions.hide()
 	%NewGame.hide()
 	%Saves.show()
@@ -68,7 +74,7 @@ func _start_game() -> void:
 		layout["wave_mode"] = waves
 		layout["queen_timer"] = %TimerOption.button_pressed
 	else:
-		layout = {"tutorial": true}
+		layout = {"tutorial": true, "zero_tutorial": true, "skip_lessons": %SkipLessons.button_pressed}
 	layout["save_path"] = SessionSave.new_path()
 	layout["save_on_start"] = true
 	Router.goto(&"match", layout)
@@ -81,10 +87,26 @@ func _load_selected() -> void:
 func _select_save(index: int) -> void:
 	var entry: Dictionary = %SaveList.get_item_metadata(index)
 	%Load.visible = not entry.campaign
+	%Delete.show()
 	if entry.campaign:
 		_show_islands(entry.path)
 	else:
 		%IslandPane.hide()
+
+func _confirm_delete() -> void:
+	var selected: PackedInt32Array = %SaveList.get_selected_items()
+	if selected.is_empty():
+		return
+	_delete_path = %SaveList.get_item_metadata(selected[0]).path
+	%ConfirmDelete.popup_centered()
+
+func _delete_save() -> void:
+	var error := SessionSave.delete_slot(_delete_path)
+	_delete_path = ""
+	_show_saves()
+	if error != OK:
+		%DeleteError.dialog_text = tr("ui.play.delete_failed") % error_string(error)
+		%DeleteError.popup_centered()
 
 func _show_islands(path: String) -> void:
 	var latest := SessionSave.read(path)

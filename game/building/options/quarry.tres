@@ -2,10 +2,15 @@
 
 [ext_resource type="Script" uid="uid://clwif6xxyitqt" path="res://game/economy/price_rule.gd" id="5_65qmu"]
 [ext_resource type="Script" uid="uid://dohq4yj0b3afb" path="res://game/resources/resource_amount.gd" id="amount"]
-[ext_resource type="Texture2D" uid="uid://bbc7d4i4egqkk" path="res://game/assets/sprites/quarry.svg" id="icon"]
+[ext_resource type="Texture2D" path="res://game/assets/sprites/quarry_simple.png" id="art"]
 [ext_resource type="Script" uid="uid://h1ws6w2g6pxi" path="res://game/building/workplace_upgrade_option.gd" id="option"]
 [ext_resource type="Resource" uid="uid://dnvvlsc4kjs1t" path="res://game/resources/resource_types/stone.tres" id="stone"]
 [ext_resource type="Resource" uid="uid://btsdqgmh3ee22" path="res://game/resources/resource_types/wood.tres" id="wood"]
+
+[sub_resource type="AtlasTexture" id="icon"]
+atlas = ExtResource("art")
+region = Rect2(188, 180, 920, 920)
+filter_clip = true
 
 [sub_resource type="Resource" id="cost_wood"]
 script = ExtResource("amount")
@@ -23,5 +28,5 @@ source_type = ExtResource("stone")
 id = &"quarry"
 display_name = "ui.building.quarry"
 description = "ui.construction.description.quarry"
-icon = ExtResource("icon")
+icon = SubResource("icon")
 costs = Array[ExtResource("amount")]([SubResource("cost_wood"), SubResource("cost_stone")])

@@ -440,6 +440,36 @@ func test_orders(test: Node) -> void:
 	test.expect(not barracks.requests.has(key), "completed exports clear at zero")
 	world.free()
 
+func test_canteen_delivery(test: Node) -> void:
+	var world: World = test.make_world()
+	var stock := world.inventory
+	var food := stock.type_by_id(WorldInventory.FOOD_ID)
+	var canteen := world.registry.canteens()[0]
+	stock.add(food, canteen.food_capacity + NestDefaults.load_defaults().base_min)
+	var total := stock.quantity(food)
+	var carrier := world.population.agents().back() as AntAgent
+	carrier._decide()
+	_step_until(carrier, func() -> bool: return carrier.transport.shipment)
+	var load_size := canteen.incoming_food
+	test.expect(load_size > 0 and stock.depot_quantity(canteen, food) == 0 and stock.quantity(food) == total, "a canteen refill travels before becoming local stock")
+	_step_until(carrier, func() -> bool: return not carrier.transport.shipment)
+	test.expect(stock.depot_quantity(canteen, food) == load_size and canteen.incoming_food == 0 and stock.quantity(food) == total, "unloading moves food without creating extra stock")
+	var feedback := canteen.stock_transfer_feedback
+	test.expect(feedback.get_child_count() == 1 and feedback.get_child(0).get_node("Content/Amount").text == "+%d" % load_size, "canteens show the delivered quantity")
+	var main_food := stock.stock_of(null, food)
+	var worker := world.population.agents()[0]
+	worker._seek_food()
+	_step_until(worker, func() -> bool: return stock.quantity(food) < total)
+	test.expect(stock.depot_quantity(canteen, food) == load_size - 1 and stock.stock_of(null, food) == main_food, "eating consumes local food first")
+	test.expect(feedback.get_child_count() == 2 and feedback.get_child(1).get_node("Content/Amount").text == "−1", "a successful meal shows the consumed portion")
+	stock.consume(stock.reserve(food, load_size - 1), canteen)
+	worker._meal = stock.reserve(food, 2)
+	worker._seek_food()
+	total = stock.quantity(food)
+	_step_until(worker, func() -> bool: return stock.quantity(food) < total)
+	test.expect(stock.stock_of(null, food) == main_food - 2 and feedback.get_child_count() == 3 and feedback.get_child(2).get_node("Content/Amount").text == "−2", "an empty canteen uses colony stock and shows the full meal cost")
+	world.free()
+
 func test_authored_map(test: Node) -> void:
 	var data: Dictionary = LevelStore.load_level("builtin/tidal_shards")
 	test.expect(LevelValidator.validate("res://game/worlds/maps/tidal_shards.tres").is_empty(), "bundled maps support the same editor and command-line validator as scenes")
@@ -590,6 +620,8 @@ func test_recruitment(test: Node) -> void:
 	var main_wood: int = stock.nest_quantity(main, main, wood)
 	main.set_order(str(wood.id), "min", main_wood + 1)
 	main.set_order(str(wood.id), "max", main_wood + 6)
+	# Keep food at home in this fixture so the only shipment is the wood under test.
+	main.set_order(str(food.id), "min", stock.stock_of(null, food))
 	carrier._decide()
 	_step_until(carrier, func() -> bool: return carrier.transport.shipment)
 	var total: int = stock.quantity(wood)

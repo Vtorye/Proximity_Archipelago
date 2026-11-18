@@ -1,11 +1,16 @@
 [gd_scene format=3 uid="uid://brf42b54ugjtv"]
 
-[ext_resource type="Texture2D" path="res://game/assets/sprites/canteen_variant.png" id="art"]
+[ext_resource type="Texture2D" path="res://game/assets/sprites/canteen_picnic_house.svg" id="art"]
 [ext_resource type="Script" uid="uid://61u1015oq8mh" path="res://game/entities/canteen.gd" id="script"]
+[ext_resource type="PackedScene" path="res://game/ui/stock_transfer_feedback.tscn" id="feedback"]
 
-[node name="Canteen" type="Node2D" unique_id=1819773372]
+[node name="Canteen" type="Node2D" unique_id=1819773372 node_paths=PackedStringArray("stock_transfer_feedback")]
 script = ExtResource("script")
 title = "ui.building.canteen"
+stock_transfer_feedback = NodePath("StockTransferOrigin")
 
 [node name="Sprite" type="Sprite2D" parent="." unique_id=2081162632]
 texture = ExtResource("art")
+
+[node name="StockTransferOrigin" parent="." instance=ExtResource("feedback")]
+position = Vector2(0, -22)

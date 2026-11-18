@@ -32,6 +32,12 @@ var residents: Array[Node2D]:
 func _ready() -> void:
 	refresh_appearance()
 
+
+func show_stock_transfer(cargo: Array[ResourceAmount], incoming_stock: bool) -> void:
+	for entry in cargo:
+		if entry != null and entry.amount > 0:
+			show_stock_change(entry.type, entry.amount if incoming_stock else -entry.amount)
+
 func refresh_appearance() -> void:
 	var sprite := get_node_or_null("Sprite") as Sprite2D
 	if sprite != null:

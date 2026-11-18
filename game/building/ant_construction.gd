@@ -69,6 +69,7 @@ func arrive(destination: StringName) -> void:
 				ant._decide()
 				return
 			job.picked_up = true
+			job.source.show_stock_transfer(job.materials, false)
 			if not resume():
 				ant._set_status(AntAgent.Status.WAITING_FOR_FOOD)
 				ant._timer = 1.0

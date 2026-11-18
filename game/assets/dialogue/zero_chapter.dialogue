@@ -1,0 +1,176 @@
+~ intro
+Queen: ui.story.tutorial.wake [#portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_pleased.png]
+Queen: ui.story.tutorial.ask_name [#name_input, portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_thinking.png]
+Queen: ui.story.tutorial.never_mind [#portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_pleased.png]
+Queen: ui.story.tutorial.given_name [#portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_pleased.png]
+Queen: ui.story.tutorial.purpose [#portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_pleased.png]
+Queen: ui.zero.power
+Queen: ui.story.tutorial.my_fault [#portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_thinking.png]
+Queen: ui.story.controls.pause_intro
+Queen: ui.story.controls.pause [#action=pause]
+=> END
+
+~ after_pause
+Queen: ui.story.controls.move_intro
+Queen: ui.story.controls.move [#action=move_camera]
+=> END
+
+~ after_movement
+Queen: ui.story.controls.zoom_intro
+Queen: ui.story.controls.zoom [#action=zoom]
+=> END
+
+~ after_zoom
+Queen: ui.story.tutorial.colony [#portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_thinking.png]
+Queen: ui.story.controls.talk [#action=talk]
+=> END
+
+~ road
+Queen: ui.story.tutorial.road_hint [#action=road]
+=> END
+
+~ road_advice
+Courier: ui.story.road.advice
+Courier: ui.story.road.also_build
+Courier: ui.story.road.better_fed
+=> road
+
+~ order
+Queen: ui.story.tutorial.order_hint [#action=order]
+=> END
+
+~ ending_build
+Queen: ui.story.tutorial.feast [#portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_eating_berries.png]
+Courier: ui.chapter.feast_expires
+Queen: ui.chapter.distraction
+=> handoff
+
+~ ending_diversion
+Queen: ui.story.tutorial.statue [#portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_pleased.png]
+Queen: ui.chapter.statue_whatever
+=> handoff
+
+~ handoff
+Queen: ui.chapter.other_request
+Queen: ui.chapter.second_order [#action=second_order]
+=> END
+
+~ second_feast
+Queen: ui.story.tutorial.feast [#portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_eating_berries.png]
+Courier: ui.chapter.feast_expires
+Queen: ui.chapter.distraction
+=> after_both
+
+~ second_statue
+Queen: ui.story.tutorial.statue [#portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_pleased.png]
+Queen: ui.chapter.statue_whatever
+=> after_both
+
+~ after_road
+Queen: ui.story.tutorial.road_done [#portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_pleased.png]
+=> wall
+
+~ early_requests
+Queen: ui.story.tutorial.choice [#portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_eating_berries.png]
+=> order
+
+~ after_both
+=> north_road
+
+~ north_road
+Worker: ui.zero.berries
+Courier: ui.zero.shortcut
+Courier: ui.zero.nav_explain
+Courier: ui.zero.road_explain
+Courier: ui.zero.road_goal [#action=north_road]
+=> END
+
+~ queen_topic
+Queen: ui.chapter.resource_answer
+=> END
+
+~ orders
+Worker: ui.zero.stone_home
+Courier: ui.zero.source_target
+Courier: ui.zero.min_explain
+Courier: ui.zero.max_explain
+Courier: ui.zero.orders_goal [#action=orders]
+=> END
+
+~ wall
+Queen: ui.zero.wall_line
+Queen: ui.zero.wall_goal [#action=wall]
+=> END
+
+~ statues
+Courier: ui.zero.order_delivered
+Queen: ui.zero.statues_line
+Queen: ui.zero.statues_goal [#action=statues]
+=> END
+
+~ planner
+Planner: ui.zero.planner_shock
+Planner: ui.zero.remove_wall_line
+Planner: ui.zero.remove_wall_goal [#action=remove_wall]
+=> END
+
+~ remove_statue
+Planner: ui.zero.remove_statue_line
+Planner: ui.zero.remove_statue_goal [#action=remove_statue]
+=> END
+
+~ caught
+Queen: ui.zero.caught
+Planner: ui.zero.blocked
+Queen: ui.zero.remove_source_line
+Queen: ui.zero.remove_source_goal [#action=remove_source]
+=> END
+
+~ mentor
+Queen: ui.zero.mentor_order
+Planner: ui.zero.mentor_reply
+Planner: ui.zero.finite_explain
+Planner: ui.zero.quarry_goal [#action=quarry]
+=> END
+
+~ briefing
+Planner: ui.zero.briefing
+Planner: ui.zero.plan
+Courier: ui.zero.load
+Planner: ui.zero.ship_goal [#action=preparation]
+=> END
+
+~ military
+Military: ui.zero.report
+Courier: ui.zero.watch
+Military: ui.zero.no_watch
+Military: ui.zero.no_watch [#action=breach]
+=> END
+
+~ spider
+Spider: ui.zero.spider_first
+Spider: ui.zero.spider_last
+Queen: ui.zero.run
+Courier: ui.zero.board_goal [#action=evacuation]
+=> END
+
+~ farewell
+Worker: ui.zero.on_board
+Queen: ui.zero.leave
+Queen: ui.zero.leave [#action=depart]
+=> END
+
+~ courier_topic
+Courier: ui.zero.source_target
+Courier: ui.zero.min_explain
+Courier: ui.zero.max_explain
+Courier: ui.zero.once_explain
+=> END
+
+~ worker_topic
+Worker: ui.zero.work_topic
+=> END
+
+~ planner_topic
+Planner: ui.zero.plan
+=> END

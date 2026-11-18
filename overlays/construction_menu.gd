@@ -90,6 +90,9 @@ func _update_mode() -> void:
 	_update_buildings_visibility()
 
 func detach_toolbar() -> void:
+	controls[&"apply"].pressed.disconnect(apply_plan)
+	controls[&"apply"].pressed.disconnect(AppSettings.play_click)
+	controls[&"apply"].disabled = true
 	controls[&"undo"].pressed.disconnect(_undo)
 	controls[&"undo"].pressed.disconnect(AppSettings.play_click)
 	controls[&"undo"].disabled = true
@@ -158,7 +161,7 @@ func _ready() -> void:
 	context.controller.map.get_parent().add_child(_preview)
 	controls[&"undo"] = context.undo_button
 	controls[&"demolish"] = %Demolish
-	controls[&"apply"] = %Apply
+	controls[&"apply"] = context.apply_button
 	controls[&"cancel"] = %Cancel
 	controls[&"move"] = context.pan_button
 	context.pan_button.disabled = false
@@ -398,7 +401,7 @@ func _cancel() -> void:
 	close_requested.emit(self)
 
 func apply_plan() -> void:
-	if draft.size() == 0: return
+	if controls[&"apply"].disabled or _confirmation.visible: return
 	_end_stroke()
 	var residents: int = draft.residents_to_demolish()
 	if residents > 0:
@@ -423,6 +426,10 @@ func _input(event: InputEvent) -> void:
 		return
 	if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_Z and event.ctrl_pressed:
 		_undo()
+		get_viewport().set_input_as_handled()
+	elif event.is_action_pressed(&"commit_construction") and not _confirmation.visible and not controls[&"apply"].disabled:
+		AppSettings.play_click()
+		apply_plan()
 		get_viewport().set_input_as_handled()
 	elif event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_ESCAPE:
 		if not context.dismiss_map_popup.is_valid() or not context.dismiss_map_popup.call():

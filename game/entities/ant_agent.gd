@@ -143,8 +143,7 @@ func _physics_process(delta: float) -> void:
 		Status.EATING:
 			_timer -= delta
 			if _timer <= 0.0:
-				if planner.inventory.consume(_meal):
-					needs.eat()
+				_finish_meal()
 				_meal = null
 				if role == Role.WARRIOR:
 					_set_status(Status.HOME)
@@ -225,6 +224,15 @@ func _can_recover() -> bool:
 		return false
 	refresh_meal_reservation()
 	return _meal != null and _meal.active
+
+func _finish_meal() -> void:
+	var cell := route_service.world_to_cell(global_position)
+	var meal_site: Building = home if _destination == &"combat_meal" else planner.canteen_at_entry(cell)
+	var ticket := _meal
+	if planner.inventory.consume(ticket, meal_site as Canteen):
+		needs.eat()
+		if is_instance_valid(meal_site):
+			meal_site.show_stock_change(ticket.type, -ticket.amount)
 
 func _seek_food() -> void:
 	if combat != null and role == Role.WARRIOR:

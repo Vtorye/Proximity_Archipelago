@@ -138,6 +138,11 @@ func add_time(seconds: float) -> void:
 	_last_seconds = ceili(time_remaining)
 	time_changed.emit(_last_seconds)
 
+func reset_countdown(seconds: float) -> void:
+	time_remaining = seconds
+	_last_seconds = ceili(seconds)
+	time_changed.emit(_last_seconds)
+
 func complete_objective() -> void:
 	if _started and not _finished: _finish(Result.WIN, Reason.TARGET_REACHED)
 

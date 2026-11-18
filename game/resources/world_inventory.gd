@@ -13,6 +13,7 @@ func display_amount(type: ResourceType, amount: int) -> String:
 	return str(amount) if quantities_known or type.id == CURRENCY_ID else "∞"
 
 const CURRENCY_ID := &"royal"
+const FOOD_ID := &"food"
 
 ## Goods one base nest can hold; set in nest_defaults.tres. Royal is currency, not counted.
 static func base_capacity() -> int:
@@ -25,7 +26,7 @@ static func order_limit() -> int:
 var _types: Dictionary[StringName, ResourceType] = {}
 var _amounts: Dictionary[StringName, int] = {}
 var _main_stock: Dictionary[StringName, int] = {}
-var _depots: Dictionary[House, Dictionary] = {}
+var _depots: Dictionary[Building, Dictionary] = {}
 var _transit: Dictionary[StringName, int] = {}
 var _reserved: Dictionary[StringName, int] = {}
 var _tickets: Dictionary[int, StockReservation] = {}
@@ -88,7 +89,7 @@ func can_afford_all(costs: Array[ResourceAmount], main_only: bool = false, use_r
 		if cost == null or cost.amount < 0 or not is_registered(cost.type):
 			return false
 		totals[cost.type.id] = totals.get(cost.type.id, 0) + cost.amount
-		var limit: int = _physical_stock(cost.type) if use_reserved_food and cost.type.id == &"food" else available(cost.type)
+		var limit: int = _physical_stock(cost.type) if use_reserved_food and cost.type.id == FOOD_ID else available(cost.type)
 		if main_only:
 			limit = mini(limit, main_quantity(cost.type))
 		if totals[cost.type.id] > limit:
@@ -107,7 +108,7 @@ func try_spend_all(costs: Array[ResourceAmount], main_only: bool = false, use_re
 	return true
 
 
-func _store_stock(store: House) -> Dictionary:
+func _store_stock(store: Building) -> Dictionary:
 	return _main_stock if store == null else _depots.get(store, {})
 
 ## Physical goods at one store (null is the first base). Meal reservations are ignored on purpose:
@@ -145,7 +146,7 @@ func allocate_build_materials(costs: Array[ResourceAmount], primary: House, sour
 	for cost in costs:
 		var remaining: int = cost.amount
 		for source in sources:
-			var stock: Dictionary = _main_stock if source == primary else _depots[source]
+			var stock := _store_stock(null if source == primary else source)
 			if not planned.has(source):
 				planned[source] = {}
 			var used: int = planned[source].get(cost.type.id, 0)
@@ -169,7 +170,7 @@ func allocate_build_materials(costs: Array[ResourceAmount], primary: House, sour
 ## Commit the allocation once all orders and their combined budget have passed preflight.
 func debit_build_materials(crates: Dictionary, primary: House) -> void:
 	for source: House in crates:
-		var stock: Dictionary = _main_stock if source == primary else _depots[source]
+		var stock := _store_stock(null if source == primary else source)
 		for item: ResourceAmount in crates[source]:
 			stock[item.type.id] -= item.amount
 			_amounts[item.type.id] -= item.amount
@@ -213,14 +214,24 @@ func release(ticket: StockReservation) -> bool:
 	_notify()
 	return true
 
-func consume(ticket: StockReservation) -> bool:
+func consume(ticket: StockReservation, canteen: Canteen = null) -> bool:
 	if ticket == null or not ticket.active or _tickets.get(ticket.id) != ticket:
 		return false
 	if _physical_stock(ticket.type) < ticket.amount:
 		release(ticket)
 		return false
 	begin_update()
-	_withdraw(ticket.type.id, ticket.amount)
+	var remaining := ticket.amount
+	if ticket.type.id == FOOD_ID and _depots.has(canteen):
+		var stock := _store_stock(canteen)
+		var local: int = stock.get(FOOD_ID, 0)
+		var served := mini(local, remaining)
+		if served > 0:
+			stock[FOOD_ID] = local - served
+			_amounts[FOOD_ID] -= served
+			remaining -= served
+	if remaining > 0:
+		_withdraw(ticket.type.id, remaining)
 	release(ticket)
 	end_update()
 	return true
@@ -230,7 +241,7 @@ func main_quantity(type: ResourceType) -> int:
 		return 0
 	var amount: int = _main_stock.get(type.id, 0)
 	for house in _depots:
-		if house.is_main_nest:
+		if house is House and house.is_main_nest:
 			amount += depot_quantity(house, type)
 	return amount
 
@@ -252,19 +263,19 @@ func destroy_nest(house: House, primary: House) -> void:
 	_notify()
 	end_update()
 
-func register_depot(house: House) -> void:
-	_depots[house] = {}
+func register_depot(building: Building) -> void:
+	_depots[building] = {}
 
-func unregister_depot(house: House) -> void:
-	var stock: Dictionary = _depots.get(house, {})
+func unregister_depot(building: Building) -> void:
+	var stock: Dictionary = _depots.get(building, {})
 	for id: StringName in stock:
 		_main_stock[id] += stock[id]
-	_depots.erase(house)
+	_depots.erase(building)
 	if not stock.is_empty():
 		_notify()
 
-func depot_quantity(house: House, type: ResourceType) -> int:
-	return _depots.get(house, {}).get(type.id, 0) if type != null else 0
+func depot_quantity(building: Building, type: ResourceType) -> int:
+	return _depots.get(building, {}).get(type.id, 0) if type != null else 0
 
 func depot_fill(house: House) -> int:
 	var count := 0
@@ -285,8 +296,8 @@ func storage_load(house: House) -> int:
 func has_base_room(count: int) -> bool:
 	if can_deposit(null, count):
 		return true
-	for house: House in _depots:
-		if house.is_main_nest and can_deposit(house, count):
+	for house in _depots:
+		if house is House and house.is_main_nest and can_deposit(house, count):
 			return true
 	return false
 
@@ -310,7 +321,7 @@ func deposit(house: House, cargo: Array[ResourceAmount], force := false) -> bool
 	var fits: bool = (force and (house == null or _depots.has(house))) or can_deposit(house, cargo_size(cargo))
 	if not fits:
 		return false
-	var stock: Dictionary = _main_stock if house == null else _depots[house]
+	var stock := _store_stock(house)
 	for item in cargo:
 		var id: StringName = item.type.id
 		stock[id] = int(stock.get(id, 0)) + item.amount
@@ -342,7 +353,7 @@ func take_for_order(house: House, type: ResourceType, amount: int) -> Array[Reso
 	var cargo: Array[ResourceAmount] = []
 	if amount <= 0 or not is_registered(type) or stock_of(house, type) < amount or available(type) < amount:
 		return cargo
-	var stock: Dictionary = _main_stock if house == null else _depots[house]
+	var stock := _store_stock(house)
 	stock[type.id] -= amount
 	_transit[type.id] = int(_transit.get(type.id, 0)) + amount
 	var item := ResourceAmount.new()
@@ -352,11 +363,24 @@ func take_for_order(house: House, type: ResourceType, amount: int) -> Array[Reso
 	_notify()
 	return cargo
 
-## Delivered cargo goes to any nest with room (null is the first base); otherwise nothing changes.
-func close_shipment(cargo: Array[ResourceAmount], delivered: bool, destination: House = null) -> bool:
-	if delivered and not can_deposit(destination, cargo_size(cargo)):
+func can_deliver_food(canteen: Canteen, cargo: Array[ResourceAmount]) -> bool:
+	if not _depots.has(canteen) or cargo.is_empty():
 		return false
-	var stock: Dictionary = _main_stock if destination == null else _depots.get(destination, {})
+	var food_stock := _store_stock(canteen)
+	for item in cargo:
+		if item == null or item.type == null or item.type.id != FOOD_ID or item.amount <= 0:
+			return false
+	return int(food_stock.get(FOOD_ID, 0)) + cargo_size(cargo) <= canteen.food_capacity
+
+## Close transit when cargo reaches a store with room or is lost.
+func close_shipment(cargo: Array[ResourceAmount], delivered: bool, destination: Building = null) -> bool:
+	if delivered:
+		if destination is Canteen:
+			if not can_deliver_food(destination, cargo):
+				return false
+		elif (destination != null and not destination is House) or not can_deposit(destination as House, cargo_size(cargo)):
+			return false
+	var stock := _store_stock(destination)
 	for item in cargo:
 		var id: StringName = item.type.id
 		_transit[id] -= item.amount
@@ -382,7 +406,7 @@ func _withdraw(id: StringName, count: int, main_only: bool = false) -> void:
 	if remaining == 0:
 		return
 	for house in _depots:
-		if main_only and not house.is_main_nest:
+		if main_only and (not house is House or not house.is_main_nest):
 			continue
 		var stock: Dictionary = _depots[house]
 		var taken: int = mini(stock.get(id, 0), remaining)
@@ -424,9 +448,9 @@ func restore_stock(state: Dictionary) -> void:
 	_reserved.clear()
 	_tickets.clear()
 
-func capture_depot(house: House) -> Dictionary:
-	return _depots.get(house, {}).duplicate()
+func capture_depot(building: Building) -> Dictionary:
+	return _depots.get(building, {}).duplicate()
 
-func restore_depot(house: House, stock: Dictionary) -> void:
-	if _depots.has(house):
-		_depots[house] = stock.duplicate()
+func restore_depot(building: Building, stock: Dictionary) -> void:
+	if _depots.has(building):
+		_depots[building] = stock.duplicate()

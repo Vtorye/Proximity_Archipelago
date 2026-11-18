@@ -131,13 +131,6 @@ tooltip_text = "ui.construction.demolish"
 toggle_mode = true
 mouse_default_cursor_shape = 2
 
-[node name="Apply" type="Button" parent="Panel/WindowContents/CategoryContent/PlanActions"]
-unique_name_in_owner = true
-theme_type_variation = &"CompactButton"
-text = "ui.construction.apply"
-disabled = true
-mouse_default_cursor_shape = 2
-
 [node name="Cancel" type="Button" parent="Panel/WindowContents/CategoryContent/PlanActions"]
 unique_name_in_owner = true
 theme_type_variation = &"CompactButton"

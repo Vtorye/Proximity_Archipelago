@@ -3,15 +3,26 @@
 [ext_resource type="Script" path="res://game/ui/ui_text_binding.gd" id="ui_text_binding"]
 [ext_resource type="Script" path="res://game/ui/match_hud.gd" id="script"]
 
-[ext_resource type="Texture2D" path="res://game/assets/ui/menu_dots.svg" id="menu_icon"]
-[ext_resource type="Texture2D" path="res://game/assets/ui/build_undo.svg" id="undo_icon"]
-[ext_resource type="Texture2D" path="res://game/assets/ui/build_move.svg" id="pan_icon"]
 [ext_resource type="PackedScene" path="res://game/ui/navigation_panel.tscn" id="navigation_panel"]
 
 [ext_resource type="PackedScene" path="res://game/ui/colony_summary.tscn" id="summary"]
 [ext_resource type="PackedScene" path="res://game/ui/build_details_panel.tscn" id="details"]
 
 [ext_resource type="StyleBox" path="res://game/ui/hud_bottom_bar.tres" id="bottom_bar"]
+
+[ext_resource type="PackedScene" path="res://game/ui/hud_buttons/routes.tscn" id="routes"]
+[ext_resource type="PackedScene" path="res://game/ui/hud_buttons/pause.tscn" id="pause"]
+[ext_resource type="PackedScene" path="res://game/ui/hud_buttons/settings.tscn" id="settings"]
+[ext_resource type="PackedScene" path="res://game/ui/hud_buttons/build.tscn" id="build"]
+[ext_resource type="PackedScene" path="res://game/ui/hud_buttons/colony_tab.tscn" id="colony_tab"]
+[ext_resource type="PackedScene" path="res://game/ui/hud_buttons/tasks_tab.tscn" id="tasks_tab"]
+[ext_resource type="PackedScene" path="res://game/ui/hud_buttons/undo.tscn" id="undo"]
+[ext_resource type="PackedScene" path="res://game/ui/hud_buttons/talk_tab.tscn" id="talk_tab"]
+[ext_resource type="PackedScene" path="res://game/ui/hud_buttons/move.tscn" id="move"]
+[ext_resource type="PackedScene" path="res://game/ui/hud_buttons/zoom_out.tscn" id="zoom_out"]
+[ext_resource type="PackedScene" path="res://game/ui/hud_buttons/zoom_in.tscn" id="zoom_in"]
+
+[ext_resource type="PackedScene" path="res://game/ui/hud_buttons/apply.tscn" id="apply"]
 
 [node name="Hud" type="Control"]
 script = ExtResource("script")
@@ -34,7 +45,11 @@ grow_horizontal = 2
 mouse_filter = 2
 theme_override_constants/separation = 6
 
-[node name="ColonySummary" parent="Top" instance=ExtResource("summary")]
+[node name="ColonySummarySlot" type="MarginContainer" parent="Top"]
+mouse_filter = 2
+size_flags_vertical = 0
+
+[node name="ColonySummary" parent="Top/ColonySummarySlot" instance=ExtResource("summary")]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(148, 0)
 size_flags_vertical = 0
@@ -44,24 +59,27 @@ unique_name_in_owner = true
 size_flags_horizontal = 3
 size_flags_vertical = 0
 
-[node name="Counters" type="HBoxContainer" parent="Top/MatchStatus"]
+[node name="CountersSlot" type="MarginContainer" parent="Top/MatchStatus"]
+mouse_filter = 2
+
+[node name="Counters" type="HBoxContainer" parent="Top/MatchStatus/CountersSlot"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 32)
 alignment = 1
 theme_override_constants/separation = 8
 
-[node name="Timers" type="VBoxContainer" parent="Top/MatchStatus/Counters"]
+[node name="Timers" type="VBoxContainer" parent="Top/MatchStatus/CountersSlot/Counters"]
 size_flags_vertical = 4
 theme_override_constants/separation = 0
 
-[node name="Timer" type="Label" parent="Top/MatchStatus/Counters/Timers"]
+[node name="Timer" type="Label" parent="Top/MatchStatus/CountersSlot/Counters/Timers"]
 theme_type_variation = &"Caption"
 unique_name_in_owner = true
 mouse_filter = 2
 text = "Execution in 5:00"
 theme_override_colors/font_color = Color(0.8745, 0.7765, 0.5451, 1)
 
-[node name="WaveTimer" type="Label" parent="Top/MatchStatus/Counters/Timers"]
+[node name="WaveTimer" type="Label" parent="Top/MatchStatus/CountersSlot/Counters/Timers"]
 text = "Wave 0:30"
 theme_type_variation = &"Caption"
 unique_name_in_owner = true
@@ -75,36 +93,20 @@ size_flags_vertical = 0
 [node name="TopActions" type="HBoxContainer" parent="Top/MatchControls"]
 theme_override_constants/separation = 4
 
-[node name="Routes" type="Button" parent="Top/MatchControls/TopActions"]
-theme_type_variation = &"CompactButton"
-unique_name_in_owner = true
-mouse_default_cursor_shape = 2
-text = ""
-custom_minimum_size = Vector2(32, 32)
-size_flags_horizontal = 4
-process_mode = 3
-toggle_mode = true
+[node name="RoutesSlot" type="MarginContainer" parent="Top/MatchControls/TopActions"]
+mouse_filter = 2
 
-[node name="Pause" type="Button" parent="Top/MatchControls/TopActions"]
+[node name="Routes" parent="Top/MatchControls/TopActions/RoutesSlot" instance=ExtResource("routes")]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(32, 32)
-theme_type_variation = &"CompactButton"
-expand_icon = true
-theme_override_constants/icon_max_width = 16
-tooltip_text = "ui.hud.pause"
-mouse_default_cursor_shape = 2
 
-[node name="Settings" type="Button" parent="Top/MatchControls/TopActions"]
-expand_icon = true
-theme_override_constants/icon_max_width = 16
+[node name="PauseSlot" type="MarginContainer" parent="Top/MatchControls/TopActions"]
+mouse_filter = 2
+
+[node name="Pause" parent="Top/MatchControls/TopActions/PauseSlot" instance=ExtResource("pause")]
 unique_name_in_owner = true
-mouse_default_cursor_shape = 2
-text = ""
-custom_minimum_size = Vector2(32, 32)
-size_flags_horizontal = 4
-icon = ExtResource("menu_icon")
-icon_alignment = 1
-tooltip_text = "ui.hud.menu"
+
+[node name="Settings" parent="Top/MatchControls/TopActions" instance=ExtResource("settings")]
+unique_name_in_owner = true
 
 [node name="Objectives" type="PanelContainer" parent="."]
 unique_name_in_owner = true
@@ -152,87 +154,66 @@ grow_vertical = 0
 [node name="Actions" type="HBoxContainer" parent="Bottom"]
 theme_override_constants/separation = 6
 
-[node name="Build" type="Button" parent="Bottom/Actions"]
-theme_type_variation = &"CompactButton"
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 28)
-mouse_default_cursor_shape = 2
-text = "ui.hud.tab_build"
-tooltip_text = "ui.hud.build"
-toggle_mode = true
+[node name="BuildSlot" type="MarginContainer" parent="Bottom/Actions"]
+mouse_filter = 2
 
-[node name="ColonyTab" type="Button" parent="Bottom/Actions"]
+[node name="Build" parent="Bottom/Actions/BuildSlot" instance=ExtResource("build")]
 unique_name_in_owner = true
-theme_type_variation = &"CompactButton"
-custom_minimum_size = Vector2(0, 28)
-text = "ui.hud.tab_colony"
-toggle_mode = true
-mouse_default_cursor_shape = 2
 
-[node name="TasksTab" type="Button" parent="Bottom/Actions"]
-unique_name_in_owner = true
-theme_type_variation = &"CompactButton"
-custom_minimum_size = Vector2(0, 28)
-text = "ui.hud.tab_tasks"
-toggle_mode = true
-mouse_default_cursor_shape = 2
+[node name="ColonyTabSlot" type="MarginContainer" parent="Bottom/Actions"]
+mouse_filter = 2
 
-[node name="Undo" type="Button" parent="Bottom/Actions"]
-disabled = true
+[node name="ColonyTab" parent="Bottom/Actions/ColonyTabSlot" instance=ExtResource("colony_tab")]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(34, 34)
-icon = ExtResource("undo_icon")
-icon_alignment = 1
-theme_type_variation = &"CompactButton"
-tooltip_text = "ui.construction.undo"
-mouse_default_cursor_shape = 2
 
-[node name="TalkTab" type="Button" parent="Bottom/Actions" index="3"]
-unique_name_in_owner = true
-theme_type_variation = &"CompactButton"
-custom_minimum_size = Vector2(0, 28)
-text = "ui.chapter.conversations"
-toggle_mode = true
-mouse_default_cursor_shape = 2
+[node name="TasksTabSlot" type="MarginContainer" parent="Bottom/Actions"]
+mouse_filter = 2
 
-[node name="Move" type="Button" parent="Bottom/Actions"]
-disabled = true
+[node name="TasksTab" parent="Bottom/Actions/TasksTabSlot" instance=ExtResource("tasks_tab")]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(34, 34)
-icon = ExtResource("pan_icon")
-icon_alignment = 1
-theme_type_variation = &"CompactButton"
-tooltip_text = "ui.construction.inspect_hint"
-toggle_mode = true
-mouse_default_cursor_shape = 2
+
+[node name="TalkTabSlot" type="MarginContainer" parent="Bottom/Actions"]
+mouse_filter = 2
+
+[node name="TalkTab" parent="Bottom/Actions/TalkTabSlot" instance=ExtResource("talk_tab")]
+unique_name_in_owner = true
+
+[node name="Undo" parent="Bottom/Actions" instance=ExtResource("undo")]
+unique_name_in_owner = true
+visible = false
+
+[node name="Apply" parent="Bottom/Actions" instance=ExtResource("apply")]
+unique_name_in_owner = true
+visible = false
+
+[node name="Move" parent="Bottom/Actions" instance=ExtResource("move")]
+unique_name_in_owner = true
+visible = false
 
 [node name="Spacer" type="Control" parent="Bottom/Actions"]
 mouse_filter = 2
 size_flags_horizontal = 3
 
-[node name="ZoomOut" type="Button" parent="Bottom/Actions"]
-theme_type_variation = &"CompactButton"
-unique_name_in_owner = true
-mouse_default_cursor_shape = 2
-text = "-"
-custom_minimum_size = Vector2(24, 24)
-size_flags_horizontal = 4
-size_flags_vertical = 4
+[node name="ZoomOutSlot" type="MarginContainer" parent="Bottom/Actions"]
+mouse_filter = 2
 
-[node name="Zoom" type="Label" parent="Bottom/Actions"]
+[node name="ZoomOut" parent="Bottom/Actions/ZoomOutSlot" instance=ExtResource("zoom_out")]
+unique_name_in_owner = true
+
+[node name="ZoomSlot" type="MarginContainer" parent="Bottom/Actions"]
+mouse_filter = 2
+
+[node name="Zoom" type="Label" parent="Bottom/Actions/ZoomSlot"]
 unique_name_in_owner = true
 mouse_filter = 2
 text = "1x"
 theme_override_colors/font_color = Color(0.6667, 0.651, 0.6118, 1)
 
-[node name="ZoomIn" type="Button" parent="Bottom/Actions"]
-theme_type_variation = &"CompactButton"
+[node name="ZoomInSlot" type="MarginContainer" parent="Bottom/Actions"]
+mouse_filter = 2
+
+[node name="ZoomIn" parent="Bottom/Actions/ZoomInSlot" instance=ExtResource("zoom_in")]
 unique_name_in_owner = true
-mouse_default_cursor_shape = 2
-text = "+"
-custom_minimum_size = Vector2(24, 24)
-size_flags_horizontal = 4
-size_flags_vertical = 4
 
 [node name="Toast" type="Label" parent="."]
 unique_name_in_owner = true

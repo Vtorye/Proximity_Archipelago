@@ -49,6 +49,7 @@ func _run() -> void:
 	islands.test_physical_logistics(self)
 	islands.test_multiple_bases(self)
 	islands.test_orders(self)
+	islands.test_canteen_delivery(self)
 	await islands.test_authored_map(self)
 	islands.test_recruitment(self)
 	_test_resident_pruning()

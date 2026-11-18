@@ -96,6 +96,18 @@ alignment = 2
 unique_name_in_owner = true
 text = "ui.story.skip_tutorial"
 
+[node name="SkipLessons" type="Button" parent="DialogueWindow/DialoguePanel/DialogueContents/Text/DialogueActions"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+text = "ui.story.skip_tutorial"
+
+[node name="NameBeat" type="Timer" parent="."]
+unique_name_in_owner = true
+wait_time = 1.0
+one_shot = true
+ignore_time_scale = true
+
 [node name="Continue" type="Button" parent="DialogueWindow/DialoguePanel/DialogueContents/Text/DialogueActions"]
 unique_name_in_owner = true
 text = "ui.story.continue"

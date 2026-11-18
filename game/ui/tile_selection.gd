@@ -7,6 +7,7 @@ var map: TileMapLayer
 var selected := false
 var cell: Vector2i
 var _guided := false
+var _guide_cells: Array[Vector2i] = []
 @export var guidance_color := Color("#ffd46b")
 @export_range(0.0, 1.0, 0.01) var guidance_fill_opacity := 0.58
 var _time := 0.0
@@ -18,9 +19,22 @@ func _ready() -> void:
 func select(target: Vector2i, guided := false) -> void:
 	cell = target
 	_guided = guided
+	_guide_cells.clear()
+	if guided:
+		_guide_cells.append(target)
 	selected = true
 	_time = 0.0
 	queue_redraw()
+
+func show_guides(targets: Array[Vector2i]) -> void:
+	if targets.is_empty():
+		if selected:
+			clear()
+		return
+	if _guided and selected and targets == _guide_cells:
+		return
+	select(targets[0], true)
+	_guide_cells = targets
 
 func clear() -> void:
 	selected = false
@@ -48,13 +62,14 @@ func _draw() -> void:
 	var white := Color(1, 1, 1, alpha)
 	var pixel: float = 1.0 / maxf(get_global_transform_with_canvas().get_scale().x, 0.01)
 	if _guided:
-		var corners := PackedVector2Array()
-		for offset in [Vector2(-0.5, -0.5), Vector2(0.5, -0.5), Vector2(0.5, 0.5), Vector2(-0.5, 0.5)]:
-			corners.append(_corner_at(cell, offset))
-		draw_colored_polygon(corners, Color(guidance_color, alpha * guidance_fill_opacity))
-		corners.append(corners[0])
-		draw_polyline(corners, Color(0.24, 0.15, 0.04, 0.95), 4.0 * pixel)
-		draw_polyline(corners, guidance_color, 2.0 * pixel)
+		for target in _guide_cells:
+			var corners := PackedVector2Array()
+			for offset in [Vector2(-0.5, -0.5), Vector2(0.5, -0.5), Vector2(0.5, 0.5), Vector2(-0.5, 0.5)]:
+				corners.append(_corner_at(target, offset))
+			draw_colored_polygon(corners, Color(guidance_color, alpha * guidance_fill_opacity))
+			corners.append(corners[0])
+			draw_polyline(corners, Color(0.24, 0.15, 0.04, 0.95), 4.0 * pixel)
+			draw_polyline(corners, guidance_color, 2.0 * pixel)
 		return
 	var arm: float = minf(PRESENTATION.selection_arm_pixels * pixel, PRESENTATION.selection_max_arm)
 	for x in [-1.0, 1.0]:

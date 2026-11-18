@@ -116,7 +116,10 @@ static func decode(layout: Dictionary) -> LevelData:
 
 static func create_world(layout: Dictionary) -> World:
 	var data: LevelData = decode(layout)
-	var template: PackedScene = load("res://game/worlds/first_island.tscn") if layout.get("chapter") == "first_island" else DEFAULT_WORLD
+	var template := DEFAULT_WORLD
+	match layout.get("chapter"):
+		"first_island": template = load("res://game/worlds/first_island.tscn")
+		ZeroChapter.LAYOUT_ID: template = load("res://game/worlds/zero_island.tscn")
 	return instantiate_world(data, template) if data != null else null
 
 static func instantiate_world(data: LevelData, template: PackedScene = null) -> World:

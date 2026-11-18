@@ -29,7 +29,7 @@ var _floating_position := Vector2.ZERO
 var _layout_pending := false
 
 @onready var handle: Label = %Handle
-@onready var toggle: Button = %Toggle
+@onready var toggle: Button = %FoldToggle if action == Action.FOLD else %Toggle
 
 func _ready() -> void:
 	handle.text = title

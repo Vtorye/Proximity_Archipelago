@@ -19,6 +19,19 @@ corner_radius_top_right = 5
 corner_radius_bottom_right = 5
 corner_radius_bottom_left = 5
 
+[sub_resource type="AtlasTexture" id="queen_closeup"]
+atlas = ExtResource("queen")
+region = Rect2(355, 170, 775, 690)
+filter_clip = true
+
+[sub_resource type="StyleBoxFlat" id="screen_frame"]
+draw_center = false
+border_width_left = 10
+border_width_top = 10
+border_width_right = 10
+border_width_bottom = 10
+border_color = Color(0.79, 0.58, 0.25, 1)
+
 [node name="MainMenu" type="Control" unique_id=434943035]
 layout_mode = 3
 anchors_preset = 15
@@ -47,44 +60,60 @@ grow_vertical = 2
 mouse_filter = 2
 color = Color(0.025, 0.045, 0.04, 0.52)
 
+[node name="ScreenFrame" type="Panel" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("screen_frame")
+
+[node name="Queen" type="TextureRect" parent="."]
+anchor_left = 0.36
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -38.0
+offset_right = 34.0
+offset_bottom = 38.0
+mouse_filter = 2
+texture = SubResource("queen_closeup")
+expand_mode = 1
+stretch_mode = 5
+flip_h = true
+texture_filter = 2
+
 [node name="MenuFrame" type="Panel" parent="."]
 anchors_preset = 15
-anchor_left = 0.025
+anchor_left = 0.045
 anchor_top = 0.1
-anchor_right = 0.425
+anchor_right = 0.39
 anchor_bottom = 0.9
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 theme_override_styles/panel = SubResource("menu_frame")
 
-[node name="Queen" type="TextureRect" parent="."]
-anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -380.0
-offset_bottom = 410.0
-scale = Vector2(-1, 1)
-pivot_offset = Vector2(190, 205)
-grow_horizontal = 0
-grow_vertical = 0
+[node name="LeftMenu" type="CenterContainer" parent="."]
+anchor_left = 0.045
+anchor_right = 0.39
+anchor_bottom = 1.0
 mouse_filter = 2
-texture = ExtResource("queen")
-expand_mode = 1
-stretch_mode = 5
 
 [node name="Center" type="CenterContainer" parent="."]
-anchors_preset = 10
-anchor_right = 0.42
+anchors_preset = 15
+anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 2
 
-[node name="Actions" type="VBoxContainer" parent="Center"]
+[node name="Actions" type="VBoxContainer" parent="LeftMenu"]
+layout_mode = 2
 unique_name_in_owner = true
 theme_override_constants/separation = 2
 
-[node name="Title" type="Label" parent="Center/Actions"]
+[node name="Title" type="Label" parent="LeftMenu/Actions"]
 layout_mode = 2
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 3
@@ -92,11 +121,11 @@ theme_override_font_sizes/font_size = 30
 text = "Proximity"
 horizontal_alignment = 1
 
-[node name="TitleSpacer" type="Control" parent="Center/Actions"]
+[node name="TitleSpacer" type="Control" parent="LeftMenu/Actions"]
 custom_minimum_size = Vector2(0, 8)
 layout_mode = 2
 
-[node name="Play" type="Button" parent="Center/Actions"]
+[node name="Play" type="Button" parent="LeftMenu/Actions"]
 unique_name_in_owner = true
 mouse_default_cursor_shape = 2
 text = "ui.menu.play"
@@ -110,7 +139,7 @@ theme_override_styles/pressed = SubResource("empty")
 theme_override_styles/disabled = SubResource("empty")
 theme_override_styles/focus = SubResource("empty")
 
-[node name="Maps" type="Button" parent="Center/Actions"]
+[node name="Maps" type="Button" parent="LeftMenu/Actions"]
 unique_name_in_owner = true
 mouse_default_cursor_shape = 2
 text = "ui.menu.maps"
@@ -124,7 +153,7 @@ theme_override_styles/pressed = SubResource("empty")
 theme_override_styles/disabled = SubResource("empty")
 theme_override_styles/focus = SubResource("empty")
 
-[node name="Settings" type="Button" parent="Center/Actions"]
+[node name="Settings" type="Button" parent="LeftMenu/Actions"]
 unique_name_in_owner = true
 mouse_default_cursor_shape = 2
 text = "ui.menu.settings"
@@ -138,7 +167,7 @@ theme_override_styles/pressed = SubResource("empty")
 theme_override_styles/disabled = SubResource("empty")
 theme_override_styles/focus = SubResource("empty")
 
-[node name="Language" type="Button" parent="Center/Actions"]
+[node name="Language" type="Button" parent="LeftMenu/Actions"]
 unique_name_in_owner = true
 mouse_default_cursor_shape = 2
 text = "ui.menu.language"
@@ -152,7 +181,7 @@ theme_override_styles/pressed = SubResource("empty")
 theme_override_styles/disabled = SubResource("empty")
 theme_override_styles/focus = SubResource("empty")
 
-[node name="Quit" type="Button" parent="Center/Actions"]
+[node name="Quit" type="Button" parent="LeftMenu/Actions"]
 unique_name_in_owner = true
 mouse_default_cursor_shape = 2
 text = "ui.menu.quit"
@@ -166,13 +195,17 @@ theme_override_styles/pressed = SubResource("empty")
 theme_override_styles/disabled = SubResource("empty")
 theme_override_styles/focus = SubResource("empty")
 
-[node name="Saves" type="VBoxContainer" parent="Center"]
+[node name="Saves" type="HBoxContainer" parent="Center"]
 unique_name_in_owner = true
 layout_mode = 2
 visible = false
+theme_override_constants/separation = 16
+
+[node name="SaveActions" type="VBoxContainer" parent="Center/Saves"]
+layout_mode = 2
 custom_minimum_size = Vector2(230, 0)
 
-[node name="SavesTitle" type="Label" parent="Center/Saves"]
+[node name="SavesTitle" type="Label" parent="Center/Saves/SaveActions"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "ui.play.saves"
@@ -190,22 +223,28 @@ layout_mode = 2
 text = "ui.play.new"
 horizontal_alignment = 1
 
-[node name="SaveList" type="ItemList" parent="Center/Saves"]
+[node name="SaveList" type="ItemList" parent="Center/Saves/SaveActions"]
 unique_name_in_owner = true
 layout_mode = 2
 custom_minimum_size = Vector2(0, 115)
 
-[node name="Load" type="Button" parent="Center/Saves"]
+[node name="Load" type="Button" parent="Center/Saves/SaveActions"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "ui.voyage.continue"
 
-[node name="Add" type="Button" parent="Center/Saves"]
+[node name="Delete" type="Button" parent="Center/Saves/SaveActions"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+text = "ui.play.delete"
+
+[node name="Add" type="Button" parent="Center/Saves/SaveActions"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "ui.play.add"
 
-[node name="Back" type="Button" parent="Center/Saves"]
+[node name="Back" type="Button" parent="Center/Saves/SaveActions"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "ui.common.back"
@@ -219,6 +258,11 @@ popup/item_0/text = "ui.play.campaign"
 popup/item_0/id = 0
 popup/item_1/text = "ui.play.endless"
 popup/item_1/id = 1
+
+[node name="SkipLessons" type="CheckButton" parent="Center/NewGame"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "ui.story.skip_tutorial"
 
 [node name="EndlessOptions" type="VBoxContainer" parent="Center/NewGame"]
 unique_name_in_owner = true
@@ -245,42 +289,49 @@ unique_name_in_owner = true
 layout_mode = 2
 text = "ui.common.back"
 
-[node name="IslandPane" type="CenterContainer" parent="."]
+[node name="IslandPane" type="VBoxContainer" parent="Center/Saves"]
 unique_name_in_owner = true
 visible = false
-anchor_left = 0.43
-anchor_right = 1.0
-anchor_bottom = 1.0
-mouse_filter = 2
+layout_mode = 2
 
-[node name="IslandPanel" type="PanelContainer" parent="IslandPane"]
+[node name="IslandPanel" type="PanelContainer" parent="Center/Saves/IslandPane"]
 layout_mode = 2
 theme_override_styles/panel = SubResource("menu_frame")
 
-[node name="IslandMargin" type="MarginContainer" parent="IslandPane/IslandPanel"]
+[node name="IslandMargin" type="MarginContainer" parent="Center/Saves/IslandPane/IslandPanel"]
 layout_mode = 2
 theme_override_constants/margin_left = 12
 theme_override_constants/margin_top = 10
 theme_override_constants/margin_right = 12
 theme_override_constants/margin_bottom = 10
 
-[node name="IslandActions" type="VBoxContainer" parent="IslandPane/IslandPanel/IslandMargin"]
+[node name="IslandActions" type="VBoxContainer" parent="Center/Saves/IslandPane/IslandPanel/IslandMargin"]
 layout_mode = 2
 
-[node name="IslandTitle" type="Label" parent="IslandPane/IslandPanel/IslandMargin/IslandActions"]
+[node name="IslandTitle" type="Label" parent="Center/Saves/IslandPane/IslandPanel/IslandMargin/IslandActions"]
 layout_mode = 2
 text = "ui.play.island_saves"
 horizontal_alignment = 1
 
-[node name="IslandList" type="ItemList" parent="IslandPane/IslandPanel/IslandMargin/IslandActions"]
+[node name="IslandList" type="ItemList" parent="Center/Saves/IslandPane/IslandPanel/IslandMargin/IslandActions"]
 unique_name_in_owner = true
 layout_mode = 2
 custom_minimum_size = Vector2(210, 115)
 
-[node name="LoadIsland" type="Button" parent="IslandPane/IslandPanel/IslandMargin/IslandActions"]
+[node name="LoadIsland" type="Button" parent="Center/Saves/IslandPane/IslandPanel/IslandMargin/IslandActions"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "ui.voyage.continue"
+
+[node name="ConfirmDelete" type="ConfirmationDialog" parent="."]
+unique_name_in_owner = true
+title = "ui.play.delete"
+dialog_text = "ui.play.confirm_delete"
+ok_button_text = "ui.play.delete"
+
+[node name="DeleteError" type="AcceptDialog" parent="."]
+unique_name_in_owner = true
+title = "ui.play.delete"
 
 [node name="UiText" type="Node" parent="." node_paths=PackedStringArray("target")]
 script = ExtResource("ui_text_binding")

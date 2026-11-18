@@ -6,6 +6,7 @@ signal modal_changed(is_modal: bool)
 signal scene_finished
 signal action_requested(action: StringName)
 signal practice_done_requested
+signal lesson_skip_requested
 const PAUSE_REASON := &"tutorial_dialogue"
 
 @export var dialogue_resource: DialogueResource
@@ -65,10 +66,12 @@ func _ready() -> void:
 		button.pressed.connect(AppSettings.play_click)
 	%SkipDialogue.pressed.connect(_skip_scene)
 	%SkipHint.hide()
+	%SkipHint.pressed.connect(lesson_skip_requested.emit)
+	%SkipLessons.pressed.connect(lesson_skip_requested.emit)
 	%PracticeDone.pressed.connect(AppSettings.play_click)
 	%PracticeDone.pressed.connect(practice_done_requested.emit)
 	_warning.timeout.connect(_clear_warning)
-	_name_input.text_changed.connect(_on_name_changed)
+	%NameBeat.timeout.connect(_dismiss_name_input)
 	set_process(false)
 	hide()
 
@@ -114,6 +117,13 @@ func show_hint(key: String) -> void:
 	_clear_warning()
 	%HintHeader.queue_layout()
 	_refresh_visibility()
+
+func set_lesson_skip(enabled: bool) -> void:
+	%SkipHint.visible = enabled
+	%SkipLessons.visible = enabled
+	%SkipDialogue.text = "ui.zero.skip_lines"
+	%HintHeader.queue_layout()
+	_queue_dialogue_layout()
 
 func set_practice_done(shown: bool, enabled: bool) -> void:
 	%PracticeDone.visible = shown
@@ -235,9 +245,10 @@ func _reveal_line() -> void:
 		_name_window.show()
 		_continue.disabled = true
 		_name_input.grab_focus()
+		%NameBeat.start()
 
-func _on_name_changed(value: String) -> void:
-	if value.is_empty() or _name_dismissing or not _active:
+func _dismiss_name_input() -> void:
+	if not _name_window.visible or _name_dismissing or not _active:
 		return
 	_name_dismissing = true
 	_name_input.editable = false
@@ -252,6 +263,7 @@ func _on_name_changed(value: String) -> void:
 		_request_line(_line.next_id)
 
 func _close_name_input() -> void:
+	%NameBeat.stop()
 	if _name_tween != null and _name_tween.is_valid():
 		_name_tween.kill()
 	_name_window.hide()

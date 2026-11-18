@@ -19,6 +19,7 @@ var navigation: RouteService
 var inventory: WorldInventory
 var logistics: ColonyLogistics
 var food_type: ResourceType
+var _canteens_by_entry: Dictionary[Vector2i, Canteen] = {}
 var _opportunities_queued := false
 var _storage_had_room := true
 var _home_fields: Dictionary[Vector2i, NavigationField] = {}
@@ -46,10 +47,15 @@ func _on_navigation_changed() -> void:
 		queue_workplace_refresh()
 
 func refresh_food() -> void:
-	var cells: Array[Vector2i] = []
+	_canteens_by_entry.clear()
 	for canteen in registry.canteens():
-		cells.append_array(canteen.entry_cells())
-	navigation.set_food_cells(cells)
+		for cell in canteen.entry_cells():
+			if not _canteens_by_entry.has(cell):
+				_canteens_by_entry[cell] = canteen
+	navigation.set_food_cells(_canteens_by_entry.keys())
+
+func canteen_at_entry(cell: Vector2i) -> Canteen:
+	return _canteens_by_entry.get(cell)
 
 func reserve_meal() -> StockReservation:
 	return inventory.reserve(food_type, 1)

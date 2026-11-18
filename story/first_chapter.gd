@@ -64,6 +64,21 @@ func configure(colony: World, dialogue: StoryOverlay) -> void:
 	PauseController.pause_changed.connect(_on_pause_changed)
 	set_process(false)
 
+func save_layout_id() -> String:
+	return "first_island"
+
+func countdown_visible() -> bool:
+	return false
+
+func navigation_changed(_mode: int) -> void:
+	pass
+
+func guide_cells() -> Array[Vector2i]:
+	return [guide_cell()]
+
+func travellers() -> Array[String]:
+	return ["Queen", "Protagonist", "Courier", "Worker"]
+
 func start(saved: Dictionary = {}) -> void:
 	if not saved.is_empty():
 		restore_state(saved)
@@ -79,6 +94,20 @@ func economy_visible() -> bool:
 	return true
 
 func nest_available() -> bool:
+	return true
+
+func shows_control(control: StringName) -> bool:
+	match control:
+		&"pause":
+			return stage != Stage.INTRO
+		&"zoom":
+			return stage not in [Stage.INTRO, Stage.PAUSE_LESSON, Stage.CAMERA_LESSON]
+		&"colony", &"talk":
+			return shows_control(&"zoom") and stage != Stage.ZOOM_LESSON
+		&"build", &"tasks":
+			return allows_section(control)
+		&"routes":
+			return false
 	return true
 
 func allows_section(section: StringName) -> bool:
@@ -609,7 +638,7 @@ func _depart() -> void:
 	if boat == null:
 		return
 	world.voyage.departure_manifest = boat.manifest.duplicate()
-	world.voyage.travelling_characters.assign(["Queen", "Protagonist", "Courier", "Worker"])
+	world.voyage.travelling_characters.assign(travellers())
 	world.queen.hide()
 	boat.accepting_cargo = false
 	var tween := boat.create_tween()

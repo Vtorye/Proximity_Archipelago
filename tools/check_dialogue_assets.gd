@@ -1,7 +1,7 @@
 extends SceneTree
 
 const DIALOGUE_DIR := "res://game/assets/dialogue/"
-const DIALOGUES := ["first_chapter", "tutorial"]
+const DIALOGUES := ["first_chapter", "tutorial", "zero_chapter"]
 
 
 func _initialize() -> void:

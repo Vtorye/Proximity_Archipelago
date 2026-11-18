@@ -14,22 +14,27 @@ func _run() -> void:
 	AppSettings.apply()
 	await click(Router._current.controls[&"play"])
 	await click(Router._current.get_node("%Add"))
-	await click(Router._current.get_node("%Start"))
+	Router.goto(&"match", {"tutorial": true, "save_path": SessionSave.new_path()})
 	await _navigation()
 	screen = Router._current
 	_chapter = screen.chapter
 	expect(screen.world.population.count() == 15, "the authored colony starts with three inhabited nests")
 	expect(screen.world.queen != null and screen.world.chapter_rules != null, "the queen and chapter rules are authored in the scene")
-	expect(not screen.hud.get_node("%Timer").visible and screen.hud.colony_summary.get_node("%Totals").visible, "the tutorial uses the real resource HUD without an execution timer")
+	expect(not screen.hud.get_node("%Timer").visible and not screen.hud.colony_summary.is_visible_in_tree(), "the timer and resource HUD are hidden during the introduction")
 	expect(not screen.world.queen.visible, "the queen has no sprite on the map")
 	expect(screen.get_node_or_null("Interface/ChapterPanel") == null, "the separate tutorial interface is removed")
-	expect(screen.hud.get_node("%TasksTab").visible and screen.hud.get_node("%ColonyTab").visible, "the standard task and colony tabs are present")
+	expect(not screen.hud.get_node("%TasksTab").visible and not screen.hud.get_node("%ColonyTab").visible, "unexplained task and colony tabs are hidden")
 	expect(not screen.world.inventory.quantities_known and screen.hud.colony_summary.get_node("%Totals").get_parsed_text().contains("∞"), "materials appear infinite before the planner arrives")
 	await _window_controls(screen.story.get_node("%DialogueHeader"), Vector2(0, -20))
 	await _capture("00-dialogue-window")
 	await _dialogue()
 	await _practice_controls()
+	await key(KEY_C)
+	expect(screen.hud.colony_summary.is_expanded(), "C opens the colony summary")
+	await key(KEY_C)
+	expect(not screen.hud.colony_summary.is_expanded(), "C closes the colony summary")
 	expect(_chapter.stage == FirstChapter.Stage.ROAD, "the original road dialogue leads to a mandatory road task")
+	expect(screen.hud.get_node("%Build").visible and not screen.hud.get_node("%TasksTab").visible, "the road lesson reveals Build before Tasks")
 	if "--controls-only" in OS.get_cmdline_user_args():
 		print("TUTORIAL CONTROLS ", assertions, " assertions, ", failures.size(), " failures")
 		get_tree().quit(0 if failures.is_empty() else 1)
@@ -42,7 +47,7 @@ func _run() -> void:
 	await frames(2)
 	await _dialogue()
 	expect(_chapter.stage == FirstChapter.Stage.ROYAL_ORDER, "the completed road unlocks the first royal request")
-	await click(screen.hud.get_node("%TasksTab"))
+	await key(KEY_T)
 	var category: Button = screen.hud.task_panel.get_node("%Category")
 	if not category.button_pressed:
 		await click(category)
@@ -207,6 +212,12 @@ func _run() -> void:
 	await _navigation()
 	screen = Router._current
 	expect(screen.world.voyage.island == 2 and not screen._chapter_active, "the normal second island opens")
+	await key(KEY_B)
+	expect(screen.hud.get_node("%Build").button_pressed and screen._construction != null, "B opens construction on the second island")
+	await key(KEY_C)
+	expect(screen.hud.colony_summary.is_expanded(), "C opens Colony on the second island")
+	await key(KEY_T)
+	expect(screen.hud.get_node("%TasksTab").button_pressed, "T opens Tasks on the second island")
 	for id in manifest:
 		expect(screen.world.inventory.quantity(screen.world.inventory.type_by_id(StringName(id))) <= int(manifest[id]), "travel carries cargo instead of abandoned colony wealth")
 	print("FIRST CHAPTER UI ", assertions, " assertions, ", failures.size(), " failures")
@@ -358,8 +369,7 @@ func _dialogue() -> void:
 		var entry: LineEdit = screen.story.get_node("%NameInput")
 		if screen.story.get_node("%NameWindow").visible:
 			entry.text = "A"
-			entry.text_changed.emit(entry.text)
-			await frames(5)
+			await get_tree().create_timer(1.1, true, false, true).timeout
 		else:
 			await click(screen.story.get_node("%Continue"))
 	expect(false, "dialogue returns control")
@@ -433,7 +443,7 @@ func _build(id: StringName, cell: Vector2i) -> void:
 	if menu.draft.size() == 0:
 		print("BUILD FAILED ", id, " ", cell, " screen ", cell_point(cell), " reason ", menu.draft.last_result.code, " obstacles ", screen._construction_obstacles())
 		return
-	await click(menu.controls[&"apply"])
+	await key(KEY_ENTER)
 
 func _build_roads() -> void:
 	for cell in _chapter.rules.route_cells:

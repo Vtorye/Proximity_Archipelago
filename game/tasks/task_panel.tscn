@@ -46,7 +46,6 @@ theme_override_styles/panel = ExtResource("category_style")
 
 [node name="CategoryHeader" parent="Categories/WindowContents" node_paths=PackedStringArray("panel", "body") instance=ExtResource("window_header")]
 unique_name_in_owner = true
-title = "ui.window.tasks"
 action = 1
 external_layout = true
 panel = NodePath("../..")
@@ -90,7 +89,6 @@ theme_override_styles/panel = ExtResource("strip_style")
 
 [node name="StripHeader" parent="TaskStrip/WindowContents" node_paths=PackedStringArray("panel", "body") instance=ExtResource("window_header")]
 unique_name_in_owner = true
-title = "ui.window.tasks"
 action = 1
 external_layout = true
 panel = NodePath("../..")

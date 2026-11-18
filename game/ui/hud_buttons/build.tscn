@@ -1,0 +1,9 @@
+[gd_scene format=3]
+
+[node name="Build" type="Button"]
+theme_type_variation = &"CompactButton"
+custom_minimum_size = Vector2(0, 28)
+mouse_default_cursor_shape = 2
+text = "ui.hud.tab_build"
+tooltip_text = "ui.hud.build"
+toggle_mode = true

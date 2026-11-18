@@ -58,7 +58,7 @@ ui.construction.drag,Pan map,Перетаскивание
 ui.construction.demolish,Demolish: mark a building or road,Снос: отметить здание или дорогу
 ui.construction.undo,Undo stroke (Ctrl+Z),Отменить ход (Ctrl+Z)
 ui.construction.cancel,Cancel all,Отменить всё
-ui.construction.apply,Start construction,Начать строительство
+ui.construction.apply,Build (Enter),Построить (Enter)
 ui.construction.build_hint,LMB: build · RMB: remove layer,ЛКМ: строить · ПКМ: убрать слой
 ui.construction.move_hint,LMB/MMB: pan · wheel: zoom,ЛКМ/СКМ: камера · колесо: зум
 ui.construction.demolish_hint,LMB: demolish · RMB: unmark,ЛКМ: снос · ПКМ: убрать отметку
@@ -352,9 +352,9 @@ ui.world.five_soils_description,Fertile valleys alternate with dry hills and roc
 ui.window.close,Close,Закрыть
 ui.hud.pause,Pause [Space],Пауза [Пробел]
 ui.hud.unpause,Resume [Space],Продолжить [Пробел]
-ui.hud.tab_build,Build,Стройка
-ui.hud.tab_colony,Colony,Колония
-ui.hud.tab_tasks,Tasks,Задачи
+ui.hud.tab_build,Build (B),Стройка (B)
+ui.hud.tab_colony,Colony (C),Колония (C)
+ui.hud.tab_tasks,Tasks (T),Задачи (T)
 ui.settings.minimum_text,Minimum text size,Мин. размер текста
 ui.settings.text_pixels,%d px,%d пкс
 ui.construction.demolish_short,Demolish,Снос
@@ -526,3 +526,63 @@ ui.play.start,Start,Начать
 ui.play.legacy,Previous save,Прежнее сохранение
 ui.play.island_saves,Island autosaves,Автосохранения по островам
 ui.play.island_number,Island %d,Остров %d
+ui.play.delete,Delete save,Удалить сохранение
+ui.play.confirm_delete,Delete this save and all its island snapshots?,Удалить это сохранение и снимки всех его островов?
+ui.play.delete_failed,Could not delete the save (%s).,Не удалось удалить сохранение (%s).
+ui.zero.skip_lines,"Skip lines","Пропустить реплики"
+ui.zero.military,"Scout","Военная"
+ui.zero.spider,"Spider","Паук"
+ui.zero.old_stone,"Northern outcrop","Северный камень"
+ui.zero.finite_stone,"Outer yard quarry","Каменоломня во внешнем дворе"
+ui.zero.wake,"You're awake. Good. I was beginning to think I'd made a pillow.","Проснулась. Хорошо. Я уж решила, что у меня получилась подушка."
+ui.zero.power,"I made you to entertain me. I meant to give you a little authority, but it was fiddly. So you get the whole colony. I'm keeping the crown.","Я создала тебя для развлечений. Хотела выдать тебе чуточку власти, но там столько возни. В общем, колония твоя. Корона моя."
+ui.zero.berries,"Another basket of berries. Anyone want to trade?","Ещё корзина ягод. Никто махнуться не хочет?"
+ui.zero.shortcut,"See where they're all going? Berries are a short trip. Lay a road north and stone starts looking like a better job.","Видишь, куда все свернули? До ягод два шага. Проложи дорогу на север, и за камнем станет выгоднее ходить."
+ui.zero.nav_explain,"Press N once to see the time to enter a tile. Press it again for work priorities: lower wins among reachable jobs with room. The more ants already working or on their way, the higher the score.","Нажми N. Сначала увидишь время входа в клетку. Ещё раз — приоритет работ: из доступных мест со свободными местами рабочая выберет меньшее число. Чем больше муравьёв уже там или в пути, тем выше число."
+ui.zero.road_explain,"Paint the whole marked stretch, then apply once. A drawing is a plan. You'll see the road change when the ants bring the materials and finish it.","Нарисуй весь отмеченный участок и примени план один раз. На карте пока чертёж. Дорога появится, когда муравьи принесут материалы и достроят её."
+ui.zero.road_goal,"Build → Road. Draw the marked stretch and apply the plan.","Стройка → Дорога. Нарисуй отмеченный участок и примени план."
+ui.zero.navigation_goal,"Compare travel and work with N. Then build the marked road north.","Сравни время и приоритет работ клавишей N. Затем построй отмеченную дорогу на север."
+ui.zero.wait_stone,"Wait for a worker to bring stone to a nest.","Дождись, пока рабочая принесёт камень в муравейник."
+ui.zero.stone_home,"Stone's in my nest. If you need it somewhere else, ask her.","Камень у меня в муравейнике. Если нужен в другом месте, это к ней."
+ui.zero.source_target,"I'll pick up stone at the central nest and bring it to the west barracks. That's where you set the receiving order. Carriers look for a reachable store with a surplus and a recipient with room.","Заберу камень из центрального муравейника и отнесу в западную казарму. Заказ на получение ставь там. Носильщики ищут доступный склад с излишком и получателя со свободным местом."
+ui.zero.min_explain,"Min is the trigger. If there's less than that in storage and on the way, a carrier can take the job. At the sending end, Min normally stays in the store.","«Мин.» — порог. Если на складе и в пути меньше этого числа, носильщик может взять заказ. На складе-отправителе «Мин.» обычно оставляют про запас."
+ui.zero.max_explain,"Max is the fill target for that trip. The carrier only takes what fits, what the source can spare and what the recipient has room for.","«Макс.» — до какого запаса пополнять склад. За рейс носильщик берёт столько, сколько унесёт, сколько есть в излишке и сколько помещается у получателя."
+ui.zero.once_explain,"Use One-time when you only need a single delivery. A positive number asks for goods here. A negative number asks carriers to take goods from here to another store.","«Однократно» пригодится для разовой перевозки. Плюс заказывает груз сюда. Минус просит вывезти груз отсюда на другой склад."
+ui.zero.orders_goal,"West barracks → Orders → Stone. Set Max to %d, then Min to %d. Watch for the delivery from the central nest.","Западная казарма → Заказы → Камень. Поставь «Макс.» %d, затем «Мин.» %d. Дождись груза из центрального муравейника."
+ui.zero.order_delivered,"There. Watch the stock at both ends. The same stone left one nest and arrived at the other.","Вот и довезли. Посмотри на оба склада. Тот же камень убыл в одном и прибавился в другом."
+ui.zero.wall_line,"A wall, about here. A queen ought to have something to stand in front of.","Поставь мне здесь стенку. У королевы должно быть что-нибудь за спиной, когда она позирует."
+ui.zero.wall_goal,"Build a wall on the marked tile.","Построй стену на отмеченной клетке."
+ui.zero.statues_line,"It looks a little empty. Three statues of me by that stone. You'll get my good side from every direction.","Пустовато. Поставь у камня три мои статуи. Куда ни глянь, везде моя удачная сторона."
+ui.zero.statues_goal,"Build three statues in one plan. Finished %d/%d.","Поставь три статуи одним планом. Готово %d/%d."
+ui.zero.statue_price,"Each commissioned statue raises the next price. See the combined price before applying the plan.","С каждой заказанной статуей растёт цена следующей. Общая цена видна до применения плана."
+ui.zero.planner_shock,"Who approved three statues in front of a working quarry? I need that stone in the stores, not on a pedestal.","Кто согласовал три статуи у действующей добычи? Мне камень нужен на складе. На постамент я его уже списала."
+ui.zero.remove_wall_line,"Start with that wall. Mark it with Demolish, then apply the plan. The path opens once the plan goes through.","Начни со стены. Отметь её инструментом «Снос» и примени план. Проход откроется, когда план вступит в силу."
+ui.zero.remove_wall_goal,"Build → Demolish. Mark the wall and apply.","Стройка → Снос. Отметь стену и примени план."
+ui.zero.remove_statue_line,"Now open an entrance to the stone. One statue should do it. Let's see what the workers do with a way in.","Теперь открой проход к камню. Одной статуи должно хватить. Посмотрим, пойдут ли рабочие."
+ui.zero.remove_statue_goal,"Mark a statue for demolition and apply.","Отметь одну статую на снос и примени план."
+ui.zero.caught,"Why is there one less of me? I was gone for one minute.","Почему меня стало на одну меньше? Я же на минуту отошла."
+ui.zero.blocked,"Your statues blocked every approach. That source hasn't run out of stone in living memory.","Статуи закрыли все подходы. А камень там на моей памяти ни разу не кончался."
+ui.zero.remove_source_line,"So the stone was in the way. Shu, remove it. Leave my statues where they are.","Значит, мешал камень. Шу, убери его. Остальных меня не трогай."
+ui.zero.remove_source_goal,"Demolish the northern outcrop.","Снеси северный источник камня."
+ui.zero.mentor_order,"On second thought, Planner, keep an eye on Shu. I can't spend all day explaining what I meant.","Вот ещё что. Планировщица, возьми Шу к себе. Я не могу весь день объяснять, что имела в виду."
+ui.zero.mentor_reply,"I have two stores to reconcile. Fine. Shu, come out to the yard. There's another quarry.","Мне ещё два склада сводить. Ладно. Шу, пойдём во внешний двор. Там есть второй камень."
+ui.zero.finite_explain,"That one can run out. Its card shows how much is left. Get the workers a road and bring the first load in.","Этот кончается. Остаток видно в карточке. Проложи дорогу и дождись первой партии."
+ui.zero.quarry_goal,"Build the marked road to the quarry in the outer yard.","Построй отмеченный участок дороги к камню во внешнем дворе."
+ui.zero.briefing,"For the inspection, I need a loaded barge at the east landing. I've set aside a starting budget. You'll have to produce the rest.","К проверке мне нужна гружёная баржа у восточного причала. Стартовый запас я выделила. Остальное добудете сами."
+ui.zero.plan,"Go straight through the yard and open the partition, or use the longer road around it. See what you can afford before you start breaking walls.","Можно расчистить проход через двор или обойти перегородку по старой дороге. Сначала посмотри, на что хватит запасов."
+ui.zero.load,"Carriers load the barge from stores with surplus. Leave them stock to pick up and a good route. If a store keeps too much for itself, check its Min.","Носильщики загружают баржу из складских излишков. Нужны запас и нормальный путь. Если склад держит груз у себя, проверь его «Мин.»."
+ui.zero.ship_goal,"Build a barge at the eastern landing.","Построй баржу у восточного причала."
+ui.zero.ship_done,"Barge ready","Баржа готова"
+ui.zero.escape_road_goal,"Connect camp to the landing with a continuous road.","Соедини лагерь и причал непрерывной дорогой."
+ui.zero.road_done,"The landing is connected","Дорога к причалу готова"
+ui.zero.report,"Something big is coming up to the west wall. Where's the guard?","К западной стене идёт что-то здоровое. Где караул?"
+ui.zero.watch,"I have three towers on the map.","На карте у меня три башни."
+ui.zero.no_watch,"I ran past all three. They're empty.","Я мимо всех трёх пробежала. Пустые."
+ui.zero.spider_first,"I smelled a crown.","Чую корону."
+ui.zero.spider_last,"Send out your queen.","Отдайте королеву."
+ui.zero.run,"Shu. The barge. Now.","Шу. На баржу. Сейчас."
+ui.zero.board_goal,"Click the loaded barge to take the queen aboard.","Нажми на гружёную баржу, чтобы провести королеву на борт."
+ui.zero.on_board,"All aboard. I checked.","Все на борту. Я проверила."
+ui.zero.leave,"Well. At least I had you build the road.","Ну. Главное, что я велела тебе построить дорогу."
+ui.zero.check_goal,"Check the current objective.","Сверься с текущей задачей."
+ui.zero.work_topic,"I pick a job I can reach, do the work, then take the haul to my nest. If our store's full, I look for space nearby.","Выбираю работу, до которой могу дойти. Добычу несу в свой муравейник. Если там всё забито, ищу место поблизости."

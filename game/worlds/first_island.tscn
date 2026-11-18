@@ -21,6 +21,8 @@
 [ext_resource type="PackedScene" path="res://game/entities/resource_source.tscn" id="source"]
 [ext_resource type="Texture2D" path="res://game/assets/sprites/timber.svg" id="timber_art"]
 
+[ext_resource type="Texture2D" path="res://game/assets/sprites/stone_cutout_2x1.svg" id="stone_large"]
+
 [sub_resource type="Resource" id="wood_stock"]
 script = ExtResource("amount")
 type = ExtResource("wood")
@@ -106,6 +108,11 @@ remaining_supply = 900
 [node name="Workplace2" parent="." index="7"]
 finite_supply = true
 remaining_supply = 900
+
+[node name="Sprite" parent="Workplace2" index="0"]
+position = Vector2(8, 0)
+scale = Vector2(0.125, 0.125)
+texture = ExtResource("stone_large")
 
 [node name="Queen" parent="." instance=ExtResource("queen")]
 visible = false

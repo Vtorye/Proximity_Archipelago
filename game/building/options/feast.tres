@@ -1,6 +1,6 @@
 [gd_resource type="Resource" script_class="SceneBuildOption" format=3 uid="uid://c62wo80ihkc7y"]
 
-[ext_resource type="Texture2D" uid="uid://ch2ru2be5qdpr" path="res://game/assets/sprites/picnic/picnic_red.svg" id="4_ajvmo"]
+[ext_resource type="Texture2D" path="res://game/assets/sprites/picnic/picnic_red_marker.svg" id="4_ajvmo"]
 [ext_resource type="Script" uid="uid://clwif6xxyitqt" path="res://game/economy/price_rule.gd" id="5_ajvmo"]
 [ext_resource type="Script" uid="uid://dohq4yj0b3afb" path="res://game/resources/resource_amount.gd" id="amount"]
 [ext_resource type="Resource" path="res://game/resources/feast_variants.tres" id="appearance_variants"]

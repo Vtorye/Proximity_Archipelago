@@ -21,6 +21,23 @@ static func paths() -> PackedStringArray:
 		result.append(PATH)
 	return result
 
+static func delete_slot(path: String) -> Error:
+	if not paths().has(path):
+		return ERR_FILE_NOT_FOUND
+	var checkpoint := FirstChapter.CHECKPOINT if path == PATH else path + ".checkpoint"
+	var files: Array[String] = []
+	files.assign(island_paths(path).values())
+	files.append(checkpoint)
+	files.append(path)
+	for base in files:
+		for suffix in [".tmp", ".bak", ""]:
+			var file_path: String = base + suffix
+			if FileAccess.file_exists(file_path):
+				var error := DirAccess.remove_absolute(file_path)
+				if error != OK:
+					return error
+	return OK
+
 static func island_number(snapshot: Dictionary) -> int:
 	# Voyage counts its starting island as one. The campaign menu starts at zero.
 	var voyage: Dictionary = snapshot.get("voyage", {})
@@ -122,7 +139,7 @@ static func capture(world: World) -> Dictionary:
 	var data := {"save_version": VERSION, "layout": LevelLayout.capture(world.map, layout_buildings), "buildings": [], "ants": [], "sites": []}
 	if world.chapter != null:
 		data["chapter"] = world.chapter.capture_state()
-		data.layout["chapter"] = "first_island"
+		data.layout["chapter"] = world.chapter.save_layout_id()
 	data.layout["wave_mode"] = world.combat != null
 	if world.endless:
 		data.layout["endless"] = true
@@ -135,8 +152,10 @@ static func capture(world: World) -> Dictionary:
 	for building: Building in buildings:
 		var state := {}
 		if building is House:
-			# incoming is not saved: its carriers lose their order target on load.
+			# Incoming loads are rebuilt from carrier state.
 			state = building.capture_storage_settings()
+			state["stock"] = world.inventory.capture_depot(building)
+		elif building is Canteen:
 			state["stock"] = world.inventory.capture_depot(building)
 		if building is Workplace:
 			state = building.capture_production()
@@ -179,6 +198,8 @@ static func apply(world: World, data: Dictionary) -> void:
 		if building is House:
 			building.restore_storage_settings(state)
 			world.inventory.restore_depot(building, state.get("stock", world.inventory.capture_depot(building)))
+		elif building is Canteen:
+			world.inventory.restore_depot(building, state.get("stock", {}))
 		elif building is CargoShip:
 			building.manifest.assign(state.get("manifest", {}))
 		elif building is Workplace:
@@ -209,6 +230,8 @@ static func apply(world: World, data: Dictionary) -> void:
 		for option in world.chapter_rules.wishes:
 			if data.options.has(str(option.id)) and not options.has(option):
 				options.append(option)
+		if world.chapter_rules is ZeroChapterRules and data.options.has(str(world.chapter_rules.ship.id)):
+			options.append(world.chapter_rules.ship)
 	world.build_controller.set_available_options(options)
 	world.prices.restore_state(data.prices)
 	var legacy_order: TaskBuildOrder
@@ -306,4 +329,7 @@ static func _definitions(world: World) -> Dictionary:
 				options.append_array(task.unlocks)
 	for option in options:
 		if option != null: result[str(option.id)] = option
+	if world.chapter_rules is ZeroChapterRules:
+		var statue: SceneBuildOption = world.chapter_rules.statue
+		result[str(statue.id)] = statue
 	return result

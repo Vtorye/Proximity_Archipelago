@@ -54,6 +54,8 @@ func load_pickup() -> void:
 		cargo = ant.planner.inventory.take_for_order(ant.logistics.store_of(source), type, amount)
 		shipment = not cargo.is_empty()
 		if shipment:
+			pickup_source = source
+			source.show_stock_transfer(cargo, false)
 			_export_source = source if int(source.requests.get(str(type.id), 0)) < 0 else null
 			source.record_export(str(type.id), WorldInventory.cargo_size(cargo))
 	if cargo.is_empty():
@@ -123,11 +125,13 @@ func _delivery_energy(route: Route, from_cell: Vector2i) -> float:
 	return energy
 
 func _order_target_accepts(count: int) -> bool:
-	if not is_instance_valid(order_target):
+	if not is_instance_valid(order_target) or not ant.logistics.owns(order_target):
 		return false
 	if order_target is CargoShip:
-		return ant.logistics.owns(order_target) and order_target.accepts(cargo)
-	return is_instance_valid(order_target) and ant.logistics.owns(order_target) and ant.planner.inventory.can_deposit(ant.logistics.store_of(order_target), count)
+		return order_target.accepts(cargo)
+	if order_target is Canteen:
+		return ant.planner.inventory.can_deliver_food(order_target, cargo)
+	return ant.planner.inventory.can_deposit(ant.logistics.store_of(order_target), count)
 
 ## An order is valid while its source still has surplus and its target still needs the amount.
 func _order_still_valid(source: House, target: Building, type: ResourceType, amount: int) -> bool:
@@ -142,43 +146,56 @@ func _order_still_valid(source: House, target: Building, type: ResourceType, amo
 func _set_incoming(delta: int) -> void:
 	if not is_instance_valid(order_target) or cargo.is_empty():
 		return
+	if order_target is Canteen:
+		order_target.incoming_food = maxi(0, order_target.incoming_food + delta)
+		return
 	var key: String = str(cargo[0].type.id)
 	order_target.incoming[key] = maxi(0, int(order_target.incoming.get(key, 0)) + delta)
 
 func unload() -> void:
 	if shipment:
-		if is_instance_valid(delivery_nest) and delivery_nest is CargoShip:
-			if ant.logistics.owns(delivery_nest) and delivery_nest.receive(cargo, ant.planner.inventory):
-				_set_incoming(-WorldInventory.cargo_size(cargo))
-				ant.logistics.shipment_delivered.emit(delivery_nest, cargo[0].type, WorldInventory.cargo_size(cargo))
-				_notify_export()
-				_clear_cargo()
-				ant._go_home()
-			else:
-				deliver()
+		if not _receive_shipment():
+			# Destination lost its room while this load was en route; keep the cargo and retry.
+			deliver()
 			return
-		if ant.logistics.owns(delivery_nest) and ant.planner.inventory.close_shipment(cargo, true, ant.logistics.store_of(delivery_nest)):
-			if delivery_nest == order_target:
-				order_target.fulfil(str(cargo[0].type.id), WorldInventory.cargo_size(cargo))
-			_set_incoming(-WorldInventory.cargo_size(cargo))
-			ant.logistics.shipment_delivered.emit(delivery_nest, cargo[0].type, WorldInventory.cargo_size(cargo))
-			_notify_export()
-			_clear_cargo()
-			ant._set_waiting_reason(WorkPlan.WaitReason.NONE)
-			ant._go_home()
-			return
-		# Destination lost its room while this load was en route; keep the cargo and retry.
+	elif not ant.logistics.deposit(delivery_nest as House, cargo):
 		deliver()
 		return
-	if not ant.logistics.deposit(delivery_nest as House, cargo):
-		deliver()
-		return
+	else:
+		(delivery_nest as House).show_stock_transfer(cargo, true)
 	_clear_cargo()
 	ant._set_waiting_reason(WorkPlan.WaitReason.NONE)
 	ant._go_home()
 
+func _receive_shipment() -> bool:
+	if not is_instance_valid(delivery_nest) or not ant.logistics.owns(delivery_nest):
+		return false
+	var count := WorldInventory.cargo_size(cargo)
+	var type := cargo[0].type
+	var inventory: WorldInventory = ant.planner.inventory
+	if delivery_nest is CargoShip:
+		if not delivery_nest.receive(cargo, inventory):
+			return false
+	else:
+		var store: Building = delivery_nest if delivery_nest is Canteen else ant.logistics.store_of(delivery_nest)
+		if not inventory.close_shipment(cargo, true, store):
+			return false
+		if delivery_nest is House:
+			delivery_nest.show_stock_transfer(cargo, true)
+			if delivery_nest == order_target:
+				delivery_nest.fulfil(str(type.id), count)
+		else:
+			delivery_nest.show_stock_change(type, count)
+	_set_incoming(-count)
+	ant.logistics.shipment_delivered.emit(delivery_nest, type, count)
+	if is_instance_valid(pickup_source):
+		ant.logistics.stock_transferred.emit(pickup_source as House, delivery_nest, type, count)
+	_notify_export()
+	return true
+
 func _clear_cargo() -> void:
 	_export_source = null
+	pickup_source = null
 	cargo.clear()
 	shipment = false
 	order_target = null

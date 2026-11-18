@@ -20,11 +20,13 @@ signal worker_left(worker: Node2D)
 @export var finite_supply := false:
 	set(value):
 		finite_supply = value
-		refresh_appearance()
+		if is_node_ready():
+			refresh_appearance()
 @export_range(0, 1000000) var remaining_supply := 100:
 	set(value):
 		remaining_supply = value
-		refresh_appearance()
+		if is_node_ready():
+			refresh_appearance()
 @export var improvement: WorkplaceUpgradeOption
 var _source_texture: Texture2D
 var _improvement_slots := 0

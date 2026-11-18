@@ -4,7 +4,6 @@
 [ext_resource type="Resource" path="res://game/campaign/default_voyage.tres" id="voyage"]
 [ext_resource type="Resource" path="res://game/planning/default_satiety.tres" id="satiety"]
 [ext_resource type="Resource" path="res://game/worlds/default_island_generation.tres" id="islands"]
-[ext_resource type="Texture2D" path="res://game/assets/sprites/canteen_variant.png" id="18_j2ppp"]
 [ext_resource type="Texture2D" uid="uid://cs2d7s20em84t" path="res://game/assets/tiles/fertile.svg" id="19_mvcoq"]
 [ext_resource type="Texture2D" uid="uid://cm6m5swipnpj8" path="res://game/assets/tiles/rocky.svg" id="20_bcmvv"]
 [ext_resource type="Texture2D" uid="uid://gbvjkdmhjbke" path="res://game/assets/tiles/dry.svg" id="21_yxje7"]
@@ -14,7 +13,7 @@
 [ext_resource type="Script" uid="uid://by4ibgdnpa3ce" path="res://game/entities/colony_population.gd" id="ants"]
 [ext_resource type="PackedScene" path="res://game/entities/berry_bush.tscn" id="berries"]
 [ext_resource type="Resource" uid="uid://buu6g5wpbtgif" path="res://game/building/options/berry_bush.tres" id="berry_option"]
-[ext_resource type="Script" uid="uid://61u1015oq8mh" path="res://game/entities/canteen.gd" id="canteen"]
+[ext_resource type="PackedScene" uid="uid://brf42b54ugjtv" path="res://game/entities/canteen.tscn" id="canteen"]
 [ext_resource type="PackedScene" path="res://game/ants/carrier.tscn" id="carrier"]
 [ext_resource type="Resource" uid="uid://bmrmfp1u0lwkg" path="res://game/building/catalog.tres" id="catalog"]
 [ext_resource type="Texture2D" uid="uid://cu3usiyljy8ek" path="res://game/assets/sprites/coast.svg" id="coast"]
@@ -34,7 +33,7 @@
 [ext_resource type="Script" uid="uid://cb14xx3cbld27" path="res://game/match/match_controller.gd" id="rules"]
 [ext_resource type="PackedScene" path="res://game/combat/spider.tscn" id="spider"]
 [ext_resource type="Resource" path="res://game/resources/resource_types/stone.tres" id="stone"]
-[ext_resource type="Texture2D" path="res://game/assets/sprites/stone.svg" id="stone_art"]
+[ext_resource type="Texture2D" path="res://game/assets/sprites/stone_cutout_1x1.svg" id="stone_art"]
 [ext_resource type="Resource" uid="uid://clier5qj0teei" path="res://game/tasks/queen_orders.tres" id="tasks"]
 [ext_resource type="Script" uid="uid://dlcdylh4crwm7" path="res://game/terrain/terrain_map.gd" id="terrain_map"]
 [ext_resource type="Script" uid="uid://ljth83w2ttbw" path="res://game/terrain/terrain_rules.gd" id="terrain_rules"]
@@ -254,15 +253,11 @@ output_per_second = 2.0
 title = "ui.building.stone"
 
 [node name="Sprite" type="Sprite2D" parent="Workplace2" unique_id=587804168]
+scale = Vector2(0.125, 0.125)
 texture = ExtResource("stone_art")
 
-[node name="Food" type="Node2D" parent="." unique_id=812127111]
+[node name="Food" parent="." unique_id=812127111 instance=ExtResource("canteen")]
 position = Vector2(456, 424)
-script = ExtResource("canteen")
-title = "ui.building.canteen"
-
-[node name="Sprite" type="Sprite2D" parent="Food" unique_id=95982103]
-texture = ExtResource("18_j2ppp")
 
 [node name="AppleTree" parent="." unique_id=1346957884 instance=ExtResource("berries")]
 position = Vector2(392, 344)

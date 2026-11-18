@@ -47,8 +47,16 @@ func configure(session: World, routes: NavigationOverlay) -> void:
 		_build_hud()
 
 func _ready() -> void:
+	for control: Control in [colony_summary, %Counters, %Routes, %Pause, %Build, %ColonyTab, %TasksTab,
+			%TalkTab, %ZoomOut, %Zoom, %ZoomIn]:
+		_update_tutorial_slot(control)
+		control.minimum_size_changed.connect(_update_tutorial_slot.bind(control))
 	if world != null:
 		_build_hud()
+
+func _update_tutorial_slot(control: Control) -> void:
+	var slot := control.get_parent() as MarginContainer
+	slot.custom_minimum_size = control.get_combined_minimum_size()
 
 func _build_hud() -> void:
 	colony_summary.configure(world)
@@ -176,6 +184,24 @@ func _on_time_changed(seconds: int) -> void:
 	_timer.text = tr("ui.hud.match_timer") % [seconds / 60, seconds % 60]
 	_timer.add_theme_color_override("font_color", ColonyStyle.color(&"danger") if seconds <= PRESENTATION.timer_warning_seconds else ColonyStyle.color(&"accent"))
 
+func set_tutorial_controls(chapter: FirstChapter) -> void:
+	%Pause.visible = chapter.shows_control(&"pause")
+	%Routes.visible = chapter.shows_control(&"routes")
+	%Zoom.visible = chapter.shows_control(&"zoom")
+	%ZoomIn.visible = %Zoom.visible
+	%ZoomOut.visible = %Zoom.visible
+	%ColonyTab.visible = chapter.shows_control(&"colony")
+	colony_summary.visible = %ColonyTab.visible
+	%Counters.visible = _economy_visible and colony_summary.visible
+	%TalkTab.visible = chapter.shows_control(&"talk")
+	%Build.visible = chapter.shows_control(&"build")
+	%TasksTab.visible = chapter.shows_control(&"tasks")
+
+func set_construction_controls_visible(enabled: bool) -> void:
+	%Undo.visible = enabled
+	%Apply.visible = enabled
+	%Move.visible = enabled
+
 func set_countdown_visible(enabled: bool) -> void:
 	_timer.visible = enabled
 
@@ -196,7 +222,7 @@ func highlight_control(id: StringName) -> void:
 func set_economy_visible(enabled: bool) -> void:
 	_economy_visible = enabled
 	colony_summary.get_node("%Totals").visible = enabled
-	%Counters.visible = enabled
+	%Counters.visible = enabled and colony_summary.visible
 	%MatchStatus.self_modulate.a = 1.0 if enabled else 0.0
 	_warning.visible = enabled
 	_waiting.visible = enabled
@@ -243,6 +269,9 @@ func toast(message: String, danger: bool = false) -> void:
 
 func construction_undo_button() -> Button:
 	return %Undo
+
+func construction_apply_button() -> Button:
+	return %Apply
 
 func construction_pan_button() -> Button:
 	return %Move

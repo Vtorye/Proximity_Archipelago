@@ -3,6 +3,8 @@ class_name Building
 
 signal demolished(building: Building)
 
+const StockTransferFeedback := preload("res://game/ui/stock_transfer_feedback.gd")
+
 var cell: Vector2i
 ## May be null for buildings placed in the scene from the start.
 @export var option: BuildOption
@@ -13,6 +15,12 @@ var _is_demolished := false
 var _appearance_texture: Texture2D
 var _appearance_tile_size := 0.0
 @export var title := "ui.building.generic"
+@export var stock_transfer_feedback: StockTransferFeedback
+
+
+func show_stock_change(resource: ResourceType, amount: int) -> void:
+	if stock_transfer_feedback != null:
+		stock_transfer_feedback.show_change(resource, amount)
 
 func display_title() -> String:
 	return option.display_name if option != null else title

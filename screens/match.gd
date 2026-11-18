@@ -15,6 +15,7 @@ var world: World
 const CONSTRUCTION_PANEL := preload("res://overlays/construction_menu.tscn")
 const NEST_POPUP := preload("res://overlays/nest_menu.tscn")
 const FIRST_ISLAND := preload("res://game/worlds/first_island.tscn")
+const ZERO_ISLAND := preload("res://game/worlds/zero_island.tscn")
 
 var nest_popup: NestMenu
 var _construction: ConstructionMenu
@@ -26,6 +27,7 @@ var _tutorial_start := false
 var _chapter_active := false
 var _chapter_checkpoint: Dictionary = {}
 var _save_path := SessionSave.PATH
+var _follow_actor: Node2D
 
 func _ready() -> void:
 	var waves: bool = payload is Dictionary and payload.get("wave_mode", false)
@@ -37,7 +39,7 @@ func _ready() -> void:
 	if payload is Dictionary and payload.has("tiles"):
 		world = LevelLayout.create_world(payload)
 	elif _tutorial_start:
-		world = FIRST_ISLAND.instantiate()
+		world = (ZERO_ISLAND if payload.get("zero_tutorial", false) else FIRST_ISLAND).instantiate()
 	else:
 		var seed_generator := RandomNumberGenerator.new()
 		seed_generator.randomize()
@@ -51,6 +53,11 @@ func _ready() -> void:
 			template.free()
 	if world == null:
 		world = LevelLayout.DEFAULT_WORLD.instantiate()
+	if world.chapter_rules is ZeroChapterRules:
+		chapter.set_script(ZeroChapter)
+		var zero_chapter := chapter as ZeroChapter
+		zero_chapter.skip_lessons = payload.get("skip_lessons", false)
+		zero_chapter.camera_follow_requested.connect(func(actor: Node2D): _follow_actor = actor)
 	_chapter_active = world.chapter_rules != null and (_tutorial_start or not _chapter_checkpoint.is_empty())
 	world.waves.enabled = waves or _chapter_active
 	world.endless = payload is Dictionary and payload.get("endless", false)
@@ -133,7 +140,7 @@ func _on_completed(summary: MatchSummary) -> void:
 func _input(event: InputEvent) -> void:
 	if not _active or Router.is_navigating():
 		return
-	if story.is_modal:
+	if story.is_modal or is_instance_valid(_follow_actor):
 		camera.dragging = false
 		return
 	if event is InputEventMouseMotion: _pointer = event.position
@@ -166,7 +173,7 @@ func _input(event: InputEvent) -> void:
 		return
 
 func _unhandled_input(event: InputEvent) -> void:
-	if not _active or Router.is_navigating() or story.is_modal: return
+	if not _active or Router.is_navigating() or story.is_modal or is_instance_valid(_follow_actor): return
 	var top: MenuBase = Router.top_overlay()
 	if top == null and event.is_action_pressed(&"ui_cancel") and not _building_active() and not campaign_panel.visible:
 		_open_settings()
@@ -181,31 +188,37 @@ func _unhandled_input(event: InputEvent) -> void:
 			_inspect_building(_cell_at(event.position))
 			get_viewport().set_input_as_handled()
 			return
-	if top == null and event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_B:
-		hud.construction_requested.emit()
-		get_viewport().set_input_as_handled()
+	if top == null:
+		for section: StringName in [&"build", &"colony", &"tasks"]:
+			if event.is_action_pressed("open_" + section) and (not _chapter_active or chapter.shows_control(section)):
+				_select_section(section)
+				get_viewport().set_input_as_handled()
+				return
 
 func _process(_delta: float) -> void:
 	if camera == null:
 		return
 	var top: MenuBase = Router.top_overlay()
+	if is_instance_valid(_follow_actor):
+		camera.global_position = _follow_actor.global_position
+		camera.force_update_scroll()
 	story.set_covered(top != null or campaign_panel.visible)
 	var can_use_map: bool = top == null and not story.is_modal and not campaign_panel.visible
 	if is_instance_valid(_construction):
 		_construction.visible = can_use_map and _section != &"talk"
+	hud.set_construction_controls_visible(_building_active())
 	conversations.visible = can_use_map and _section == &"talk"
 	conversations.dock_above(hud.bottom_bar_height())
-	camera.enabled_input = can_use_map and not _building_active()
+	camera.enabled_input = can_use_map and not _building_active() and not is_instance_valid(_follow_actor)
 	if is_instance_valid(nest_popup):
 		nest_popup.visible = (top == null or top is PauseMenu) and not story.is_modal and not campaign_panel.visible
 		$PopupLayer.layer = 8
 	hud.lock_zoom(top != null or story.is_modal)
 	hud.highlight_control(chapter.highlighted_control() if _chapter_active and not story.is_modal else &"")
 	if _chapter_active:
-		var target := chapter.guide_cell()
-		if can_use_map and world.map.get_used_rect().has_point(target):
-			if not selection.selected or selection.cell != target:
-				selection.select(target, true)
+		if can_use_map:
+			var map_area := world.map.get_used_rect()
+			selection.show_guides(chapter.guide_cells().filter(func(cell: Vector2i): return map_area.has_point(cell)))
 		elif selection.selected:
 			selection.clear()
 	elif navigation_overlay.mode == 2 and _navigation_available():
@@ -222,9 +235,10 @@ func _process(_delta: float) -> void:
 			navigation_overlay.hovered = _cell_at(_pointer)
 
 func _refresh_chapter_ui() -> void:
+	hud.set_tutorial_controls(chapter)
 	_close_nest_popup()
 	hud.navigation_panel.inspect_cell(null)
-	hud.set_countdown_visible(false)
+	hud.set_countdown_visible(chapter.countdown_visible())
 	hud.set_economy_visible(true)
 	hud.get_node("%WaveTimer").hide()
 	if is_instance_valid(_construction):
@@ -394,6 +408,7 @@ func _create_construction_panel() -> void:
 	context.art = world.art
 	context.camera = camera
 	context.undo_button = hud.construction_undo_button()
+	context.apply_button = hud.construction_apply_button()
 	context.pan_button = hud.construction_pan_button()
 	context.obstacles = _construction_obstacles
 	context.dismiss_map_popup = _dismiss_visible_nest_popup
@@ -466,7 +481,7 @@ func _construction_obstacles() -> Array[Rect2]:
 
 func _navigation_available() -> bool:
 	var top: MenuBase = Router.top_overlay()
-	return _active and not story.is_modal and not Router.is_navigating() and (top == null or top is PauseMenu)
+	return _active and not story.is_modal and not Router.is_navigating() and (top == null or top is PauseMenu) and (not _chapter_active or chapter.shows_control(&"routes"))
 
 func _toggle_navigation() -> void:
 	if not _navigation_available(): return
@@ -475,6 +490,8 @@ func _toggle_navigation() -> void:
 		chapter.reprimand()
 		return
 	navigation_overlay.cycle()
+	if _chapter_active:
+		chapter.navigation_changed(navigation_overlay.mode)
 	hud.set_navigation_mode(navigation_overlay.mode)
 	if Router.has_overlay(): return
 	var messages: Array[String] = [
