@@ -13,6 +13,7 @@ var _queued := false
 var _selection: TaskBuildOrder
 var _bottom_inset := 0.0
 var _pan_mode := false
+var _pending_prices: Dictionary[String, int] = {}
 @onready var _requests: HBoxContainer = %Requests
 @onready var _waiting: Label = %Waiting
 @onready var _categories: PanelContainer = %Categories
@@ -105,6 +106,7 @@ func _refresh() -> void:
 		var request: TaskRequest = REQUEST.instantiate()
 		_requests.add_child(request)
 		request.configure(director, task, index + 1)
+		request.refresh_prices(_pending_prices)
 		request.set_selection(_selection)
 		request.order_requested.connect(order_requested.emit)
 		request.info_requested.connect(info_requested.emit)
@@ -116,8 +118,12 @@ func _refresh() -> void:
 
 func _refresh_prices() -> void:
 	for request: TaskRequest in _requests.get_children():
-		request.refresh_prices()
+		request.refresh_prices(_pending_prices)
 	_update_waiting()
+
+func set_pending_prices(pending: Dictionary[String, int]) -> void:
+	_pending_prices = pending
+	_refresh_prices()
 
 func _on_time_changed(_seconds: int) -> void:
 	for request: TaskRequest in _requests.get_children():

@@ -65,13 +65,12 @@ func _ready() -> void:
 	for button: Button in [%SkipDialogue, _continue]:
 		button.pressed.connect(AppSettings.play_click)
 	%SkipDialogue.pressed.connect(_skip_scene)
-	%SkipHint.hide()
-	%SkipHint.pressed.connect(lesson_skip_requested.emit)
 	%SkipLessons.pressed.connect(lesson_skip_requested.emit)
 	%PracticeDone.pressed.connect(AppSettings.play_click)
 	%PracticeDone.pressed.connect(practice_done_requested.emit)
 	_warning.timeout.connect(_clear_warning)
 	%NameBeat.timeout.connect(_dismiss_name_input)
+	_name_input.text_changed.connect(_on_name_started)
 	set_process(false)
 	hide()
 
@@ -119,7 +118,6 @@ func show_hint(key: String) -> void:
 	_refresh_visibility()
 
 func set_lesson_skip(enabled: bool) -> void:
-	%SkipHint.visible = enabled
 	%SkipLessons.visible = enabled
 	%SkipDialogue.text = "ui.zero.skip_lines"
 	%HintHeader.queue_layout()
@@ -245,6 +243,9 @@ func _reveal_line() -> void:
 		_name_window.show()
 		_continue.disabled = true
 		_name_input.grab_focus()
+
+func _on_name_started(value: String) -> void:
+	if not value.is_empty() and _name_window.visible and not _name_dismissing and %NameBeat.is_stopped():
 		%NameBeat.start()
 
 func _dismiss_name_input() -> void:

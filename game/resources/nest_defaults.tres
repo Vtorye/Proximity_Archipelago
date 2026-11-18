@@ -6,7 +6,6 @@
 script = ExtResource("1")
 base_capacity = 1200
 base_min = 20
-base_max = 1200
 order_limit = 10000
 barracks_min = 0
-barracks_max = 0
+stock_max_fraction = 0.3333333333333333

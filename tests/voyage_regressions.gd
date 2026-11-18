@@ -92,6 +92,10 @@ func run(test: Node) -> void:
 	world.combat.spawner.remaining = 17.5
 	warrior.combat._attack = 0.6
 	(world.registry.at(tower_cell) as DefenseBuilding).shot_timer = 0.4
+	var canteen := world.registry.canteens()[0]
+	canteen.set_food_order("max", 8)
+	canteen.set_food_order("min", 3)
+	canteen.request_food(9)
 	var snapshot: Dictionary = SessionSave.capture(world)
 	var path := "user://voyage-regression.save"
 	test.expect(SessionSave.write(world, path) == OK and not SessionSave.read(path).is_empty(), "save file writes and reads an object-free snapshot")
@@ -107,6 +111,8 @@ func run(test: Node) -> void:
 			for key in ["funds_construction", "storage_capacity", "orders", "requests"]:
 				snapshot.buildings[index].erase(key)
 	SessionSave.apply(restored, snapshot)
+	var restored_canteen := restored.registry.canteens()[0]
+	test.expect(restored_canteen.food_minimum == 3 and restored_canteen.food_maximum == 8 and restored_canteen.requested_food == 9, "save restores the canteen thresholds and remaining food request")
 	test.expect(restored.logistics.main_nest.funds_construction, "legacy snapshot keeps the authored construction funding default")
 	test.expect(restored.population.count() == world.population.count() and restored.tasks.level == 5 and restored.tasks.buffs == world.tasks.buffs, "save restores residents, progression and chosen rewards")
 	for type in world.inventory.registered_types():

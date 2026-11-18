@@ -9,6 +9,7 @@ signal map_inspection_requested(cell: Vector2i)
 signal pan_mode_changed(enabled: bool)
 signal restricted_action(reason: StringName)
 signal placement_drafted
+signal draft_pricing_changed(pending: Dictionary[String, int])
 var order: TaskBuildOrder
 
 var context: ConstructionContext
@@ -85,9 +86,9 @@ func _update_mode() -> void:
 		button.visible = not _task_mode
 	for id in _category_for:
 		controls[id].visible = not _task_mode and _category_for[id] == _active_category
-	%Demolish.disabled = _task_mode
 	description_panel.hide()
 	_update_buildings_visibility()
+	_refresh()
 
 func detach_toolbar() -> void:
 	controls[&"apply"].pressed.disconnect(apply_plan)
@@ -194,6 +195,7 @@ func _ready() -> void:
 	if not context.controller.registry.removed.is_connected(draft.forget_removal):
 		context.controller.registry.removed.connect(draft.forget_removal)
 	context.controller.registry.changed.connect(_queue_refresh)
+	context.controller.changed.connect(_queue_refresh)
 	AppSettings.language_changed.connect(_queue_refresh)
 	draft.changed.connect(_queue_refresh)
 	_refresh()
@@ -346,20 +348,28 @@ func select_demolition() -> void:
 	_refresh()
 
 func _tool_allowed(option: BuildOption, task_order: TaskBuildOrder) -> bool:
-	if context.allow_tool.is_valid() and not context.allow_tool.call(option, task_order):
+	if not _tool_available(option, task_order):
 		restricted_action.emit(&"action")
 		return false
 	return true
+
+func _tool_available(option: BuildOption, task_order: TaskBuildOrder = null) -> bool:
+	return not context.allow_tool.is_valid() or context.allow_tool.call(option, task_order)
 
 func _cancel_confirmation() -> void:
 	if _confirmation != null: _confirmation.hide()
 
 func _refresh() -> void:
 	_refresh_queued = false
+	var pending: Dictionary[String, int] = {}
+	if context.controller.prices != null:
+		pending = context.controller.prices.pending_after(draft.commands())
 	for control in controls.values():
 		var card := control as ConstructionCard
 		if card != null and card.option != null:
-			card.set_price(context.controller.price(card.option, _pricing_cell))
+			card.disabled = not _tool_available(card.option)
+			card.set_price(context.controller.price(card.option, _pricing_cell, pending))
+	draft_pricing_changed.emit(pending)
 	var budget: PlacementCheck = draft.budget_check()
 	BuildCostText.show_price(_cost, draft.costs(), tr("ui.construction.cost") % [draft.size(), "%s"])
 	var orders := draft.task_orders()
@@ -372,6 +382,8 @@ func _refresh() -> void:
 			seconds += task_order.time_reward()
 		BuildCostText.show_reward(_reward, rewards, seconds, tr("ui.construction.plan_reward"))
 	_cost.add_theme_color_override("default_color", ColonyStyle.color(&"text") if budget.allowed() else ColonyStyle.color(&"danger"))
+	%Demolish.visible = not _task_mode and _tool_available(null)
+	%Demolish.disabled = not %Demolish.visible
 	controls[&"demolish"].set_pressed_no_signal(_tool == &"demolish")
 	controls[&"undo"].disabled = not draft.can_undo()
 	controls[&"apply"].disabled = draft.size() == 0 or not budget.allowed()
@@ -383,7 +395,7 @@ func _refresh() -> void:
 		_cost.hide()
 		_reward.hide()
 		_status.hide()
-	description_panel.refresh_at(_pricing_cell)
+	description_panel.refresh_at(_pricing_cell, pending)
 	_preview.queue_redraw()
 
 func _queue_refresh() -> void:

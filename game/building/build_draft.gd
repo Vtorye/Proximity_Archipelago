@@ -39,7 +39,17 @@ func paint(option: BuildOption, cell: Vector2i, order: TaskBuildOrder = null) ->
 		return true
 	if not last_result.allowed(): return false
 	var prior_order: BuildCommand
-	if order != null:
+	if order != null and order.task.build_count > 1:
+		if previous != null and previous.order != null and previous.order.task == order.task and previous.cell == cell:
+			return true
+		var count := 0
+		for command in _commands:
+			if command.order != null and command.order.task == order.task:
+				count += 1
+		if not controller.can_place_order.call(order, count):
+			last_result = PlacementCheck.result(PlacementCheck.Code.INSTANCE_LIMIT)
+			return false
+	elif order != null:
 		for command in _commands:
 			if command.order != null and command.order.task == order.task:
 				prior_order = command
@@ -113,8 +123,10 @@ func costs() -> Array[ResourceAmount]:
 
 func task_orders() -> Array[TaskBuildOrder]:
 	var result: Array[TaskBuildOrder] = []
+	var included: Dictionary[TaskSpec, bool] = {}
 	for command in _commands:
-		if command.order != null:
+		if command.order != null and not included.has(command.order.task):
+			included[command.order.task] = true
 			result.append(command.order)
 	return result
 
@@ -169,6 +181,8 @@ func demolition_check(cell: Vector2i) -> PlacementCheck:
 	var building: Building = controller.demolition_target(cell)
 	if building != null:
 		if removals().has(building): return PlacementCheck.result(PlacementCheck.Code.ALREADY_PLACED)
+		if controller.demolition_limit > 0 and _removed.size() >= controller.demolition_limit:
+			return PlacementCheck.result(PlacementCheck.Code.INSTANCE_LIMIT)
 		return controller.demolition_check(cell)
 	if controller.map is TerrainMap:
 		var surface: TerrainType = controller.map.surface_at(cell)

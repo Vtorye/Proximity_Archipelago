@@ -1,6 +1,7 @@
 class_name House
 extends Building
 signal delivery_requested(resource_id: String, amount: int)
+signal stock_order_changed
 
 const BARRACKS_TINT := Color("91b7df")
 @export var capacity: int = 5
@@ -74,9 +75,9 @@ func order_of(id: String) -> Dictionary:
 	if orders.has(id):
 		return orders[id]
 	var defaults: NestDefaults = NestDefaults.load_defaults()
-	if is_main_nest:
-		return {"min": defaults.base_min, "max": defaults.base_max}
-	return {"min": defaults.barracks_min, "max": defaults.barracks_max}
+	var maximum := defaults.stock_max_for(defaults.base_capacity if is_main_nest else storage_capacity)
+	var minimum := defaults.base_min if is_main_nest else defaults.barracks_min
+	return {"min": mini(minimum, maximum), "max": maximum}
 
 ## Keeps min <= max. Editing max below min lowers min, and editing min above max raises max.
 func set_order(id: String, field: String, value: int) -> void:
@@ -88,6 +89,7 @@ func set_order(id: String, field: String, value: int) -> void:
 		else:
 			order.min = order.max
 	orders[id] = order
+	stock_order_changed.emit()
 
 ## One-time request: the total still owed to this nest for one resource. It shrinks as carriers deliver.
 func request(id: String, amount: int) -> void:

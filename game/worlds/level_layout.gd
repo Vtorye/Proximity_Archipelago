@@ -6,6 +6,7 @@ static var DEFAULT_WORLD: PackedScene:
 	get:
 		return load("res://game/worlds/starter_island.tscn") as PackedScene
 const VERSION := 1
+const ZERO_ISLAND_ID := "zero_island"
 const CELL_LIMIT := 32768
 const TILE_LIMIT := 262144
 
@@ -119,7 +120,7 @@ static func create_world(layout: Dictionary) -> World:
 	var template := DEFAULT_WORLD
 	match layout.get("chapter"):
 		"first_island": template = load("res://game/worlds/first_island.tscn")
-		ZeroChapter.LAYOUT_ID: template = load("res://game/worlds/zero_island.tscn")
+		ZERO_ISLAND_ID: template = load("res://game/worlds/zero_island.tscn")
 	return instantiate_world(data, template) if data != null else null
 
 static func instantiate_world(data: LevelData, template: PackedScene = null) -> World:
@@ -238,7 +239,9 @@ static func _restore_objects(world: World, map: TileMapLayer, objects: Array[Lev
 			if workplace == null:
 				building.free()
 				return false
-			workplace.finite_supply = placement.finite_supply
+			var inexhaustible_timber := world.chapter_rules is ZeroChapterRules and workplace.output != null \
+				and workplace.output.id == &"wood" and not workplace.finite_supply
+			workplace.finite_supply = placement.finite_supply and not inexhaustible_timber
 			workplace.remaining_supply = placement.remaining_supply
 			if placement.improvement_id != &"":
 				var improvement: WorkplaceUpgradeOption = improvements.get(str(placement.improvement_id))

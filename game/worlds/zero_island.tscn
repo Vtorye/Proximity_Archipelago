@@ -2,6 +2,7 @@
 
 [ext_resource type="PackedScene" path="res://game/worlds/first_island.tscn" id="base"]
 [ext_resource type="Resource" path="res://story/zero_chapter_rules.tres" id="rules"]
+[ext_resource type="Resource" path="res://story/zero_chapter_tasks.tres" id="tasks"]
 [ext_resource type="Script" path="res://game/building/scene_build_option.gd" id="option"]
 [ext_resource type="Script" path="res://game/combat/wave_rules.gd" id="wave_script"]
 [ext_resource type="Resource" path="res://game/combat/defense_catalog.tres" id="defenses"]
@@ -11,6 +12,8 @@
 [ext_resource type="Resource" path="res://game/combat/tower.tres" id="tower_option"]
 [ext_resource type="Texture2D" path="res://game/assets/sprites/stone_cutout_1x1.svg" id="stone_art"]
 [ext_resource type="PackedScene" path="res://game/entities/resource_source.tscn" id="source"]
+[ext_resource type="PackedScene" path="res://game/entities/berry_bush.tscn" id="berries"]
+[ext_resource type="Resource" path="res://game/building/options/berry_bush.tres" id="berry_option"]
 [ext_resource type="Resource" path="res://game/resources/resource_types/stone.tres" id="stone"]
 [ext_resource type="Resource" path="res://game/resources/resource_types/wood.tres" id="wood"]
 [ext_resource type="Resource" path="res://game/resources/resource_types/food.tres" id="food"]
@@ -24,7 +27,7 @@ amount = 106
 [sub_resource type="Resource" id="stone_stock"]
 script = ExtResource("amount")
 type = ExtResource("stone")
-amount = 104
+amount = 125
 [sub_resource type="Resource" id="food_stock"]
 script = ExtResource("amount")
 type = ExtResource("food")
@@ -47,10 +50,14 @@ spider_speed = 5.2
 
 [node name="ZeroIsland" instance=ExtResource("base")]
 chapter_rules = ExtResource("rules")
+task_deck = ExtResource("tasks")
 starting_resources = Array[ExtResource("amount")]([SubResource("wood_stock"), SubResource("stone_stock"), SubResource("food_stock"), SubResource("royal_stock")])
 
 [node name="Waves" parent="." index="0"]
 rules = SubResource("breach_rules")
+
+[node name="Workplace" parent="." index="6"]
+finite_supply = false
 
 [node name="Workplace2" parent="." index="7"]
 position = Vector2(408, 328)
@@ -63,18 +70,36 @@ texture = ExtResource("stone_art")
 [node name="AppleTree" parent="." index="9"]
 position = Vector2(424, 376)
 
+[node name="Food" parent="." index="8"]
+position = Vector2(440, 440)
+
 [node name="AppleTree2" parent="." index="10"]
 position = Vector2(520, 376)
+work_slots = 1
+
+[node name="OldSawmill" parent="."]
+finite_supply = false
 
 [node name="Queen" parent="." index="18"]
 speed = 25.0
 
 [node name="FiniteOutcrop" parent="." instance=ExtResource("source")]
-position = Vector2(504, 312)
+position = Vector2(552, 248)
 output = ExtResource("stone")
-output_per_second = 1.0
-remaining_supply = 190
+output_per_second = 2.0
+remaining_supply = 1000
 title = "ui.zero.finite_stone"
+
+[node name="EastBerriesSouth" parent="." instance=ExtResource("berries")]
+position = Vector2(520, 488)
+option = ExtResource("berry_option")
+work_slots = 1
+remaining_supply = 140
+
+[node name="EastBerriesRidge" parent="." instance=ExtResource("berries")]
+position = Vector2(456, 344)
+option = ExtResource("berry_option")
+remaining_supply = 180
 
 [node name="NorthTower" parent="." instance=ExtResource("tower")]
 position = Vector2(344, 296)
@@ -233,7 +258,7 @@ position = Vector2(504, 520)
 option = ExtResource("wall_option")
 
 [node name="Perimeter_32_17" parent="." instance=ExtResource("wall")]
-position = Vector2(520, 280)
+position = Vector2(504, 264)
 option = ExtResource("wall_option")
 
 [node name="Perimeter_32_32" parent="." instance=ExtResource("wall")]
@@ -352,12 +377,16 @@ option = ExtResource("wall_option")
 position = Vector2(552, 504)
 option = ExtResource("wall_option")
 
-[node name="Perimeter_25_19" parent="." instance=ExtResource("wall")]
-position = Vector2(408, 312)
+[node name="YardGate_28_24" parent="." instance=ExtResource("wall")]
+position = Vector2(504, 424)
 option = ExtResource("wall_option")
 
-[node name="YardGate_28_24" parent="." instance=ExtResource("wall")]
-position = Vector2(456, 392)
+[node name="Perimeter_25_18" parent="." instance=ExtResource("wall")]
+position = Vector2(408, 296)
+option = ExtResource("wall_option")
+
+[node name="Perimeter_25_19" parent="." instance=ExtResource("wall")]
+position = Vector2(408, 312)
 option = ExtResource("wall_option")
 
 [node name="YardGate_28_25" parent="." instance=ExtResource("wall")]

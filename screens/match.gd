@@ -338,17 +338,17 @@ func _inspect_building(cell: Vector2i) -> void:
 			story.flash_warning("ui.chapter.ship_not_ready")
 		return
 	hud.navigation_panel.inspect_cell(cell)
-	if building is House:
+	if (building is House or building is Canteen) and world.logistics.owns(building):
 		camera.dragging = false
 		if Router.top_overlay() == null:
 			_open_nest_popup(building)
 
-func _open_nest_popup(house: House) -> void:
+func _open_nest_popup(building: Building) -> void:
 	camera.clear_nest_focus()
 	_close_nest_popup()
 	var popup: NestMenu = NEST_POPUP.instantiate()
-	popup.payload = {"world": world, "house": house}
-	popup.close_requested.connect(func(_menu: MenuBase): _close_nest_popup())
+	popup.payload = {"world": world, "building": building}
+	popup.close_requested.connect(func(_menu: MenuBase): _dismiss_visible_nest_popup())
 	nest_popup = popup
 	$PopupLayer/NestPopups.add_child(popup)
 
@@ -356,6 +356,7 @@ func _dismiss_visible_nest_popup() -> bool:
 	if not is_instance_valid(nest_popup) or not nest_popup.is_visible_in_tree():
 		return false
 	_close_nest_popup()
+	hud.navigation_panel.inspect_cell(null)
 	return true
 
 func _close_nest_popup() -> void:
@@ -388,6 +389,8 @@ func _select_section(section: StringName) -> void:
 	if section == &"build" and is_instance_valid(_construction):
 		already_open = _section == &"build" and _construction.is_palette_open()
 	_section = &"" if already_open else section
+	if _section in [&"build", &"tasks"]:
+		hud.navigation_panel.inspect_cell(null)
 	hud.set_section(_section)
 	if _section == &"build":
 		if not is_instance_valid(_construction):
@@ -423,6 +426,7 @@ func _create_construction_panel() -> void:
 	if _chapter_active:
 		_construction.restricted_action.connect(chapter.reprimand)
 	_construction.placement_drafted.connect(story.clear_reprimand)
+	_construction.draft_pricing_changed.connect(hud.set_draft_prices)
 	_construction.close_requested.connect(_close_construction_panel)
 	$ConstructionLayer.add_child(_construction)
 	_update_construction_dock()
@@ -455,6 +459,7 @@ func _close_construction_panel(menu: MenuBase) -> void:
 	_construction.detach_toolbar()
 	_construction.queue_free()
 	_construction = null
+	hud.set_draft_prices({})
 	hud.set_task_selection(null)
 	hud.set_task_pan_mode(false)
 	if _section != &"tasks":

@@ -9,12 +9,15 @@ const PATH := "res://game/resources/nest_defaults.tres"
 @export_range(1, 100000) var base_capacity := 1200
 ## Largest value a min or max order (or a one-time request) can take. Independent of capacity.
 @export_range(1, 1000000) var order_limit := 10000
-## Starting minimum and maximum of every base nest, per resource.
+## Starting minimum of every base nest, per resource.
 @export_range(0, 100000) var base_min := 400
-@export_range(0, 100000) var base_max := 1200
-## Starting minimum and maximum of every barracks, per resource.
+## Starting minimum of every barracks, per resource.
 @export_range(0, 100000) var barracks_min := 0
-@export_range(0, 100000) var barracks_max := 0
+## Share of the warehouse reserved as the default maximum for each resource.
+@export_range(0.0, 1.0, 0.01) var stock_max_fraction := 1.0 / 3.0
+
+func stock_max_for(capacity: int) -> int:
+	return mini(order_limit, roundi(capacity * stock_max_fraction))
 
 static var _defaults: NestDefaults
 

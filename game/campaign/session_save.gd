@@ -157,6 +157,7 @@ static func capture(world: World) -> Dictionary:
 			state["stock"] = world.inventory.capture_depot(building)
 		elif building is Canteen:
 			state["stock"] = world.inventory.capture_depot(building)
+			state["food_order"] = building.capture_delivery_settings()
 		if building is Workplace:
 			state = building.capture_production()
 		if building is DefenseBuilding: state["shot_timer"] = building.shot_timer
@@ -199,6 +200,7 @@ static func apply(world: World, data: Dictionary) -> void:
 			building.restore_storage_settings(state)
 			world.inventory.restore_depot(building, state.get("stock", world.inventory.capture_depot(building)))
 		elif building is Canteen:
+			building.restore_delivery_settings(state.get("food_order", {}))
 			world.inventory.restore_depot(building, state.get("stock", {}))
 		elif building is CargoShip:
 			building.manifest.assign(state.get("manifest", {}))

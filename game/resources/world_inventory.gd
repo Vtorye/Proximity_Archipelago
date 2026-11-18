@@ -277,9 +277,9 @@ func unregister_depot(building: Building) -> void:
 func depot_quantity(building: Building, type: ResourceType) -> int:
 	return _depots.get(building, {}).get(type.id, 0) if type != null else 0
 
-func depot_fill(house: House) -> int:
+func depot_fill(building: Building) -> int:
 	var count := 0
-	for amount: int in _depots.get(house, {}).values():
+	for amount: int in _depots.get(building, {}).values():
 		count += amount
 	return count
 

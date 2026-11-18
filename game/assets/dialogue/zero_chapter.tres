@@ -6,39 +6,40 @@
 script = ExtResource("1_e8bk0")
 using_states = PackedStringArray()
 cues = {
-"after_both": "77",
-"after_movement": "18",
-"after_pause": "13",
-"after_road": "69",
-"after_zoom": "23",
-"briefing": "136",
-"caught": "122",
-"courier_topic": "163",
-"early_requests": "73",
-"ending_build": "42",
-"ending_diversion": "48",
-"farewell": "157",
-"handoff": "53",
+"after_both": "87",
+"after_movement": "19",
+"after_pause": "14",
+"after_road": "78",
+"after_zoom": "24",
+"briefing": "150",
+"build_advice": "92",
+"caught": "132",
+"courier_topic": "178",
+"early_requests": "82",
+"ending_build": "49",
+"ending_diversion": "55",
+"farewell": "172",
+"handoff": "61",
 "intro": "1",
-"mentor": "129",
-"military": "143",
-"north_road": "80",
-"order": "38",
-"orders": "92",
-"planner": "111",
-"planner_topic": "174",
-"queen_topic": "88",
-"remove_statue": "117",
-"road": "28",
-"road_advice": "32",
-"second_feast": "58",
-"second_statue": "64",
-"spider": "150",
-"statues": "105",
-"wall": "100",
-"worker_topic": "170"
+"mentor": "139",
+"military": "158",
+"order": "45",
+"orders": "105",
+"planner": "121",
+"planner_topic": "194",
+"queen_topic": "100",
+"remove_statue": "127",
+"road": "33",
+"road_advice": "37",
+"second_feast": "66",
+"second_statue": "72",
+"spider": "165",
+"statues": "116",
+"wall": "111",
+"worker_advice_topic": "190",
+"worker_topic": "185"
 }
-character_names = PackedStringArray("Queen", "Courier", "Worker", "Planner", "Military", "Spider")
+character_names = PackedStringArray("Queen", "Protagonist", "Courier", "Worker", "Planner", "Military", "Spider")
 first_cue = "0"
 lines = {
 "0": {
@@ -56,18 +57,20 @@ lines = {
 &"type": "dialogue"
 },
 "10": {
+&"character": "Queen",
 &"id": "10",
-&"is_snippet": false,
-&"next_id": "end",
-&"next_id_after": "",
-&"type": "goto"
+&"next_id": "11",
+&"static_id": "",
+&"tags": PackedStringArray("action=pause"),
+&"text": "ui.story.controls.pause",
+&"type": "dialogue"
 },
 "100": {
-&"character": "Queen",
+&"character": "Protagonist",
 &"id": "100",
 &"next_id": "101",
 &"static_id": "",
-&"text": "ui.zero.wall_line",
+&"text": "ui.chapter.resource_question",
 &"type": "dialogue"
 },
 "101": {
@@ -75,8 +78,7 @@ lines = {
 &"id": "101",
 &"next_id": "102",
 &"static_id": "",
-&"tags": PackedStringArray("action=wall"),
-&"text": "ui.zero.wall_goal",
+&"text": "ui.chapter.resource_answer",
 &"type": "dialogue"
 },
 "102": {
@@ -97,28 +99,28 @@ lines = {
 &"type": "cue"
 },
 "105": {
-&"character": "Courier",
+&"character": "Worker",
 &"id": "105",
 &"next_id": "106",
 &"static_id": "",
-&"text": "ui.zero.order_delivered",
+&"text": "ui.zero.stone_home",
 &"type": "dialogue"
 },
 "106": {
-&"character": "Queen",
+&"character": "Courier",
 &"id": "106",
 &"next_id": "107",
 &"static_id": "",
-&"text": "ui.zero.statues_line",
+&"text": "ui.zero.source_target",
 &"type": "dialogue"
 },
 "107": {
-&"character": "Queen",
+&"character": "Courier",
 &"id": "107",
 &"next_id": "108",
 &"static_id": "",
-&"tags": PackedStringArray("action=statues"),
-&"text": "ui.zero.statues_goal",
+&"tags": PackedStringArray("action=orders"),
+&"text": "ui.zero.set_max",
 &"type": "dialogue"
 },
 "108": {
@@ -135,8 +137,10 @@ lines = {
 },
 "11": {
 &"id": "11",
-&"next_id": "12",
-&"type": ""
+&"is_snippet": false,
+&"next_id": "end",
+&"next_id_after": "",
+&"type": "goto"
 },
 "110": {
 &"id": "110",
@@ -144,92 +148,92 @@ lines = {
 &"type": "cue"
 },
 "111": {
-&"character": "Planner",
+&"character": "Queen",
 &"id": "111",
 &"next_id": "112",
 &"static_id": "",
-&"text": "ui.zero.planner_shock",
+&"text": "ui.zero.wall_line",
 &"type": "dialogue"
 },
 "112": {
-&"character": "Planner",
+&"character": "Queen",
 &"id": "112",
 &"next_id": "113",
 &"static_id": "",
-&"text": "ui.zero.remove_wall_line",
+&"tags": PackedStringArray("action=wall"),
+&"text": "ui.zero.wall_goal",
 &"type": "dialogue"
 },
 "113": {
-&"character": "Planner",
 &"id": "113",
-&"next_id": "114",
-&"static_id": "",
-&"tags": PackedStringArray("action=remove_wall"),
-&"text": "ui.zero.remove_wall_goal",
-&"type": "dialogue"
-},
-"114": {
-&"id": "114",
 &"is_snippet": false,
 &"next_id": "end",
 &"next_id_after": "",
 &"type": "goto"
+},
+"114": {
+&"id": "114",
+&"next_id": "115",
+&"type": ""
 },
 "115": {
 &"id": "115",
 &"next_id": "116",
-&"type": ""
-},
-"116": {
-&"id": "116",
-&"next_id": "117",
 &"type": "cue"
 },
+"116": {
+&"character": "Queen",
+&"id": "116",
+&"next_id": "117",
+&"static_id": "",
+&"text": "ui.zero.statues_line",
+&"type": "dialogue"
+},
 "117": {
-&"character": "Planner",
+&"character": "Queen",
 &"id": "117",
 &"next_id": "118",
 &"static_id": "",
-&"text": "ui.zero.remove_statue_line",
+&"tags": PackedStringArray("action=statues"),
+&"text": "ui.zero.statues_goal",
 &"type": "dialogue"
 },
 "118": {
-&"character": "Planner",
 &"id": "118",
-&"next_id": "119",
-&"static_id": "",
-&"tags": PackedStringArray("action=remove_statue"),
-&"text": "ui.zero.remove_statue_goal",
-&"type": "dialogue"
-},
-"119": {
-&"id": "119",
 &"is_snippet": false,
 &"next_id": "end",
 &"next_id_after": "",
 &"type": "goto"
 },
+"119": {
+&"id": "119",
+&"next_id": "120",
+&"type": ""
+},
 "12": {
 &"id": "12",
 &"next_id": "13",
-&"type": "cue"
+&"type": ""
 },
 "120": {
 &"id": "120",
 &"next_id": "121",
-&"type": ""
-},
-"121": {
-&"id": "121",
-&"next_id": "122",
 &"type": "cue"
 },
+"121": {
+&"character": "Planner",
+&"id": "121",
+&"next_id": "122",
+&"static_id": "",
+&"text": "ui.zero.planner_shock",
+&"type": "dialogue"
+},
 "122": {
-&"character": "Queen",
+&"character": "Planner",
 &"id": "122",
 &"next_id": "123",
 &"static_id": "",
-&"text": "ui.zero.caught",
+&"text": "ui.zero.remove_wall_line",
 &"type": "dialogue"
 },
 "123": {
@@ -237,132 +241,122 @@ lines = {
 &"id": "123",
 &"next_id": "124",
 &"static_id": "",
-&"text": "ui.zero.blocked",
+&"tags": PackedStringArray("action=remove_wall"),
+&"text": "ui.zero.remove_wall_goal",
 &"type": "dialogue"
 },
 "124": {
-&"character": "Queen",
 &"id": "124",
-&"next_id": "125",
+&"is_snippet": false,
+&"next_id": "end",
+&"next_id_after": "",
+&"type": "goto"
+},
+"125": {
+&"id": "125",
+&"next_id": "126",
+&"type": ""
+},
+"126": {
+&"id": "126",
+&"next_id": "127",
+&"type": "cue"
+},
+"127": {
+&"character": "Planner",
+&"id": "127",
+&"next_id": "128",
+&"static_id": "",
+&"text": "ui.zero.remove_statue_line",
+&"type": "dialogue"
+},
+"128": {
+&"character": "Planner",
+&"id": "128",
+&"next_id": "129",
+&"static_id": "",
+&"tags": PackedStringArray("action=remove_statue"),
+&"text": "ui.zero.remove_statue_goal",
+&"type": "dialogue"
+},
+"129": {
+&"id": "129",
+&"is_snippet": false,
+&"next_id": "end",
+&"next_id_after": "",
+&"type": "goto"
+},
+"13": {
+&"id": "13",
+&"next_id": "14",
+&"type": "cue"
+},
+"130": {
+&"id": "130",
+&"next_id": "131",
+&"type": ""
+},
+"131": {
+&"id": "131",
+&"next_id": "132",
+&"type": "cue"
+},
+"132": {
+&"character": "Queen",
+&"id": "132",
+&"next_id": "133",
+&"static_id": "",
+&"text": "ui.zero.caught",
+&"type": "dialogue"
+},
+"133": {
+&"character": "Planner",
+&"id": "133",
+&"next_id": "134",
+&"static_id": "",
+&"text": "ui.zero.blocked",
+&"type": "dialogue"
+},
+"134": {
+&"character": "Queen",
+&"id": "134",
+&"next_id": "135",
 &"static_id": "",
 &"text": "ui.zero.remove_source_line",
 &"type": "dialogue"
 },
-"125": {
+"135": {
 &"character": "Queen",
-&"id": "125",
-&"next_id": "126",
+&"id": "135",
+&"next_id": "136",
 &"static_id": "",
 &"tags": PackedStringArray("action=remove_source"),
 &"text": "ui.zero.remove_source_goal",
 &"type": "dialogue"
 },
-"126": {
-&"id": "126",
-&"is_snippet": false,
-&"next_id": "end",
-&"next_id_after": "",
-&"type": "goto"
-},
-"127": {
-&"id": "127",
-&"next_id": "128",
-&"type": ""
-},
-"128": {
-&"id": "128",
-&"next_id": "129",
-&"type": "cue"
-},
-"129": {
-&"character": "Queen",
-&"id": "129",
-&"next_id": "130",
-&"static_id": "",
-&"text": "ui.zero.mentor_order",
-&"type": "dialogue"
-},
-"13": {
-&"character": "Queen",
-&"id": "13",
-&"next_id": "14",
-&"static_id": "",
-&"text": "ui.story.controls.move_intro",
-&"type": "dialogue"
-},
-"130": {
-&"character": "Planner",
-&"id": "130",
-&"next_id": "131",
-&"static_id": "",
-&"text": "ui.zero.mentor_reply",
-&"type": "dialogue"
-},
-"131": {
-&"character": "Planner",
-&"id": "131",
-&"next_id": "132",
-&"static_id": "",
-&"text": "ui.zero.finite_explain",
-&"type": "dialogue"
-},
-"132": {
-&"character": "Planner",
-&"id": "132",
-&"next_id": "133",
-&"static_id": "",
-&"tags": PackedStringArray("action=quarry"),
-&"text": "ui.zero.quarry_goal",
-&"type": "dialogue"
-},
-"133": {
-&"id": "133",
-&"is_snippet": false,
-&"next_id": "end",
-&"next_id_after": "",
-&"type": "goto"
-},
-"134": {
-&"id": "134",
-&"next_id": "135",
-&"type": ""
-},
-"135": {
-&"id": "135",
-&"next_id": "136",
-&"type": "cue"
-},
 "136": {
-&"character": "Planner",
 &"id": "136",
-&"next_id": "137",
-&"static_id": "",
-&"text": "ui.zero.briefing",
-&"type": "dialogue"
+&"is_snippet": false,
+&"next_id": "end",
+&"next_id_after": "",
+&"type": "goto"
 },
 "137": {
-&"character": "Planner",
 &"id": "137",
 &"next_id": "138",
-&"static_id": "",
-&"text": "ui.zero.plan",
-&"type": "dialogue"
+&"type": ""
 },
 "138": {
-&"character": "Courier",
 &"id": "138",
 &"next_id": "139",
-&"static_id": "",
-&"text": "ui.zero.load",
-&"type": "dialogue"
+&"type": "cue"
 },
 "139": {
-&"character": "Planner",
+&"character": "Queen",
 &"id": "139",
 &"next_id": "140",
 &"static_id": "",
-&"tags": PackedStringArray("action=preparation"),
-&"text": "ui.zero.ship_goal",
+&"text": "ui.zero.mentor_order",
 &"type": "dialogue"
 },
 "14": {
@@ -370,58 +364,64 @@ lines = {
 &"id": "14",
 &"next_id": "15",
 &"static_id": "",
-&"tags": PackedStringArray("action=move_camera"),
-&"text": "ui.story.controls.move",
+&"text": "ui.story.controls.move_intro",
 &"type": "dialogue"
 },
 "140": {
+&"character": "Planner",
 &"id": "140",
-&"is_snippet": false,
-&"next_id": "end",
-&"next_id_after": "",
-&"type": "goto"
+&"next_id": "141",
+&"static_id": "",
+&"text": "ui.zero.mentor_reply",
+&"type": "dialogue"
 },
 "141": {
+&"character": "Worker",
 &"id": "141",
 &"next_id": "142",
-&"type": ""
+&"static_id": "",
+&"text": "ui.zero.berries",
+&"type": "dialogue"
 },
 "142": {
+&"character": "Protagonist",
 &"id": "142",
 &"next_id": "143",
-&"type": "cue"
+&"static_id": "",
+&"text": "ui.zero.stone_question",
+&"type": "dialogue"
 },
 "143": {
-&"character": "Military",
+&"character": "Planner",
 &"id": "143",
 &"next_id": "144",
 &"static_id": "",
-&"text": "ui.zero.report",
+&"text": "ui.zero.shortcut",
 &"type": "dialogue"
 },
 "144": {
-&"character": "Courier",
+&"character": "Planner",
 &"id": "144",
 &"next_id": "145",
 &"static_id": "",
-&"text": "ui.zero.watch",
+&"text": "ui.zero.finite_explain",
 &"type": "dialogue"
 },
 "145": {
-&"character": "Military",
+&"character": "Planner",
 &"id": "145",
 &"next_id": "146",
 &"static_id": "",
-&"text": "ui.zero.no_watch",
+&"text": "ui.zero.housing",
 &"type": "dialogue"
 },
 "146": {
-&"character": "Military",
+&"character": "Planner",
 &"id": "146",
 &"next_id": "147",
 &"static_id": "",
-&"tags": PackedStringArray("action=breach"),
-&"text": "ui.zero.no_watch",
+&"tags": PackedStringArray("action=quarry"),
+&"text": "ui.zero.quarry_goal",
 &"type": "dialogue"
 },
 "147": {
@@ -442,34 +442,36 @@ lines = {
 &"type": "cue"
 },
 "15": {
+&"character": "Queen",
 &"id": "15",
-&"is_snippet": false,
-&"next_id": "end",
-&"next_id_after": "",
-&"type": "goto"
+&"next_id": "16",
+&"static_id": "",
+&"tags": PackedStringArray("action=move_camera"),
+&"text": "ui.story.controls.move",
+&"type": "dialogue"
 },
 "150": {
-&"character": "Spider",
+&"character": "Courier",
 &"id": "150",
 &"next_id": "151",
 &"static_id": "",
-&"text": "ui.zero.spider_first",
+&"text": "ui.zero.order_delivered",
 &"type": "dialogue"
 },
 "151": {
-&"character": "Spider",
+&"character": "Planner",
 &"id": "151",
 &"next_id": "152",
 &"static_id": "",
-&"text": "ui.zero.spider_last",
+&"text": "ui.zero.briefing",
 &"type": "dialogue"
 },
 "152": {
-&"character": "Queen",
+&"character": "Planner",
 &"id": "152",
 &"next_id": "153",
 &"static_id": "",
-&"text": "ui.zero.run",
+&"text": "ui.zero.plan",
 &"type": "dialogue"
 },
 "153": {
@@ -477,159 +479,170 @@ lines = {
 &"id": "153",
 &"next_id": "154",
 &"static_id": "",
-&"tags": PackedStringArray("action=evacuation"),
-&"text": "ui.zero.board_goal",
+&"text": "ui.zero.load",
 &"type": "dialogue"
 },
 "154": {
+&"character": "Planner",
 &"id": "154",
+&"next_id": "155",
+&"static_id": "",
+&"tags": PackedStringArray("action=preparation"),
+&"text": "ui.zero.ship_goal",
+&"type": "dialogue"
+},
+"155": {
+&"id": "155",
 &"is_snippet": false,
 &"next_id": "end",
 &"next_id_after": "",
 &"type": "goto"
-},
-"155": {
-&"id": "155",
-&"next_id": "156",
-&"type": ""
 },
 "156": {
 &"id": "156",
 &"next_id": "157",
-&"type": "cue"
+&"type": ""
 },
 "157": {
-&"character": "Worker",
 &"id": "157",
 &"next_id": "158",
-&"static_id": "",
-&"text": "ui.zero.on_board",
-&"type": "dialogue"
+&"type": "cue"
 },
 "158": {
-&"character": "Queen",
+&"character": "Military",
 &"id": "158",
 &"next_id": "159",
 &"static_id": "",
-&"text": "ui.zero.leave",
+&"text": "ui.zero.report",
 &"type": "dialogue"
 },
 "159": {
-&"character": "Queen",
+&"character": "Courier",
 &"id": "159",
 &"next_id": "160",
 &"static_id": "",
-&"tags": PackedStringArray("action=depart"),
-&"text": "ui.zero.leave",
+&"text": "ui.zero.watch",
 &"type": "dialogue"
 },
 "16": {
 &"id": "16",
-&"next_id": "17",
-&"type": ""
-},
-"160": {
-&"id": "160",
 &"is_snippet": false,
 &"next_id": "end",
 &"next_id_after": "",
 &"type": "goto"
 },
+"160": {
+&"character": "Military",
+&"id": "160",
+&"next_id": "161",
+&"static_id": "",
+&"text": "ui.zero.no_watch",
+&"type": "dialogue"
+},
 "161": {
+&"character": "Military",
 &"id": "161",
 &"next_id": "162",
-&"type": ""
+&"static_id": "",
+&"tags": PackedStringArray("action=breach"),
+&"text": "ui.zero.no_watch",
+&"type": "dialogue"
 },
 "162": {
 &"id": "162",
-&"next_id": "163",
-&"type": "cue"
-},
-"163": {
-&"character": "Courier",
-&"id": "163",
-&"next_id": "164",
-&"static_id": "",
-&"text": "ui.zero.source_target",
-&"type": "dialogue"
-},
-"164": {
-&"character": "Courier",
-&"id": "164",
-&"next_id": "165",
-&"static_id": "",
-&"text": "ui.zero.min_explain",
-&"type": "dialogue"
-},
-"165": {
-&"character": "Courier",
-&"id": "165",
-&"next_id": "166",
-&"static_id": "",
-&"text": "ui.zero.max_explain",
-&"type": "dialogue"
-},
-"166": {
-&"character": "Courier",
-&"id": "166",
-&"next_id": "167",
-&"static_id": "",
-&"text": "ui.zero.once_explain",
-&"type": "dialogue"
-},
-"167": {
-&"id": "167",
 &"is_snippet": false,
 &"next_id": "end",
 &"next_id_after": "",
 &"type": "goto"
 },
+"163": {
+&"id": "163",
+&"next_id": "164",
+&"type": ""
+},
+"164": {
+&"id": "164",
+&"next_id": "165",
+&"type": "cue"
+},
+"165": {
+&"character": "Spider",
+&"id": "165",
+&"next_id": "166",
+&"static_id": "",
+&"text": "ui.zero.spider_first",
+&"type": "dialogue"
+},
+"166": {
+&"character": "Spider",
+&"id": "166",
+&"next_id": "167",
+&"static_id": "",
+&"text": "ui.zero.spider_last",
+&"type": "dialogue"
+},
+"167": {
+&"character": "Queen",
+&"id": "167",
+&"next_id": "168",
+&"static_id": "",
+&"text": "ui.zero.run",
+&"type": "dialogue"
+},
 "168": {
+&"character": "Courier",
 &"id": "168",
 &"next_id": "169",
-&"type": ""
+&"static_id": "",
+&"tags": PackedStringArray("action=evacuation"),
+&"text": "ui.zero.board_goal",
+&"type": "dialogue"
 },
 "169": {
 &"id": "169",
-&"next_id": "170",
-&"type": "cue"
+&"is_snippet": false,
+&"next_id": "end",
+&"next_id_after": "",
+&"type": "goto"
 },
 "17": {
 &"id": "17",
 &"next_id": "18",
-&"type": "cue"
+&"type": ""
 },
 "170": {
-&"character": "Worker",
 &"id": "170",
 &"next_id": "171",
-&"static_id": "",
-&"text": "ui.zero.work_topic",
-&"type": "dialogue"
+&"type": ""
 },
 "171": {
 &"id": "171",
-&"is_snippet": false,
-&"next_id": "end",
-&"next_id_after": "",
-&"type": "goto"
-},
-"172": {
-&"id": "172",
-&"next_id": "173",
-&"type": ""
-},
-"173": {
-&"id": "173",
-&"next_id": "174",
+&"next_id": "172",
 &"type": "cue"
 },
+"172": {
+&"character": "Worker",
+&"id": "172",
+&"next_id": "173",
+&"static_id": "",
+&"text": "ui.zero.on_board",
+&"type": "dialogue"
+},
+"173": {
+&"character": "Queen",
+&"id": "173",
+&"next_id": "174",
+&"static_id": "",
+&"text": "ui.zero.leave",
+&"type": "dialogue"
+},
 "174": {
-&"character": "Planner",
+&"character": "Queen",
 &"id": "174",
 &"next_id": "175",
 &"static_id": "",
-&"text": "ui.zero.plan",
+&"tags": PackedStringArray("action=depart"),
+&"text": "ui.zero.leave",
 &"type": "dialogue"
 },
 "175": {
@@ -646,27 +659,155 @@ lines = {
 },
 "177": {
 &"id": "177",
+&"next_id": "178",
+&"type": "cue"
+},
+"178": {
+&"character": "Courier",
+&"id": "178",
+&"next_id": "179",
+&"static_id": "",
+&"text": "ui.zero.source_target",
+&"type": "dialogue"
+},
+"179": {
+&"character": "Courier",
+&"id": "179",
+&"next_id": "180",
+&"static_id": "",
+&"text": "ui.zero.min_explain",
+&"type": "dialogue"
+},
+"18": {
+&"id": "18",
+&"next_id": "19",
+&"type": "cue"
+},
+"180": {
+&"character": "Courier",
+&"id": "180",
+&"next_id": "181",
+&"static_id": "",
+&"text": "ui.zero.max_explain",
+&"type": "dialogue"
+},
+"181": {
+&"character": "Courier",
+&"id": "181",
+&"next_id": "182",
+&"static_id": "",
+&"text": "ui.zero.once_explain",
+&"type": "dialogue"
+},
+"182": {
+&"id": "182",
 &"is_snippet": false,
 &"next_id": "end",
 &"next_id_after": "",
 &"type": "goto"
 },
-"18": {
-&"character": "Queen",
-&"id": "18",
-&"next_id": "19",
+"183": {
+&"id": "183",
+&"next_id": "184",
+&"type": ""
+},
+"184": {
+&"id": "184",
+&"next_id": "185",
+&"type": "cue"
+},
+"185": {
+&"character": "Worker",
+&"id": "185",
+&"next_id": "186",
 &"static_id": "",
-&"text": "ui.story.controls.zoom_intro",
+&"text": "ui.zero.work_topic",
 &"type": "dialogue"
+},
+"186": {
+&"character": "Worker",
+&"id": "186",
+&"next_id": "187",
+&"static_id": "",
+&"text": "ui.chapter.recruit_intro",
+&"type": "dialogue"
+},
+"187": {
+&"id": "187",
+&"is_snippet": false,
+&"next_id": "end",
+&"next_id_after": "",
+&"type": "goto"
+},
+"188": {
+&"id": "188",
+&"next_id": "189",
+&"type": ""
+},
+"189": {
+&"id": "189",
+&"next_id": "190",
+&"type": "cue"
 },
 "19": {
 &"character": "Queen",
 &"id": "19",
 &"next_id": "20",
 &"static_id": "",
-&"tags": PackedStringArray("action=zoom"),
-&"text": "ui.story.controls.zoom",
+&"text": "ui.story.controls.zoom_intro",
 &"type": "dialogue"
+},
+"190": {
+&"character": "Worker",
+&"id": "190",
+&"next_id": "191",
+&"static_id": "",
+&"text": "ui.chapter.worker_info",
+&"type": "dialogue"
+},
+"191": {
+&"id": "191",
+&"is_snippet": false,
+&"next_id": "end",
+&"next_id_after": "",
+&"type": "goto"
+},
+"192": {
+&"id": "192",
+&"next_id": "193",
+&"type": ""
+},
+"193": {
+&"id": "193",
+&"next_id": "194",
+&"type": "cue"
+},
+"194": {
+&"character": "Planner",
+&"id": "194",
+&"next_id": "195",
+&"static_id": "",
+&"text": "ui.zero.plan",
+&"type": "dialogue"
+},
+"195": {
+&"id": "195",
+&"is_snippet": false,
+&"next_id": "end",
+&"next_id_after": "",
+&"type": "goto"
+},
+"196": {
+&"id": "196",
+&"next_id": "197",
+&"type": ""
+},
+"197": {
+&"id": "197",
+&"is_snippet": false,
+&"next_id": "end",
+&"next_id_after": "",
+&"type": "goto"
 },
 "2": {
 &"character": "Queen",
@@ -678,72 +819,81 @@ lines = {
 &"type": "dialogue"
 },
 "20": {
+&"character": "Queen",
 &"id": "20",
+&"next_id": "21",
+&"static_id": "",
+&"tags": PackedStringArray("action=zoom"),
+&"text": "ui.story.controls.zoom",
+&"type": "dialogue"
+},
+"21": {
+&"id": "21",
 &"is_snippet": false,
 &"next_id": "end",
 &"next_id_after": "",
 &"type": "goto"
 },
-"21": {
-&"id": "21",
-&"next_id": "22",
-&"type": ""
-},
 "22": {
 &"id": "22",
 &"next_id": "23",
-&"type": "cue"
+&"type": ""
 },
 "23": {
-&"character": "Queen",
 &"id": "23",
 &"next_id": "24",
-&"static_id": "",
-&"tags": PackedStringArray("portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_thinking.png"),
-&"text": "ui.story.tutorial.colony",
-&"type": "dialogue"
+&"type": "cue"
 },
 "24": {
 &"character": "Queen",
 &"id": "24",
 &"next_id": "25",
 &"static_id": "",
-&"tags": PackedStringArray("action=talk"),
-&"text": "ui.story.controls.talk",
+&"tags": PackedStringArray("portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_thinking.png"),
+&"text": "ui.story.tutorial.colony",
 &"type": "dialogue"
 },
 "25": {
+&"character": "Protagonist",
 &"id": "25",
-&"is_snippet": false,
-&"next_id": "end",
-&"next_id_after": "",
-&"type": "goto"
+&"next_id": "26",
+&"static_id": "",
+&"text": "ui.chapter.resource_question",
+&"type": "dialogue"
 },
 "26": {
+&"character": "Queen",
 &"id": "26",
 &"next_id": "27",
-&"type": ""
+&"static_id": "",
+&"text": "ui.chapter.resource_answer",
+&"type": "dialogue"
 },
 "27": {
+&"character": "Queen",
 &"id": "27",
 &"next_id": "28",
-&"type": "cue"
+&"static_id": "",
+&"text": "ui.chapter.infinite_claim",
+&"type": "dialogue"
 },
 "28": {
-&"character": "Queen",
+&"character": "Protagonist",
 &"id": "28",
 &"next_id": "29",
 &"static_id": "",
-&"tags": PackedStringArray("action=road"),
-&"text": "ui.story.tutorial.road_hint",
+&"tags": PackedStringArray("portrait=res://game/assets/sprites/visual_novel/protagonist/protagonist_ant.png"),
+&"text": "ui.story.road.ask_advice",
 &"type": "dialogue"
 },
 "29": {
+&"character": "Queen",
 &"id": "29",
-&"is_snippet": false,
-&"next_id": "end",
-&"next_id_after": "",
-&"type": "goto"
+&"next_id": "30",
+&"static_id": "",
+&"tags": PackedStringArray("action=talk"),
+&"text": "ui.story.controls.talk",
+&"type": "dialogue"
 },
 "3": {
 &"character": "Queen",
@@ -756,70 +906,70 @@ lines = {
 },
 "30": {
 &"id": "30",
-&"next_id": "31",
-&"type": ""
-},
-"31": {
-&"id": "31",
-&"next_id": "32",
-&"type": "cue"
-},
-"32": {
-&"character": "Courier",
-&"id": "32",
-&"next_id": "33",
-&"static_id": "",
-&"text": "ui.story.road.advice",
-&"type": "dialogue"
-},
-"33": {
-&"character": "Courier",
-&"id": "33",
-&"next_id": "34",
-&"static_id": "",
-&"text": "ui.story.road.also_build",
-&"type": "dialogue"
-},
-"34": {
-&"character": "Courier",
-&"id": "34",
-&"next_id": "35",
-&"static_id": "",
-&"text": "ui.story.road.better_fed",
-&"type": "dialogue"
-},
-"35": {
-&"id": "35",
-&"is_snippet": false,
-&"next_id": "28",
-&"next_id_after": "",
-&"type": "goto"
-},
-"36": {
-&"id": "36",
-&"next_id": "37",
-&"type": ""
-},
-"37": {
-&"id": "37",
-&"next_id": "38",
-&"type": "cue"
-},
-"38": {
-&"character": "Queen",
-&"id": "38",
-&"next_id": "39",
-&"static_id": "",
-&"tags": PackedStringArray("action=order"),
-&"text": "ui.story.tutorial.order_hint",
-&"type": "dialogue"
-},
-"39": {
-&"id": "39",
 &"is_snippet": false,
 &"next_id": "end",
 &"next_id_after": "",
 &"type": "goto"
+},
+"31": {
+&"id": "31",
+&"next_id": "32",
+&"type": ""
+},
+"32": {
+&"id": "32",
+&"next_id": "33",
+&"type": "cue"
+},
+"33": {
+&"character": "Queen",
+&"id": "33",
+&"next_id": "34",
+&"static_id": "",
+&"tags": PackedStringArray("action=road"),
+&"text": "ui.story.tutorial.road_hint",
+&"type": "dialogue"
+},
+"34": {
+&"id": "34",
+&"is_snippet": false,
+&"next_id": "end",
+&"next_id_after": "",
+&"type": "goto"
+},
+"35": {
+&"id": "35",
+&"next_id": "36",
+&"type": ""
+},
+"36": {
+&"id": "36",
+&"next_id": "37",
+&"type": "cue"
+},
+"37": {
+&"character": "Courier",
+&"id": "37",
+&"next_id": "38",
+&"static_id": "",
+&"text": "ui.story.road.advice",
+&"type": "dialogue"
+},
+"38": {
+&"character": "Protagonist",
+&"id": "38",
+&"next_id": "39",
+&"static_id": "",
+&"text": "ui.story.road.why_build",
+&"type": "dialogue"
+},
+"39": {
+&"character": "Courier",
+&"id": "39",
+&"next_id": "40",
+&"static_id": "",
+&"text": "ui.story.road.also_build",
+&"type": "dialogue"
 },
 "4": {
 &"character": "Queen",
@@ -831,72 +981,71 @@ lines = {
 &"type": "dialogue"
 },
 "40": {
+&"character": "Protagonist",
 &"id": "40",
 &"next_id": "41",
-&"type": ""
+&"static_id": "",
+&"text": "ui.story.road.why_not_builders",
+&"type": "dialogue"
 },
 "41": {
+&"character": "Courier",
 &"id": "41",
 &"next_id": "42",
-&"type": "cue"
+&"static_id": "",
+&"text": "ui.story.road.better_fed",
+&"type": "dialogue"
 },
 "42": {
-&"character": "Queen",
 &"id": "42",
-&"next_id": "43",
-&"static_id": "",
-&"tags": PackedStringArray("portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_eating_berries.png"),
-&"text": "ui.story.tutorial.feast",
-&"type": "dialogue"
-},
-"43": {
-&"character": "Courier",
-&"id": "43",
-&"next_id": "44",
-&"static_id": "",
-&"text": "ui.chapter.feast_expires",
-&"type": "dialogue"
-},
-"44": {
-&"character": "Queen",
-&"id": "44",
-&"next_id": "45",
-&"static_id": "",
-&"text": "ui.chapter.distraction",
-&"type": "dialogue"
-},
-"45": {
-&"id": "45",
 &"is_snippet": false,
-&"next_id": "53",
+&"next_id": "33",
 &"next_id_after": "",
 &"type": "goto"
 },
+"43": {
+&"id": "43",
+&"next_id": "44",
+&"type": ""
+},
+"44": {
+&"id": "44",
+&"next_id": "45",
+&"type": "cue"
+},
+"45": {
+&"character": "Queen",
+&"id": "45",
+&"next_id": "46",
+&"static_id": "",
+&"tags": PackedStringArray("action=order"),
+&"text": "ui.story.tutorial.order_hint",
+&"type": "dialogue"
+},
 "46": {
 &"id": "46",
-&"next_id": "47",
-&"type": ""
+&"is_snippet": false,
+&"next_id": "end",
+&"next_id_after": "",
+&"type": "goto"
 },
 "47": {
 &"id": "47",
 &"next_id": "48",
-&"type": "cue"
+&"type": ""
 },
 "48": {
-&"character": "Queen",
 &"id": "48",
 &"next_id": "49",
-&"static_id": "",
-&"tags": PackedStringArray("portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_pleased.png"),
-&"text": "ui.story.tutorial.statue",
-&"type": "dialogue"
+&"type": "cue"
 },
 "49": {
 &"character": "Queen",
 &"id": "49",
 &"next_id": "50",
 &"static_id": "",
-&"text": "ui.chapter.statue_whatever",
+&"tags": PackedStringArray("portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_eating_berries.png"),
+&"text": "ui.story.tutorial.feast",
 &"type": "dialogue"
 },
 "5": {
@@ -909,72 +1058,74 @@ lines = {
 &"type": "dialogue"
 },
 "50": {
-&"id": "50",
-&"is_snippet": false,
-&"next_id": "53",
-&"next_id_after": "",
-&"type": "goto"
-},
-"51": {
-&"id": "51",
-&"next_id": "52",
-&"type": ""
-},
-"52": {
-&"id": "52",
-&"next_id": "53",
-&"type": "cue"
-},
-"53": {
-&"character": "Queen",
-&"id": "53",
-&"next_id": "54",
-&"static_id": "",
-&"text": "ui.chapter.other_request",
-&"type": "dialogue"
-},
-"54": {
-&"character": "Queen",
-&"id": "54",
-&"next_id": "55",
-&"static_id": "",
-&"tags": PackedStringArray("action=second_order"),
-&"text": "ui.chapter.second_order",
-&"type": "dialogue"
-},
-"55": {
-&"id": "55",
-&"is_snippet": false,
-&"next_id": "end",
-&"next_id_after": "",
-&"type": "goto"
-},
-"56": {
-&"id": "56",
-&"next_id": "57",
-&"type": ""
-},
-"57": {
-&"id": "57",
-&"next_id": "58",
-&"type": "cue"
-},
-"58": {
-&"character": "Queen",
-&"id": "58",
-&"next_id": "59",
-&"static_id": "",
-&"tags": PackedStringArray("portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_eating_berries.png"),
-&"text": "ui.story.tutorial.feast",
-&"type": "dialogue"
-},
-"59": {
 &"character": "Courier",
-&"id": "59",
-&"next_id": "60",
+&"id": "50",
+&"next_id": "51",
 &"static_id": "",
 &"text": "ui.chapter.feast_expires",
 &"type": "dialogue"
+},
+"51": {
+&"character": "Queen",
+&"id": "51",
+&"next_id": "52",
+&"static_id": "",
+&"text": "ui.chapter.distraction",
+&"type": "dialogue"
+},
+"52": {
+&"id": "52",
+&"is_snippet": false,
+&"next_id": "61",
+&"next_id_after": "",
+&"type": "goto"
+},
+"53": {
+&"id": "53",
+&"next_id": "54",
+&"type": ""
+},
+"54": {
+&"id": "54",
+&"next_id": "55",
+&"type": "cue"
+},
+"55": {
+&"character": "Queen",
+&"id": "55",
+&"next_id": "56",
+&"static_id": "",
+&"tags": PackedStringArray("portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_pleased.png"),
+&"text": "ui.story.tutorial.statue",
+&"type": "dialogue"
+},
+"56": {
+&"character": "Protagonist",
+&"id": "56",
+&"next_id": "57",
+&"static_id": "",
+&"text": "ui.chapter.statue_blocks",
+&"type": "dialogue"
+},
+"57": {
+&"character": "Queen",
+&"id": "57",
+&"next_id": "58",
+&"static_id": "",
+&"text": "ui.chapter.statue_whatever",
+&"type": "dialogue"
+},
+"58": {
+&"id": "58",
+&"is_snippet": false,
+&"next_id": "61",
+&"next_id_after": "",
+&"type": "goto"
+},
+"59": {
+&"id": "59",
+&"next_id": "60",
+&"type": ""
 },
 "6": {
 &"character": "Queen",
@@ -985,214 +1136,221 @@ lines = {
 &"type": "dialogue"
 },
 "60": {
-&"character": "Queen",
 &"id": "60",
 &"next_id": "61",
+&"type": "cue"
+},
+"61": {
+&"character": "Queen",
+&"id": "61",
+&"next_id": "62",
+&"static_id": "",
+&"text": "ui.chapter.other_request",
+&"type": "dialogue"
+},
+"62": {
+&"character": "Queen",
+&"id": "62",
+&"next_id": "63",
+&"static_id": "",
+&"tags": PackedStringArray("action=second_order"),
+&"text": "ui.chapter.second_order",
+&"type": "dialogue"
+},
+"63": {
+&"id": "63",
+&"is_snippet": false,
+&"next_id": "end",
+&"next_id_after": "",
+&"type": "goto"
+},
+"64": {
+&"id": "64",
+&"next_id": "65",
+&"type": ""
+},
+"65": {
+&"id": "65",
+&"next_id": "66",
+&"type": "cue"
+},
+"66": {
+&"character": "Queen",
+&"id": "66",
+&"next_id": "67",
+&"static_id": "",
+&"tags": PackedStringArray("portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_eating_berries.png"),
+&"text": "ui.story.tutorial.feast",
+&"type": "dialogue"
+},
+"67": {
+&"character": "Courier",
+&"id": "67",
+&"next_id": "68",
+&"static_id": "",
+&"text": "ui.chapter.feast_expires",
+&"type": "dialogue"
+},
+"68": {
+&"character": "Queen",
+&"id": "68",
+&"next_id": "69",
 &"static_id": "",
 &"text": "ui.chapter.distraction",
 &"type": "dialogue"
 },
-"61": {
-&"id": "61",
+"69": {
+&"id": "69",
 &"is_snippet": false,
-&"next_id": "77",
+&"next_id": "87",
 &"next_id_after": "",
 &"type": "goto"
 },
-"62": {
-&"id": "62",
-&"next_id": "63",
+"7": {
+&"character": "Protagonist",
+&"id": "7",
+&"next_id": "8",
+&"static_id": "",
+&"tags": PackedStringArray("portrait=res://game/assets/sprites/visual_novel/protagonist/protagonist_ant.png"),
+&"text": "ui.story.tutorial.before",
+&"type": "dialogue"
+},
+"70": {
+&"id": "70",
+&"next_id": "71",
 &"type": ""
 },
-"63": {
-&"id": "63",
-&"next_id": "64",
+"71": {
+&"id": "71",
+&"next_id": "72",
 &"type": "cue"
 },
-"64": {
+"72": {
 &"character": "Queen",
-&"id": "64",
-&"next_id": "65",
+&"id": "72",
+&"next_id": "73",
 &"static_id": "",
 &"tags": PackedStringArray("portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_pleased.png"),
 &"text": "ui.story.tutorial.statue",
 &"type": "dialogue"
 },
-"65": {
+"73": {
+&"character": "Protagonist",
+&"id": "73",
+&"next_id": "74",
+&"static_id": "",
+&"text": "ui.chapter.statue_blocks",
+&"type": "dialogue"
+},
+"74": {
 &"character": "Queen",
-&"id": "65",
-&"next_id": "66",
+&"id": "74",
+&"next_id": "75",
 &"static_id": "",
 &"text": "ui.chapter.statue_whatever",
 &"type": "dialogue"
 },
-"66": {
-&"id": "66",
+"75": {
+&"id": "75",
 &"is_snippet": false,
-&"next_id": "77",
+&"next_id": "87",
 &"next_id_after": "",
 &"type": "goto"
 },
-"67": {
-&"id": "67",
-&"next_id": "68",
+"76": {
+&"id": "76",
+&"next_id": "77",
 &"type": ""
 },
-"68": {
-&"id": "68",
-&"next_id": "69",
+"77": {
+&"id": "77",
+&"next_id": "78",
 &"type": "cue"
 },
-"69": {
+"78": {
 &"character": "Queen",
-&"id": "69",
-&"next_id": "70",
+&"id": "78",
+&"next_id": "79",
 &"static_id": "",
 &"tags": PackedStringArray("portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_pleased.png"),
 &"text": "ui.story.tutorial.road_done",
 &"type": "dialogue"
 },
-"7": {
-&"character": "Queen",
-&"id": "7",
-&"next_id": "8",
-&"static_id": "",
-&"tags": PackedStringArray("portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_thinking.png"),
-&"text": "ui.story.tutorial.my_fault",
-&"type": "dialogue"
-},
-"70": {
-&"id": "70",
-&"is_snippet": false,
-&"next_id": "100",
-&"next_id_after": "",
-&"type": "goto"
-},
-"71": {
-&"id": "71",
-&"next_id": "72",
-&"type": ""
-},
-"72": {
-&"id": "72",
-&"next_id": "73",
-&"type": "cue"
-},
-"73": {
-&"character": "Queen",
-&"id": "73",
-&"next_id": "74",
-&"static_id": "",
-&"tags": PackedStringArray("portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_eating_berries.png"),
-&"text": "ui.story.tutorial.choice",
-&"type": "dialogue"
-},
-"74": {
-&"id": "74",
-&"is_snippet": false,
-&"next_id": "38",
-&"next_id_after": "",
-&"type": "goto"
-},
-"75": {
-&"id": "75",
-&"next_id": "76",
-&"type": ""
-},
-"76": {
-&"id": "76",
-&"next_id": "77",
-&"type": "cue"
-},
-"77": {
-&"id": "77",
-&"is_snippet": false,
-&"next_id": "80",
-&"next_id_after": "",
-&"type": "goto"
-},
-"78": {
-&"id": "78",
-&"next_id": "79",
-&"type": ""
-},
 "79": {
 &"id": "79",
-&"next_id": "80",
-&"type": "cue"
+&"is_snippet": false,
+&"next_id": "111",
+&"next_id_after": "",
+&"type": "goto"
 },
 "8": {
 &"character": "Queen",
 &"id": "8",
 &"next_id": "9",
 &"static_id": "",
-&"text": "ui.story.controls.pause_intro",
+&"tags": PackedStringArray("portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_thinking.png"),
+&"text": "ui.story.tutorial.my_fault",
 &"type": "dialogue"
 },
 "80": {
-&"character": "Worker",
 &"id": "80",
 &"next_id": "81",
-&"static_id": "",
-&"text": "ui.zero.berries",
-&"type": "dialogue"
+&"type": ""
 },
 "81": {
-&"character": "Courier",
 &"id": "81",
 &"next_id": "82",
-&"static_id": "",
-&"text": "ui.zero.shortcut",
-&"type": "dialogue"
+&"type": "cue"
 },
 "82": {
-&"character": "Courier",
+&"character": "Queen",
 &"id": "82",
 &"next_id": "83",
 &"static_id": "",
-&"text": "ui.zero.nav_explain",
+&"tags": PackedStringArray("portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_eating_berries.png"),
+&"text": "ui.story.tutorial.choice",
 &"type": "dialogue"
 },
 "83": {
-&"character": "Courier",
+&"character": "Protagonist",
 &"id": "83",
 &"next_id": "84",
 &"static_id": "",
-&"text": "ui.zero.road_explain",
+&"text": "ui.zero.order_question",
 &"type": "dialogue"
 },
 "84": {
-&"character": "Courier",
 &"id": "84",
-&"next_id": "85",
-&"static_id": "",
-&"tags": PackedStringArray("action=north_road"),
-&"text": "ui.zero.road_goal",
-&"type": "dialogue"
+&"is_snippet": false,
+&"next_id": "45",
+&"next_id_after": "",
+&"type": "goto"
 },
 "85": {
 &"id": "85",
-&"is_snippet": false,
-&"next_id": "end",
-&"next_id_after": "",
-&"type": "goto"
+&"next_id": "86",
+&"type": ""
 },
 "86": {
 &"id": "86",
 &"next_id": "87",
-&"type": ""
+&"type": "cue"
 },
 "87": {
+&"character": "Queen",
 &"id": "87",
 &"next_id": "88",
-&"type": "cue"
+&"static_id": "",
+&"text": "ui.chapter.free_intro",
+&"type": "dialogue"
 },
 "88": {
 &"character": "Queen",
 &"id": "88",
 &"next_id": "89",
 &"static_id": "",
-&"text": "ui.chapter.resource_answer",
+&"tags": PackedStringArray("action=worker_advice"),
+&"text": "ui.chapter.ask_worker",
 &"type": "dialogue"
 },
 "89": {
@@ -1207,8 +1365,7 @@ lines = {
 &"id": "9",
 &"next_id": "10",
 &"static_id": "",
-&"tags": PackedStringArray("action=pause"),
-&"text": "ui.story.controls.pause",
+&"text": "ui.story.controls.pause_intro",
 &"type": "dialogue"
 },
 "90": {
@@ -1226,40 +1383,40 @@ lines = {
 &"id": "92",
 &"next_id": "93",
 &"static_id": "",
-&"text": "ui.zero.stone_home",
+&"text": "ui.chapter.worker_improvements",
 &"type": "dialogue"
 },
 "93": {
-&"character": "Courier",
+&"character": "Worker",
 &"id": "93",
 &"next_id": "94",
 &"static_id": "",
-&"text": "ui.zero.source_target",
+&"text": "ui.chapter.worker_info",
 &"type": "dialogue"
 },
 "94": {
-&"character": "Courier",
+&"character": "Protagonist",
 &"id": "94",
 &"next_id": "95",
 &"static_id": "",
-&"text": "ui.zero.min_explain",
+&"text": "ui.chapter.upgrade_reply",
 &"type": "dialogue"
 },
 "95": {
-&"character": "Courier",
+&"character": "Worker",
 &"id": "95",
 &"next_id": "96",
 &"static_id": "",
-&"text": "ui.zero.max_explain",
+&"text": "ui.chapter.worker_upgrade_task",
 &"type": "dialogue"
 },
 "96": {
-&"character": "Courier",
+&"character": "Queen",
 &"id": "96",
 &"next_id": "97",
 &"static_id": "",
-&"tags": PackedStringArray("action=orders"),
-&"text": "ui.zero.orders_goal",
+&"tags": PackedStringArray("action=free"),
+&"text": "ui.chapter.wish_hint",
 &"type": "dialogue"
 },
 "97": {

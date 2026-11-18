@@ -4,17 +4,22 @@ extends FirstChapter
 
 signal camera_follow_requested(actor: Node2D)
 
-const LAYOUT_ID := "zero_island"
-enum Phase { INTRO, ROAD, ORDERS, WALL, STATUES, REMOVE_WALL, REMOVE_STATUE, REMOVE_SOURCE,
+## Snapshots preserve their authored map, including the original, intramural quarry.
+const ORIGINAL_QUARRY_CELL := Vector2i(31, 19)
+const ORIGINAL_QUARRY_ROADS: Array[Vector2i] = [
+	Vector2i(32, 21), Vector2i(32, 20), Vector2i(31, 20), ORIGINAL_QUARRY_CELL]
+
+enum Phase { INTRO, ORDERS = 2, WALL, STATUES, REMOVE_WALL, REMOVE_STATUE, REMOVE_SOURCE,
 	QUARRY, BRIEFING, PREPARATION, MILITARY, BREACH, DEMAND, EVACUATION, ESCORT, FAREWELL, COMPLETE }
 
 var phase := Phase.INTRO
 var skip_lessons := false
 var _zero: ZeroChapterRules
 var _stone: ResourceType
+var _quarry_cell: Vector2i
+var _quarry_roads: Array[Vector2i] = []
 var _saw_priority := false
-var _mined := false
-var _received := false
+var _quarry_mined := 0
 var _wall_ordered := false
 var _breach_running := false
 var _runner: Node2D
@@ -24,12 +29,24 @@ func configure(colony: World, dialogue: StoryOverlay) -> void:
 	super.configure(colony, dialogue)
 	_zero = colony.chapter_rules as ZeroChapterRules
 	_stone = colony.inventory.type_by_id(&"stone")
-	for source_cell in [_zero.stone_cell, _zero.finite_stone_cell]:
-		var source := colony.registry.at(source_cell) as Workplace
-		if source != null:
-			source.produced.connect(_on_stone_produced.bind(source_cell))
-	colony.logistics.worker_deposited.connect(_on_worker_deposited)
+	_quarry_cell = _zero.finite_stone_cell
+	_quarry_roads = _zero.quarry_roads
+	var quarry := colony.registry.at(_quarry_cell) as Workplace
+	if quarry == null:
+		var original := colony.registry.at(ORIGINAL_QUARRY_CELL) as Workplace
+		if original != null and original.output == _stone:
+			_quarry_cell = ORIGINAL_QUARRY_CELL
+			_quarry_roads = ORIGINAL_QUARRY_ROADS
+			quarry = original
+	if quarry != null:
+		quarry.produced.connect(_on_quarry_produced)
+	var old_source := colony.registry.at(_zero.stone_cell) as Workplace
+	if old_source != null:
+		old_source.improvement_changed.connect(_on_old_source_improvement_changed.bind(old_source))
 	colony.logistics.stock_transferred.connect(_on_stock_transferred)
+	var depot := _demonstration_depot()
+	if depot != null:
+		depot.stock_order_changed.connect(_resume_hint)
 	colony.population.allow_warriors = false
 	story.set_lesson_skip(true)
 	story.lesson_skip_requested.connect(_skip_lessons)
@@ -37,6 +54,7 @@ func configure(colony: World, dialogue: StoryOverlay) -> void:
 func start(saved: Dictionary = {}) -> void:
 	_starting = false
 	set_process(true)
+	world.inventory.quantities_known = false
 	if not saved.is_empty():
 		restore_state(saved)
 		_resume()
@@ -46,7 +64,7 @@ func start(saved: Dictionary = {}) -> void:
 		story.play("intro")
 
 func save_layout_id() -> String:
-	return LAYOUT_ID
+	return LevelLayout.ZERO_ISLAND_ID
 
 func countdown_visible() -> bool:
 	return phase == Phase.PREPARATION
@@ -56,33 +74,45 @@ func shows_control(control: StringName) -> bool:
 		return super.shows_control(control)
 	match control:
 		&"build": return allows_section(control)
-		&"tasks": return false
-		&"routes": return phase in [Phase.ROAD, Phase.ORDERS, Phase.QUARRY, Phase.PREPARATION]
+		&"tasks": return phase == Phase.STATUES
+		&"routes": return phase in [Phase.ORDERS, Phase.QUARRY, Phase.PREPARATION]
 	return true
 
 func allows_section(section: StringName) -> bool:
 	if phase == Phase.INTRO:
 		return super.allows_section(section)
+	if section == &"tasks":
+		return phase == Phase.STATUES
 	return section in [&"talk", &"colony"] or section == &"build" and phase in [
-		Phase.ROAD, Phase.WALL, Phase.STATUES, Phase.REMOVE_WALL, Phase.REMOVE_STATUE,
+		Phase.ORDERS, Phase.WALL, Phase.REMOVE_WALL, Phase.REMOVE_STATUE,
 		Phase.REMOVE_SOURCE, Phase.QUARRY, Phase.PREPARATION]
 
 func allows_order(task_id: StringName, variant_id: StringName) -> bool:
-	return phase == Phase.INTRO and super.allows_order(task_id, variant_id)
+	if phase == Phase.INTRO:
+		return super.allows_order(task_id, variant_id)
+	return phase == Phase.STATUES and task_id == _zero.statue_order.id
 
 func allows_tool(option: BuildOption, order: TaskBuildOrder = null) -> bool:
 	if _scripted:
 		return true
 	if phase == Phase.INTRO:
+		if stage == Stage.FREE_BUILD:
+			if story.is_modal or order != null:
+				return false
+			if option == null:
+				return _can_remove_lesson_upgrade(_zero.timber_cell) or _can_remove_lesson_upgrade(_zero.stone_cell) or _can_remove_lesson_upgrade(_quarry_cell)
+			return option == _zero.road or option == _zero.wishes[1] or option == _zero.wishes[2]
 		return super.allows_tool(option, order)
-	if story.is_modal or order != null:
+	if story.is_modal:
 		return false
+	if order != null:
+		return option == _zero.statue and allows_order(order.task.id, order.variant.id)
 	match phase:
-		Phase.ROAD, Phase.QUARRY: return option == _zero.road
+		Phase.QUARRY: return option == _zero.road or option is NestBuildOption or option == _zero.wishes[2]
+		Phase.ORDERS: return option is NestBuildOption
 		Phase.WALL: return option == _zero.wall
-		Phase.STATUES: return option == _zero.statue
 		Phase.REMOVE_WALL, Phase.REMOVE_STATUE, Phase.REMOVE_SOURCE: return option == null
-		Phase.PREPARATION: return option == null or option in [
+		Phase.PREPARATION: return option == null or option is NestBuildOption or option in [
 			_zero.road, _zero.ship, _zero.wishes[1], _zero.wishes[2], _zero.ground]
 	return false
 
@@ -90,13 +120,16 @@ func allows_placement(option: BuildOption, cell: Vector2i, order: TaskBuildOrder
 	if _scripted:
 		return true
 	if phase == Phase.INTRO:
+		if stage == Stage.FREE_BUILD and option == null:
+			return not story.is_modal and _can_remove_lesson_upgrade(cell)
 		return super.allows_placement(option, cell, order)
 	if not allows_tool(option, order):
 		return false
 	match phase:
-		Phase.ROAD: return _zero.first_roads.has(cell)
-		Phase.QUARRY: return _zero.quarry_roads.has(cell)
-		Phase.WALL, Phase.REMOVE_WALL: return cell == _zero.wall_cell
+		Phase.QUARRY: return not option is WorkplaceUpgradeOption or cell == _quarry_cell
+		Phase.ORDERS: return option is NestBuildOption
+		Phase.WALL: return cell == _zero.wall_cell
+		Phase.REMOVE_WALL: return _zero.demolition_wall_cells.has(cell)
 		Phase.STATUES: return _zero.statue_cells.has(cell)
 		Phase.REMOVE_STATUE: return _zero.statue_cells.has(cell)
 		Phase.REMOVE_SOURCE: return cell == _zero.stone_cell
@@ -107,31 +140,55 @@ func allows_placement(option: BuildOption, cell: Vector2i, order: TaskBuildOrder
 			if option == null and building != null and not building is ConstructionSite:
 				if building is DefenseBuilding and not _zero.protected_walls.grow(-1).has_point(cell):
 					return false
-				return not building is House and building != ship() and cell != _zero.finite_stone_cell
+				return not building is House and building != ship() and cell != _quarry_cell
+			return true
+	return false
+
+func _can_remove_lesson_upgrade(cell: Vector2i) -> bool:
+	if cell != _zero.timber_cell and cell != _zero.stone_cell and cell != _quarry_cell:
+		return false
+	var target := world.build_controller.demolition_target(cell)
+	return (target is ConstructionSite and target.option is WorkplaceUpgradeOption) or (
+		target is Workplace and target.improvement != null)
+
+func _lesson_has_sawmill() -> bool:
+	var source := world.registry.at(_zero.timber_cell) as Workplace
+	return source != null and source.improvement == _zero.wishes[1]
+
+func _lesson_has_quarry() -> bool:
+	for cell in [_zero.stone_cell, _quarry_cell]:
+		var source := world.registry.at(cell) as Workplace
+		if source != null and source.improvement == _zero.wishes[2]:
 			return true
 	return false
 
 func preferred_option() -> StringName:
 	if phase == Phase.INTRO:
+		if stage == Stage.FREE_BUILD:
+			return _zero.wishes[2 if _lesson_has_sawmill() else 1].id
 		return super.preferred_option()
 	match phase:
-		Phase.ROAD, Phase.QUARRY: return _zero.road.id
+		Phase.QUARRY: return _zero.road.id
 		Phase.WALL: return _zero.wall.id
-		Phase.STATUES: return _zero.statue.id
 		Phase.PREPARATION: return _zero.ship.id if ship() == null else _zero.road.id
 	return &""
 
 func highlighted_control() -> StringName:
 	if phase == Phase.INTRO:
 		return super.highlighted_control()
-	return &"routes" if phase == Phase.ROAD and not _saw_priority else &""
+	if phase == Phase.STATUES:
+		return &"tasks"
+	return &"routes" if phase == Phase.QUARRY and not _saw_priority else &""
 
 func guide_cell() -> Vector2i:
 	match phase:
-		Phase.ROAD: return _next_road(_zero.first_roads, _zero.stone_cell)
-		Phase.QUARRY: return _next_road(_zero.quarry_roads, _zero.finite_stone_cell)
+		Phase.QUARRY: return _quarry_cell
 		Phase.ORDERS: return _zero.delivery_cell
-		Phase.WALL, Phase.REMOVE_WALL: return _zero.wall_cell
+		Phase.WALL: return _zero.wall_cell
+		Phase.REMOVE_WALL:
+			for cell in _zero.demolition_wall_cells:
+				if world.registry.at(cell) != null:
+					return cell
 		Phase.STATUES, Phase.REMOVE_STATUE:
 			for cell in _zero.statue_cells:
 				# Highlight the next placement or the statue opening the central path.
@@ -145,16 +202,17 @@ func guide_cell() -> Vector2i:
 
 func guide_cells() -> Array[Vector2i]:
 	match phase:
-		Phase.ROAD: return _zero.first_roads.filter(func(cell: Vector2i): return not _is_road(cell))
-		Phase.QUARRY: return _zero.quarry_roads.filter(func(cell: Vector2i): return not _is_road(cell))
+		Phase.INTRO:
+			if stage == Stage.FREE_BUILD:
+				var targets: Array[Vector2i] = []
+				if not _lesson_has_sawmill():
+					targets.append(_zero.timber_cell)
+				if not _lesson_has_quarry():
+					targets.append(_zero.stone_cell)
+				return targets
 		Phase.STATUES: return _zero.statue_cells.filter(func(cell: Vector2i): return not _complete_building(cell, _zero.statue))
+		Phase.REMOVE_WALL: return _zero.demolition_wall_cells.filter(func(cell: Vector2i): return world.registry.at(cell) != null)
 	return super.guide_cells()
-
-func _next_road(cells: Array[Vector2i], fallback: Vector2i) -> Vector2i:
-	for cell in cells:
-		if not _is_road(cell):
-			return cell
-	return fallback
 
 func navigation_changed(mode: int) -> void:
 	if mode == 2:
@@ -163,13 +221,22 @@ func navigation_changed(mode: int) -> void:
 
 func status_text() -> String:
 	if phase == Phase.INTRO:
+		if stage == Stage.FREE_BUILD:
+			if _lesson_has_sawmill():
+				return tr("ui.zero.quarry_upgrade_goal")
+			if _lesson_has_quarry():
+				return tr("ui.zero.sawmill_upgrade_goal")
+			return tr("ui.zero.upgrades_goal")
 		return super.status_text()
 	match phase:
-		Phase.ROAD:
-			if _zero.first_roads.all(_is_road): return tr("ui.zero.wait_stone")
-			return tr("ui.zero.road_goal" if _saw_priority else "ui.zero.navigation_goal")
 		Phase.ORDERS:
-			return tr("ui.zero.orders_goal") % [_zero.depot_maximum, _zero.depot_minimum]
+			var depot := _demonstration_depot()
+			var order := depot.order_of(str(_stone.id))
+			if not depot.orders.has(str(_stone.id)) or int(order.max) <= _zero.depot_minimum:
+				return tr("ui.zero.set_max") % _zero.depot_maximum
+			if int(order.min) == 0 or int(order.min) == int(order.max):
+				return tr("ui.zero.set_min") % _zero.depot_minimum
+			return tr("ui.zero.wait_transfer")
 		Phase.WALL: return tr("ui.zero.wall_goal")
 		Phase.STATUES:
 			var finished := 0
@@ -181,7 +248,7 @@ func status_text() -> String:
 		Phase.REMOVE_STATUE: return tr("ui.zero.remove_statue_goal")
 		Phase.REMOVE_SOURCE: return tr("ui.zero.remove_source_goal")
 		Phase.QUARRY:
-			return tr("ui.zero.wait_stone" if _zero.quarry_roads.all(_is_road) else "ui.zero.quarry_goal")
+			return tr("ui.zero.quarry_goal") % [_quarry_mined, _zero.quarry_target]
 		Phase.PREPARATION:
 			var boat := ship()
 			var lines := PackedStringArray([
@@ -192,6 +259,9 @@ func status_text() -> String:
 				cargo.append("%s %d/%d" % [tr(item.type.display_name),
 					boat.manifest.get(str(item.type.id), 0) if boat != null else 0, item.amount])
 			lines.append(" · ".join(cargo))
+			var depot := _quarry_depot()
+			if boat != null and is_instance_valid(depot) and world.logistics.order_surplus(depot, _stone) == 0:
+				lines.append(tr("ui.zero.reserve_hint"))
 			return "\n".join(lines)
 		Phase.EVACUATION: return tr("ui.zero.board_goal")
 		Phase.ESCORT: return tr("ui.chapter.escort_hint")
@@ -205,6 +275,8 @@ func _queen_route_ready() -> bool:
 	return not world.queen.route_to(landing_cell()).is_empty()
 
 func topic_available(character: StoryCharacter) -> bool:
+	if character.id == &"Protagonist":
+		return false
 	if phase == Phase.INTRO:
 		return super.topic_available(character)
 	return phase in [Phase.ORDERS, Phase.QUARRY, Phase.PREPARATION] and character.id in [&"Courier", &"Worker"] or (
@@ -223,22 +295,24 @@ func reprimand(_reason: StringName = &"action") -> void:
 
 func _on_action(action: StringName) -> void:
 	match action:
-		&"north_road":
-			# Later objectives have independent permissions and use the shared tools.
-			stage = Stage.INTRO
-			_enter(Phase.ROAD)
+		&"road":
+			super._on_action(action)
+			if _is_road(_zero.road_cell):
+				story.play.call_deferred("after_road")
 		&"orders": _enter(Phase.ORDERS)
 		&"wall":
 			_wall_ordered = true
 			_enter(Phase.WALL)
 		&"statues":
-			world.build_controller.unlock_option(_zero.statue)
 			_enter(Phase.STATUES)
 		&"remove_wall": _enter(Phase.REMOVE_WALL)
 		&"remove_statue": _enter(Phase.REMOVE_STATUE)
 		&"remove_source": _enter(Phase.REMOVE_SOURCE)
 		&"quarry": _enter(Phase.QUARRY)
 		&"preparation": _begin_preparation()
+		&"free":
+			super._on_action(action)
+			focus_requested.emit(_zero.timber_cell)
 		&"breach": _enter(Phase.BREACH)
 		&"evacuation":
 			if is_instance_valid(_spider):
@@ -251,6 +325,8 @@ func _on_action(action: StringName) -> void:
 
 func _enter(next: Phase, focus := true) -> void:
 	phase = next
+	world.build_controller.demolition_limit = 1 if phase == Phase.REMOVE_STATUE else 0
+	world.inventory.quantities_known = phase >= Phase.REMOVE_WALL
 	story.set_lesson_skip(phase < Phase.PREPARATION)
 	presentation_changed.emit()
 	_resume_hint()
@@ -267,27 +343,27 @@ func _process(_delta: float) -> void:
 		return
 	# Observe committed world state. A plan can contain several builds/removals in one transaction.
 	match phase:
-		Phase.ROAD:
-			if _received and _zero.first_roads.all(_is_road): _complete_lesson(Phase.ORDERS, "orders")
+		Phase.INTRO:
+			if stage == Stage.FREE_BUILD and _lesson_has_sawmill() and _lesson_has_quarry():
+				_complete_lesson(Phase.STATUES, "statues")
 		Phase.ORDERS:
-			if _transport_delivered > 0: _complete_lesson(Phase.STATUES, "statues")
+			if _transport_delivered > 0: _complete_lesson(Phase.BRIEFING, "briefing")
 		Phase.WALL:
 			if _complete_building(_zero.wall_cell, _zero.wall): _complete_lesson(Phase.INTRO, "early_requests")
 		Phase.STATUES:
 			if _zero.statue_cells.all(func(cell: Vector2i): return _complete_building(cell, _zero.statue)):
 				_complete_lesson(Phase.REMOVE_WALL, "planner")
 		Phase.REMOVE_WALL:
-			if world.registry.at(_zero.wall_cell) == null: _complete_lesson(Phase.REMOVE_STATUE, "remove_statue")
+			if _zero.demolition_wall_cells.all(func(cell: Vector2i): return world.registry.at(cell) == null):
+				_complete_lesson(Phase.REMOVE_STATUE, "remove_statue")
 		Phase.REMOVE_STATUE:
 			if _zero.statue_cells.any(func(cell: Vector2i): return world.registry.at(cell) == null):
 				_complete_lesson(Phase.REMOVE_SOURCE, "caught")
 		Phase.REMOVE_SOURCE:
 			if world.registry.at(_zero.stone_cell) == null:
-				_mined = false
-				_received = false
 				_complete_lesson(Phase.QUARRY, "mentor")
 		Phase.QUARRY:
-			if _received and _zero.quarry_roads.all(_is_road): _complete_lesson(Phase.BRIEFING, "briefing")
+			if _quarry_mined >= _zero.quarry_target: _complete_lesson(Phase.ORDERS, "orders")
 		Phase.PREPARATION:
 			if ship() != null and ship().supplied() and _queen_route_ready():
 				world.match_controller.countdown_suspended = true
@@ -296,24 +372,23 @@ func _process(_delta: float) -> void:
 		Phase.BREACH:
 			if not _breach_running: _run_breach()
 
-func _on_stone_produced(_type: ResourceType, _amount: int, cell: Vector2i) -> void:
-	if phase == Phase.ROAD and cell == _zero.stone_cell and _zero.first_roads.all(_is_road) or (
-		phase == Phase.QUARRY and cell == _zero.finite_stone_cell and _zero.quarry_roads.all(_is_road)):
-		_mined = true
-
-func _on_worker_deposited(_house: House, type: ResourceType, _amount: int) -> void:
-	if _mined and (phase == Phase.ROAD or phase == Phase.QUARRY) and type == _stone:
-		_received = true
+func _on_quarry_produced(type: ResourceType, amount: int) -> void:
+	if phase == Phase.QUARRY and type == _stone:
+		_quarry_mined = mini(_quarry_mined + amount, _zero.quarry_target)
+		_resume_hint()
 
 func _on_stock_transferred(source: House, target: Building, type: ResourceType, amount: int) -> void:
-	if phase == Phase.ORDERS and source == world.logistics.main_nest and target == _demonstration_depot() and type == _stone:
+	if phase == Phase.ORDERS and source != target and target == _demonstration_depot() and type == _stone:
 		var order := (target as House).order_of(str(type.id))
 		if int(order.min) > 0 and int(order.max) > int(order.min):
 			_transport_delivered += amount
 
 func _on_built(option: BuildOption, _cell: Vector2i) -> void:
 	if phase == Phase.INTRO:
-		super._on_built(option, _cell)
+		if stage == Stage.FREE_BUILD:
+			_resume_hint()
+		else:
+			super._on_built(option, _cell)
 		return
 	if option == _zero.ship:
 		_configure_ship()
@@ -326,6 +401,17 @@ func _on_shipment_delivered(_target: Building, _type: ResourceType, _amount: int
 func _on_construction_changed() -> void:
 	_resume_hint()
 
+func _on_old_source_improvement_changed(source: Workplace) -> void:
+	if phase == Phase.REMOVE_SOURCE and source.improvement == null:
+		# Wait until the player-confirmed demolition finishes its transaction.
+		_demolish_old_source.call_deferred()
+
+func _demolish_old_source() -> void:
+	if world.registry.at(_zero.stone_cell) is Workplace:
+		world.build_controller.demolish_at(_zero.stone_cell)
+		if world.registry.at(_zero.stone_cell) is Workplace:
+			world.build_controller.demolish_at(_zero.stone_cell)
+
 func _configure_ship() -> void:
 	super._configure_ship()
 	var boat := ship()
@@ -334,6 +420,10 @@ func _configure_ship() -> void:
 
 func _begin_preparation() -> void:
 	_balance_preparation_stock()
+	var depot := _quarry_depot()
+	if depot != null:
+		depot.set_order(str(_stone.id), "max", _zero.quarry_depot_reserve)
+		depot.set_order(str(_stone.id), "min", _zero.quarry_depot_reserve)
 	for option in [_zero.ship, _zero.wishes[1], _zero.wishes[2]]:
 		world.build_controller.unlock_option(option)
 	world.match_controller.reset_countdown(_zero.preparation_seconds)
@@ -341,6 +431,9 @@ func _begin_preparation() -> void:
 	_enter(Phase.PREPARATION)
 	_configure_ship()
 	checkpoint_requested.emit(CHECKPOINT)
+
+func _quarry_depot() -> House:
+	return world.registry.at(_zero.quarry_depot_cell) as House
 
 func _balance_preparation_stock() -> void:
 	for budget in _zero.preparation_stock:
@@ -358,15 +451,18 @@ func _skip_lessons() -> void:
 		return
 	story.finish()
 	_scripted = true
+	world.build_controller.demolition_limit = 0
 	var pending: Array[BuildCommand] = []
 	for site in world.construction_service.sites:
 		pending.append(BuildCommand.remove(site))
 	world.build_controller.try_build_plan(pending)
-	if world.registry.at(_zero.stone_cell) != null:
-		world.build_controller.demolish_at(_zero.stone_cell)
-	if _complete_building(_zero.wall_cell, _zero.wall):
-		world.build_controller.demolish_at(_zero.wall_cell)
-	for cell in _zero.first_roads + _zero.quarry_roads:
+	_demolish_old_source()
+	for cell in _zero.demolition_wall_cells:
+		if _complete_building(cell, _zero.wall):
+			world.build_controller.demolish_at(cell)
+	var roads: Array[Vector2i] = [_zero.road_cell]
+	roads.append_array(_quarry_roads)
+	for cell in roads:
 		if not _is_road(cell) and world.route_service.walkable(cell):
 			world.build_controller.apply_surface(_zero.road, cell)
 	world.route_service.rebuild(world.registry.blocked_cells())
@@ -434,17 +530,20 @@ func travellers() -> Array[String]:
 func capture_state() -> Dictionary:
 	var state := super.capture_state()
 	state.merge({"phase": phase, "seen_priority": _saw_priority,
-		"mined": _mined, "received": _received, "wall_ordered": _wall_ordered})
-	state["version"] = 2
+		"quarry_mined": _quarry_mined, "wall_ordered": _wall_ordered})
+	state["version"] = 3
 	return state
 
 func restore_state(saved: Dictionary) -> void:
 	super.restore_state(saved)
 	phase = clampi(int(saved.get("phase", Phase.INTRO)), Phase.INTRO, Phase.COMPLETE) as Phase
 	_saw_priority = saved.get("seen_priority", false)
-	_mined = saved.get("mined", false)
-	_received = saved.get("received", false)
+	_quarry_mined = clampi(int(saved.get("quarry_mined", 0)), 0, _zero.quarry_target)
 	_wall_ordered = saved.get("wall_ordered", false)
+	if int(saved.get("version", 2)) == 2 and (
+			int(phase) == 1 or phase == Phase.ORDERS and world.registry.at(_zero.stone_cell) != null):
+		phase = Phase.INTRO
+		stage = Stage.WORKER_ADVICE if not _first_choice.is_empty() else Stage.INTRO
 
 func _resume() -> void:
 	world.match_controller.countdown_suspended = phase != Phase.PREPARATION
@@ -453,7 +552,9 @@ func _resume() -> void:
 	_configure_ship()
 	match phase:
 		Phase.INTRO:
-			if stage == Stage.ROAD and _is_road(_zero.road_cell):
+			if stage == Stage.FREE_BUILD and _lesson_has_sawmill() and _lesson_has_quarry():
+				_complete_lesson(Phase.STATUES, "statues")
+			elif stage == Stage.ROAD and _is_road(_zero.road_cell):
 				story.play("early_requests" if _wall_ordered else "after_road")
 			else:
 				super._resume()

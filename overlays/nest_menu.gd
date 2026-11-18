@@ -1,9 +1,10 @@
 class_name NestMenu
 extends MenuBase
-## Per-nest inventory, assigned residents, and recruitment.
+## Per-building inventory and orders, with resident management for nests.
 
 var world: World
 var house: House
+var canteen: Canteen
 var controls: Dictionary[StringName, Button] = {}
 @onready var _inventory_tab: VBoxContainer = %InventoryTab
 @onready var _residents_tab: VBoxContainer = %ResidentsTab
@@ -22,11 +23,18 @@ func _ready() -> void:
 		close_requested.emit.call_deferred(self)
 		return
 	world = payload.get("world") as World
-	house = payload.get("house") as House
-	if not is_instance_valid(world) or not world.logistics.owns(house):
+	var building := payload.get("building") as Building
+	house = building as House
+	canteen = building as Canteen
+	if not is_instance_valid(world) or (house == null and canteen == null) or not world.logistics.owns(building):
 		close_requested.emit.call_deferred(self)
 		return
-	%Title.text = "ui.storage.main" if house.is_main_nest else "ui.storage.local"
+	var is_canteen := canteen != null
+	%Title.visible = not is_canteen
+	if is_canteen:
+		%WindowHeader.set_title(canteen.display_title())
+	else:
+		%Title.text = house.display_title()
 	controls[&"close"] = %WindowHeader.toggle
 	%WindowHeader.close_requested.connect(func(): close_requested.emit(self))
 	controls[&"inventory"] = %Inventory
@@ -35,29 +43,26 @@ func _ready() -> void:
 	controls[&"orders"] = %Orders
 	%Orders.pressed.connect(AppSettings.play_click)
 	%Orders.pressed.connect(_show_tab.bind(&"orders"))
-	controls[&"residents"] = %Residents
-	%Residents.pressed.connect(AppSettings.play_click)
-	%Residents.pressed.connect(_show_tab.bind(&"residents"))
+	%Residents.visible = not is_canteen
+	_funds.visible = not is_canteen
 	for type in world.inventory.registered_types():
-		if type.id == WorldInventory.CURRENCY_ID:
+		if type.id == WorldInventory.CURRENCY_ID or (is_canteen and type.id != WorldInventory.FOOD_ID):
 			continue
 		var line: RichTextLabel = preload("res://game/ui/nest_stock_label.tscn").instantiate()
 		_stock_labels[type.id] = line
 		_inventory_tab.add_child(line)
-	_funds.toggled.connect(func(enabled: bool):
-		if is_instance_valid(house):
-			house.funds_construction = enabled)
-	for type in world.inventory.registered_types():
-		if type.id == WorldInventory.CURRENCY_ID:
-			continue
 		var row: HBoxContainer = preload("res://game/ui/nest_order_row.tscn").instantiate()
 		var minimum: SpinBox = row.get_node("Minimum")
 		var maximum: SpinBox = row.get_node("Maximum")
 		var owed: SpinBox = row.get_node("Owed")
-		for spin in [minimum, maximum, owed]:
-			spin.max_value = WorldInventory.order_limit()
-		owed.min_value = -WorldInventory.order_limit()
-		owed.tooltip_text = "ui.storage.signed_request"
+		var order_limit := canteen.food_capacity if is_canteen else WorldInventory.order_limit()
+		minimum.max_value = order_limit
+		maximum.max_value = order_limit
+		owed.max_value = WorldInventory.order_limit()
+		owed.min_value = 0 if is_canteen else -WorldInventory.order_limit()
+		owed.tooltip_text = "ui.canteen.once_hint" if is_canteen else "ui.storage.signed_request"
+		minimum.tooltip_text = "ui.canteen.min_hint" if is_canteen else "ui.order.min_hint"
+		maximum.tooltip_text = "ui.canteen.max_hint" if is_canteen else "ui.order.max_hint"
 		minimum.value_changed.connect(_set_order.bind(str(type.id), "min"))
 		maximum.value_changed.connect(_set_order.bind(str(type.id), "max"))
 		owed.value_changed.connect(_set_owed.bind(str(type.id)))
@@ -66,6 +71,24 @@ func _ready() -> void:
 			"name": row.get_node("Resource"), "type": type,
 			"spins": {"min": minimum, "max": maximum, "once": owed},
 		}
+	if is_canteen:
+		canteen.food_request_changed.connect(refresh)
+	else:
+		_setup_residents()
+	world.inventory.changed.connect(refresh)
+	building.tree_exiting.connect(func(): close_requested.emit(self))
+	AppSettings.language_changed.connect(refresh)
+	_show_tab(&"inventory")
+	refresh()
+	default_focus = controls[&"close"]
+
+func _setup_residents() -> void:
+	controls[&"residents"] = %Residents
+	%Residents.pressed.connect(AppSettings.play_click)
+	%Residents.pressed.connect(_show_tab.bind(&"residents"))
+	_funds.toggled.connect(func(enabled: bool):
+		if is_instance_valid(house):
+			house.funds_construction = enabled)
 	for role in world.population.roles():
 		var row: HBoxContainer = preload("res://game/ui/nest_resident_row.tscn").instantiate()
 		_role_labels[role] = row.get_node("Labels/Count")
@@ -80,13 +103,7 @@ func _ready() -> void:
 		controls[_control_key("kill", role)] = kill
 		_residents_tab.add_child(row)
 	_residents_tab.move_child(%Assigned, -1)
-	world.inventory.changed.connect(refresh)
 	world.population.changed.connect(refresh)
-	house.tree_exiting.connect(func(): close_requested.emit(self))
-	AppSettings.language_changed.connect(refresh)
-	_show_tab(&"inventory")
-	refresh()
-	default_focus = controls[&"close"]
 
 func panel_bounds() -> Rect2:
 	return _dialog.get_global_rect()
@@ -100,13 +117,17 @@ func _show_tab(key: StringName) -> void:
 func _set_order(value: float, id: String, field: String) -> void:
 	if is_instance_valid(house):
 		house.set_order(id, field, roundi(value))
-		refresh()
+	elif is_instance_valid(canteen):
+		canteen.set_food_order(field, roundi(value))
+	refresh()
 
 ## The value is saved as soon as it changes; it is the total still owed for this resource.
 func _set_owed(value: float, id: String) -> void:
 	if is_instance_valid(house):
 		house.request(id, roundi(value))
 		refresh()
+	elif is_instance_valid(canteen):
+		canteen.request_food(roundi(value))
 
 func _recruit(role: AntAgent.Role) -> void:
 	world.population.recruit(house, role)
@@ -117,30 +138,49 @@ func _kill(role: AntAgent.Role) -> void:
 	refresh()
 
 func refresh() -> void:
-	if not is_instance_valid(house) or not is_instance_valid(world):
+	if not is_instance_valid(world) or (not is_instance_valid(house) and not is_instance_valid(canteen)):
 		return
-	var main: bool = house.is_main_nest
-	var used: int = world.inventory.storage_load(null if house == world.logistics.main_nest else house) if main else world.inventory.depot_fill(house)
-	var capacity: int = WorldInventory.base_capacity() if main else house.storage_capacity
+	var used: int
+	var capacity: int
+	if is_instance_valid(canteen):
+		used = world.inventory.depot_fill(canteen)
+		capacity = canteen.food_capacity
+	elif house.is_main_nest:
+		used = world.inventory.storage_load(world.logistics.store_of(house))
+		capacity = WorldInventory.base_capacity()
+	else:
+		used = world.inventory.depot_fill(house)
+		capacity = house.storage_capacity
 	_capacity.text = tr("ui.storage.fill") % [used, capacity] if world.inventory.quantities_known else tr("ui.storage.unlimited")
-	for type in world.inventory.registered_types():
-		if not _stock_labels.has(type.id):
-			continue
-		var amount: int = world.inventory.nest_quantity(house, world.logistics.main_nest, type)
-		_show_stock(_stock_labels[type.id], type, amount)
-	_funds.visible = true
-	_funds.set_pressed_no_signal(house.funds_construction)
 	for id in _order_rows:
 		var row: Dictionary = _order_rows[id]
 		var type: ResourceType = row.type
-		var order: Dictionary = house.order_of(id)
-		var stock: int = world.inventory.nest_quantity(house, world.logistics.main_nest, type)
+		var stock: int
+		var minimum: int
+		var maximum: int
+		var owed: int
+		if is_instance_valid(canteen):
+			stock = world.inventory.depot_quantity(canteen, type)
+			minimum = canteen.food_minimum
+			maximum = canteen.food_maximum
+			owed = canteen.requested_food
+		else:
+			stock = world.inventory.nest_quantity(house, world.logistics.main_nest, type)
+			var order: Dictionary = house.order_of(id)
+			minimum = int(order.min)
+			maximum = int(order.max)
+			owed = int(house.requests.get(id, 0))
+		_show_stock(_stock_labels[type.id], type, stock)
 		_show_stock(row.name, type, stock)
 		var spins: Dictionary = row.spins
-		for field in ["min", "max"]:
-			(spins[field] as SpinBox).set_value_no_signal(int(order.get(field, 0)))
-		# The owed field mirrors the saved total, which shrinks as carriers deliver.
-		(spins["once"] as SpinBox).set_value_no_signal(int(house.requests.get(id, 0)))
+		(spins["min"] as SpinBox).set_value_no_signal(minimum)
+		(spins["max"] as SpinBox).set_value_no_signal(maximum)
+		(spins["once"] as SpinBox).set_value_no_signal(owed)
+	if is_instance_valid(house):
+		_refresh_residents()
+
+func _refresh_residents() -> void:
+	_funds.set_pressed_no_signal(house.funds_construction)
 	_population.text = tr("ui.nest.population") % [house.residents.size(), house.resident_limit()]
 	_population.tooltip_text = tr("ui.terrain.capacity_bonus") % roundi((house.terrain_capacity_multiplier - 1) * 100) if house.terrain_capacity_multiplier > 1 else ""
 	var counts := {}

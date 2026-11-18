@@ -96,13 +96,32 @@ func quote_plan(commands: Array[BuildCommand]) -> Array[ResourceAmount]:
 ## A single sequential quote funds each individual site as well as the complete plan.
 func quote_commands(commands: Array[BuildCommand]) -> Dictionary:
 	var result: Dictionary = {}
+	for command in commands:
+		if command == null or command.is_removal() and not is_instance_valid(command.removed_building):
+			return {null: [null]}
+	var pending := _pending_removals(commands)
+	for command in commands:
+		if command.is_removal(): continue
+		if command.option == null: return {null: [null]}
+		result[command] = quote_at(command.option, command.cell, pending)
+		_count_placement(pending, command.option)
+	return result
+
+## The same price history that would apply to a new brush mark at the end of this draft.
+func pending_after(commands: Array[BuildCommand]) -> Dictionary[String, int]:
+	var pending := _pending_removals(commands)
+	for command in commands:
+		if command != null and command.option != null:
+			_count_placement(pending, command.option)
+	return pending
+
+func _pending_removals(commands: Array[BuildCommand]) -> Dictionary[String, int]:
 	var pending: Dictionary[String, int] = {}
 	# Demolition commits before construction, regardless of brush insertion order.
 	for command in commands:
-		if command == null: return {null: [null]}
-		if not command.is_removal(): continue
+		if command == null or not command.is_removal(): continue
 		var building: Building = command.removed_building
-		if not is_instance_valid(building): return {null: [null]}
+		if not is_instance_valid(building): continue
 		if building is ConstructionSite:
 			var reserved_event: GameEvents.Kind = GameEvents.Kind.TERRAIN_CHANGED if building.option is TileBuildOption else GameEvents.Kind.BUILDING_BUILT
 			for filter in [building.option.id, &""]:
@@ -113,16 +132,13 @@ func quote_commands(commands: Array[BuildCommand]) -> Dictionary:
 		for filter in [subject, &""]:
 			var id: String = key(GameEvents.Kind.BUILDING_DEMOLISHED, filter)
 			pending[id] = pending.get(id, 0) + 1
-	for command in commands:
-		if command == null: return {null: [null]}
-		if command.is_removal(): continue
-		if command.option == null: return {null: [null]}
-		result[command] = quote_at(command.option, command.cell, pending)
-		for subject in [command.option.id, &""]:
-			var event: GameEvents.Kind = GameEvents.Kind.TERRAIN_CHANGED if command.option is TileBuildOption else GameEvents.Kind.BUILDING_BUILT
-			var id: String = key(event, subject)
-			pending[id] = pending.get(id, 0) + 1
-	return result
+	return pending
+
+func _count_placement(pending: Dictionary[String, int], option: BuildOption) -> void:
+	var event: GameEvents.Kind = GameEvents.Kind.TERRAIN_CHANGED if option is TileBuildOption else GameEvents.Kind.BUILDING_BUILT
+	for subject in [option.id, &""]:
+		var id: String = key(event, subject)
+		pending[id] = pending.get(id, 0) + 1
 
 func quote_at(option: BuildOption, cell: Vector2i, pending: Dictionary[String, int] = {}) -> Array[ResourceAmount]:
 	var factor: float = _terrain_multiplier.call(option, cell) if _terrain_multiplier.is_valid() else 1.0

@@ -181,7 +181,8 @@ func _refresh_wave_timer() -> void:
 	%WaveTimer.text = tr("ui.hud.wave_timer") % [seconds / 60, seconds % 60]
 
 func _on_time_changed(seconds: int) -> void:
-	_timer.text = tr("ui.hud.match_timer") % [seconds / 60, seconds % 60]
+	var label := "ui.zero.preparation_timer" if world.chapter_rules is ZeroChapterRules else "ui.hud.match_timer"
+	_timer.text = tr(label) % [seconds / 60, seconds % 60]
 	_timer.add_theme_color_override("font_color", ColonyStyle.color(&"danger") if seconds <= PRESENTATION.timer_warning_seconds else ColonyStyle.color(&"accent"))
 
 func set_tutorial_controls(chapter: FirstChapter) -> void:
@@ -299,6 +300,11 @@ func set_section(section: StringName) -> void:
 func set_task_selection(order: TaskBuildOrder) -> void:
 	if task_panel != null:
 		task_panel.set_selection(order)
+
+func set_draft_prices(pending: Dictionary[String, int]) -> void:
+	if task_panel != null:
+		task_panel.set_pending_prices(pending)
+	_task_details.refresh_at(Vector2i(2147483647, 2147483647), pending)
 
 func set_task_pan_mode(enabled: bool) -> void:
 	if task_panel != null:

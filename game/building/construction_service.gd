@@ -41,6 +41,13 @@ func active_order_for(task: TaskSpec) -> TaskBuildOrder:
 			return site.order
 	return null
 
+func active_order_count(task: TaskSpec) -> int:
+	var count := 0
+	for site in sites:
+		if site.active and site.order != null and site.order.task == task:
+			count += 1
+	return count
+
 func enqueue(command: BuildCommand, candidate: Building, quote: Array[ResourceAmount], crates: Dictionary) -> ConstructionSite:
 	if candidate != null:
 		candidate.configure_appearance(art, controller.route_service.cell_size())
@@ -261,7 +268,7 @@ func _replenish(site: ConstructionSite) -> void:
 			for item: ResourceAmount in site.crates[source]:
 				if item.type.id == required.type.id: accounted += item.amount
 		if accounted < required.amount: missing.append(_item(required.type, required.amount - accounted))
-	if missing.is_empty() or not controller.inventory.can_afford_all(missing, true, true):
+	if missing.is_empty() or not controller.inventory.can_afford_all(missing, false, true):
 		return
 	var sources := controller.logistics.construction_sources(entries)
 	var primary: House = controller.logistics.main_nest

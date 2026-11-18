@@ -264,6 +264,11 @@ func _go_home() -> void:
 	var entry: Vector2i = planner.accessible_entry(home)
 	var route: Route = planner.home_route(home, route_service.world_to_cell(global_position))
 	if not route.is_valid() or not needs.can_afford(planner.travel_energy(route.cost, movement_speed()) + planner.escape_energy(entry, speed)):
+		if _is_foodless():
+			# Going home from a waiting plan must not immediately repeat that same decision.
+			_set_status(Status.WAITING_FOR_FOOD)
+			_timer = 1.0
+			return
 		_seek_food()
 		return
 	_walk(route, &"home")

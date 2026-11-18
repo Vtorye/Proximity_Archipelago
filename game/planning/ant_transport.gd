@@ -10,7 +10,6 @@ var pickup_source: Building
 var delivery_nest: Building
 var order_target: Building
 var _order_type: ResourceType
-var _order_amount := 0
 var _export_source: House
 
 func decide_pickup(foodless: bool) -> void:
@@ -20,13 +19,11 @@ func decide_pickup(foodless: bool) -> void:
 		pickup_source = order.source
 		order_target = order.target
 		_order_type = order.type
-		_order_amount = order.amount
 		ant._walk(order.pickup, &"pickup")
 		return
 	pickup_source = null
 	order_target = null
 	_order_type = null
-	_order_amount = 0
 	if foodless:
 		ant._wander()
 	elif not ant.needs.can_afford(ant.planner.escape_energy(cell, ant.speed) + ant.needs.rules.travel_reserve):
@@ -48,9 +45,10 @@ func load_pickup() -> void:
 	var source: House = pickup_source as House
 	var target: Building = order_target
 	var type: ResourceType = _order_type
-	var amount: int = _order_amount
 	pickup_source = null
-	if _order_still_valid(source, target, type, amount):
+	# Other couriers may have loaded or reserved room while this one was walking.
+	var amount := mini(ant.carry_capacity, ant.logistics.transfer_amount(source, target, type))
+	if amount > 0:
 		cargo = ant.planner.inventory.take_for_order(ant.logistics.store_of(source), type, amount)
 		shipment = not cargo.is_empty()
 		if shipment:
@@ -133,15 +131,6 @@ func _order_target_accepts(count: int) -> bool:
 		return ant.planner.inventory.can_deliver_food(order_target, cargo)
 	return ant.planner.inventory.can_deposit(ant.logistics.store_of(order_target), count)
 
-## An order is valid while its source still has surplus and its target still needs the amount.
-func _order_still_valid(source: House, target: Building, type: ResourceType, amount: int) -> bool:
-	return (
-		type != null and amount > 0
-		and is_instance_valid(source) and source.is_inside_tree() and ant.logistics.owns(source)
-		and is_instance_valid(target) and ant.logistics.owns(target)
-		and ant.logistics.transfer_amount(source, target, type) >= amount
-	)
-
 ## Units en route to the order target count toward its minimum, so no second trip is sent for them.
 func _set_incoming(delta: int) -> void:
 	if not is_instance_valid(order_target) or cargo.is_empty():
@@ -187,6 +176,8 @@ func _receive_shipment() -> bool:
 		else:
 			delivery_nest.show_stock_change(type, count)
 	_set_incoming(-count)
+	if delivery_nest == order_target and delivery_nest is Canteen:
+		delivery_nest.fulfil_food_request(count)
 	ant.logistics.shipment_delivered.emit(delivery_nest, type, count)
 	if is_instance_valid(pickup_source):
 		ant.logistics.stock_transferred.emit(pickup_source as House, delivery_nest, type, count)
@@ -222,7 +213,6 @@ func capture_state(state: Dictionary, buildings: Array[Building]) -> void:
 	if is_instance_valid(order_target):
 		state["order_target"] = buildings.find(order_target)
 		state["order_type"] = str(_order_type.id) if _order_type != null else ""
-		state["order_amount"] = _order_amount
 
 func restore_state(state: Dictionary, buildings: Array[Building]) -> void:
 	cargo = ResourceAmount.unpack(state.cargo, ant.planner.inventory.type_by_id)
@@ -235,6 +225,5 @@ func restore_state(state: Dictionary, buildings: Array[Building]) -> void:
 	if int(state.get("order_target", -1)) >= 0:
 		order_target = buildings[state.order_target]
 		_order_type = ant.planner.inventory.type_by_id(StringName(state.get("order_type", "")))
-		_order_amount = int(state.get("order_amount", 0))
 		if shipment and order_target != null:
 			_set_incoming(WorldInventory.cargo_size(cargo))

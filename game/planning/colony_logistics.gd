@@ -152,20 +152,20 @@ func order_for(house: House, type: ResourceType) -> Dictionary:
 
 ## Units a nest still wants: refill up to max once stock (plus incoming) drops below min,
 ## plus any one-time request not yet on its way. Never more than free space.
-func order_need(house: Building, type: ResourceType) -> int:
+func order_need(house: Building, type: ResourceType, accept_surplus := false) -> int:
 	if house is CargoShip:
 		return house.need(type) if owns(house) else 0
 	if not owns(house):
 		return 0
 	if house is Canteen:
-		return house.food_needed(inventory.depot_quantity(house, type)) if type.id == WorldInventory.FOOD_ID else 0
+		return house.food_needed(inventory.depot_quantity(house, type), accept_surplus) if type.id == WorldInventory.FOOD_ID else 0
 	var id: String = str(type.id)
 	if int(house.requests.get(id, 0)) < 0:
 		return 0
 	var order: Dictionary = order_for(house, type)
 	var have: int = inventory.stock_of(store_of(house), type) + int(house.incoming.get(id, 0))
 	var wanted := 0
-	if not order.is_empty() and have < int(order.min):
+	if accept_surplus or have < int(order.min):
 		wanted = int(order.max) - have
 	wanted = maxi(wanted, int(house.requests.get(id, 0)) - int(house.incoming.get(id, 0)))
 	var room: int = inventory.free_space(store_of(house)) - _incoming_total(house)
@@ -175,21 +175,21 @@ func order_need(house: Building, type: ResourceType) -> int:
 func order_surplus(house: House, type: ResourceType) -> int:
 	var minimum: int = int(order_for(house, type).get("min", 0))
 	var stock := inventory.stock_of(store_of(house), type)
-	var export_amount := maxi(0, -int(house.requests.get(str(type.id), 0)))
-	return mini(stock, maxi(stock - minimum, export_amount))
+	return maxi(0, stock - minimum)
 
-## A negative one-time request may use spare capacity even without a receiving order.
+## Refill below a receiver's minimum, or distribute an overflowing donor's stock
+## to any warehouse below its maximum. Manual shipments still need physical room.
 func transfer_amount(source: House, target: Building, type: ResourceType) -> int:
-	if source == target or not owns(source) or not owns(target):
+	if type == null or source == target or not owns(source) or not owns(target):
 		return 0
-	var wanted := order_need(target, type)
-	if target is Canteen:
-		wanted = mini(wanted, inventory.available(type))
+	var stock := inventory.stock_of(store_of(source), type)
+	var overflow: bool = stock > int(order_for(source, type).max)
+	var wanted := order_need(target, type, overflow)
 	var exported := maxi(0, -int(source.requests.get(str(type.id), 0)))
 	if exported > 0 and target is House and int(target.requests.get(str(type.id), 0)) >= 0:
 		var room := inventory.free_space(store_of(target)) - _incoming_total(target)
 		wanted = maxi(wanted, mini(exported, room))
-	return maxi(0, mini(order_surplus(source, type), wanted))
+	return maxi(0, mini(mini(order_surplus(source, type), wanted), inventory.available(type)))
 
 ## Base nests that fund construction keep their stock while a site still lacks materials.
 func construction_pending() -> bool:
@@ -242,7 +242,6 @@ func _nearest_order(from_cell: Vector2i, capacity: int, can_collect: Callable) -
 		for type in surplus_by_type:
 			var sources: Dictionary[House, int] = surplus_by_type[type]
 			for source in sources:
-				if source == target: continue
 				var need := mini(transfer_amount(source, target, type), capacity)
 				if need <= 0:
 					continue
@@ -256,7 +255,7 @@ func _nearest_order(from_cell: Vector2i, capacity: int, can_collect: Callable) -
 				var cost: float = pickup_cost + delivery_cost
 				if cost < lowest and can_collect.call(pickup_cost, delivery_cost, from_cell, target_field.destination(pickup_end)):
 					lowest = cost
-					best = StockOrder.new(source, target, type, mini(need, sources[source]), null)
+					best = StockOrder.new(source, target, type, need, null)
 	if best != null:
 		best.pickup = route_to(best.source, from_cell)
 	return best

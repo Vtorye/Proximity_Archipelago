@@ -5,6 +5,7 @@ Queen: ui.story.tutorial.never_mind [#portrait=res://game/assets/sprites/visual_
 Queen: ui.story.tutorial.given_name [#portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_pleased.png]
 Queen: ui.story.tutorial.purpose [#portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_pleased.png]
 Queen: ui.zero.power
+Protagonist: ui.story.tutorial.before [#portrait=res://game/assets/sprites/visual_novel/protagonist/protagonist_ant.png]
 Queen: ui.story.tutorial.my_fault [#portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_thinking.png]
 Queen: ui.story.controls.pause_intro
 Queen: ui.story.controls.pause [#action=pause]
@@ -22,6 +23,10 @@ Queen: ui.story.controls.zoom [#action=zoom]
 
 ~ after_zoom
 Queen: ui.story.tutorial.colony [#portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_thinking.png]
+Protagonist: ui.chapter.resource_question
+Queen: ui.chapter.resource_answer
+Queen: ui.chapter.infinite_claim
+Protagonist: ui.story.road.ask_advice [#portrait=res://game/assets/sprites/visual_novel/protagonist/protagonist_ant.png]
 Queen: ui.story.controls.talk [#action=talk]
 => END
 
@@ -31,7 +36,9 @@ Queen: ui.story.tutorial.road_hint [#action=road]
 
 ~ road_advice
 Courier: ui.story.road.advice
+Protagonist: ui.story.road.why_build
 Courier: ui.story.road.also_build
+Protagonist: ui.story.road.why_not_builders
 Courier: ui.story.road.better_fed
 => road
 
@@ -47,6 +54,7 @@ Queen: ui.chapter.distraction
 
 ~ ending_diversion
 Queen: ui.story.tutorial.statue [#portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_pleased.png]
+Protagonist: ui.chapter.statue_blocks
 Queen: ui.chapter.statue_whatever
 => handoff
 
@@ -63,6 +71,7 @@ Queen: ui.chapter.distraction
 
 ~ second_statue
 Queen: ui.story.tutorial.statue [#portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_pleased.png]
+Protagonist: ui.chapter.statue_blocks
 Queen: ui.chapter.statue_whatever
 => after_both
 
@@ -72,29 +81,41 @@ Queen: ui.story.tutorial.road_done [#portrait=res://game/assets/sprites/visual_n
 
 ~ early_requests
 Queen: ui.story.tutorial.choice [#portrait=res://game/assets/sprites/visual_novel/ant_queen/ant_queen_eating_berries.png]
+Protagonist: ui.zero.order_question
 => order
 
 ~ after_both
-=> north_road
+Queen: ui.chapter.free_intro
+Queen: ui.chapter.ask_worker [#action=worker_advice]
+=> END
 
-~ north_road
-Worker: ui.zero.berries
-Courier: ui.zero.shortcut
-Courier: ui.zero.nav_explain
-Courier: ui.zero.road_explain
-Courier: ui.zero.road_goal [#action=north_road]
+~ build_advice
+Worker: ui.chapter.worker_improvements
+Worker: ui.chapter.worker_info
+Protagonist: ui.chapter.upgrade_reply
+Worker: ui.zero.worker_upgrades
+Queen: ui.zero.upgrades_goal [#action=free]
 => END
 
 ~ queen_topic
+Protagonist: ui.chapter.resource_question
 Queen: ui.chapter.resource_answer
 => END
 
 ~ orders
 Worker: ui.zero.stone_home
+Courier: ui.chapter.carry_command
+Worker: ui.chapter.no
+Courier: ui.chapter.not_question
+Worker: ui.chapter.home
+Courier: ui.chapter.always
+Worker: ui.chapter.find_me
+Courier: ui.chapter.job
+Worker: ui.chapter.coffee
+Courier: ui.chapter.no_coffee
+Worker: ui.chapter.berry
 Courier: ui.zero.source_target
-Courier: ui.zero.min_explain
-Courier: ui.zero.max_explain
-Courier: ui.zero.orders_goal [#action=orders]
+Courier: ui.zero.set_max [#action=orders]
 => END
 
 ~ wall
@@ -103,13 +124,14 @@ Queen: ui.zero.wall_goal [#action=wall]
 => END
 
 ~ statues
-Courier: ui.zero.order_delivered
 Queen: ui.zero.statues_line
 Queen: ui.zero.statues_goal [#action=statues]
 => END
 
 ~ planner
 Planner: ui.zero.planner_shock
+Protagonist: ui.chapter.infinite_question
+Planner: ui.zero.real_stock
 Planner: ui.zero.remove_wall_line
 Planner: ui.zero.remove_wall_goal [#action=remove_wall]
 => END
@@ -129,11 +151,18 @@ Queen: ui.zero.remove_source_goal [#action=remove_source]
 ~ mentor
 Queen: ui.zero.mentor_order
 Planner: ui.zero.mentor_reply
+Worker: ui.zero.berries
+Protagonist: ui.zero.stone_question
+Planner: ui.zero.shortcut
+Planner: ui.zero.navigation_goal
 Planner: ui.zero.finite_explain
+Planner: ui.zero.housing
+Planner: ui.zero.quarry_ask
 Planner: ui.zero.quarry_goal [#action=quarry]
 => END
 
 ~ briefing
+Courier: ui.zero.order_delivered
 Planner: ui.zero.briefing
 Planner: ui.zero.plan
 Courier: ui.zero.load
@@ -169,6 +198,11 @@ Courier: ui.zero.once_explain
 
 ~ worker_topic
 Worker: ui.zero.work_topic
+Worker: ui.chapter.recruit_intro
+=> END
+
+~ worker_advice_topic
+Worker: ui.chapter.worker_info
 => END
 
 ~ planner_topic

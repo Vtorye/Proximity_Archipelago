@@ -163,6 +163,7 @@ func _run() -> void:
 	expect((screen.world.registry.at(Vector2i(24, 25)) as House).residents.size() == 5, "starter nest owns five residents")
 	expect(screen.world.population.agents().any(func(ant: AntAgent): return ant.status == AntAgent.Status.WALKING), "starter ants visibly leave home")
 	await capture("06-colony")
+	await _check_canteen_popup()
 	await click_at(Vector2(320, 200))
 	expect(not Router.has_overlay(), "left click never opens construction")
 	await click_at(cell_point(Vector2i(26, 25)), MOUSE_BUTTON_RIGHT)
@@ -265,6 +266,29 @@ func _run() -> void:
 	expect(Router.current_screen_key() == &"main_menu" and not Router.has_overlay() and not get_tree().paused, "completion during navigation cannot reopen a result")
 	AppSettings.reset_defaults()
 	_finish()
+
+func _check_canteen_popup() -> void:
+	var canteen: Canteen = screen.world.registry.canteens()[0]
+	await click_at(cell_point(canteen.cell))
+	var menu: NestMenu = screen.nest_popup
+	expect(menu != null and menu.canteen == canteen and menu._inventory_tab.visible, "clicking the canteen opens its food inventory")
+	if menu == null or menu.canteen != canteen:
+		return
+	expect(menu._stock_labels.keys() == [WorldInventory.FOOD_ID] and not menu.controls.has(&"residents"), "canteen inventory contains food and has no residents tab")
+	await click(menu.controls[&"orders"])
+	expect(menu._orders_tab.visible and not menu._funds.visible and menu._order_rows.size() == 1, "canteen orders show only the food delivery settings")
+	var spins: Dictionary = menu._order_rows[str(WorldInventory.FOOD_ID)].spins
+	spins.max.value = 5
+	spins.min.value = 2
+	var once: SpinBox = spins.once
+	await click(once.get_line_edit())
+	once.get_line_edit().text = "4"
+	await key(KEY_ENTER)
+	expect(canteen.food_minimum == 2 and canteen.food_maximum == 5 and canteen.requested_food == 4, "editing the canteen order changes the actual delivery settings")
+	await capture("06a-canteen-orders")
+	await key(KEY_ESCAPE)
+	expect(screen.nest_popup == null and not get_tree().paused, "escape closes the canteen menu without pausing the match")
+	canteen.restore_delivery_settings({})
 
 func _layout_only() -> void:
 	var dimensions: Vector2i = display_size if display_size != Vector2i.ZERO else get_window().size

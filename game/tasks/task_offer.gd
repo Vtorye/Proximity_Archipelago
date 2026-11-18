@@ -29,8 +29,8 @@ func configure(offer: TaskBuildOrder, art: ArtCatalog) -> void:
 	placement.tooltip_text = title
 	BuildCostText.show_reward(reward, order.resources(), order.time_reward())
 
-func refresh_price(controller: BuildController) -> void:
-	placement.set_price(controller.price(order.variant.building))
+func refresh_price(controller: BuildController, pending: Dictionary[String, int] = {}) -> void:
+	placement.set_price(controller.price(order.variant.building, Vector2i(2147483647, 2147483647), pending))
 
 func set_available(available: bool) -> void:
 	placement.disabled = not available

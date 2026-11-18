@@ -7,6 +7,7 @@
 [ext_resource type="Resource" path="res://story/planner.tres" id="planner"]
 [ext_resource type="Resource" path="res://story/courier.tres" id="courier"]
 [ext_resource type="Resource" path="res://story/worker.tres" id="worker"]
+[ext_resource type="Resource" path="res://story/shuti.tres" id="shuti"]
 [ext_resource type="Resource" path="res://story/military.tres" id="military"]
 [ext_resource type="Resource" path="res://story/spider.tres" id="spider"]
 [ext_resource type="Script" path="res://game/building/build_option.gd" id="option"]
@@ -24,6 +25,7 @@
 [ext_resource type="PackedScene" path="res://story/military_runner.tscn" id="runner"]
 [ext_resource type="Resource" path="res://game/tasks/request_statue_feast.tres" id="opening"]
 [ext_resource type="Resource" path="res://game/tasks/request_statue_feast_b.tres" id="followup"]
+[ext_resource type="Resource" path="res://story/zero_statue_order.tres" id="statue_order"]
 
 [sub_resource type="Resource" id="food_cargo"]
 script = ExtResource("amount")
@@ -44,16 +46,16 @@ amount = 130
 [sub_resource type="Resource" id="wood_stock"]
 script = ExtResource("amount")
 type = ExtResource("wood")
-amount = 62
+amount = 78
 [sub_resource type="Resource" id="stone_stock"]
 script = ExtResource("amount")
 type = ExtResource("stone")
-amount = 28
+amount = 42
 
 [resource]
 script = ExtResource("rules")
 dialogue = ExtResource("dialogue")
-characters = Array[ExtResource("character")]([ExtResource("queen"), ExtResource("planner"), ExtResource("courier"), ExtResource("worker"), ExtResource("military"), ExtResource("spider")])
+characters = Array[ExtResource("character")]([ExtResource("queen"), ExtResource("planner"), ExtResource("courier"), ExtResource("worker"), ExtResource("shuti"), ExtResource("military"), ExtResource("spider")])
 wishes = Array[ExtResource("option")]([ExtResource("statue"), ExtResource("sawmill"), ExtResource("quarry")])
 road = ExtResource("road")
 opening_order = ExtResource("opening")
@@ -62,17 +64,21 @@ ground = ExtResource("ground")
 ship = ExtResource("ship")
 wall = ExtResource("wall")
 statue = ExtResource("statue")
+statue_order = ExtResource("statue_order")
 wall_cell = Vector2i(23, 21)
+demolition_wall_cells = Array[Vector2i]([Vector2i(28, 25), Vector2i(28, 26), Vector2i(28, 27)])
 statue_cells = Array[Vector2i]([Vector2i(25, 21), Vector2i(24, 20), Vector2i(26, 20)])
+timber_cell = Vector2i(21, 22)
 stone_cell = Vector2i(25, 20)
-finite_stone_cell = Vector2i(31, 19)
-first_roads = Array[Vector2i]([Vector2i(25, 25), Vector2i(25, 24), Vector2i(25, 23), Vector2i(25, 22), Vector2i(25, 21)])
-quarry_roads = Array[Vector2i]([Vector2i(32, 21), Vector2i(32, 20), Vector2i(31, 20), Vector2i(31, 19)])
+finite_stone_cell = Vector2i(34, 15)
+quarry_target = 50
+quarry_roads = Array[Vector2i]([Vector2i(32, 21), Vector2i(32, 20), Vector2i(32, 19), Vector2i(32, 18), Vector2i(32, 17), Vector2i(32, 16), Vector2i(32, 15), Vector2i(33, 15), Vector2i(34, 15)])
 route_cells = Array[Vector2i]([Vector2i(35, 28)])
 minimum_cargo = Array[ExtResource("amount")]([SubResource("food_cargo"), SubResource("wood_cargo"), SubResource("stone_cargo")])
 cargo_capacity = 50
 preparation_stock = Array[ExtResource("amount")]([SubResource("food_stock"), SubResource("wood_stock"), SubResource("stone_stock")])
 protected_walls = Rect2i(14, 17, 21, 16)
+quarry_depot_cell = Vector2i(32, 24)
 military_scene = ExtResource("runner")
 military_entry = Vector2i(35, 31)
 military_destination = Vector2i(24, 26)

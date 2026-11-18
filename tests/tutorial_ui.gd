@@ -368,7 +368,12 @@ func _dialogue() -> void:
 			_seen_lines.append(screen.story.get_node("%Dialogue").text)
 		var entry: LineEdit = screen.story.get_node("%NameInput")
 		if screen.story.get_node("%NameWindow").visible:
-			entry.text = "A"
+			if entry.text.is_empty():
+				var beat: Timer = screen.story.get_node("%NameBeat")
+				expect(beat.is_stopped(), "the name gag waits until typing begins")
+				entry.text = "A"
+				entry.text_changed.emit(entry.text)
+				expect(beat.time_left > 0.9, "starting to type gives the player about one second")
 			await get_tree().create_timer(1.1, true, false, true).timeout
 		else:
 			await click(screen.story.get_node("%Continue"))

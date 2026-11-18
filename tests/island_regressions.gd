@@ -394,7 +394,9 @@ func test_orders(test: Node) -> void:
 	var key: String = str(wood.id)
 	var have: int = stock.nest_quantity(main, main, wood)
 	var defaults: NestDefaults = NestDefaults.load_defaults()
-	test.expect(main.order_of(key).min == defaults.base_min and main.order_of(key).max == defaults.base_max and barracks.order_of(key).max == defaults.barracks_max, "bases and barracks start from the values in nest_defaults.tres")
+	test.expect(main.order_of(key).min == defaults.base_min and main.order_of(key).max == roundi(defaults.base_capacity / 3.0)
+		and barracks.order_of(key).max == roundi(barracks.storage_capacity / 3.0),
+		"default maximums use one third of each warehouse's capacity")
 	# Explicit orders so the checks do not depend on the starting values.
 	main.set_order(key, "min", have + 5)
 	main.set_order(key, "max", have + 10)
@@ -415,28 +417,37 @@ func test_orders(test: Node) -> void:
 		return start == origin and target == main.cell and pickup_cost > 0.0 and delivery_cost > pickup_cost)
 	test.expect(order != null and order.source == barracks and order.target == main and order.amount == 3 and order.pickup.cells.front() == origin and order.pickup.cells.back() == barracks.cell, "courier order scoring resolves both endpoints and creates the selected pickup route")
 	main.request(key, 0)
+	main.set_order(key, "max", have + 2)
+	test.expect(world.logistics.order_need(main, wood) == 0 and world.logistics.transfer_amount(barracks, main, wood) == 2,
+		"overflow can go to a warehouse between its minimum and maximum")
+	main.incoming[key] = 1
+	test.expect(world.logistics.transfer_amount(barracks, main, wood) == 1, "overflow counts incoming goods against the receiver's maximum")
+	main.incoming.erase(key)
 	main.set_order(key, "min", 0)
 	main.set_order(key, "max", 0)
 	barracks.set_order(key, "min", 8)
 	barracks.request(key, -6)
-	test.expect(world.logistics.order_need(barracks, wood) == 0 and world.logistics.transfer_amount(barracks, main, wood) == 6, "negative requests export the requested stock despite standing minimums")
+	test.expect(world.logistics.order_need(barracks, wood) == 0 and world.logistics.transfer_amount(barracks, main, wood) == 0,
+		"a one-time export still keeps the source minimum in stock")
+	barracks.set_order(key, "min", 5)
 	order = world.logistics.nearest_order(origin, 3, func(_a: float, _b: float, _c: Vector2i, _d: Vector2i) -> bool: return true)
 	test.expect(order != null and order.source == barracks and order.target == main and order.amount == 3, "an export finds a warehouse with room without a positive receiving order")
-	var worker := world.population.agents()[0]
+	var worker := main.residents.back() as AntAgent
 	worker.transport.pickup_source = barracks
 	worker.transport.order_target = main
 	worker.transport._order_type = wood
-	worker.transport._order_amount = 3
+	barracks.set_order(key, "min", 6)
 	worker.transport.load_pickup()
-	test.expect(barracks.requests[key] == -3 and stock.stock_of(barracks, wood) == 5, "physical pickup reduces a negative request toward zero")
+	test.expect(barracks.requests[key] == -4 and stock.stock_of(barracks, wood) == 6,
+		"pickup can take a partial load and leaves the source at its minimum")
 	worker.transport.delivery_nest = main
 	worker.transport.unload()
-	test.expect(stock.stock_of(null, wood) == have + 3 and worker.transport.cargo.is_empty(), "exported goods arrive through the existing shipment ledger")
+	test.expect(stock.stock_of(null, wood) == have + 2 and worker.transport.cargo.is_empty(), "exported goods arrive through the existing shipment ledger")
 	var settings := barracks.capture_storage_settings()
 	barracks.request(key, 0)
 	barracks.restore_storage_settings(settings)
-	test.expect(barracks.requests[key] == -3, "negative requests survive saving storage settings")
-	barracks.record_export(key, 3)
+	test.expect(barracks.requests[key] == -4, "negative requests survive saving storage settings")
+	barracks.record_export(key, 4)
 	test.expect(not barracks.requests.has(key), "completed exports clear at zero")
 	world.free()
 
@@ -445,6 +456,19 @@ func test_canteen_delivery(test: Node) -> void:
 	var stock := world.inventory
 	var food := stock.type_by_id(WorldInventory.FOOD_ID)
 	var canteen := world.registry.canteens()[0]
+	var default_maximum := roundi(canteen.food_capacity / 3.0)
+	var default_minimum := mini(floori(canteen.food_capacity * canteen.refill_fraction) + 1, default_maximum)
+	test.expect(canteen.food_maximum == default_maximum and canteen.food_minimum == default_minimum
+		and canteen.food_needed(default_minimum - 1) == default_maximum - default_minimum + 1
+		and canteen.food_needed(default_minimum) == 0, "canteen defaults use one third of capacity and keep the refill threshold within it")
+	canteen.set_food_order("max", 4)
+	canteen.set_food_order("min", 2)
+	test.expect(canteen.food_needed(1) == 3 and canteen.food_needed(2) == 0, "canteen refill aims for max only when stock is below min")
+	canteen.set_food_order("min", 0)
+	test.expect(world.logistics.order_need(canteen, food) == 0 and world.logistics.order_need(canteen, food, true) == 4, "zero minimum stops refill requests while the canteen can still receive surplus up to its maximum")
+	var requested := canteen.food_capacity + 2
+	canteen.request_food(requested)
+	test.expect(canteen.food_needed(canteen.food_capacity - 1) == 1, "a one-time food order is bounded by available storage")
 	stock.add(food, canteen.food_capacity + NestDefaults.load_defaults().base_min)
 	var total := stock.quantity(food)
 	var carrier := world.population.agents().back() as AntAgent
@@ -452,8 +476,10 @@ func test_canteen_delivery(test: Node) -> void:
 	_step_until(carrier, func() -> bool: return carrier.transport.shipment)
 	var load_size := canteen.incoming_food
 	test.expect(load_size > 0 and stock.depot_quantity(canteen, food) == 0 and stock.quantity(food) == total, "a canteen refill travels before becoming local stock")
+	test.expect(canteen.requested_food == requested and world.logistics.order_need(canteen, food) == canteen.food_capacity - load_size, "incoming food reserves storage without completing the request")
 	_step_until(carrier, func() -> bool: return not carrier.transport.shipment)
 	test.expect(stock.depot_quantity(canteen, food) == load_size and canteen.incoming_food == 0 and stock.quantity(food) == total, "unloading moves food without creating extra stock")
+	test.expect(canteen.requested_food == requested - load_size, "only an actual canteen delivery reduces the remaining request")
 	var feedback := canteen.stock_transfer_feedback
 	test.expect(feedback.get_child_count() == 1 and feedback.get_child(0).get_node("Content/Amount").text == "+%d" % load_size, "canteens show the delivered quantity")
 	var main_food := stock.stock_of(null, food)
@@ -468,6 +494,8 @@ func test_canteen_delivery(test: Node) -> void:
 	total = stock.quantity(food)
 	_step_until(worker, func() -> bool: return stock.quantity(food) < total)
 	test.expect(stock.stock_of(null, food) == main_food - 2 and feedback.get_child_count() == 3 and feedback.get_child(2).get_node("Content/Amount").text == "−2", "an empty canteen uses colony stock and shows the full meal cost")
+	canteen.restore_delivery_settings({})
+	test.expect(canteen.food_minimum == default_minimum and canteen.food_maximum == default_maximum and canteen.requested_food == 0, "older saves use the current authored canteen defaults")
 	world.free()
 
 func test_authored_map(test: Node) -> void:

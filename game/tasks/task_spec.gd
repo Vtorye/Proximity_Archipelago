@@ -2,6 +2,8 @@ class_name TaskSpec
 extends Resource
 @export var id: StringName
 @export var title: String
+## Number of structures needed to fulfil this request.
+@export_range(1, 100, 1) var build_count := 1
 @export var reward_seconds := 20.0
 @export var rewards: Array[ResourceAmount] = []
 @export var unlocks: Array[BuildOption] = []
