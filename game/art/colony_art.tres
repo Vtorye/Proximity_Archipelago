@@ -4,7 +4,7 @@
 [ext_resource type="Texture2D" uid="uid://d31fehkeqbli4" path="res://game/assets/sprites/berries.svg" id="berries"]
 [ext_resource type="Texture2D" uid="uid://c46nj7ke08ktq" path="res://game/assets/tiles/grass.png" id="grass"]
 [ext_resource type="Texture2D" uid="uid://c3svnje4dj580" path="res://game/assets/sprites/nest.svg" id="nest"]
-[ext_resource type="Texture2D" uid="uid://c6jthwg8o7ei8" path="res://game/assets/tiles/road.png" id="road"]
+[ext_resource type="Texture2D" path="res://game/assets/tiles/road_paper.svg" id="road"]
 [ext_resource type="Script" uid="uid://cp68nt7h0pc5t" path="res://game/art/art_catalog.gd" id="script"]
 [ext_resource type="Texture2D" uid="uid://bitlc3a4akicr" path="res://game/assets/tiles/soil.png" id="soil"]
 [ext_resource type="Texture2D" uid="uid://cgyilhetugbng" path="res://game/assets/sprites/stone.svg" id="stone"]

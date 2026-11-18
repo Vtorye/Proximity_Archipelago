@@ -18,6 +18,7 @@ var map_size: Vector2i:
 	get:
 		return map.get_used_rect().size
 @export var diagnostics_enabled := false
+var endless := false
 var voyage: Voyage
 @export var waves: CombatDirector
 var combat: CombatDirector
@@ -106,7 +107,7 @@ func _ready() -> void:
 	if waves.enabled:
 		combat = waves
 		combat.configure(self, waves.rules)
-	if tasks != null and voyage_rules != null:
+	if not endless and tasks != null and voyage_rules != null:
 		voyage = Voyage.new()
 		voyage.configure(self, voyage_rules)
 	ready_for_play = true

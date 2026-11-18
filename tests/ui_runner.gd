@@ -250,6 +250,11 @@ func _run() -> void:
 	await capture("26-return-to-menu")
 	# A result arriving during an exit must never survive that session.
 	await click(Router._current.controls[&"play"])
+	await click(Router._current.get_node("%Add"))
+	var mode: OptionButton = Router._current.get_node("%Mode")
+	mode.select(1)
+	mode.item_selected.emit(1)
+	await click(Router._current.get_node("%Start"))
 	await frames(50)
 	screen = Router._current
 	# Legacy UI regression retains the fixed-goal fixture; task behavior has its own runner.

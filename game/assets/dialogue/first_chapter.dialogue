@@ -85,7 +85,6 @@ Queen: ui.chapter.free_intro
 => summon_worker
 
 ~ summon_worker
-Queen: ui.chapter.upgrade_request
 Queen: ui.chapter.ask_worker [#action=worker_advice]
 => END
 

@@ -515,3 +515,14 @@ ui.chapter.wait_export,"Step 2: order accepted. Wait for couriers to pick up 6 w
 "ui.storage.unlimited","Supplies: ∞","Запасы: ∞"
 ui.chapter.demolition_wait,"Wait for the work on the marked tile to finish. Then remove the next highlighted structure.","Дождись завершения работ на отмеченной клетке. Затем убери следующую подсвеченную постройку."
 ui.story.controls.done,Done,Готово
+ui.play.saves,Saved games,Сохранения
+ui.play.new,New game,Новая игра
+ui.play.add,+ New game,+ Новая игра
+ui.play.campaign,Campaign,Кампания
+ui.play.endless,Endless,Бесконечно
+ui.play.waves,Enemy waves,Волны врагов
+ui.play.timer,Queen timer,Таймер королевы
+ui.play.start,Start,Начать
+ui.play.legacy,Previous save,Прежнее сохранение
+ui.play.island_saves,Island autosaves,Автосохранения по островам
+ui.play.island_number,Island %d,Остров %d

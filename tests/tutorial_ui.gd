@@ -12,7 +12,9 @@ func _run() -> void:
 	AppSettings.language = "ru"
 	AppSettings.text_size = AppSettings.TYPOGRAPHY.minimum_sizes.size() - 1
 	AppSettings.apply()
-	await click(Router._current.controls[&"tutorial"])
+	await click(Router._current.controls[&"play"])
+	await click(Router._current.get_node("%Add"))
+	await click(Router._current.get_node("%Start"))
 	await _navigation()
 	screen = Router._current
 	_chapter = screen.chapter
@@ -454,6 +456,7 @@ func _reload(path: String) -> void:
 		return
 	var layout: Dictionary = saved.layout.duplicate()
 	layout["snapshot"] = saved
+	layout["save_path"] = screen._save_path
 	Router.goto(&"match", layout)
 	await _navigation()
 	screen = Router._current

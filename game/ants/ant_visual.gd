@@ -1,6 +1,8 @@
 class_name AntVisual
 extends Node2D
 ## Draw the unit and its status indicators from the current simulation state.
+const WORKER_APPEARANCE = preload("res://game/ants/worker_appearance.tres")
+
 var ant: AntAgent
 var direction := Vector2.UP
 var elapsed := 0.0
@@ -32,7 +34,10 @@ func _draw() -> void:
 			for sign_value in [-1.0, 1.0]:
 				var foot: Vector2 = origin + side * sign_value * 3.5 + forward * leg_phase * sign_value
 				draw_line(origin, foot.round(), Color("222521"), 1.0)
-		var abdomen := Color("a87054") if ant.role == AntAgent.Role.WARRIOR else (Color("5067F9") if ant.role == AntAgent.Role.CARRIER else Color("38271e"))
+		var abdomen: Color = WORKER_APPEARANCE.abdomen_color
+		match ant.role:
+			AntAgent.Role.WARRIOR: abdomen = Color("a87054")
+			AntAgent.Role.CARRIER: abdomen = Color("5067F9")
 		draw_circle(-forward * 3.0, 2.0, abdomen)
 		draw_circle(Vector2.ZERO, 1.5, Color("241e19"))
 		draw_circle(forward * 3.0, 1.7, Color("33251d"))

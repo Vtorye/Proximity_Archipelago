@@ -81,6 +81,7 @@ grow_horizontal = 2
 grow_vertical = 2
 
 [node name="Actions" type="VBoxContainer" parent="Center"]
+unique_name_in_owner = true
 theme_override_constants/separation = 2
 
 [node name="Title" type="Label" parent="Center/Actions"]
@@ -94,21 +95,6 @@ horizontal_alignment = 1
 [node name="TitleSpacer" type="Control" parent="Center/Actions"]
 custom_minimum_size = Vector2(0, 8)
 layout_mode = 2
-
-[node name="Continue" type="Button" parent="Center/Actions"]
-unique_name_in_owner = true
-mouse_default_cursor_shape = 2
-text = "ui.voyage.continue"
-custom_minimum_size = Vector2(176, 29)
-theme_override_font_sizes/font_size = 16
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 2
-theme_override_styles/normal = SubResource("empty")
-theme_override_styles/hover = SubResource("empty")
-theme_override_styles/pressed = SubResource("empty")
-theme_override_styles/disabled = SubResource("empty")
-theme_override_styles/focus = SubResource("empty")
-visible = false
 
 [node name="Play" type="Button" parent="Center/Actions"]
 unique_name_in_owner = true
@@ -124,38 +110,10 @@ theme_override_styles/pressed = SubResource("empty")
 theme_override_styles/disabled = SubResource("empty")
 theme_override_styles/focus = SubResource("empty")
 
-[node name="Waves" type="Button" parent="Center/Actions"]
-unique_name_in_owner = true
-mouse_default_cursor_shape = 2
-text = "ui.menu.waves"
-custom_minimum_size = Vector2(176, 29)
-theme_override_font_sizes/font_size = 16
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 2
-theme_override_styles/normal = SubResource("empty")
-theme_override_styles/hover = SubResource("empty")
-theme_override_styles/pressed = SubResource("empty")
-theme_override_styles/disabled = SubResource("empty")
-theme_override_styles/focus = SubResource("empty")
-
 [node name="Maps" type="Button" parent="Center/Actions"]
 unique_name_in_owner = true
 mouse_default_cursor_shape = 2
 text = "ui.menu.maps"
-custom_minimum_size = Vector2(176, 29)
-theme_override_font_sizes/font_size = 16
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 2
-theme_override_styles/normal = SubResource("empty")
-theme_override_styles/hover = SubResource("empty")
-theme_override_styles/pressed = SubResource("empty")
-theme_override_styles/disabled = SubResource("empty")
-theme_override_styles/focus = SubResource("empty")
-
-[node name="Tutorial" type="Button" parent="Center/Actions"]
-unique_name_in_owner = true
-mouse_default_cursor_shape = 2
-text = "ui.menu.tutorial"
 custom_minimum_size = Vector2(176, 29)
 theme_override_font_sizes/font_size = 16
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
@@ -207,6 +165,122 @@ theme_override_styles/hover = SubResource("empty")
 theme_override_styles/pressed = SubResource("empty")
 theme_override_styles/disabled = SubResource("empty")
 theme_override_styles/focus = SubResource("empty")
+
+[node name="Saves" type="VBoxContainer" parent="Center"]
+unique_name_in_owner = true
+layout_mode = 2
+visible = false
+custom_minimum_size = Vector2(230, 0)
+
+[node name="SavesTitle" type="Label" parent="Center/Saves"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "ui.play.saves"
+horizontal_alignment = 1
+
+[node name="NewGame" type="VBoxContainer" parent="Center"]
+unique_name_in_owner = true
+layout_mode = 2
+visible = false
+custom_minimum_size = Vector2(230, 0)
+
+[node name="NewGameTitle" type="Label" parent="Center/NewGame"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "ui.play.new"
+horizontal_alignment = 1
+
+[node name="SaveList" type="ItemList" parent="Center/Saves"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(0, 115)
+
+[node name="Load" type="Button" parent="Center/Saves"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "ui.voyage.continue"
+
+[node name="Add" type="Button" parent="Center/Saves"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "ui.play.add"
+
+[node name="Back" type="Button" parent="Center/Saves"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "ui.common.back"
+
+[node name="Mode" type="OptionButton" parent="Center/NewGame"]
+unique_name_in_owner = true
+layout_mode = 2
+item_count = 2
+selected = 0
+popup/item_0/text = "ui.play.campaign"
+popup/item_0/id = 0
+popup/item_1/text = "ui.play.endless"
+popup/item_1/id = 1
+
+[node name="EndlessOptions" type="VBoxContainer" parent="Center/NewGame"]
+unique_name_in_owner = true
+layout_mode = 2
+visible = false
+
+[node name="WavesOption" type="CheckButton" parent="Center/NewGame/EndlessOptions"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "ui.play.waves"
+
+[node name="TimerOption" type="CheckButton" parent="Center/NewGame/EndlessOptions"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "ui.play.timer"
+
+[node name="Start" type="Button" parent="Center/NewGame"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "ui.play.start"
+
+[node name="CancelNew" type="Button" parent="Center/NewGame"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "ui.common.back"
+
+[node name="IslandPane" type="CenterContainer" parent="."]
+unique_name_in_owner = true
+visible = false
+anchor_left = 0.43
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+
+[node name="IslandPanel" type="PanelContainer" parent="IslandPane"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("menu_frame")
+
+[node name="IslandMargin" type="MarginContainer" parent="IslandPane/IslandPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 10
+
+[node name="IslandActions" type="VBoxContainer" parent="IslandPane/IslandPanel/IslandMargin"]
+layout_mode = 2
+
+[node name="IslandTitle" type="Label" parent="IslandPane/IslandPanel/IslandMargin/IslandActions"]
+layout_mode = 2
+text = "ui.play.island_saves"
+horizontal_alignment = 1
+
+[node name="IslandList" type="ItemList" parent="IslandPane/IslandPanel/IslandMargin/IslandActions"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(210, 115)
+
+[node name="LoadIsland" type="Button" parent="IslandPane/IslandPanel/IslandMargin/IslandActions"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "ui.voyage.continue"
 
 [node name="UiText" type="Node" parent="." node_paths=PackedStringArray("target")]
 script = ExtResource("ui_text_binding")

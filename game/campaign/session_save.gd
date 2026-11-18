@@ -5,13 +5,54 @@ const PATH := "user://voyage.save"
 const VERSION := 1
 const LIMIT := 32 * 1024 * 1024
 
-static func write(world: World, path := PATH, tutorial: Dictionary = {}) -> Error:
+static func new_path() -> String:
+	return "user://voyage-%s.save" % Crypto.new().generate_random_bytes(16).hex_encode()
+
+static func paths() -> PackedStringArray:
+	var result := PackedStringArray()
+	for filename: String in DirAccess.get_files_at("user://"):
+		var base := filename.trim_suffix(".bak")
+		if not base.begins_with("voyage-") or base.get_extension() != "save":
+			continue
+		var path := "user://".path_join(base)
+		if not result.has(path):
+			result.append(path)
+	if FileAccess.file_exists(PATH) or FileAccess.file_exists(PATH + ".bak"):
+		result.append(PATH)
+	return result
+
+static func island_number(snapshot: Dictionary) -> int:
+	# Voyage counts its starting island as one. The campaign menu starts at zero.
+	var voyage: Dictionary = snapshot.get("voyage", {})
+	return maxi(0, int(voyage.get("island", 1)) - 1)
+
+static func island_paths(path: String) -> Dictionary[int, String]:
+	var result: Dictionary[int, String] = {}
+	var prefix := path.get_file() + ".island-"
+	for filename: String in DirAccess.get_files_at(path.get_base_dir()):
+		var base := filename.trim_suffix(".bak")
+		if not base.begins_with(prefix):
+			continue
+		var number := base.trim_prefix(prefix)
+		if number.is_valid_int() and int(number) >= 0:
+			result[int(number)] = path.get_base_dir().path_join(base)
+	return result
+
+static func write(world: World, path := PATH, tutorial: Dictionary = {}, archive_island := false) -> Error:
 	if world == null or not world.ready_for_play or (world.match_controller.is_finished() and (world.voyage == null or not world.voyage.departed)): return ERR_UNAVAILABLE
 	var snapshot := capture(world)
 	if not tutorial.is_empty():
 		snapshot["tutorial"] = tutorial
 	var bytes: PackedByteArray = var_to_bytes(snapshot)
 	if bytes.size() > LIMIT: return ERR_OUT_OF_MEMORY
+	if archive_island:
+		var archive := "%s.island-%d" % [path, island_number(snapshot)]
+		var error := _write_bytes(archive, bytes)
+		if error != OK:
+			return error
+	return _write_bytes(path, bytes)
+
+static func _write_bytes(path: String, bytes: PackedByteArray) -> Error:
 	var file := FileAccess.open(path + ".tmp", FileAccess.WRITE)
 	if file == null: return FileAccess.get_open_error()
 	file.store_buffer(_digest(bytes))
@@ -83,6 +124,9 @@ static func capture(world: World) -> Dictionary:
 		data["chapter"] = world.chapter.capture_state()
 		data.layout["chapter"] = "first_island"
 	data.layout["wave_mode"] = world.combat != null
+	if world.endless:
+		data.layout["endless"] = true
+		data.layout["queen_timer"] = world.match_controller.countdown_enabled
 	data["stock"] = world.inventory.capture_stock()
 	data["time"] = world.match_controller.time_remaining
 	data["finished"] = world.match_controller.is_finished()

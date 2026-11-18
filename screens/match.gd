@@ -25,11 +25,14 @@ var _camera_moved := false
 var _tutorial_start := false
 var _chapter_active := false
 var _chapter_checkpoint: Dictionary = {}
+var _save_path := SessionSave.PATH
 
 func _ready() -> void:
 	var waves: bool = payload is Dictionary and payload.get("wave_mode", false)
 	_tutorial_start = payload is Dictionary and payload.get("tutorial", false) == true
 	var snapshot: Dictionary = payload.get("snapshot", {}) if payload is Dictionary else {}
+	if payload is Dictionary:
+		_save_path = payload.get("save_path", SessionSave.PATH)
 	_chapter_checkpoint = snapshot.get("chapter", {})
 	if payload is Dictionary and payload.has("tiles"):
 		world = LevelLayout.create_world(payload)
@@ -50,6 +53,9 @@ func _ready() -> void:
 		world = LevelLayout.DEFAULT_WORLD.instantiate()
 	_chapter_active = world.chapter_rules != null and (_tutorial_start or not _chapter_checkpoint.is_empty())
 	world.waves.enabled = waves or _chapter_active
+	world.endless = payload is Dictionary and payload.get("endless", false)
+	if world.endless:
+		world.match_controller.countdown_enabled = payload.get("queen_timer", false)
 	world.name = "World"
 	world.auto_start = false
 	if _chapter_active:
@@ -63,10 +69,11 @@ func _ready() -> void:
 	navigation_overlay.configure(world)
 	selection.map = world.map
 	hud.configure(world, navigation_overlay)
+	hud.set_countdown_visible(world.match_controller.countdown_enabled)
 	if _chapter_active:
 		chapter.configure(world, story)
 		chapter.focus_requested.connect(_focus_chapter_cell)
-		chapter.checkpoint_requested.connect(save_game)
+		chapter.checkpoint_requested.connect(_save_chapter_checkpoint)
 		chapter.presentation_changed.connect(_refresh_chapter_ui)
 		story.modal_changed.connect(_on_story_modal_changed)
 		_refresh_chapter_ui()
@@ -74,6 +81,8 @@ func _ready() -> void:
 		if payload is Dictionary and payload.has("journey"): world.voyage.apply(payload.journey)
 	if payload is Dictionary and payload.has("snapshot"): SessionSave.apply(world, payload.snapshot)
 	campaign_panel.configure(world)
+	campaign_panel.save_requested.connect(save_game)
+	campaign_panel.travel_requested.connect(_travel)
 	hud.nest_selected.connect(camera.focus_nest)
 	hud.settings_requested.connect(_open_settings)
 	hud.navigation_requested.connect(_toggle_navigation)
@@ -98,7 +107,10 @@ func on_focus() -> void:
 	world.start()
 	if _chapter_active:
 		chapter.start(_chapter_checkpoint)
-	if payload is Dictionary and payload.has("journey"): SessionSave.write(world)
+	if payload is Dictionary and (payload.has("journey") or payload.get("save_on_start", false)):
+		var error := save_game()
+		if error != OK:
+			push_warning("Could not save session: %s" % error_string(error))
 	if debug_show_result:
 		_on_completed(MatchSummary.capture(true, &"target_reached", 83.0, world.inventory))
 
@@ -273,14 +285,25 @@ func _on_story_modal_changed(modal: bool) -> void:
 		if is_instance_valid(nest_popup):
 			nest_popup.hide()
 
-func save_game(path := SessionSave.PATH) -> Error:
-	return SessionSave.write(world, path)
+func _travel(layout: Dictionary) -> void:
+	layout["save_path"] = _save_path
+	Router.goto(&"match", layout)
+
+func _checkpoint_path() -> String:
+	return FirstChapter.CHECKPOINT if _save_path == SessionSave.PATH else _save_path.get_basename() + ".checkpoint"
+
+func _save_chapter_checkpoint(path: String) -> void:
+	save_game(_checkpoint_path() if path == FirstChapter.CHECKPOINT else "")
+
+func save_game(path := "") -> Error:
+	return SessionSave.write(world, _save_path if path.is_empty() else path, {}, path.is_empty() and world.voyage != null)
 
 func retry_game() -> void:
-	var saved := SessionSave.read(FirstChapter.CHECKPOINT) if _chapter_active else {}
+	var saved := SessionSave.read(_checkpoint_path()) if _chapter_active else {}
 	if not saved.is_empty():
 		var layout: Dictionary = saved.layout.duplicate()
 		layout["snapshot"] = saved
+		layout["save_path"] = _save_path
 		Router.goto(&"match", layout)
 	else:
 		Router.restart_current()
