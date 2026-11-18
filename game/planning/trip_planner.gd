@@ -105,12 +105,10 @@ func _plan_work(agent: Node2D, home: Building, needs: AntNeeds, speed: float, wo
 	var workplaces: Array = _reachable_workplaces(from_node)
 	if foodless and workplaces.is_empty():
 		return null
-	var return_field: NavigationField
-	if not foodless:
-		if ticket == null or not ticket.active:
-			return null
-		prepare_home(home)
-		return_field = _home_fields[home_cell]
+	if not foodless and (ticket == null or not ticket.active):
+		return null
+	prepare_home(home)
+	var return_field: NavigationField = _home_fields[home_cell]
 	var outward_field: NavigationField
 	if not workplaces.is_empty():
 		# A worker can be replanned away from home after construction or wandering.
@@ -131,25 +129,26 @@ func _plan_work(agent: Node2D, home: Building, needs: AntNeeds, speed: float, wo
 			if not is_finite(cost): continue
 			var to_work: float = approach + travel_seconds(cost, speed)
 			var energy: float = to_work * satiety_rules.walk_rate
-			var delivery_cost: float = return_field.cost(entry) if not foodless else 0.0
+			var delivery_cost := return_field.cost(entry)
+			if not is_finite(delivery_cost): continue
+			var return_energy := travel_energy(delivery_cost, speed * carry_speed_ratio) + satiety_rules.travel_reserve
+			if not foodless:
+				return_energy += food_after_home
 			var work_seconds := work_time
 			if workplace.recipe == null:
 				var rate: float = workplace.resource_rate()
 				if rate <= 0.0: continue
 				var capacity_seconds: float = float(carry_capacity) / rate
-				var hunger_budget: float
-				if foodless:
-					hunger_budget = needs.satiety - energy - 0.01
-				else:
-					var return_energy: float = travel_energy(delivery_cost, speed * carry_speed_ratio) + food_after_home + satiety_rules.travel_reserve + satiety_rules.safety_margin
-					hunger_budget = needs.satiety - energy - return_energy
+				var hunger_budget: float = needs.satiety - energy - return_energy
+				if not foodless:
+					hunger_budget -= satiety_rules.safety_margin
 				work_seconds = minf(capacity_seconds, maxf(0.0, hunger_budget / satiety_rules.work_rate))
 				if floori(rate * work_seconds + 0.000001) <= 0: continue
+			energy += work_seconds * satiety_rules.work_rate + return_energy
 			if foodless:
-				if energy + work_seconds * satiety_rules.work_rate >= needs.satiety:
+				if energy >= needs.satiety:
 					continue
 			else:
-				energy += _work_return_energy(work_seconds, delivery_cost, food_after_home, speed) + satiety_rules.travel_reserve
 				possible_after_meal = possible_after_meal or energy + satiety_rules.safety_margin <= needs.capacity
 				if not needs.can_afford(energy):
 					continue
@@ -219,15 +218,14 @@ func accessible_entry(building: Building) -> Vector2i:
 func food_route(from_cell: Vector2i) -> Route:
 	return navigation.make_route(navigation.food_field().path(from_cell))
 
-func can_finish_work(cell: Vector2i, home: Building, needs: AntNeeds, speed: float, remaining_work: float) -> bool:
+func can_finish_work(cell: Vector2i, home: Building, needs: AntNeeds, speed: float, remaining_work: float, foodless: bool) -> bool:
 	if not is_instance_valid(home):
 		return false
 	var delivery := home_route(home, cell)
-	return delivery.is_valid() and needs.can_afford(_work_return_energy(
-		remaining_work, delivery.cost, escape_energy(delivery.cells.back(), speed), speed))
-
-func _work_return_energy(work_seconds: float, delivery_cost: float, food_after_delivery: float, speed: float) -> float:
-	return work_seconds * satiety_rules.work_rate + travel_energy(delivery_cost, speed * carry_speed_ratio) + food_after_delivery
+	if not delivery.is_valid():
+		return false
+	var energy := remaining_work * satiety_rules.work_rate + travel_energy(delivery.cost, speed * carry_speed_ratio)
+	return needs.satiety > energy if foodless else needs.can_afford(energy + escape_energy(delivery.cells.back(), speed))
 
 func prepare_home(home: Building) -> void:
 	if _revision != navigation.field_epoch:

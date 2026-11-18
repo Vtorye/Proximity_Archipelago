@@ -126,6 +126,12 @@ func test_foodless_colonies(test: Node) -> void:
 		ant.died.connect(func(_ant: Node2D, cause: int): idle_deaths.append(cause))
 	worker.died.connect(func(_ant: Node2D, cause: int): deaths.append(cause))
 	wanderer.cell_changed.connect(func(_old: Vector2i, next: Vector2i): walked.append(next))
+	var outward := world.route_service.request_route(world.planner.accessible_entry(work_house), job_cell)
+	var outward_energy := world.planner.travel_energy(outward.cost, worker.speed)
+	worker.needs.satiety = outward_energy + 2.0
+	test.expect(world.planner.plan_work(worker, work_house, worker.needs, worker.speed, worker.work_time, null) == null,
+		"a worker without a canteen declines a job if she cannot bring the cargo home")
+	worker.needs.eat()
 	worker._decide()
 	wanderer._decide()
 	stranded._decide()
@@ -134,17 +140,21 @@ func test_foodless_colonies(test: Node) -> void:
 	test.expect(wanderer._destination == &"wander" and wanderer.work.workplace == null, "idle ant leaves its nest to wander instead of choosing work across water")
 	var cycles: Array[int] = [0]
 	worker.work_completed.connect(func(_ant: Node2D, _job: Node2D): cycles[0] += 1)
+	var loaded_return := world.planner.home_route(work_house, job_cell)
+	var seconds_to_deliver := world.planner.travel_seconds(outward.cost, worker.speed) + worker.work.plan.work_seconds + world.planner.travel_seconds(loaded_return.cost, worker.speed * world.planner.carry_speed_ratio)
+	var initial_steps := ceili(seconds_to_deliver * 30) + 4
 	var reached_work := false
-	for _step in range(30 * 12):
+	for _step in range(initial_steps):
 		for ant in [worker, wanderer, stranded]:
 			ant._physics_process(1.0 / 30.0)
 		reached_work = reached_work or (workplace.working_count() == 1 and worker.status == AntAgent.Status.WORKING)
 	test.expect(reached_work, "dry ant reaches the workplace")
 	test.expect(stock.quantity(wood) > start_wood, "dry worker carries the first batch to its local nest")
+	test.expect(worker._destination == &"home", "workers can return home after unloading on an island with no canteen")
 	test.expect(walked.size() >= 2 and wanderer.needs.satiety < wanderer.needs.capacity, "idle ant visits neighboring cells while losing satiety")
 	test.expect(walked.all(func(cell: Vector2i) -> bool:
 		return world.route_service.walkable(cell) and absi(cell.x - second_idle_nest.x) + absi(cell.y - second_idle_nest.y) <= 2), "wander stays on walkable cells near the nest")
-	for step in range(30 * (ceili(world.match_controller.match_duration) - 12) - 1):
+	for step in range(ceili(world.match_controller.match_duration * 30) - initial_steps - 1):
 		for ant in [worker, wanderer, stranded]:
 			ant._physics_process(1.0 / 30.0)
 	test.expect(cycles[0] > 1 and deaths == [AntAgent.DeathCause.STARVATION], "dry worker continues producing and delivering until starvation")
@@ -224,10 +234,7 @@ func test_physical_logistics(test: Node) -> void:
 	ant.transport.deliver()
 	test.expect(ant.transport.delivery_nest == depot and stock.deposit(depot, [test.entry(stone, 2)]), "another delivery can fill the chosen depot while a worker is moving")
 	test.expect(stock.depot_fill(depot) == 5 and not stock.deposit(depot, [test.entry(stone, 1)]) and not world.build_controller.demolition_check(depot.cell).allowed(), "a full depot rejects additional stock and cannot be demolished")
-	for step in range(180):
-		ant._physics_process(1.0 / 60.0)
-		if ant.waiting_reason == WorkPlan.WaitReason.STORAGE_FULL:
-			break
+	_step_until(ant, func() -> bool: return ant.waiting_reason == WorkPlan.WaitReason.STORAGE_FULL)
 	test.expect(ant.waiting_reason == WorkPlan.WaitReason.STORAGE_FULL and WorldInventory.cargo_size(ant.transport.cargo) == 2, "a worker holds cargo near home when its storage fills up")
 	test.expect(stock.main_quantity(wood) == before and stock.depot_fill(other) == 0, "a worker never unloads at another nest")
 	test.expect(stock.pay_at(depot, [test.entry(stone, 2)]), "spending from the worker's home makes room")
@@ -536,21 +543,19 @@ func _play_authored_map(test: Node, develop: bool) -> Dictionary:
 	world.build_controller.physical_construction = false
 	test.add_child(world)
 	var road: BuildOption = load("res://game/building/options/road.tres")
+	var camp: BuildOption = load("res://game/building/options/barracks.tres")
+	var timber_camp := Vector2i(60, 43)
+	var quarry_camp := Vector2i(78, 47)
+	var timber_camp_built := false
 	if develop:
-		var camp: BuildOption = load("res://game/building/options/barracks.tres")
-		var stone := world.inventory.type_by_id(&"stone")
-		var camp_cells: Array[Vector2i] = [Vector2i(64, 42), Vector2i(74, 40)]
-		var stone_due := 0
-		for cell in camp_cells:
-			stone_due += BuildController.price_amount(world.build_controller.price(camp, cell), stone)
-		world.inventory.add(stone, maxi(0, stone_due - world.inventory.quantity(stone)))
-		test.expect(world.build_controller.try_build(camp, camp_cells[0]) and world.build_controller.try_build(camp, camp_cells[1]), "the development fixture builds separate timber and stone camps")
-		for x in range(64, 76):
-			if world.build_controller.can_build(road, Vector2i(x, 44)): world.build_controller.try_build(road, Vector2i(x, 44))
-		for y in range(39, 44):
-			world.build_controller.try_build(road, Vector2i(75, y))
-		for y in range(41, 44):
-			world.build_controller.try_build(road, Vector2i(65, y))
+		if world.build_controller.try_build(camp, quarry_camp):
+			(world.registry.at(quarry_camp) as House).set_order("stone", "max", 0)
+		else:
+			test.expect(false, "the starter budget funds a camp beside the larger quarry")
+		for x in range(71, 79):
+			world.build_controller.try_build(road, Vector2i(x, 44))
+		for y in range(45, 48):
+			world.build_controller.try_build(road, Vector2i(78, y))
 		world.build_controller.try_build(road, Vector2i(68, 45))
 		world.build_controller.try_build(road, Vector2i(68, 46))
 	var deaths: Array[int] = [0]
@@ -567,31 +572,39 @@ func _play_authored_map(test: Node, develop: bool) -> Dictionary:
 		world.match_controller._process(1.0 / 60.0)
 		if world.match_controller.is_finished(): break
 		if tick % 60 == 0:
+			if develop and not timber_camp_built:
+				timber_camp_built = world.build_controller.try_build(camp, timber_camp)
+				if timber_camp_built:
+					(world.registry.at(timber_camp) as House).set_order("wood", "max", 0)
 			if world.tasks.pending_reward:
 				world.tasks.choose_reward(0)
-			for index in range(world.tasks.slots.size()):
-				if world.tasks.slots[index] == null: continue
-				var order := world.tasks.start_order(world.tasks.slots[index].id, &"build")
-				if order == null: continue
-				# Check the current stock before searching all candidate cells.
-				if not world.inventory.can_afford_all(world.build_controller.price(order.variant.building), true, true):
-					continue
-				var placed := false
-				for y in range(40, 49):
-					for x in range(62, 78):
-						if world.build_controller.try_build(order.variant.building, Vector2i(x, y), order):
-							placed = true
-							break
-					if placed: break
-				if placed: break
+			# Save the quarry's first deliveries for the timber camp before spending on orders.
+			if not develop or timber_camp_built:
+				_place_authored_request(world)
 			if develop:
 				var farm: BuildOption = load("res://game/building/options/farm.tres")
 				if world.inventory.available(world.inventory.type_by_id(&"food")) >= 10 and world.build_controller.can_build(farm, Vector2i(68, 46)):
 					world.build_controller.try_build(farm, Vector2i(68, 46))
 			await test.get_tree().process_frame
 	var result := {"tasks": world.tasks.completed_count, "level": world.tasks.level, "cycles": cycles[0], "deaths": deaths[0], "ants": world.population.count(), "time_left": snappedf(world.match_controller.time_remaining, 0.1)}
+	if develop:
+		test.expect(timber_camp_built and world.population.count() == 15, "stone shipments pay for a second production camp")
 	world.free()
 	return result
+
+func _place_authored_request(world: World) -> void:
+	for task in world.tasks.slots:
+		if task == null: continue
+		for variant in task.variants:
+			var order := world.tasks.start_order(task.id, variant.id)
+			if order == null: continue
+			# Feast orders share the meal supply with the workers.
+			if not world.inventory.can_afford_all(world.build_controller.price(variant.building), true):
+				continue
+			for y in range(40, 49):
+				for x in range(62, 78):
+					if world.build_controller.try_build(variant.building, Vector2i(x, y), order):
+						return
 
 func _step_until(ant: AntAgent, condition: Callable) -> void:
 	for step in range(1800):

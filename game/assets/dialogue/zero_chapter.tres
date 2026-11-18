@@ -11,33 +11,33 @@ cues = {
 "after_pause": "14",
 "after_road": "78",
 "after_zoom": "24",
-"briefing": "150",
+"briefing": "164",
 "build_advice": "92",
-"caught": "132",
-"courier_topic": "178",
+"caught": "144",
+"courier_topic": "192",
 "early_requests": "82",
 "ending_build": "49",
 "ending_diversion": "55",
-"farewell": "172",
+"farewell": "186",
 "handoff": "61",
 "intro": "1",
-"mentor": "139",
-"military": "158",
+"mentor": "151",
+"military": "172",
 "order": "45",
 "orders": "105",
-"planner": "121",
-"planner_topic": "194",
+"planner": "131",
+"planner_topic": "208",
 "queen_topic": "100",
-"remove_statue": "127",
+"remove_statue": "139",
 "road": "33",
 "road_advice": "37",
 "second_feast": "66",
 "second_statue": "72",
-"spider": "165",
-"statues": "116",
-"wall": "111",
-"worker_advice_topic": "190",
-"worker_topic": "185"
+"spider": "179",
+"statues": "126",
+"wall": "121",
+"worker_advice_topic": "204",
+"worker_topic": "199"
 }
 character_names = PackedStringArray("Queen", "Protagonist", "Courier", "Worker", "Planner", "Military", "Spider")
 first_cue = "0"
@@ -111,29 +111,32 @@ lines = {
 &"id": "106",
 &"next_id": "107",
 &"static_id": "",
-&"text": "ui.zero.source_target",
+&"text": "ui.chapter.carry_command",
 &"type": "dialogue"
 },
 "107": {
-&"character": "Courier",
+&"character": "Worker",
 &"id": "107",
 &"next_id": "108",
 &"static_id": "",
-&"tags": PackedStringArray("action=orders"),
-&"text": "ui.zero.set_max",
+&"text": "ui.chapter.no",
 &"type": "dialogue"
 },
 "108": {
+&"character": "Courier",
 &"id": "108",
-&"is_snippet": false,
-&"next_id": "end",
-&"next_id_after": "",
-&"type": "goto"
+&"next_id": "109",
+&"static_id": "",
+&"text": "ui.chapter.not_question",
+&"type": "dialogue"
 },
 "109": {
+&"character": "Worker",
 &"id": "109",
 &"next_id": "110",
-&"type": ""
+&"static_id": "",
+&"text": "ui.chapter.home",
+&"type": "dialogue"
 },
 "11": {
 &"id": "11",
@@ -143,59 +146,68 @@ lines = {
 &"type": "goto"
 },
 "110": {
+&"character": "Courier",
 &"id": "110",
 &"next_id": "111",
-&"type": "cue"
+&"static_id": "",
+&"text": "ui.chapter.always",
+&"type": "dialogue"
 },
 "111": {
-&"character": "Queen",
+&"character": "Worker",
 &"id": "111",
 &"next_id": "112",
 &"static_id": "",
-&"text": "ui.zero.wall_line",
+&"text": "ui.chapter.find_me",
 &"type": "dialogue"
 },
 "112": {
-&"character": "Queen",
+&"character": "Courier",
 &"id": "112",
 &"next_id": "113",
 &"static_id": "",
-&"tags": PackedStringArray("action=wall"),
-&"text": "ui.zero.wall_goal",
+&"text": "ui.chapter.job",
 &"type": "dialogue"
 },
 "113": {
+&"character": "Worker",
 &"id": "113",
-&"is_snippet": false,
-&"next_id": "end",
-&"next_id_after": "",
-&"type": "goto"
+&"next_id": "114",
+&"static_id": "",
+&"text": "ui.chapter.coffee",
+&"type": "dialogue"
 },
 "114": {
+&"character": "Courier",
 &"id": "114",
 &"next_id": "115",
-&"type": ""
+&"static_id": "",
+&"text": "ui.chapter.no_coffee",
+&"type": "dialogue"
 },
 "115": {
+&"character": "Worker",
 &"id": "115",
 &"next_id": "116",
-&"type": "cue"
+&"static_id": "",
+&"text": "ui.chapter.berry",
+&"type": "dialogue"
 },
 "116": {
-&"character": "Queen",
+&"character": "Courier",
 &"id": "116",
 &"next_id": "117",
 &"static_id": "",
-&"text": "ui.zero.statues_line",
+&"text": "ui.zero.source_target",
 &"type": "dialogue"
 },
 "117": {
-&"character": "Queen",
+&"character": "Courier",
 &"id": "117",
 &"next_id": "118",
 &"static_id": "",
-&"tags": PackedStringArray("action=statues"),
-&"text": "ui.zero.statues_goal",
+&"tags": PackedStringArray("action=orders"),
+&"text": "ui.zero.set_max",
 &"type": "dialogue"
 },
 "118": {
@@ -221,70 +233,67 @@ lines = {
 &"type": "cue"
 },
 "121": {
-&"character": "Planner",
+&"character": "Queen",
 &"id": "121",
 &"next_id": "122",
 &"static_id": "",
-&"text": "ui.zero.planner_shock",
+&"text": "ui.zero.wall_line",
 &"type": "dialogue"
 },
 "122": {
-&"character": "Planner",
+&"character": "Queen",
 &"id": "122",
 &"next_id": "123",
 &"static_id": "",
-&"text": "ui.zero.remove_wall_line",
+&"tags": PackedStringArray("action=wall"),
+&"text": "ui.zero.wall_goal",
 &"type": "dialogue"
 },
 "123": {
-&"character": "Planner",
 &"id": "123",
-&"next_id": "124",
-&"static_id": "",
-&"tags": PackedStringArray("action=remove_wall"),
-&"text": "ui.zero.remove_wall_goal",
-&"type": "dialogue"
-},
-"124": {
-&"id": "124",
 &"is_snippet": false,
 &"next_id": "end",
 &"next_id_after": "",
 &"type": "goto"
+},
+"124": {
+&"id": "124",
+&"next_id": "125",
+&"type": ""
 },
 "125": {
 &"id": "125",
 &"next_id": "126",
-&"type": ""
-},
-"126": {
-&"id": "126",
-&"next_id": "127",
 &"type": "cue"
 },
+"126": {
+&"character": "Queen",
+&"id": "126",
+&"next_id": "127",
+&"static_id": "",
+&"text": "ui.zero.statues_line",
+&"type": "dialogue"
+},
 "127": {
-&"character": "Planner",
+&"character": "Queen",
 &"id": "127",
 &"next_id": "128",
 &"static_id": "",
-&"text": "ui.zero.remove_statue_line",
+&"tags": PackedStringArray("action=statues"),
+&"text": "ui.zero.statues_goal",
 &"type": "dialogue"
 },
 "128": {
-&"character": "Planner",
 &"id": "128",
-&"next_id": "129",
-&"static_id": "",
-&"tags": PackedStringArray("action=remove_statue"),
-&"text": "ui.zero.remove_statue_goal",
-&"type": "dialogue"
-},
-"129": {
-&"id": "129",
 &"is_snippet": false,
 &"next_id": "end",
 &"next_id_after": "",
 &"type": "goto"
+},
+"129": {
+&"id": "129",
+&"next_id": "130",
+&"type": ""
 },
 "13": {
 &"id": "13",
@@ -294,19 +303,22 @@ lines = {
 "130": {
 &"id": "130",
 &"next_id": "131",
-&"type": ""
-},
-"131": {
-&"id": "131",
-&"next_id": "132",
 &"type": "cue"
 },
+"131": {
+&"character": "Planner",
+&"id": "131",
+&"next_id": "132",
+&"static_id": "",
+&"text": "ui.zero.planner_shock",
+&"type": "dialogue"
+},
 "132": {
-&"character": "Queen",
+&"character": "Protagonist",
 &"id": "132",
 &"next_id": "133",
 &"static_id": "",
-&"text": "ui.zero.caught",
+&"text": "ui.chapter.infinite_question",
 &"type": "dialogue"
 },
 "133": {
@@ -314,24 +326,24 @@ lines = {
 &"id": "133",
 &"next_id": "134",
 &"static_id": "",
-&"text": "ui.zero.blocked",
+&"text": "ui.zero.real_stock",
 &"type": "dialogue"
 },
 "134": {
-&"character": "Queen",
+&"character": "Planner",
 &"id": "134",
 &"next_id": "135",
 &"static_id": "",
-&"text": "ui.zero.remove_source_line",
+&"text": "ui.zero.remove_wall_line",
 &"type": "dialogue"
 },
 "135": {
-&"character": "Queen",
+&"character": "Planner",
 &"id": "135",
 &"next_id": "136",
 &"static_id": "",
-&"tags": PackedStringArray("action=remove_source"),
-&"text": "ui.zero.remove_source_goal",
+&"tags": PackedStringArray("action=remove_wall"),
+&"text": "ui.zero.remove_wall_goal",
 &"type": "dialogue"
 },
 "136": {
@@ -352,11 +364,11 @@ lines = {
 &"type": "cue"
 },
 "139": {
-&"character": "Queen",
+&"character": "Planner",
 &"id": "139",
 &"next_id": "140",
 &"static_id": "",
-&"text": "ui.zero.mentor_order",
+&"text": "ui.zero.remove_statue_line",
 &"type": "dialogue"
 },
 "14": {
@@ -372,39 +384,33 @@ lines = {
 &"id": "140",
 &"next_id": "141",
 &"static_id": "",
-&"text": "ui.zero.mentor_reply",
+&"tags": PackedStringArray("action=remove_statue"),
+&"text": "ui.zero.remove_statue_goal",
 &"type": "dialogue"
 },
 "141": {
-&"character": "Worker",
 &"id": "141",
-&"next_id": "142",
-&"static_id": "",
-&"text": "ui.zero.berries",
-&"type": "dialogue"
+&"is_snippet": false,
+&"next_id": "end",
+&"next_id_after": "",
+&"type": "goto"
 },
 "142": {
-&"character": "Protagonist",
 &"id": "142",
 &"next_id": "143",
-&"static_id": "",
-&"text": "ui.zero.stone_question",
-&"type": "dialogue"
+&"type": ""
 },
 "143": {
-&"character": "Planner",
 &"id": "143",
 &"next_id": "144",
-&"static_id": "",
-&"text": "ui.zero.shortcut",
-&"type": "dialogue"
+&"type": "cue"
 },
 "144": {
-&"character": "Planner",
+&"character": "Queen",
 &"id": "144",
 &"next_id": "145",
 &"static_id": "",
-&"text": "ui.zero.finite_explain",
+&"text": "ui.zero.caught",
 &"type": "dialogue"
 },
 "145": {
@@ -412,34 +418,37 @@ lines = {
 &"id": "145",
 &"next_id": "146",
 &"static_id": "",
-&"text": "ui.zero.housing",
+&"text": "ui.zero.blocked",
 &"type": "dialogue"
 },
 "146": {
-&"character": "Planner",
+&"character": "Queen",
 &"id": "146",
 &"next_id": "147",
 &"static_id": "",
-&"tags": PackedStringArray("action=quarry"),
-&"text": "ui.zero.quarry_goal",
+&"text": "ui.zero.remove_source_line",
 &"type": "dialogue"
 },
 "147": {
+&"character": "Queen",
 &"id": "147",
+&"next_id": "148",
+&"static_id": "",
+&"tags": PackedStringArray("action=remove_source"),
+&"text": "ui.zero.remove_source_goal",
+&"type": "dialogue"
+},
+"148": {
+&"id": "148",
 &"is_snippet": false,
 &"next_id": "end",
 &"next_id_after": "",
 &"type": "goto"
 },
-"148": {
-&"id": "148",
-&"next_id": "149",
-&"type": ""
-},
 "149": {
 &"id": "149",
 &"next_id": "150",
-&"type": "cue"
+&"type": ""
 },
 "15": {
 &"character": "Queen",
@@ -451,19 +460,16 @@ lines = {
 &"type": "dialogue"
 },
 "150": {
-&"character": "Courier",
 &"id": "150",
 &"next_id": "151",
-&"static_id": "",
-&"text": "ui.zero.order_delivered",
-&"type": "dialogue"
+&"type": "cue"
 },
 "151": {
-&"character": "Planner",
+&"character": "Queen",
 &"id": "151",
 &"next_id": "152",
 &"static_id": "",
-&"text": "ui.zero.briefing",
+&"text": "ui.zero.mentor_order",
 &"type": "dialogue"
 },
 "152": {
@@ -471,57 +477,63 @@ lines = {
 &"id": "152",
 &"next_id": "153",
 &"static_id": "",
-&"text": "ui.zero.plan",
+&"text": "ui.zero.mentor_reply",
 &"type": "dialogue"
 },
 "153": {
-&"character": "Courier",
+&"character": "Worker",
 &"id": "153",
 &"next_id": "154",
 &"static_id": "",
-&"text": "ui.zero.load",
+&"text": "ui.zero.berries",
 &"type": "dialogue"
 },
 "154": {
-&"character": "Planner",
+&"character": "Protagonist",
 &"id": "154",
 &"next_id": "155",
 &"static_id": "",
-&"tags": PackedStringArray("action=preparation"),
-&"text": "ui.zero.ship_goal",
+&"text": "ui.zero.stone_question",
 &"type": "dialogue"
 },
 "155": {
+&"character": "Planner",
 &"id": "155",
-&"is_snippet": false,
-&"next_id": "end",
-&"next_id_after": "",
-&"type": "goto"
+&"next_id": "156",
+&"static_id": "",
+&"text": "ui.zero.shortcut",
+&"type": "dialogue"
 },
 "156": {
+&"character": "Planner",
 &"id": "156",
 &"next_id": "157",
-&"type": ""
+&"static_id": "",
+&"text": "ui.zero.navigation_goal",
+&"type": "dialogue"
 },
 "157": {
+&"character": "Planner",
 &"id": "157",
 &"next_id": "158",
-&"type": "cue"
+&"static_id": "",
+&"text": "ui.zero.finite_explain",
+&"type": "dialogue"
 },
 "158": {
-&"character": "Military",
+&"character": "Planner",
 &"id": "158",
 &"next_id": "159",
 &"static_id": "",
-&"text": "ui.zero.report",
+&"text": "ui.zero.housing",
 &"type": "dialogue"
 },
 "159": {
-&"character": "Courier",
+&"character": "Planner",
 &"id": "159",
 &"next_id": "160",
 &"static_id": "",
-&"text": "ui.zero.watch",
+&"text": "ui.zero.quarry_ask",
 &"type": "dialogue"
 },
 "16": {
@@ -532,70 +544,70 @@ lines = {
 &"type": "goto"
 },
 "160": {
-&"character": "Military",
+&"character": "Planner",
 &"id": "160",
 &"next_id": "161",
 &"static_id": "",
-&"text": "ui.zero.no_watch",
+&"tags": PackedStringArray("action=quarry"),
+&"text": "ui.zero.quarry_goal",
 &"type": "dialogue"
 },
 "161": {
-&"character": "Military",
 &"id": "161",
-&"next_id": "162",
-&"static_id": "",
-&"tags": PackedStringArray("action=breach"),
-&"text": "ui.zero.no_watch",
-&"type": "dialogue"
-},
-"162": {
-&"id": "162",
 &"is_snippet": false,
 &"next_id": "end",
 &"next_id_after": "",
 &"type": "goto"
 },
+"162": {
+&"id": "162",
+&"next_id": "163",
+&"type": ""
+},
 "163": {
 &"id": "163",
 &"next_id": "164",
-&"type": ""
-},
-"164": {
-&"id": "164",
-&"next_id": "165",
 &"type": "cue"
 },
+"164": {
+&"character": "Courier",
+&"id": "164",
+&"next_id": "165",
+&"static_id": "",
+&"text": "ui.zero.order_delivered",
+&"type": "dialogue"
+},
 "165": {
-&"character": "Spider",
+&"character": "Planner",
 &"id": "165",
 &"next_id": "166",
 &"static_id": "",
-&"text": "ui.zero.spider_first",
+&"text": "ui.zero.briefing",
 &"type": "dialogue"
 },
 "166": {
-&"character": "Spider",
+&"character": "Planner",
 &"id": "166",
 &"next_id": "167",
 &"static_id": "",
-&"text": "ui.zero.spider_last",
+&"text": "ui.zero.plan",
 &"type": "dialogue"
 },
 "167": {
-&"character": "Queen",
+&"character": "Courier",
 &"id": "167",
 &"next_id": "168",
 &"static_id": "",
-&"text": "ui.zero.run",
+&"text": "ui.zero.load",
 &"type": "dialogue"
 },
 "168": {
-&"character": "Courier",
+&"character": "Planner",
 &"id": "168",
 &"next_id": "169",
 &"static_id": "",
-&"tags": PackedStringArray("action=evacuation"),
-&"text": "ui.zero.board_goal",
+&"tags": PackedStringArray("action=preparation"),
+&"text": "ui.zero.ship_goal",
 &"type": "dialogue"
 },
 "169": {
@@ -621,61 +633,61 @@ lines = {
 &"type": "cue"
 },
 "172": {
-&"character": "Worker",
+&"character": "Military",
 &"id": "172",
 &"next_id": "173",
 &"static_id": "",
-&"text": "ui.zero.on_board",
+&"text": "ui.zero.report",
 &"type": "dialogue"
 },
 "173": {
-&"character": "Queen",
+&"character": "Courier",
 &"id": "173",
 &"next_id": "174",
 &"static_id": "",
-&"text": "ui.zero.leave",
+&"text": "ui.zero.watch",
 &"type": "dialogue"
 },
 "174": {
-&"character": "Queen",
+&"character": "Military",
 &"id": "174",
 &"next_id": "175",
 &"static_id": "",
-&"tags": PackedStringArray("action=depart"),
-&"text": "ui.zero.leave",
+&"text": "ui.zero.no_watch",
 &"type": "dialogue"
 },
 "175": {
+&"character": "Military",
 &"id": "175",
+&"next_id": "176",
+&"static_id": "",
+&"tags": PackedStringArray("action=breach"),
+&"text": "ui.zero.no_watch",
+&"type": "dialogue"
+},
+"176": {
+&"id": "176",
 &"is_snippet": false,
 &"next_id": "end",
 &"next_id_after": "",
 &"type": "goto"
 },
-"176": {
-&"id": "176",
-&"next_id": "177",
-&"type": ""
-},
 "177": {
 &"id": "177",
 &"next_id": "178",
-&"type": "cue"
+&"type": ""
 },
 "178": {
-&"character": "Courier",
 &"id": "178",
 &"next_id": "179",
-&"static_id": "",
-&"text": "ui.zero.source_target",
-&"type": "dialogue"
+&"type": "cue"
 },
 "179": {
-&"character": "Courier",
+&"character": "Spider",
 &"id": "179",
 &"next_id": "180",
 &"static_id": "",
-&"text": "ui.zero.min_explain",
+&"text": "ui.zero.spider_first",
 &"type": "dialogue"
 },
 "18": {
@@ -684,70 +696,78 @@ lines = {
 &"type": "cue"
 },
 "180": {
-&"character": "Courier",
+&"character": "Spider",
 &"id": "180",
 &"next_id": "181",
 &"static_id": "",
-&"text": "ui.zero.max_explain",
+&"text": "ui.zero.spider_last",
 &"type": "dialogue"
 },
 "181": {
-&"character": "Courier",
+&"character": "Queen",
 &"id": "181",
 &"next_id": "182",
 &"static_id": "",
-&"text": "ui.zero.once_explain",
+&"text": "ui.zero.run",
 &"type": "dialogue"
 },
 "182": {
+&"character": "Courier",
 &"id": "182",
+&"next_id": "183",
+&"static_id": "",
+&"tags": PackedStringArray("action=evacuation"),
+&"text": "ui.zero.board_goal",
+&"type": "dialogue"
+},
+"183": {
+&"id": "183",
 &"is_snippet": false,
 &"next_id": "end",
 &"next_id_after": "",
 &"type": "goto"
 },
-"183": {
-&"id": "183",
-&"next_id": "184",
-&"type": ""
-},
 "184": {
 &"id": "184",
 &"next_id": "185",
-&"type": "cue"
+&"type": ""
 },
 "185": {
-&"character": "Worker",
 &"id": "185",
 &"next_id": "186",
-&"static_id": "",
-&"text": "ui.zero.work_topic",
-&"type": "dialogue"
+&"type": "cue"
 },
 "186": {
 &"character": "Worker",
 &"id": "186",
 &"next_id": "187",
 &"static_id": "",
-&"text": "ui.chapter.recruit_intro",
+&"text": "ui.zero.on_board",
 &"type": "dialogue"
 },
 "187": {
+&"character": "Queen",
 &"id": "187",
+&"next_id": "188",
+&"static_id": "",
+&"text": "ui.zero.leave",
+&"type": "dialogue"
+},
+"188": {
+&"character": "Queen",
+&"id": "188",
+&"next_id": "189",
+&"static_id": "",
+&"tags": PackedStringArray("action=depart"),
+&"text": "ui.zero.leave",
+&"type": "dialogue"
+},
+"189": {
+&"id": "189",
 &"is_snippet": false,
 &"next_id": "end",
 &"next_id_after": "",
 &"type": "goto"
-},
-"188": {
-&"id": "188",
-&"next_id": "189",
-&"type": ""
-},
-"189": {
-&"id": "189",
-&"next_id": "190",
-&"type": "cue"
 },
 "19": {
 &"character": "Queen",
@@ -758,56 +778,71 @@ lines = {
 &"type": "dialogue"
 },
 "190": {
-&"character": "Worker",
 &"id": "190",
 &"next_id": "191",
-&"static_id": "",
-&"text": "ui.chapter.worker_info",
-&"type": "dialogue"
+&"type": ""
 },
 "191": {
 &"id": "191",
-&"is_snippet": false,
-&"next_id": "end",
-&"next_id_after": "",
-&"type": "goto"
-},
-"192": {
-&"id": "192",
-&"next_id": "193",
-&"type": ""
-},
-"193": {
-&"id": "193",
-&"next_id": "194",
+&"next_id": "192",
 &"type": "cue"
 },
+"192": {
+&"character": "Courier",
+&"id": "192",
+&"next_id": "193",
+&"static_id": "",
+&"text": "ui.zero.source_target",
+&"type": "dialogue"
+},
+"193": {
+&"character": "Courier",
+&"id": "193",
+&"next_id": "194",
+&"static_id": "",
+&"text": "ui.zero.min_explain",
+&"type": "dialogue"
+},
 "194": {
-&"character": "Planner",
+&"character": "Courier",
 &"id": "194",
 &"next_id": "195",
 &"static_id": "",
-&"text": "ui.zero.plan",
+&"text": "ui.zero.max_explain",
 &"type": "dialogue"
 },
 "195": {
+&"character": "Courier",
 &"id": "195",
-&"is_snippet": false,
-&"next_id": "end",
-&"next_id_after": "",
-&"type": "goto"
+&"next_id": "196",
+&"static_id": "",
+&"text": "ui.zero.once_explain",
+&"type": "dialogue"
 },
 "196": {
 &"id": "196",
-&"next_id": "197",
-&"type": ""
-},
-"197": {
-&"id": "197",
 &"is_snippet": false,
 &"next_id": "end",
 &"next_id_after": "",
 &"type": "goto"
+},
+"197": {
+&"id": "197",
+&"next_id": "198",
+&"type": ""
+},
+"198": {
+&"id": "198",
+&"next_id": "199",
+&"type": "cue"
+},
+"199": {
+&"character": "Worker",
+&"id": "199",
+&"next_id": "200",
+&"static_id": "",
+&"text": "ui.zero.work_topic",
+&"type": "dialogue"
 },
 "2": {
 &"character": "Queen",
@@ -827,8 +862,85 @@ lines = {
 &"text": "ui.story.controls.zoom",
 &"type": "dialogue"
 },
+"200": {
+&"character": "Worker",
+&"id": "200",
+&"next_id": "201",
+&"static_id": "",
+&"text": "ui.chapter.recruit_intro",
+&"type": "dialogue"
+},
+"201": {
+&"id": "201",
+&"is_snippet": false,
+&"next_id": "end",
+&"next_id_after": "",
+&"type": "goto"
+},
+"202": {
+&"id": "202",
+&"next_id": "203",
+&"type": ""
+},
+"203": {
+&"id": "203",
+&"next_id": "204",
+&"type": "cue"
+},
+"204": {
+&"character": "Worker",
+&"id": "204",
+&"next_id": "205",
+&"static_id": "",
+&"text": "ui.chapter.worker_info",
+&"type": "dialogue"
+},
+"205": {
+&"id": "205",
+&"is_snippet": false,
+&"next_id": "end",
+&"next_id_after": "",
+&"type": "goto"
+},
+"206": {
+&"id": "206",
+&"next_id": "207",
+&"type": ""
+},
+"207": {
+&"id": "207",
+&"next_id": "208",
+&"type": "cue"
+},
+"208": {
+&"character": "Planner",
+&"id": "208",
+&"next_id": "209",
+&"static_id": "",
+&"text": "ui.zero.plan",
+&"type": "dialogue"
+},
+"209": {
+&"id": "209",
+&"is_snippet": false,
+&"next_id": "end",
+&"next_id_after": "",
+&"type": "goto"
+},
 "21": {
 &"id": "21",
+&"is_snippet": false,
+&"next_id": "end",
+&"next_id_after": "",
+&"type": "goto"
+},
+"210": {
+&"id": "210",
+&"next_id": "211",
+&"type": ""
+},
+"211": {
+&"id": "211",
 &"is_snippet": false,
 &"next_id": "end",
 &"next_id_after": "",
@@ -1279,7 +1391,7 @@ lines = {
 "79": {
 &"id": "79",
 &"is_snippet": false,
-&"next_id": "111",
+&"next_id": "121",
 &"next_id_after": "",
 &"type": "goto"
 },
@@ -1407,7 +1519,7 @@ lines = {
 &"id": "95",
 &"next_id": "96",
 &"static_id": "",
-&"text": "ui.chapter.worker_upgrade_task",
+&"text": "ui.zero.worker_upgrades",
 &"type": "dialogue"
 },
 "96": {
@@ -1416,7 +1528,7 @@ lines = {
 &"next_id": "97",
 &"static_id": "",
 &"tags": PackedStringArray("action=free"),
-&"text": "ui.chapter.wish_hint",
+&"text": "ui.zero.upgrades_goal",
 &"type": "dialogue"
 },
 "97": {

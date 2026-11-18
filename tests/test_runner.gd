@@ -468,7 +468,8 @@ func _test_art_resolution() -> void:
 	var art: ArtCatalog = load("res://game/art/colony_art.tres") as ArtCatalog
 	expect(art.validate().is_empty(), "default art catalog valid")
 	var replacement: ArtCatalog = art.duplicate() as ArtCatalog
-	var image := Image.create(32, 32, false, Image.FORMAT_RGBA8)
+	var resolution := art.tile_resolution() * 2
+	var image := Image.create(resolution, resolution, false, Image.FORMAT_RGBA8)
 	image.fill(Color.GREEN)
 	replacement.grass = ImageTexture.create_from_image(image)
 	var world: World = WORLD.instantiate() as World
@@ -476,11 +477,11 @@ func _test_art_resolution() -> void:
 	world.build_controller.physical_construction = false
 	world.art = replacement
 	add_child(world)
-	expect(world.ready_for_play and world.art.tile_resolution() == 32 and (world.get_node("Map") as TileMapLayer).tile_set.tile_size == Vector2i(16, 16), "sprite catalog replacement preserves the authored map tile geometry")
+	expect(world.ready_for_play and world.art.tile_resolution() == resolution and world.map.tile_set.tile_size == Vector2i(16, 16), "sprite catalog replacement preserves the authored map tile geometry")
 	expect(is_equal_approx(world.route_service.cell_size(), 16.0), "texture resolution does not change physical cell size")
 	var cell := Vector2i(24, 25)
-	expect(world.route_service.world_to_cell(world.route_service.cell_to_world(cell)) == cell, "32px replacement preserves coordinate roundtrip")
-	expect(world.population.count() == 5, "32px replacement preserves population")
+	expect(world.route_service.world_to_cell(world.route_service.cell_to_world(cell)) == cell, "texture replacement preserves coordinate roundtrip")
+	expect(world.population.count() == 5, "texture replacement preserves population")
 	world.free()
 	await get_tree().process_frame
 
@@ -489,6 +490,9 @@ func _test_simulation() -> void:
 	for roads in [false, true]:
 		seed(20261025)
 		var world: World = make_world()
+		var barracks: BuildOption = preload("res://game/building/options/barracks.tres")
+		var timber_camp := Vector2i(21, 23)
+		var timber_camp_built := false
 		if roads:
 			var road: BuildOption = load("res://game/building/options/road.tres")
 			var network: Array[Vector2i] = []
@@ -497,9 +501,12 @@ func _test_simulation() -> void:
 				for y in range(item.y, item.z + 1): network.append(Vector2i(item.x, y))
 			for cell in network:
 				expect(world.build_controller.try_build(road, cell), "safe road network can be built from starting stock")
-			expect(world.build_controller.try_build(load("res://game/building/options/barracks.tres"), Vector2i(29, 22)), "player can place another nest near the stone workplace")
+			expect(world.build_controller.try_build(barracks, Vector2i(29, 22)), "player can place another nest near the stone workplace")
 		var deaths: Array[int] = [0]
 		var work: Array[int] = [0]
+		world.population.spawned.connect(func(ant: AntAgent):
+			ant.died.connect(func(_ant: Node2D, _cause: int): deaths[0] += 1)
+			ant.work_completed.connect(func(_ant: Node2D, _place: Node2D): work[0] += 1))
 		for ant in world.population.agents():
 			ant.died.connect(func(_ant: Node2D, _cause: int): deaths[0] += 1)
 			ant.work_completed.connect(func(_ant: Node2D, _place: Node2D): work[0] += 1)
@@ -510,9 +517,12 @@ func _test_simulation() -> void:
 		for step in range(60 * 180 + 1):
 			for ant in world.population.agents(): ant._physics_process(1.0 / 60.0)
 			world.match_controller._process(1.0 / 60.0)
-			if step % 60 == 0: await get_tree().process_frame
+			if step % 60 == 0:
+				if roads and not timber_camp_built:
+					timber_camp_built = world.build_controller.try_build(barracks, timber_camp)
+				await get_tree().process_frame
 			if world.match_controller.is_finished(): break
-		expect(deaths[0] == 0 and world.population.count() == (10 if roads else 5), "full match has no starvation deaths")
+		expect(deaths[0] == 0 and world.population.count() == (15 if roads else 5), "full match has no starvation deaths and the developed colony opens both camps")
 		expect(outcomes.size() == 1 and outcomes[0].won == roads, "idle loses; roads and purposeful nest placement win within three minutes")
 		var stock := {}
 		for type in world.inventory.registered_types(): stock[String(type.id)] = world.inventory.quantity(type)

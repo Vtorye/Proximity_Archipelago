@@ -261,17 +261,22 @@ func _go_home() -> void:
 	if not is_instance_valid(home):
 		_seek_food()
 		return
-	var entry: Vector2i = planner.accessible_entry(home)
-	var route: Route = planner.home_route(home, route_service.world_to_cell(global_position))
-	if not route.is_valid() or not needs.can_afford(planner.travel_energy(route.cost, movement_speed()) + planner.escape_energy(entry, speed)):
-		if _is_foodless():
-			# Going home from a waiting plan must not immediately repeat that same decision.
-			_set_status(Status.WAITING_FOR_FOOD)
-			_timer = 1.0
+	var cell := route_service.world_to_cell(global_position)
+	var route := planner.home_route(home, cell)
+	var foodless := _is_foodless()
+	if route.is_valid():
+		var pace := movement_speed()
+		var energy := planner.travel_energy(route.cost, pace) + planner.approach_energy(global_position, cell, pace)
+		var can_return := needs.satiety > energy if foodless else needs.can_afford(energy + planner.escape_energy(route.cells.back(), speed))
+		if can_return:
+			_walk(route, &"home")
 			return
+	if foodless:
+		# Seeking a meal here would immediately repeat the same decision.
+		_set_status(Status.WAITING_FOR_FOOD)
+		_timer = 1.0
+	else:
 		_seek_food()
-		return
-	_walk(route, &"home")
 
 func _walk(route: Route, destination: StringName) -> void:
 	_destination = destination

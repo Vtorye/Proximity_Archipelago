@@ -57,23 +57,25 @@ func tick(delta: float) -> bool:
 
 func arrive() -> void:
 	var cell: Vector2i = ant.route_service.world_to_cell(ant.global_position)
-	if plan == null or not is_instance_valid(workplace) or (not plan.foodless and not ant.planner.can_finish_work(cell, ant.home, ant.needs, ant.speed, plan.work_seconds)) or not workplace.begin_work(ant):
+	if plan == null or not is_instance_valid(workplace) or not ant.planner.can_finish_work(cell, ant.home, ant.needs, ant.speed, plan.work_seconds, plan.foodless) or not workplace.begin_work(ant):
 		ant._seek_food()
 		return
 	ant._set_status(AntAgent.Status.WORKING)
 	ant._timer = plan.work_seconds
 
 func reconsider() -> void:
-	if plan != null:
-		if plan.foodless:
-			if ant._can_recover():
-				ant._seek_food()
-		elif ant._is_foodless():
-			plan.foodless = true
-			ant.planner.inventory.release(ant._meal)
-			ant._meal = null
-		elif not ant.planner.can_finish_work(ant.route_service.world_to_cell(ant.global_position), ant.home, ant.needs, ant.speed, ant._timer):
-			ant._seek_food()
+	if plan == null:
+		return
+	if plan.foodless and ant._can_recover():
+		ant._seek_food()
+		return
+	if not plan.foodless and ant._is_foodless():
+		plan.foodless = true
+		ant.planner.inventory.release(ant._meal)
+		ant._meal = null
+	var cell := ant.route_service.world_to_cell(ant.global_position)
+	if not ant.planner.can_finish_work(cell, ant.home, ant.needs, ant.speed, ant._timer, plan.foodless):
+		ant._seek_food()
 
 func release() -> void:
 	if is_instance_valid(workplace):

@@ -75,17 +75,16 @@ func _test_price_reload(test: Node) -> void:
 func test_finite_sources(test: Node) -> void:
 	var world: World = test.make_world()
 	var wood: ResourceType = world.inventory.type_by_id(&"wood")
-	var workplace := Workplace.new()
+	var workplace := preload("res://game/entities/resource_source.tscn").instantiate() as Workplace
 	workplace.output = wood
-	var sprite := Sprite2D.new()
-	sprite.name = "Sprite"
+	var sprite := workplace.get_node("Sprite") as Sprite2D
 	sprite.texture = world.art.timber
-	workplace.add_child(sprite)
 	workplace.output_per_second = 2.0
 	workplace.work_slots = 2
 	workplace.finite_supply = true
 	workplace.remaining_supply = 3
 	workplace.inventory = world.inventory
+	test.add_child(workplace)
 	var worker := Node2D.new()
 	var other := Node2D.new()
 	workplace.reserve_worker(worker)
@@ -163,9 +162,9 @@ func test_resource_facilities(test: Node) -> void:
 	test.expect(world.registry.at(workplace.cell) == workplace and workplace.work_slots == slots_before + 2 and workplace.has_worker(worker), "installing a facility adds two slots without replacing the source or evicting its worker")
 	test.expect(workplace.remaining_supply == 3 and workplace.pending_output_amount() == 2 and world.inventory.quantity(wood) == before - sawmill_wood, "installing a facility preserves supply and pending cargo and charges its price once")
 	test.expect(not world.build_controller.try_build(sawmill, workplace.cell) and world.inventory.quantity(wood) == before - sawmill_wood, "a second facility cannot stack on the same resource cell")
-	test.expect((workplace.get_node("Sprite") as Sprite2D).texture == sawmill.icon and sawmill.icon.get_size() == Vector2(16, 16), "a sawmill uses its own sixteen-pixel sprite")
 	var sawmill_sprite := workplace.get_node("Sprite") as Sprite2D
-	test.expect((sawmill_sprite.get_rect().size * sawmill_sprite.scale).is_equal_approx(Vector2.ONE * world.route_service.cell_size()), "the sixteen-pixel sawmill retains a full world cell when replacing larger source art")
+	test.expect(sawmill_sprite.texture == sawmill.icon and sawmill_sprite.texture != world.art.timber, "a sawmill uses its own sprite")
+	test.expect((sawmill_sprite.get_rect().size * sawmill_sprite.scale).is_equal_approx(Vector2.ONE * world.route_service.cell_size()), "the sawmill sprite fits the same world cell as the source art")
 	sawmill.added_slots = 3
 	test.expect(world.build_controller.demolish_at(workplace.cell) and world.registry.at(workplace.cell) == workplace and workplace.improvement == null and workplace.work_slots == slots_before, "demolition removes the facility while preserving the source")
 	test.expect((sawmill_sprite.get_rect().size * sawmill_sprite.scale).is_equal_approx(Vector2.ONE * world.route_service.cell_size()), "removing the improvement restores the source at the same world size")
@@ -187,7 +186,8 @@ func test_resource_facilities(test: Node) -> void:
 		test.expect(restored.improvement == sawmill and restored.remaining_supply == 0 and not restored.can_run_recipe(), "loading a facility preserves exhaustion without regenerating resources")
 		test.expect((restored.get_node("Sprite") as Sprite2D).visible, "an existing facility stays visible after its resource is exhausted")
 		restored.remove_improvement()
-		test.expect(not (restored.get_node("Sprite") as Sprite2D).visible, "demolishing an exhausted facility does not resurrect the raw resource sprite")
+		var restored_sprite := restored.get_node("Sprite") as Sprite2D
+		test.expect(not restored_sprite.visible and restored_sprite.texture == world.art.timber, "demolishing a saved facility restores its original source texture and keeps an exhausted deposit hidden")
 		world.free()
 	var depleted := {"version": LevelLayout.VERSION, "tiles": [[0, 0, 3, 0, 0, 0]], "objects": [[0, 0, "Workplace", {"finite_supply": true, "remaining_supply": 0}]]}
 	world = LevelLayout.create_world(depleted)

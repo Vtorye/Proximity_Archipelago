@@ -19,16 +19,17 @@ func run(test: Node) -> void:
 
 func _second_nest_meal_return(test: Node) -> void:
 	var tiles: Array = []
-	for x in range(52):
+	var nest_cell := Vector2i(20, 1)
+	var job_cell := nest_cell + Vector2i.RIGHT
+	for x in range(job_cell.x + 2):
 		for y in range(3):
-			tiles.append([x, y, 3, 1, 0, 0])
+			tiles.append([x, y, 3, 0, 0, 0])
 	var world := LevelLayout.create_world({"version": LevelLayout.VERSION, "tiles": tiles,
-		"objects": [[0, 1, "Home"], [1, 1, "Food"], [49, 1, "Workplace"]]})
+		"objects": [[0, 1, "Home"], [1, 1, "Food"], [job_cell.x, job_cell.y, "Workplace"]]})
 	world.auto_start = false
 	world.build_controller.physical_construction = false
 	world.task_deck = null
 	test.add_child(world)
-	var nest_cell := Vector2i(48, 1)
 	var built := world.build_controller.try_build(load("res://game/building/options/barracks.tres"), nest_cell)
 	test.expect(built, "a second nest can be built beside the remote workplace")
 	if not built:
@@ -291,6 +292,8 @@ func _load_scoring(test: Node) -> void:
 	var near: Workplace = _place(world, Vector2i(23, 25))
 	var far: Workplace = _place(world, Vector2i(25, 25))
 	var ants: Array[AntAgent] = world.population.agents()
+	# Use a fixed test speed so the extra walk falls between two and three penalties.
+	ants[0].speed = AntProfile.new().speed
 	_reserve_walk(world, near, ants[1])
 	var plan: WorkPlan = world.planner.plan_work(ants[0], ants[0].home, ants[0].needs, ants[0].speed, ants[0].work_time, ants[0]._meal)
 	test.expect(plan.workplace == far, "equal travel time prefers fewer working or incoming ants")
@@ -335,15 +338,16 @@ func _workload_ui(test: Node) -> void:
 	test.add_child(panel)
 	test.expect(workplace.incoming_count() == 1 and workplace.working_count() == 0 and panel._detail.get_parsed_text().contains("0+1 / 4"), "UI immediately includes a reserved walking worker")
 	var before: float = overlay.sample(workplace.cell).score
-	for step in range(1200):
+	var travel_seconds := world.planner.travel_seconds(ant.motion.route.cost, ant.movement_speed())
+	for step in range(ceili((travel_seconds + 1.0) * 60)):
 		ant._physics_process(1.0 / 60.0)
 		if ant.status == AntAgent.Status.WORKING: break
 	panel.refresh()
 	test.expect(workplace.incoming_count() == 0 and workplace.working_count() == 1 and panel._detail.get_parsed_text().contains("1+0 / 4"), "arrival transfers the same worker from incoming to working in the UI")
-	ant._physics_process(ant.work_time + 0.01)
+	ant._physics_process(ant.work.plan.work_seconds + 0.01)
 	panel.refresh()
 	test.expect(ant.transport.carrying and ant._destination == &"delivery" and workplace.worker_count() == 0 and panel._detail.get_parsed_text().contains("0+0 / 4"), "loaded return is excluded from the displayed enterprise load")
-	test.expect(is_equal_approx(before - overlay.sample(workplace.cell).score, 0.5), "the number on the workplace tile includes the live load penalty")
+	test.expect(is_equal_approx(before - overlay.sample(workplace.cell).score, world.planner.load_penalty_seconds), "the number on the workplace tile includes the live load penalty")
 	test.expect(overlay.sample(workplace.cell).kind == &"work" and overlay.sample(ant.home.cell).kind == &"home", "workplaces and homes use different map label categories")
 	panel.free()
 	overlay.free()
