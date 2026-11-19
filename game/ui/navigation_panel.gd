@@ -26,8 +26,9 @@ func configure(routes: NavigationOverlay) -> void:
 	refresh()
 
 func _process(delta: float) -> void:
+	if overlay == null: return
 	_elapsed += delta
-	if _elapsed >= 0.2:
+	if _elapsed >= NavigationOverlay.PRESENTATION.navigation_refresh:
 		_elapsed = 0.0
 		refresh()
 func inspect_cell(cell: Variant) -> void:
@@ -108,7 +109,7 @@ func refresh() -> void:
 			description += "\n\n" + soil
 	_detail.clear()
 	_detail.add_text(description)
-	if not has_trap and building is House:
+	if inspected_cell != null and not has_trap and building is House:
 		_append_stock(building)
 	elif not has_trap and building is ConstructionSite:
 		for item in building.required:

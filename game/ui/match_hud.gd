@@ -188,15 +188,17 @@ func _on_time_changed(seconds: int) -> void:
 func set_tutorial_controls(chapter: FirstChapter) -> void:
 	%Pause.visible = chapter.shows_control(&"pause")
 	%Routes.visible = chapter.shows_control(&"routes")
+	%MatchControls.self_modulate.a = 1.0 if %Routes.visible or %Pause.visible else 0.0
 	%Zoom.visible = chapter.shows_control(&"zoom")
 	%ZoomIn.visible = %Zoom.visible
 	%ZoomOut.visible = %Zoom.visible
 	%ColonyTab.visible = chapter.shows_control(&"colony")
 	colony_summary.visible = %ColonyTab.visible
-	%Counters.visible = _economy_visible and colony_summary.visible
+	_refresh_counters()
 	%TalkTab.visible = chapter.shows_control(&"talk")
 	%Build.visible = chapter.shows_control(&"build")
 	%TasksTab.visible = chapter.shows_control(&"tasks")
+	_bottom.visible = %Zoom.visible or %Build.visible or %ColonyTab.visible or %TalkTab.visible or %TasksTab.visible
 
 func set_construction_controls_visible(enabled: bool) -> void:
 	%Undo.visible = enabled
@@ -223,10 +225,12 @@ func highlight_control(id: StringName) -> void:
 func set_economy_visible(enabled: bool) -> void:
 	_economy_visible = enabled
 	colony_summary.get_node("%Totals").visible = enabled
-	%Counters.visible = enabled and colony_summary.visible
-	%MatchStatus.self_modulate.a = 1.0 if enabled else 0.0
+	_refresh_counters()
 	_warning.visible = enabled
 	_waiting.visible = enabled
+
+func _refresh_counters() -> void:
+	%MatchStatus.visible = _economy_visible and colony_summary.visible
 
 func set_zoom(value: int) -> void:
 	_zoom_level = value
@@ -242,9 +246,11 @@ func _refresh_pause_indicator(paused: bool) -> void:
 
 func build_obstacles() -> Array[Rect2]:
 	var result: Array[Rect2] = []
-	result.append(%MatchStatus.get_global_rect())
+	if %MatchStatus.visible:
+		result.append(%MatchStatus.get_global_rect())
 	result.append(%MatchControls.get_global_rect())
-	result.append(_bottom.get_global_rect())
+	if _bottom.visible:
+		result.append(_bottom.get_global_rect())
 	if task_panel != null:
 		result.append_array(task_panel.visible_bounds())
 	elif _objectives.is_visible_in_tree():
@@ -278,7 +284,7 @@ func construction_pan_button() -> Button:
 	return %Move
 
 func bottom_bar_height() -> float:
-	return _bottom.size.y
+	return _bottom.size.y if _bottom.visible else 0.0
 
 func colony_panel_bottom() -> float:
 	return colony_summary.get_global_rect().end.y
