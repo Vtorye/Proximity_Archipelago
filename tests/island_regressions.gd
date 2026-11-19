@@ -131,6 +131,24 @@ func test_foodless_colonies(test: Node) -> void:
 	worker.needs.satiety = outward_energy + 2.0
 	test.expect(world.planner.plan_work(worker, work_house, worker.needs, worker.speed, worker.work_time, null) == null,
 		"a worker without a canteen declines a job if she cannot bring the cargo home")
+	var rate := workplace.resource_rate()
+	var return_cost := world.planner.home_route(work_house, job_cell).cost
+	var return_energy := world.planner.travel_energy(return_cost, worker.speed * world.planner.carry_speed_ratio)
+	var travel_budget := outward_energy + return_energy + worker.needs.rules.travel_reserve
+	worker.needs.satiety = travel_budget + 1.5 * worker.needs.rules.work_rate / rate
+	var partial := world.planner.plan_work(worker, work_house, worker.needs, worker.speed, worker.work_time, null)
+	test.expect(partial != null and is_equal_approx(partial.work_seconds, 1.0 / rate),
+		"a hungry worker budgets just long enough to gather one whole unit and deliver it")
+	workplace.release_worker(worker)
+	var normal_rules := world.planner.satiety_rules
+	var free_work: SatietyRules = normal_rules.duplicate()
+	free_work.work_rate = 0.0
+	world.planner.satiety_rules = free_work
+	var full := world.planner.plan_work(worker, work_house, worker.needs, worker.speed, worker.work_time, null)
+	test.expect(full != null and is_equal_approx(full.work_seconds, float(worker.carry_capacity) / rate),
+		"zero work energy still permits a full harvest when travel is affordable")
+	world.planner.satiety_rules = normal_rules
+	workplace.release_worker(worker)
 	worker.needs.eat()
 	worker._decide()
 	wanderer._decide()

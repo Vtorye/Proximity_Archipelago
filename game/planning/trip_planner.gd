@@ -136,12 +136,14 @@ func _plan_work(agent: Node2D, home: Building, needs: AntNeeds, speed: float, wo
 			if workplace.recipe == null:
 				var rate: float = workplace.resource_rate()
 				if rate <= 0.0: continue
-				var capacity_seconds: float = float(carry_capacity) / rate
-				var hunger_budget: float = needs.satiety - energy - return_energy
-				if not foodless:
-					hunger_budget -= satiety_rules.safety_margin
-				work_seconds = minf(capacity_seconds, maxf(0.0, hunger_budget / satiety_rules.work_rate))
-				if floori(rate * work_seconds + 0.000001) <= 0: continue
+				var units := carry_capacity
+				if satiety_rules.work_rate > 0.0:
+					var hunger_budget := needs.satiety - energy - return_energy
+					if not foodless:
+						hunger_budget -= satiety_rules.safety_margin
+					units = mini(units, workplace.harvest_units(hunger_budget / satiety_rules.work_rate))
+				if units <= 0: continue
+				work_seconds = float(units) / rate
 			energy += work_seconds * satiety_rules.work_rate + return_energy
 			if foodless:
 				if energy >= needs.satiety:

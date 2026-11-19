@@ -1,6 +1,9 @@
 class_name Workplace
 extends Building
 
+## Accounts for floating-point rounding when a full unit has just been produced.
+const YIELD_ROUNDING_TOLERANCE := 0.000001
+
 signal produced(type: ResourceType, amount: int)
 signal load_changed
 signal supply_changed
@@ -169,16 +172,14 @@ func _complete_recipe_cycle(human: Node2D, keep_output: bool) -> bool:
 		return true
 	if not can_run_recipe():
 		return false
-	if recipe != null:
-		inventory.begin_update()
-		if not inventory.try_spend_all(recipe.inputs):
-			inventory.end_update()
-			return false
-		work_complete(human)
-		for entry in recipe.outputs: _produce(entry.type, entry.amount, keep_output)
+	inventory.begin_update()
+	if not inventory.try_spend_all(recipe.inputs):
 		inventory.end_update()
-		return true
-	return false
+		return false
+	work_complete(human)
+	for entry in recipe.outputs: _produce(entry.type, entry.amount, keep_output)
+	inventory.end_update()
+	return true
 
 func complete_work_period(human: Node2D, seconds: float, keep_output: bool = false) -> bool:
 	if recipe != null:
@@ -186,9 +187,12 @@ func complete_work_period(human: Node2D, seconds: float, keep_output: bool = fal
 	if not _workers.has(human) or output == null or not can_run_recipe(): return false
 	if keep_output and not _pending_output.is_empty(): return true
 	work_complete(human)
-	var amount := floori(output_per_second * terrain_yield_multiplier * maxf(0.0, seconds) + 0.000001)
+	var amount := harvest_units(seconds)
 	if amount > 0: _produce(output, amount, keep_output)
 	return true
+
+func harvest_units(seconds: float) -> int:
+	return floori(resource_rate() * maxf(0.0, seconds) + YIELD_ROUNDING_TOLERANCE)
 
 func resource_rate() -> float:
 	return output_per_second * terrain_yield_multiplier if recipe == null and output != null else 0.0
