@@ -16,12 +16,7 @@ var wish_index := 0
 var created: Array[Dictionary] = []
 var read_topics: Array[String] = []
 var first_reprimand_seen := false
-var _reprimanding := false
-var _topic := false
 var _scripted := false
-var _elapsed := 0.0
-var _worker: AntAgent
-var _worked := false
 var _transport_delivered := 0
 var _transport_requested := false
 var _recruited := false
@@ -45,7 +40,7 @@ func configure(colony: World, dialogue: StoryOverlay) -> void:
 	story.characters = rules.characters
 	story.dialogue_resource = rules.dialogue
 	story.action_requested.connect(_on_action)
-	story.scene_finished.connect(_on_scene_finished)
+	story.scene_finished.connect(_resume_hint)
 	story.practice_done_requested.connect(_on_practice_done)
 	world.build_controller.built.connect(_on_built)
 	world.build_controller.order_completed.connect(_on_order_completed)
@@ -266,7 +261,6 @@ func reprimand(_reason: StringName = &"action") -> void:
 		return
 	if not first_reprimand_seen:
 		first_reprimand_seen = true
-		_reprimanding = true
 		story.play("first_reprimand")
 	else:
 		story.flash_warning("ui.chapter.wrong_action")
@@ -275,7 +269,6 @@ func talk(character: StoryCharacter) -> void:
 	if story.is_modal or stage in [Stage.DEMOLITION, Stage.ESCORT, Stage.COMPLETE] or not topic_available(character):
 		return
 	read_topics.append(str(character.id))
-	_topic = stage not in [Stage.TALK_LESSON, Stage.WORKER_ADVICE]
 	story.play("road_advice" if stage == Stage.TALK_LESSON else "build_advice" if stage == Stage.WORKER_ADVICE else str(character.topic))
 	presentation_changed.emit()
 
@@ -325,7 +318,6 @@ func status_text() -> String:
 			for item in rules.minimum_cargo:
 				lines.append("%s %d / %d" % [tr(item.type.display_name), boat.manifest.get(str(item.type.id), 0), item.amount])
 			return "\n".join(lines)
-		Stage.FOOD: return tr("ui.chapter.observe_food")
 		Stage.WORK: return tr("ui.chapter.rebuild_sawmill")
 		Stage.TRANSPORT: return tr("ui.chapter.wait_export") if _transport_requested else tr("ui.chapter.request_delivery")
 		Stage.MAGIC: return tr("ui.chapter.place_base")
@@ -371,7 +363,6 @@ func _is_road(cell: Vector2i) -> bool:
 	return terrain != null and terrain.kind == TerrainType.Kind.ROAD
 
 func _on_action(action: StringName) -> void:
-	_elapsed = 0.0
 	match action:
 		&"pause":
 			stage = Stage.PAUSE_LESSON
@@ -404,7 +395,6 @@ func _on_action(action: StringName) -> void:
 			_advance_demolition()
 		&"work":
 			stage = Stage.WORK
-			_worked = false
 			world.build_controller.unlock_option(rules.wishes[1])
 			checkpoint_requested.emit(SessionSave.PATH)
 		&"transport":
@@ -429,14 +419,6 @@ func _on_action(action: StringName) -> void:
 			stage = Stage.COMPLETE
 			_depart()
 	presentation_changed.emit()
-	_resume_hint()
-
-func _on_scene_finished() -> void:
-	if _reprimanding or _topic:
-		_reprimanding = false
-		_topic = false
-		_resume_hint()
-		return
 	_resume_hint()
 
 func _resume_hint() -> void:
@@ -490,27 +472,6 @@ func _on_spawned(ant: AntAgent) -> void:
 		_recruited = true
 		focus_requested.emit(world.route_service.world_to_cell(ant.global_position))
 
-func _prepare_worker() -> void:
-	_worker = null
-	for ant in world.population.agents():
-		if ant.story_id == &"Worker":
-			_worker = ant
-			break
-	for ant in world.population.agents():
-		if _worker != null:
-			break
-		if ant.role == AntAgent.Role.WORKER:
-			_worker = ant
-			ant.story_id = &"Worker"
-			break
-	if _worker != null:
-		if not _worker.work_completed.is_connected(_on_work_completed):
-			_worker.work_completed.connect(_on_work_completed)
-		focus_requested.emit(world.route_service.world_to_cell(_worker.global_position))
-
-func _on_work_completed(_ant: Node2D, _workplace: Node2D) -> void:
-	_worked = true
-
 func _on_shipment_delivered(_target: Building, _type: ResourceType, _amount: int) -> void:
 	if stage == Stage.ATTACK:
 		_resume_hint()
@@ -522,21 +483,10 @@ func _on_export_delivered(source: House, type: ResourceType, amount: int) -> voi
 func _demonstration_depot() -> House:
 	return world.registry.at(rules.delivery_cell) as House
 
-func _process(delta: float) -> void:
+func _process(_delta: float) -> void:
 	if _starting or story.is_modal or get_tree().paused or world.match_controller.is_finished():
 		return
-	_elapsed += delta
 	match stage:
-		Stage.FOOD:
-			if is_instance_valid(_worker) and _worker.status == AntAgent.Status.EATING:
-				story.play("worker_hello")
-			elif _elapsed > rules.demonstration_timeout:
-				_elapsed = 0.0
-				_prepare_worker()
-				if _worker != null:
-					_worker._seek_food()
-		Stage.WORK:
-			pass
 		Stage.TRANSPORT:
 			if _transport_requested and _transport_delivered >= rules.delivery.amount:
 				story.play("recruit")
@@ -595,18 +545,6 @@ func _reveal_materials() -> void:
 	world.inventory.try_spend_all(excess)
 	world.inventory.quantities_known = true
 
-func _perform_magic() -> void:
-	_scripted = true
-	world.build_controller.apply_surface(rules.ground, rules.magic_cell)
-	world.route_service.update_cells([rules.magic_cell], world.registry.blocked_cells())
-	var success := world.build_controller.try_build(rules.base_nest, rules.magic_cell)
-	_scripted = false
-	if success:
-		focus_requested.emit(rules.magic_cell)
-		story.play.call_deferred("supplies")
-	else:
-		story.show_hint("ui.chapter.magic_failed")
-
 func _configure_ship() -> void:
 	var boat := ship()
 	if boat != null:
@@ -650,7 +588,7 @@ func capture_state() -> Dictionary:
 	return {
 		"version": 1, "stage": stage, "wish": wish_index, "created": created.duplicate(true),
 		"topics": read_topics.duplicate(), "reprimand": first_reprimand_seen, "attack": _attack_started,
-		"worked": _worked, "recruited": _recruited, "transport_delivered": _transport_delivered,
+		"recruited": _recruited, "transport_delivered": _transport_delivered,
 		"transport_requested": _transport_requested,
 		"first_choice": str(_first_choice),
 		"camera_distance": _camera_distance, "zoom_tried": _zoom_tried,
@@ -660,12 +598,14 @@ func capture_state() -> Dictionary:
 
 func restore_state(saved: Dictionary) -> void:
 	stage = clampi(int(saved.get("stage", Stage.INTRO)), Stage.INTRO, Stage.WORKER_ADVICE)
+	# Old versions used the food demonstration here. Continue those saves at the road lesson.
+	if stage == Stage.FOOD:
+		stage = Stage.ROAD
 	wish_index = clampi(int(saved.get("wish", 0)), 0, rules.wishes.size())
 	created.assign(saved.get("created", []))
 	read_topics.assign(saved.get("topics", []))
 	first_reprimand_seen = saved.get("reprimand", false)
 	_attack_started = saved.get("attack", false)
-	_worked = saved.get("worked", false)
 	_recruited = saved.get("recruited", false)
 	_transport_delivered = saved.get("transport_delivered", 0)
 	_transport_requested = saved.get("transport_requested", false)
@@ -681,8 +621,6 @@ func _resume() -> void:
 		Stage.INTRO: story.play("intro")
 		Stage.PLANNER: story.play("planner")
 		Stage.EXECUTION: story.play("execution")
-		Stage.FOOD:
-			stage = Stage.ROAD
 		Stage.DEMOLITION:
 			_advance_demolition()
 		Stage.TRANSPORT:
