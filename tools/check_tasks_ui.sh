@@ -11,7 +11,7 @@ for size in 1280x720 960x600; do
   mkdir -p "$COLONY_CAPTURE_DIR"
   movie=()
   if [ "$size" = 1280x720 ]; then movie=(--write-movie "$task_root/tasks.avi"); fi
-  if ! godot --path "$task_root/project" --display-driver x11 --audio-driver Dummy --resolution "$size" --fixed-fps 30 --quit-after 2400 "${movie[@]}" res://tests/task_visual.tscn > "$task_root/ui.log" 2>&1; then cat "$task_root/ui.log"; exit 1; fi
+  if ! "${GODOT_BIN:-godot}" --path "$task_root/project" --display-driver x11 --audio-driver Dummy --resolution "$size" --fixed-fps 30 --quit-after 2400 "${movie[@]}" res://tests/task_visual.tscn > "$task_root/ui.log" 2>&1; then cat "$task_root/ui.log"; exit 1; fi
   cat "$task_root/ui.log"
   if rg -q 'SCRIPT ERROR|ERROR:|UI FAIL|leaked' "$task_root/ui.log" || ! rg -q '^UI TESTS PASS$' "$task_root/ui.log"; then exit 1; fi
 done
