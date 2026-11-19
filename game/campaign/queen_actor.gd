@@ -5,7 +5,12 @@ signal arrived
 signal died
 @export_range(1, 100, 1) var maximum_health := 12
 @export_range(1.0, 80.0, 1.0) var speed := 9.0
-var health := 12
+@onready var _health_bar: ProgressBar = %Health
+var health: int:
+	set(value):
+		health = clampi(value, 0, maximum_health)
+		if is_instance_valid(_health_bar):
+			_health_bar.value = health
 var navigation: RouteService
 var map: TerrainMap
 var walking := false
@@ -17,6 +22,10 @@ var _cached_origin := Vector2i(2147483647, 2147483647)
 var _cached_target := Vector2i(2147483647, 2147483647)
 var _cached_revision := -1
 var _cached_path := PackedVector2Array()
+
+func _ready() -> void:
+	_health_bar.max_value = maximum_health
+	health = maximum_health
 
 func route_to(target: Vector2i) -> PackedVector2Array:
 	if map == null or navigation == null:
@@ -54,10 +63,9 @@ func depart(target: Vector2i) -> bool:
 	return true
 
 func take_damage(amount: int) -> void:
-	if health <= 0:
+	if health <= 0 or amount <= 0:
 		return
-	health = maxi(0, health - amount)
-	%Health.value = health
+	health -= amount
 	if health == 0:
 		walking = false
 		died.emit()

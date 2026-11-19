@@ -24,6 +24,14 @@ func _advance(test: Node, world: World, seconds: float) -> void:
 		if frame % 30 == 0: await test.get_tree().process_frame
 
 func run(test: Node) -> void:
+	var queen: QueenActor = preload("res://game/campaign/queen_actor.tscn").instantiate()
+	queen.maximum_health = 20
+	test.add_child(queen)
+	var bar: ProgressBar = queen.get_node("%Health")
+	test.expect(queen.health == 20 and bar.max_value == 20, "queen and health bar use designer maximum")
+	queen.health = 5
+	test.expect(bar.value == 5, "restoring the queen's health refreshes her bar")
+	queen.free()
 	await _roles_and_fleeing(test)
 	await _towers_and_meals(test)
 	await _tower_before_chase(test)
