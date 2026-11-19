@@ -139,6 +139,10 @@ func _plan_work(agent: Node2D, home: Building, needs: AntNeeds, speed: float, wo
 					if not foodless:
 						hunger_budget -= satiety_rules.safety_margin
 					units = mini(units, workplace.harvest_units(hunger_budget / satiety_rules.work_rate))
+					# With no meal, the worker must reach home with positive satiety.
+					var trip_energy := energy + (float(units) / rate * satiety_rules.work_rate + return_energy)
+					if foodless and trip_energy >= needs.satiety:
+						units -= 1
 				if units <= 0: continue
 				work_seconds = float(units) / rate
 			energy += work_seconds * satiety_rules.work_rate + return_energy

@@ -140,6 +140,11 @@ func test_foodless_colonies(test: Node) -> void:
 	test.expect(partial != null and is_equal_approx(partial.work_seconds, 1.0 / rate),
 		"a hungry worker budgets just long enough to gather one whole unit and deliver it")
 	workplace.release_worker(worker)
+	worker.needs.satiety = travel_budget + 2.0 * worker.needs.rules.work_rate / rate
+	var exact := world.planner.plan_work(worker, work_house, worker.needs, worker.speed, worker.work_time, null)
+	test.expect(exact != null and is_equal_approx(exact.work_seconds, 1.0 / rate),
+		"a worker who would exhaust her energy delivering two units brings back one")
+	workplace.release_worker(worker)
 	var normal_rules := world.planner.satiety_rules
 	var free_work: SatietyRules = normal_rules.duplicate()
 	free_work.work_rate = 0.0
