@@ -1,6 +1,5 @@
 [gd_resource type="Resource" script_class="TileBuildOption" format=3 uid="uid://cv3ygwvsnayd2"]
 
-[ext_resource type="Script" uid="uid://clwif6xxyitqt" path="res://game/economy/price_rule.gd" id="4_v6amx"]
 [ext_resource type="Script" uid="uid://dohq4yj0b3afb" path="res://game/resources/resource_amount.gd" id="amount"]
 [ext_resource type="Texture2D" path="res://game/assets/tiles/road_pebbles.svg" id="icon"]
 [ext_resource type="Script" uid="uid://d5tyd72woa2w" path="res://game/building/tile_build_option.gd" id="option"]

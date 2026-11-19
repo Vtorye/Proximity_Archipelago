@@ -1,6 +1,5 @@
 [gd_resource type="Resource" script_class="NestBuildOption" format=3 uid="uid://bi3bebyyyf4kk"]
 
-[ext_resource type="Script" uid="uid://clwif6xxyitqt" path="res://game/economy/price_rule.gd" id="4_jgd4o"]
 [ext_resource type="Script" uid="uid://dohq4yj0b3afb" path="res://game/resources/resource_amount.gd" id="amount"]
 [ext_resource type="Script" uid="uid://bdsukqwfreh8j" path="res://game/building/nest_build_option.gd" id="option"]
 [ext_resource type="PackedScene" path="res://game/entities/nest.tscn" id="scene"]
