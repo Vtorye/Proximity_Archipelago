@@ -179,11 +179,11 @@ func _run() -> void:
 	expect(not Router.has_overlay(), "left click never opens construction")
 	await click_at(cell_point(Vector2i(26, 25)), MOUSE_BUTTON_RIGHT)
 	expect(not Router.has_overlay(), "right click no longer opens the retired construction popup")
-	await key(KEY_SPACE)
-	expect(Router.top_overlay() is ConstructionMenu and get_tree().paused, "space opens the construction planner")
+	await key(KEY_B)
+	expect(screen._construction != null and screen.hud.controls[&"build"].button_pressed, "B opens the construction planner")
 	await capture("07-construction-planner")
-	await key(KEY_SPACE)
-	expect(not Router.has_overlay() and not get_tree().paused, "space commits the plan and resumes")
+	await click(screen._construction.controls[&"cancel"])
+	expect(screen._construction == null and not get_tree().paused, "cancel closes the palette and returns to the map")
 	await click(screen.hud.controls[&"zoom_in"])
 	expect(screen.camera.level == 3, "zoom in button")
 	await click(screen.hud.controls[&"zoom_out"])
@@ -319,8 +319,8 @@ func _layout_only() -> void:
 	open_fixed_match()
 	await frames(50)
 	screen = Router._current
-	await key(KEY_SPACE)
-	var menu := Router.top_overlay() as ConstructionMenu
+	await key(KEY_B)
+	var menu := screen._construction as ConstructionMenu
 	expect(menu != null, "layout opens construction")
 	await choose_building(menu, &"house")
 	for factor: float in [0.5, 0.75, 1.0]:
@@ -328,11 +328,18 @@ func _layout_only() -> void:
 		AppSettings.apply()
 		await frames(5)
 		expect(area.encloses(menu.panel.get_global_rect()), "palette fits at %d%%" % roundi(factor * 100))
-		expect(area.encloses(menu.get_node("Panel/WindowContents/Body/Palette/Readout").get_global_rect()), "inspector fits at %d%%" % roundi(factor * 100))
+		expect(area.encloses(menu.buildings_panel.get_global_rect()), "inspector fits at %d%%" % roundi(factor * 100))
 		expect(area.encloses(screen.hud.controls[&"settings"].get_global_rect()), "HUD settings stays reachable")
-		expect(area.encloses(menu.controls[&"apply"].get_global_rect()), "apply remains reachable")
+		for button: Button in screen.hud.get_node("%Bottom").find_children("*", "Button", true, false):
+			if button.is_visible_in_tree():
+				expect(area.encloses(button.get_global_rect()), "%s stays in bounds at %d%%" % [button.name, roundi(factor * 100)])
 		await capture(tag + "build-%d" % roundi(factor * 100), 1)
-	await key(KEY_SPACE)
+	screen.hud.toast(tr("ui.storage.protected"))
+	await frames(4)
+	var toast: Label = screen.hud.get_node("%Toast")
+	var bottom: Control = screen.hud.get_node("%Bottom")
+	expect(toast.get_global_rect().end.y <= bottom.get_global_rect().position.y, "notifications stay above the wrapped toolbar")
+	await click(menu.controls[&"cancel"])
 	await click(screen.hud.controls[&"settings"])
 	await frames(8)
 	await capture(tag + "pause")
