@@ -43,7 +43,7 @@ func physics(delta: float) -> bool:
 		elif _rethink <= 0:
 			_chase(_enemy)
 	elif tower == null and _rethink <= 0 and ant.status != AntAgent.Status.WAITING_FOR_FOOD:
-		_rethink = 0.5
+		_rethink = director.rules.warrior_rethink_seconds
 		if _claim_tower(): return false
 		var enemy: SpiderAgent = _reachable_enemy()
 		if enemy != null: _chase(enemy)
@@ -54,7 +54,7 @@ func _civilian() -> bool:
 	var threat: SpiderAgent = director.nearest_spider(ant.global_position, director.rules.detection_cells)
 	if threat == null: return false
 	if ant.status == AntAgent.Status.WALKING and ant._destination == &"flee" and _rethink > 0: return false
-	_rethink = 0.4
+	_rethink = director.rules.flee_rethink_seconds
 	var navigation: RouteService = ant.route_service
 	var cell: Vector2i = navigation.world_to_cell(ant.global_position)
 	var escape := cell
@@ -124,7 +124,7 @@ func _chase(enemy: SpiderAgent) -> bool:
 		return true
 	leave_tower()
 	_enemy = enemy
-	_rethink = 0.5
+	_rethink = director.rules.warrior_rethink_seconds
 	ant._walk(route, &"combat_chase")
 	return true
 

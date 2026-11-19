@@ -11,6 +11,11 @@ extends Resource
 @export_range(1, 100) var warrior_health := 4
 @export_range(1, 100) var spider_health := 6
 @export_range(1, 100) var attack_damage := 1
+@export_group("Targeting")
+@export_range(0.1, 10.0, 0.05) var warrior_rethink_seconds := 0.5
+@export_range(0.1, 10.0, 0.05) var flee_rethink_seconds := 0.4
+@export_range(0.1, 10.0, 0.05) var spider_retarget_seconds := 1.0
+@export_group("")
 @export_range(0.1, 10.0) var attack_seconds := 1.0
 @export_range(1.0, 128.0) var spider_speed := 18.0
 @export_range(1.0, 20.0) var detection_cells := 1.0
@@ -25,7 +30,7 @@ extends Resource
 
 func validate() -> Array[String]:
 	var errors: Array[String] = []
-	for field in ["first_wave_seconds", "wave_interval_seconds", "minimum_shore_distance_cells", "maximum_shore_approach_seconds", "initial_spiders", "maximum_spiders", "warrior_health", "spider_health", "attack_damage", "attack_seconds", "spider_speed", "detection_cells", "wall_health", "tower_health", "nest_health", "building_health", "tower_range_cells", "tower_shot_seconds"]:
+	for field in ["first_wave_seconds", "wave_interval_seconds", "minimum_shore_distance_cells", "maximum_shore_approach_seconds", "initial_spiders", "maximum_spiders", "warrior_health", "spider_health", "attack_damage", "warrior_rethink_seconds", "flee_rethink_seconds", "spider_retarget_seconds", "attack_seconds", "spider_speed", "detection_cells", "wall_health", "tower_health", "nest_health", "building_health", "tower_range_cells", "tower_shot_seconds"]:
 		var value: float = float(get(field))
 		if not is_finite(value) or value <= 0: errors.append("%s must be finite and positive" % field)
 	if spiders_per_wave < 0 or maximum_spiders < initial_spiders: errors.append("invalid wave population limits")

@@ -2,7 +2,7 @@ class_name SpiderAgent
 extends Node2D
 ## Mobile predator; target selection and world damage are owned by CombatDirector.
 var director: CombatDirector
-var health := 6
+var health: int
 var motion := AntMotion.new()
 var _target: Node2D
 var _retarget := 0.0
@@ -34,7 +34,7 @@ func _physics_process(delta: float) -> void:
 		var next_target := director.prey(cell)
 		if next_target != _target: _last_target_cell = Vector2i(2147483647, 2147483647)
 		_target = next_target
-		_retarget = 1.0
+		_retarget = director.rules.spider_retarget_seconds
 	if not director.is_spider_target(_target): return
 	if director.can_melee(global_position, _target):
 		if _attack <= 0:
