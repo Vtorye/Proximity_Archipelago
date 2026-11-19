@@ -6,13 +6,10 @@ const TIMING := preload("res://game/navigation/navigation_timing.gd")
 
 signal opportunities_changed
 
-const CARRY_SPEED_RATIO := 0.8
-const LOAD_PENALTY_SECONDS := 0.5
-
 ## Speed as a fraction of normal movement while carrying goods.
-@export_range(0.05, 1.0, 0.05) var carry_speed_ratio := CARRY_SPEED_RATIO
+@export_range(0.05, 1.0, 0.05) var carry_speed_ratio := 0.8
 ## Additional score cost in seconds for each worker assigned to a workplace.
-@export_range(0.0, 60.0, 0.1) var load_penalty_seconds := LOAD_PENALTY_SECONDS
+@export_range(0.0, 60.0, 0.1) var load_penalty_seconds := 0.5
 var satiety_rules: SatietyRules
 var registry: BuildingRegistry
 var navigation: RouteService
@@ -164,10 +161,8 @@ func _plan_work(agent: Node2D, home: Building, needs: AntNeeds, speed: float, wo
 				best.foodless = foodless
 				best.workplace = workplace
 				best.job_cell = entry
-				best.home_cell = home_cell
 				best.estimated_energy = energy
 				best.work_seconds = work_seconds
-				best.navigation_revision = navigation.revision
 	if not foodless and best == null and (feasible_busy or not possible_after_meal and needs.can_afford(food_after_home + satiety_rules.travel_reserve)):
 		best = WorkPlan.new()
 		best.waiting_for_slot = true
