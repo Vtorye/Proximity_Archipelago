@@ -16,7 +16,6 @@ signal waiting_changed
 const DEFAULT_PROFILE: AntProfile = preload("res://game/ants/worker.tres")
 
 @export var profile: AntProfile
-var story_id: StringName
 var speed: float = DEFAULT_PROFILE.speed
 var work_time: float = DEFAULT_PROFILE.work_seconds
 var carry_capacity: int = DEFAULT_PROFILE.carry_capacity
@@ -438,7 +437,6 @@ func capture_state(buildings: Array[Building], sites: Array[ConstructionSite]) -
 		"_waiting_reason": _waiting_reason,
 	}
 	state["home"] = buildings.find(home)
-	state["story_id"] = str(story_id)
 	state["satiety"] = needs.satiety
 	state["capacity"] = needs.capacity
 	state["meal"] = _meal != null and _meal.active
@@ -457,7 +455,6 @@ func capture_state(buildings: Array[Building], sites: Array[ConstructionSite]) -
 	return state
 
 func restore_state(state: Dictionary, buildings: Array[Building], sites: Array[ConstructionSite]) -> void:
-	story_id = StringName(state.get("story_id", ""))
 	planner.inventory.release(_meal)
 	_meal = planner.inventory.reserve(planner.food_type, 1, true) if state.meal else null
 	needs.capacity = state.capacity
