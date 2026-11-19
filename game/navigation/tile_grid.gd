@@ -2,6 +2,7 @@ class_name TileGrid
 extends RefCounted
 ## Snapshot of the navigable map. The only class that reads TileMapLayer and tile custom data.
 ## Algorithms query cells through this class and never touch the TileMapLayer.
+const NO_CELL := Vector2i.MAX
 const OFFSETS: Array[Vector2i] = [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]
 var _rect := Rect2i()
 var _ids: Dictionary[Vector2i, int] = {}

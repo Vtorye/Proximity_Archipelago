@@ -4,14 +4,14 @@ extends RefCounted
 const TIMING := preload("res://game/navigation/navigation_timing.gd")
 ## Dijkstra with a binary min-heap. No per-cell Dictionary or Node allocations.
 
-static func build(grid: TileGrid, seeds: Array[Vector2i], reverse: bool = false, stop: Vector2i = Vector2i(2147483647, 2147483647)) -> NavigationField:
+static func build(grid: TileGrid, seeds: Array[Vector2i], reverse: bool = false, stop: Vector2i = TileGrid.NO_CELL) -> NavigationField:
 	if not TIMING.enabled: return _build(grid, seeds, reverse, stop)
 	TIMING.begin(&"dijkstra")
 	var result := _build(grid, seeds, reverse, stop)
 	TIMING.end()
 	return result
 
-static func _build(grid: TileGrid, seeds: Array[Vector2i], reverse: bool = false, stop: Vector2i = Vector2i(2147483647, 2147483647)) -> NavigationField:
+static func _build(grid: TileGrid, seeds: Array[Vector2i], reverse: bool = false, stop: Vector2i = TileGrid.NO_CELL) -> NavigationField:
 	var field := NavigationField.new()
 	field.setup(grid, seeds, reverse)
 	if field.costs.is_empty(): return field

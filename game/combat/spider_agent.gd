@@ -7,7 +7,7 @@ var motion := AntMotion.new()
 var _target: Node2D
 var _retarget := 0.0
 var _attack := 0.0
-var _last_target_cell := Vector2i(2147483647, 2147483647)
+var _last_target_cell := TileGrid.NO_CELL
 var _revision := -1
 var _animation := 0.0
 
@@ -32,7 +32,7 @@ func _physics_process(delta: float) -> void:
 	_retarget -= delta
 	if _retarget <= 0 or not director.is_spider_target(_target):
 		var next_target := director.prey(cell)
-		if next_target != _target: _last_target_cell = Vector2i(2147483647, 2147483647)
+		if next_target != _target: _last_target_cell = TileGrid.NO_CELL
 		_target = next_target
 		_retarget = director.rules.spider_retarget_seconds
 	if not director.is_spider_target(_target): return

@@ -310,7 +310,7 @@ func set_task_selection(order: TaskBuildOrder) -> void:
 func set_draft_prices(pending: Dictionary[String, int]) -> void:
 	if task_panel != null:
 		task_panel.set_pending_prices(pending)
-	_task_details.refresh_at(Vector2i(2147483647, 2147483647), pending)
+	_task_details.refresh_at(TileGrid.NO_CELL, pending)
 
 func set_task_pan_mode(enabled: bool) -> void:
 	if task_panel != null:
@@ -320,7 +320,7 @@ func _layout_task_panel() -> void:
 	task_panel.dock_above(bottom_bar_height())
 
 func _show_task_details(option: BuildOption) -> void:
-	_task_details.toggle(option, world.build_controller, Vector2i(2147483647, 2147483647))
+	_task_details.toggle(option, world.build_controller, TileGrid.NO_CELL)
 	_task_details.reset_size()
 
 func _request_task_order(task_id: StringName, variant_id: StringName) -> void:

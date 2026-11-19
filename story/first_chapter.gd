@@ -254,7 +254,7 @@ func guide_cell() -> Vector2i:
 		for cell in rules.route_cells:
 			if not _is_road(cell):
 				return cell
-	return Vector2i(2147483647, 2147483647)
+	return TileGrid.NO_CELL
 
 func reprimand(_reason: StringName = &"action") -> void:
 	if story.is_modal:

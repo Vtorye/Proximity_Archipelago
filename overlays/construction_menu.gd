@@ -44,7 +44,7 @@ var category_buttons: Array[Button] = []
 var _category_for: Dictionary[StringName, Button] = {}
 var _active_category: Button
 
-var _pricing_cell := Vector2i(2147483647, 2147483647)
+var _pricing_cell := TileGrid.NO_CELL
 var _bottom_inset := 8.0
 var _top_edge := 0.0
 

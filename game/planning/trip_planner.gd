@@ -208,7 +208,7 @@ func accessible_entry(building: Building) -> Vector2i:
 	for cell in building.entry_cells():
 		if navigation.walkable(cell):
 			return cell
-	return Vector2i(2147483647, 2147483647)
+	return TileGrid.NO_CELL
 
 func food_route(from_cell: Vector2i) -> Route:
 	return navigation.make_route(navigation.food_field().path(from_cell))

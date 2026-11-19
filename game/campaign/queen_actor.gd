@@ -18,8 +18,8 @@ var goal := Vector2i.ZERO
 var _revision := -1
 var _route := PackedVector2Array()
 var _index := 0
-var _cached_origin := Vector2i(2147483647, 2147483647)
-var _cached_target := Vector2i(2147483647, 2147483647)
+var _cached_origin := TileGrid.NO_CELL
+var _cached_target := TileGrid.NO_CELL
 var _cached_revision := -1
 var _cached_path := PackedVector2Array()
 

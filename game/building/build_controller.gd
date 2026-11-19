@@ -495,7 +495,7 @@ func _footprint(option: BuildOption, origin: Vector2i) -> Array[Vector2i]:
 func _safety() -> ConstructionSafety:
 	return ConstructionSafety.new(map, registry, population, route_service)
 
-func price(option: BuildOption, cell := Vector2i(2147483647, 2147483647), pending: Dictionary[String, int] = {}) -> Array[ResourceAmount]:
+func price(option: BuildOption, cell := TileGrid.NO_CELL, pending: Dictionary[String, int] = {}) -> Array[ResourceAmount]:
 	return prices.quote_at(option, cell, pending) if prices != null else option.costs
 
 func apply_surface(option: TileBuildOption, cell: Vector2i) -> void:
