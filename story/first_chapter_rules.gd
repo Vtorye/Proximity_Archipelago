@@ -29,3 +29,8 @@ extends Resource
 @export var magic_cell := Vector2i(29, 29)
 @export var route_cells: Array[Vector2i] = []
 
+
+@export_group("Departure animation")
+## Ship displacement in map cells after the queen boards.
+@export var departure_offset_cells := Vector2i(6, 0)
+@export_range(0.05, 10.0, 0.05, "suffix:s") var departure_seconds := 1.0

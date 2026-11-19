@@ -580,7 +580,8 @@ func _depart() -> void:
 	world.queen.hide()
 	boat.accepting_cargo = false
 	var tween := boat.create_tween()
-	tween.tween_property(boat, "position:x", boat.position.x + world.route_service.cell_size() * 6.0, 1.0)
+	var offset := Vector2(rules.departure_offset_cells) * world.route_service.cell_size()
+	tween.tween_property(boat, "position", boat.position + offset, rules.departure_seconds)
 	await tween.finished
 	world.voyage.complete_departure()
 
