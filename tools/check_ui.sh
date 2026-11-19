@@ -3,16 +3,9 @@ set -euo pipefail
 project_root="$(cd "$(dirname "$0")/.." && pwd)"
 ui_root="$(mktemp -d -t colony-ui-XXXXXX)"
 trap 'rm -rf "$ui_root"' EXIT
-python3 - "$project_root" "$ui_root/project" <<'PY'
-import shutil, sys
-from pathlib import Path
-source, destination = map(Path, sys.argv[1:])
-shutil.copytree(source, destination, ignore=shutil.ignore_patterns('.git', '.godot'))
-project = destination / 'project.godot'
-project.write_text(project.read_text().replace('config/name="archipelago"', 'config/name="archipelago-ui-validation"'))
-PY
+source "$project_root/tools/test_project.sh"
+prepare_test_project "$project_root" "$ui_root"
 godot_binary="${GODOT_BIN:-godot}"
-"$godot_binary" --headless --path "$ui_root/project" --editor --quit > "$ui_root/import.log" 2>&1
 mkdir -p "${COLONY_OUTPUT_ROOT:-/tmp/colony-validation}/after"
 export COLONY_SOURCE_REVISION="$(git -C "$project_root" rev-parse HEAD)"
 export COLONY_CAPTURE_DIR="${COLONY_OUTPUT_ROOT:-/tmp/colony-validation}/after"

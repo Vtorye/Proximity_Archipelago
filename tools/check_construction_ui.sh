@@ -3,17 +3,9 @@ set -euo pipefail
 project_root="$(cd "$(dirname "$0")/.." && pwd)"
 construction_root="$(mktemp -d -t colony-construction-ui-XXXXXX)"
 trap 'rm -rf "$construction_root"' EXIT
-python3 - "$project_root" "$construction_root/project" <<'PY'
-import shutil, sys
-from pathlib import Path
-source, destination = map(Path, sys.argv[1:])
-shutil.copytree(source, destination, ignore=shutil.ignore_patterns('.git', '.godot'))
-project = destination / 'project.godot'
-project.write_text(project.read_text().replace('config/name="archipelago"', 'config/name="archipelago-construction-validation"'))
-PY
+source "$project_root/tools/test_project.sh"
+prepare_test_project "$project_root" "$construction_root"
 godot_binary="${GODOT_BIN:-godot}"
-if ! "$godot_binary" --headless --path "$construction_root/project" --editor --quit > "$construction_root/import.log" 2>&1; then cat "$construction_root/import.log"; exit 1; fi
-if rg -q 'SCRIPT ERROR|Failed to load|Parse Error' "$construction_root/import.log"; then cat "$construction_root/import.log"; exit 1; fi
 export COLONY_CAPTURE_DIR="${COLONY_OUTPUT_ROOT:-/tmp/colony-validation}/construction"
 export COLONY_SOURCE_REVISION="$(git -C "$project_root" rev-parse HEAD)"
 mkdir -p "$COLONY_CAPTURE_DIR"

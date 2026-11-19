@@ -3,16 +3,8 @@ set -euo pipefail
 project_root="$(cd "$(dirname "$0")/.." && pwd)"
 map_root="$(mktemp -d -t colony-map-ui-XXXXXX)"
 trap 'rm -rf "$map_root"' EXIT
-python3 - "$project_root" "$map_root/project" <<'PY'
-from pathlib import Path
-import shutil, sys
-source, target = map(Path, sys.argv[1:])
-shutil.copytree(source, target, ignore=shutil.ignore_patterns('.git', '.godot'))
-project = target / 'project.godot'
-project.write_text(project.read_text().replace('config/name="archipelago"', 'config/name="archipelago-map-validation"'))
-PY
-if ! godot --headless --path "$map_root/project" --editor --quit > "$map_root/import.log" 2>&1; then cat "$map_root/import.log"; exit 1; fi
-if rg -q 'SCRIPT ERROR|Parse Error|Failed to load' "$map_root/import.log"; then cat "$map_root/import.log"; exit 1; fi
+source "$project_root/tools/test_project.sh"
+prepare_test_project "$project_root" "$map_root"
 export COLONY_SOURCE_REVISION="$(git -C "$project_root" rev-parse HEAD)"
 export COLONY_CAPTURE_DIR="${COLONY_OUTPUT_ROOT:-/tmp/colony-validation}/archipelago"
 mkdir -p "$COLONY_CAPTURE_DIR"

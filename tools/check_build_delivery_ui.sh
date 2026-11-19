@@ -3,15 +3,8 @@ set -euo pipefail
 project_root="$(cd "$(dirname "$0")/.." && pwd)"
 task_root="$(mktemp -d -t colony-build-delivery-ui-XXXXXX)"
 trap 'rm -rf "$task_root"' EXIT
-python3 - "$project_root" "$task_root/project" <<'PY'
-from pathlib import Path
-import shutil,sys
-source,target=map(Path,sys.argv[1:])
-shutil.copytree(source,target,ignore=shutil.ignore_patterns('.git','.godot'))
-p=target/'project.godot';p.write_text(p.read_text().replace('config/name="archipelago"','config/name="archipelago-build-delivery-validation"'))
-PY
-if ! godot --headless --path "$task_root/project" --editor --quit > "$task_root/import.log" 2>&1; then cat "$task_root/import.log"; exit 1; fi
-if rg -q 'SCRIPT ERROR|Parse Error|Failed to load' "$task_root/import.log"; then cat "$task_root/import.log"; exit 1; fi
+source "$project_root/tools/test_project.sh"
+prepare_test_project "$project_root" "$task_root"
 export COLONY_SOURCE_REVISION="$(git -C "$project_root" rev-parse HEAD)"
 for size in 1280x720 960x600; do
   export COLONY_CAPTURE_DIR="${COLONY_OUTPUT_ROOT:-/tmp/colony-validation}/build-delivery/$size"

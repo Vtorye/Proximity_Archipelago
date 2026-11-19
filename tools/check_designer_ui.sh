@@ -3,15 +3,8 @@ set -euo pipefail
 project_root="$(cd "$(dirname "$0")/.." && pwd)"
 preview_root="$(mktemp -d -t colony-designer-XXXXXX)"
 trap 'rm -rf "$preview_root"' EXIT
-python3 - "$project_root" "$preview_root/project" <<'PY'
-from pathlib import Path
-import shutil,sys
-source,target=map(Path,sys.argv[1:])
-shutil.copytree(source,target,ignore=shutil.ignore_patterns('.git','.godot'))
-p=target/'project.godot';p.write_text(p.read_text().replace('config/name="archipelago"','config/name="archipelago-designer-validation"'))
-PY
-if ! godot --headless --path "$preview_root/project" --editor --quit > "$preview_root/import.log" 2>&1; then cat "$preview_root/import.log"; exit 1; fi
-if rg -q 'SCRIPT ERROR|Parse Error|Failed to load' "$preview_root/import.log"; then cat "$preview_root/import.log"; exit 1; fi
+source "$project_root/tools/test_project.sh"
+prepare_test_project "$project_root" "$preview_root"
 export COLONY_SOURCE_REVISION="$(git -C "$project_root" rev-parse HEAD)"
 export COLONY_CAPTURE_DIR="${COLONY_OUTPUT_ROOT:-/tmp/colony-validation}/designer"
 mkdir -p "$COLONY_CAPTURE_DIR"
