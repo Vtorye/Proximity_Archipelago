@@ -124,8 +124,19 @@ func _traps_and_destruction(test: Node) -> void:
 	var world: World = _world(test)
 	var combat: CombatDirector = world.combat
 	var cell := Vector2i(2, 3)
+	# Terrain designers can change movement costs independently of road membership.
+	var road_data: TileData = world.map.get_cell_tile_data(cell)
+	var land_data: TileData = world.map.get_cell_tile_data(Vector2i(2, 2))
+	var road_cost: float = road_data.get_custom_data("move_cost")
+	var land_cost: float = land_data.get_custom_data("move_cost")
+	road_data.set_custom_data("move_cost", 1.5)
+	land_data.set_custom_data("move_cost", 0.25)
+	world.route_service.rebuild(world.registry.blocked_cells())
 	var trap: SpiderTrap = combat.place_trap(cell)
 	test.expect(trap != null and combat.place_trap(Vector2i(2, 2)) == null, "spiders place traps only on roads")
+	road_data.set_custom_data("move_cost", road_cost)
+	land_data.set_custom_data("move_cost", land_cost)
+	world.route_service.rebuild(world.registry.blocked_cells())
 	var worker: AntAgent = world.population.agents()[0]
 	worker.global_position = world.route_service.cell_to_world(Vector2i(1, 3))
 	worker._walk(world.route_service.make_route([Vector2i(1, 3), cell]), &"wander")

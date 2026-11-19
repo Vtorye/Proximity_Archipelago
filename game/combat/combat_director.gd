@@ -136,7 +136,7 @@ func is_spider_target(building: Variant) -> bool:
 		return false
 	if building is QueenActor:
 		return true
-	if not alive(building) or not building is Building:
+	if not building is Building:
 		return false
 	if building is Workplace:
 		return building.improvement != null or (building.colony_owned and (not building.finite_supply or building.remaining_supply > 0))
@@ -216,7 +216,12 @@ func _destroy(building: Building) -> void:
 	if not world.registry.all().any(func(item: Building) -> bool: return item is House): world.match_controller.lose_colony()
 
 func place_trap(cell: Vector2i) -> SpiderTrap:
-	if traps.has(cell) or not world.route_service.walkable(cell) or world.route_service.entry_cost(cell) >= 0.5: return null
+	if traps.has(cell) or not world.route_service.walkable(cell):
+		return null
+	var map := world.map as TerrainMap
+	var surface: TerrainType = map.surface_at(cell) if map != null else null
+	if surface == null or surface.kind != TerrainType.Kind.ROAD:
+		return null
 	var trap := SpiderTrap.new()
 	trap.cell = cell
 	trap.director = self
