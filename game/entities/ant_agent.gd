@@ -81,14 +81,21 @@ func _ready() -> void:
 	_refresh_visual()
 
 func refresh_meal_reservation() -> void:
-	if _is_foodless():
+	if not _can_reach_canteen():
 		planner.inventory.release(_meal)
 		_meal = null
 	elif _meal == null or not _meal.active:
 		_meal = planner.reserve_meal()
 
+func _can_reach_canteen() -> bool:
+	return planner.food_within_range(route_service.world_to_cell(global_position), speed, needs.capacity)
+
 func _is_foodless() -> bool:
-	return not planner.food_within_range(route_service.world_to_cell(global_position), speed, needs.capacity)
+	if role == Role.WORKER:
+		var stock := planner.inventory
+		if not stock.can_consume(_meal) and stock.available(planner.food_type) < 1:
+			return true
+	return not _can_reach_canteen()
 
 func _exit_tree() -> void:
 	if combat != null: combat.leave_tower()
@@ -181,8 +188,8 @@ func _decide_inner() -> void:
 	if not transport.cargo.is_empty():
 		resume_delivery()
 		return
-	var foodless: bool = _is_foodless()
 	refresh_meal_reservation()
+	var foodless := _is_foodless()
 	if construction != null and status in [Status.HOME, Status.WAITING_FOR_FOOD, Status.WANDERING] and construction.decide(): return
 	if role == Role.CARRIER:
 		transport.decide_pickup(foodless)
@@ -223,7 +230,7 @@ func _can_recover() -> bool:
 	if not needs.can_afford(planner.escape_energy(route_service.world_to_cell(global_position), speed)):
 		return false
 	refresh_meal_reservation()
-	return _meal != null and _meal.active
+	return planner.inventory.can_consume(_meal)
 
 func _finish_meal() -> void:
 	var cell := route_service.world_to_cell(global_position)

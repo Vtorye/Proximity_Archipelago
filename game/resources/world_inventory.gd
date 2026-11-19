@@ -214,10 +214,12 @@ func release(ticket: StockReservation) -> bool:
 	_notify()
 	return true
 
+## Recruitment and construction can spend stock after a meal is reserved.
+func can_consume(ticket: StockReservation) -> bool:
+	return ticket != null and ticket.active and _tickets.get(ticket.id) == ticket and _physical_stock(ticket.type) >= ticket.amount
+
 func consume(ticket: StockReservation, canteen: Canteen = null) -> bool:
-	if ticket == null or not ticket.active or _tickets.get(ticket.id) != ticket:
-		return false
-	if _physical_stock(ticket.type) < ticket.amount:
+	if not can_consume(ticket):
 		release(ticket)
 		return false
 	begin_update()

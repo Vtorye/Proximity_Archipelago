@@ -179,13 +179,13 @@ func test_foodless_colonies(test: Node) -> void:
 	_step_until(successor, func() -> bool: return successor.status == AntAgent.Status.EATING)
 	_step_until(successor, func() -> bool: return successor.status != AntAgent.Status.EATING)
 	test.expect(stock.quantity(food) == 0 and successor.needs.satiety > 119.0, "restored meal replenishes the worker's satiety")
-	_step_until(successor, func() -> bool: return successor.status == AntAgent.Status.WAITING_FOR_FOOD)
-	test.expect(successor.status == AntAgent.Status.WAITING_FOR_FOOD, "ant waits for food when the accessible canteen runs out")
+	_step_until(successor, func() -> bool: return successor.status == AntAgent.Status.WORKING)
+	test.expect(successor.status == AntAgent.Status.WORKING, "a worker resumes production when the canteen runs out")
 	var waiting_deaths: Array[int] = []
 	successor.died.connect(func(_ant: Node2D, cause: int): waiting_deaths.append(cause))
 	for step in range(30 * ceili(world.match_controller.match_duration) - 1):
 		successor._physics_process(1.0 / 30.0)
-	test.expect(waiting_deaths == [AntAgent.DeathCause.STARVATION], "waiting at an empty canteen still leads to starvation within a match")
+	test.expect(waiting_deaths == [AntAgent.DeathCause.STARVATION], "a worker without further meals still starves within a match")
 	var fed_idle := work_house.residents[0] as AntAgent
 	workplace.work_slots = 0
 	stock.add(food, 1)
@@ -612,7 +612,35 @@ func _step_until(ant: AntAgent, condition: Callable) -> void:
 			return
 		ant._physics_process(1.0 / 60.0)
 
+func _recruit_with_last_meal(test: Node) -> void:
+	var tiles: Array = []
+	for x in range(6):
+		for y in range(3):
+			tiles.append([x, y, 3, 0, 0, 0])
+	var world := LevelLayout.create_world({"version": LevelLayout.VERSION, "tiles": tiles,
+		"objects": [[1, 1, "Home"], [2, 1, "Food"], [4, 1, "Workplace"]]})
+	world.auto_start = false
+	test.add_child(world)
+	var population := world.population
+	var stock := world.inventory
+	var home := world.logistics.main_nest
+	var food := stock.type_by_id(&"food")
+	var wood := stock.type_by_id(&"wood")
+	stock.pay_at(null, [test.entry(food, stock.stock_of(null, food))])
+	stock.add(food, BuildController.price_amount(population.recruitment.price(AntAgent.Role.WORKER), food))
+	test.expect(population.recruit(home, AntAgent.Role.WORKER), "a worker can be recruited with the last berries")
+	var recruit := home.residents.back() as AntAgent
+	var start_wood := stock.quantity(wood)
+	_step_until(recruit, func() -> bool: return recruit.status == AntAgent.Status.WORKING)
+	test.expect(stock.quantity(food) == 0 and recruit._meal == null and recruit.status == AntAgent.Status.WORKING,
+		"a new worker with no meal reaches a workplace beside an empty canteen")
+	_step_until(recruit, func() -> bool: return stock.quantity(wood) > start_wood)
+	test.expect(stock.quantity(wood) > start_wood and recruit.needs.satiety < recruit.needs.capacity,
+		"an unfed worker physically delivers the harvest and still spends satiety")
+	world.free()
+
 func test_recruitment(test: Node) -> void:
+	_recruit_with_last_meal(test)
 	var world: World = test.make_world()
 	var main: House = world.logistics.main_nest
 	var population: ColonyPopulation = world.population

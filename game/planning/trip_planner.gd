@@ -101,11 +101,9 @@ func _plan_work(agent: Node2D, home: Building, needs: AntNeeds, speed: float, wo
 	var from_node: int = navigation.snapshot().index(from_cell)
 	if from_node < 0:
 		return null
-	var foodless: bool = not food_within_range(from_cell, speed, needs.capacity)
+	var foodless: bool = not inventory.can_consume(ticket) or not food_within_range(from_cell, speed, needs.capacity)
 	var workplaces: Array = _reachable_workplaces(from_node)
 	if foodless and workplaces.is_empty():
-		return null
-	if not foodless and (ticket == null or not ticket.active):
 		return null
 	prepare_home(home)
 	var return_field: NavigationField = _home_fields[home_cell]
