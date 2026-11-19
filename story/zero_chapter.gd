@@ -54,13 +54,13 @@ func configure(colony: World, dialogue: StoryOverlay) -> void:
 func start(saved: Dictionary = {}) -> void:
 	_starting = false
 	set_process(true)
-	world.inventory.quantities_known = false
 	if not saved.is_empty():
 		restore_state(saved)
 		_resume()
 	elif skip_lessons:
 		_skip_lessons()
 	else:
+		world.inventory.quantities_known = false
 		story.play("intro")
 
 func save_layout_id() -> String:
@@ -231,6 +231,8 @@ func status_text() -> String:
 	match phase:
 		Phase.ORDERS:
 			var depot := _demonstration_depot()
+			if depot == null:
+				return ""
 			var order := depot.order_of(str(_stone.id))
 			if not depot.orders.has(str(_stone.id)) or int(order.max) <= _zero.depot_minimum:
 				return tr("ui.zero.set_max") % _zero.depot_maximum
@@ -326,7 +328,8 @@ func _on_action(action: StringName) -> void:
 func _enter(next: Phase, focus := true) -> void:
 	phase = next
 	world.build_controller.demolition_limit = 1 if phase == Phase.REMOVE_STATUE else 0
-	world.inventory.quantities_known = phase >= Phase.REMOVE_WALL
+	# Saved phase IDs predate the current lesson order. The courier now follows the planner.
+	world.inventory.quantities_known = phase not in [Phase.INTRO, Phase.WALL, Phase.STATUES]
 	story.set_lesson_skip(phase < Phase.PREPARATION)
 	presentation_changed.emit()
 	_resume_hint()

@@ -187,9 +187,17 @@ func _run_lessons() -> void:
 	await _paint_plan(&"road", roads)
 	expect(_zero_chapter.phase == ZeroChapter.Phase.QUARRY, "roads alone do not finish the quarry objective")
 	if not await _until_phase(ZeroChapter.Phase.ORDERS, 12000): return
+	await _dialogue()
+	var totals: RichTextLabel = screen.hud.colony_summary.get_node("%Totals")
+	expect(not totals.get_parsed_text().contains("∞"), "real stocks remain visible during the courier lesson after meeting the planner")
+	expect(screen.save_game("user://zero-orders.save") == OK, "the courier order lesson saves")
+	await _reload("user://zero-orders.save")
+	_zero_chapter = screen.chapter
+	quarry = screen.world.registry.at(_rules.finite_stone_cell) as Workplace
+	totals = screen.hud.colony_summary.get_node("%Totals")
+	expect(_zero_chapter.phase == ZeroChapter.Phase.ORDERS and screen.world.inventory.quantities_known and not totals.get_parsed_text().contains("∞"), "loading the courier order lesson preserves the stock reveal")
 	expect(quarry.remaining_supply <= initial_supply - _rules.quarry_target and not _zero_chapter._is_road(_rules.finite_stone_cell),
 		"mining enough stone finishes the lesson before the marked route is fully paved")
-	await _dialogue()
 	expect(_saw_line("ui.chapter.carry_command") and _saw_line("ui.chapter.coffee") and _saw_line("ui.chapter.berry"),
 		"the original quarrel plays before the delivery lesson")
 	await screen._focus_chapter_cell(_rules.delivery_cell)
