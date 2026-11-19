@@ -7,10 +7,10 @@
 [ext_resource type="AudioStream" path="res://game/assets/audio/dialogue_blip.wav" id="blip"]
 
 [sub_resource type="StyleBoxFlat" id="dialogue_style"]
-content_margin_left = 188.0
-content_margin_top = 8.0
+content_margin_left = 108.0
+content_margin_top = 5.0
 content_margin_right = 12.0
-content_margin_bottom = 9.0
+content_margin_bottom = 5.0
 bg_color = Color(0.078, 0.069, 0.075, 0.74)
 border_width_left = 1
 border_width_top = 1
@@ -45,7 +45,7 @@ anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = 12.0
-offset_top = -163.0
+offset_top = -108.0
 offset_right = -12.0
 offset_bottom = -12.0
 mouse_filter = 2
@@ -62,7 +62,7 @@ unique_name_in_owner = true
 
 [node name="DialogueHeader" parent="DialogueWindow/DialoguePanel/DialogueContents" node_paths=PackedStringArray("panel", "body") instance=ExtResource("window_header")]
 unique_name_in_owner = true
-title_style = &"Heading"
+title_style = &"DetailsHeading"
 action = 1
 external_layout = true
 panel = NodePath("../../..")
@@ -93,10 +93,12 @@ theme_override_constants/separation = 8
 alignment = 2
 
 [node name="SkipDialogue" type="Button" parent="DialogueWindow/DialoguePanel/DialogueContents/Text/DialogueActions"]
+theme_type_variation = &"CompactButton"
 unique_name_in_owner = true
 text = "ui.story.skip_tutorial"
 
 [node name="SkipLessons" type="Button" parent="DialogueWindow/DialoguePanel/DialogueContents/Text/DialogueActions"]
+theme_type_variation = &"CompactButton"
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
@@ -109,6 +111,7 @@ one_shot = true
 ignore_time_scale = true
 
 [node name="Continue" type="Button" parent="DialogueWindow/DialoguePanel/DialogueContents/Text/DialogueActions"]
+theme_type_variation = &"CompactButton"
 unique_name_in_owner = true
 text = "ui.story.continue"
 
@@ -118,8 +121,8 @@ layout_mode = 1
 anchor_top = 1.0
 anchor_bottom = 1.0
 offset_left = 1.0
-offset_top = -264.0
-offset_right = 181.0
+offset_top = -140.0
+offset_right = 101.0
 offset_bottom = -3.0
 mouse_filter = 2
 
@@ -138,8 +141,8 @@ unique_name_in_owner = true
 layout_mode = 1
 anchor_left = 0.5
 anchor_right = 0.5
-offset_left = -156.0
-offset_right = 72.0
+offset_left = -98.0
+offset_right = 98.0
 offset_top = 52.0
 visible = false
 grow_horizontal = 2
@@ -149,10 +152,10 @@ theme_override_styles/panel = ExtResource("panel")
 
 [node name="HintHeader" parent="HintPanel/WindowContents" node_paths=PackedStringArray("panel", "body") instance=ExtResource("window_header")]
 unique_name_in_owner = true
-title = "ui.window.tasks"
+title = "ui.menu.tutorial"
 action = 1
 dock = 5
-panel_width = 228.0
+panel_width = 196.0
 inset = Vector2(8, 52)
 panel = NodePath("../..")
 body = NodePath("../HintContent")
@@ -161,6 +164,7 @@ body = NodePath("../HintContent")
 theme_override_constants/separation = 6
 
 [node name="Hint" type="Label" parent="HintPanel/WindowContents/HintContent"]
+theme_type_variation = &"Caption"
 unique_name_in_owner = true
 size_flags_horizontal = 3
 autowrap_mode = 3
@@ -229,6 +233,7 @@ volume_db = -12.0
 [node name="PaperHat" type="Polygon2D" parent="DialogueWindow/PortraitMount/Portrait"]
 unique_name_in_owner = true
 visible = false
-position = Vector2(88, 80)
+position = Vector2(49, 43)
+scale = Vector2(0.56, 0.56)
 polygon = PackedVector2Array(-31, 0, 0, -26, 32, 0, 22, 13, -22, 13)
 color = Color(0.93, 0.9, 0.77, 1)

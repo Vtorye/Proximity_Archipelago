@@ -4,10 +4,39 @@ extends "res://tests/ui_runner.gd"
 @onready var story: StoryOverlay = $Story
 
 func _run() -> void:
-	var rules: FirstChapterRules = load("res://story/first_chapter_rules.tres")
-	story.characters = rules.characters
 	# This matrix measures layout; the gameplay runner exercises dialogue audio.
 	story.get_node("%Voice").stream = null
+	for rules: FirstChapterRules in [preload("res://story/zero_chapter_rules.tres"), preload("res://story/first_chapter_rules.tres")]:
+		story.characters = rules.characters
+		story.dialogue_resource = rules.dialogue
+		story.set_lesson_skip(rules is ZeroChapterRules)
+		await _measure_dialogue(rules.resource_path.get_file().get_basename())
+	story.finish()
+	AppSettings.language = "ru"
+	AppSettings.apply()
+	story.play("intro")
+	await frames(4)
+	story._reveal_line()
+	story._advance()
+	await frames(4)
+	story._reveal_line()
+	expect(story.get_node("%Dialogue").text == "Так… как тебя назвать…", "the queen is choosing a name")
+	var name_labels := story.get_node("%NameWindow").find_children("*", "Label", true, false)
+	expect(name_labels.filter(func(label: Label) -> bool: return label.text == "ui.story.name.title").size() == 1, "the name input has only one title")
+	var entry: LineEdit = story.get_node("%NameInput")
+	entry.text = "А"
+	entry.text_changed.emit(entry.text)
+	await story.get_node("%NameBeat").timeout
+	await story._name_tween.finished
+	await frames(4)
+	expect(story.get_node("%Dialogue").text == "О, придумала!" and not story.get_node("%NameWindow").visible, "the first typed character triggers the queen's naming idea")
+	story.finish()
+	story.queue_free()
+	await frames(8)
+	print("STORY TYPOGRAPHY ", assertions, " assertions, ", failures.size(), " failures")
+	get_tree().quit.call_deferred(0 if failures.is_empty() else 1)
+
+func _measure_dialogue(chapter: String) -> void:
 	var lines: Dictionary = story.dialogue_resource.lines
 	for locale: String in ["ru", "en"]:
 		AppSettings.language = locale
@@ -47,27 +76,5 @@ func _run() -> void:
 			await frames(4)
 			expect(story.get_node("%DialogueHeader").handle.text != "ui.chapter.conversations", "only the character name remains in the dialogue header")
 			if DisplayServer.get_name() != "headless":
-				await capture("dialogue-%s-size-%d" % [locale, size], 1)
+				await capture("%s-%s-size-%d" % [chapter, locale, size], 1)
 			print("DIALOGUE FIT ", locale, " size ", size, " tallest ", tallest, " overflow ", worst_overflow)
-	story.finish()
-	AppSettings.language = "ru"
-	AppSettings.apply()
-	story.play("intro")
-	await frames(4)
-	story._reveal_line()
-	story._advance()
-	await frames(4)
-	story._reveal_line()
-	expect(story.get_node("%Dialogue").text == "Так… как тебя назвать…", "the queen is choosing a name")
-	var name_labels := story.get_node("%NameWindow").find_children("*", "Label", true, false)
-	expect(name_labels.filter(func(label: Label) -> bool: return label.text == "ui.story.name.title").size() == 1, "the name input has only one title")
-	var entry: LineEdit = story.get_node("%NameInput")
-	entry.text = "А"
-	entry.text_changed.emit(entry.text)
-	await frames(25)
-	expect(story.get_node("%Dialogue").text == "О, придумала!" and not story.get_node("%NameWindow").visible, "the first typed character triggers the queen's naming idea")
-	story.finish()
-	story.queue_free()
-	await frames(8)
-	print("STORY TYPOGRAPHY ", assertions, " assertions, ", failures.size(), " failures")
-	get_tree().quit.call_deferred(0 if failures.is_empty() else 1)
