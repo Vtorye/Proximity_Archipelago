@@ -18,7 +18,7 @@ func _ready() -> void:
 	%Quit.pressed.connect(AppSettings.quit_game)
 	%Back.pressed.connect(_show_actions)
 	%Add.pressed.connect(_show_new_game)
-	%CancelNew.pressed.connect(_show_saves)
+	%CancelNew.pressed.connect(_close_new_game)
 	%Start.pressed.connect(_start_game)
 	%Mode.item_selected.connect(func(index: int):
 		%EndlessOptions.visible = index == 1
@@ -33,8 +33,8 @@ func _ready() -> void:
 
 func _show_actions() -> void:
 	%IslandPane.hide()
-	%Saves.hide()
-	%Actions.show()
+	%SaveOverlay.hide()
+	%Actions.focus_behavior_recursive = Control.FOCUS_BEHAVIOR_INHERITED
 	on_focus()
 
 func _show_saves() -> void:
@@ -54,16 +54,30 @@ func _show_saves() -> void:
 	%Load.disabled = %SaveList.item_count == 0
 	%Load.hide()
 	%Delete.hide()
-	%Actions.hide()
-	%NewGame.hide()
-	%Saves.show()
+	%Actions.focus_behavior_recursive = Control.FOCUS_BEHAVIOR_DISABLED
+	%SaveOverlay.show()
 	%Add.grab_focus()
 
 func _show_new_game() -> void:
-	%IslandPane.hide()
-	%Saves.hide()
-	%NewGame.show()
+	%Saves.focus_behavior_recursive = Control.FOCUS_BEHAVIOR_DISABLED
+	%NewGameOverlay.show()
 	%Mode.grab_focus()
+
+func _close_new_game() -> void:
+	%NewGameOverlay.hide()
+	%Saves.focus_behavior_recursive = Control.FOCUS_BEHAVIOR_INHERITED
+	%Add.grab_focus()
+
+func _unhandled_key_input(event: InputEvent) -> void:
+	if not event.is_action_pressed(&"ui_cancel"):
+		return
+	if %NewGameOverlay.visible:
+		_close_new_game()
+	elif %SaveOverlay.visible:
+		_show_actions()
+	else:
+		return
+	get_viewport().set_input_as_handled()
 
 func _start_game() -> void:
 	var layout: Dictionary

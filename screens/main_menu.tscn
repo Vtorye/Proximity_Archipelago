@@ -6,6 +6,8 @@
 [ext_resource type="PackedScene" path="res://game/terrain/pretty_preview.tscn" id="terrain"]
 [ext_resource type="Texture2D" path="res://game/assets/sprites/visual_novel/ant_queen/main_menu_queen.png" id="queen"]
 
+[ext_resource type="StyleBox" path="res://game/ui/dialog_panel.tres" id="dialog"]
+
 [sub_resource type="StyleBoxEmpty" id="empty"]
 [sub_resource type="StyleBoxFlat" id="menu_frame"]
 bg_color = Color(0.055, 0.09, 0.078, 0.82)
@@ -100,14 +102,6 @@ anchor_right = 0.39
 anchor_bottom = 1.0
 mouse_filter = 2
 
-[node name="Center" type="CenterContainer" parent="."]
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-
 [node name="Actions" type="VBoxContainer" parent="LeftMenu"]
 layout_mode = 2
 unique_name_in_owner = true
@@ -195,61 +189,129 @@ theme_override_styles/pressed = SubResource("empty")
 theme_override_styles/disabled = SubResource("empty")
 theme_override_styles/focus = SubResource("empty")
 
-[node name="Saves" type="HBoxContainer" parent="Center"]
+[node name="SaveOverlay" type="ColorRect" parent="."]
+unique_name_in_owner = true
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.025, 0.04, 0.035, 0.42)
+
+[node name="Center" type="CenterContainer" parent="SaveOverlay"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 100.0
+mouse_filter = 2
+
+[node name="Panel" type="PanelContainer" parent="SaveOverlay/Center"]
+theme_override_styles/panel = ExtResource("dialog")
+
+[node name="Saves" type="HBoxContainer" parent="SaveOverlay/Center/Panel"]
 unique_name_in_owner = true
 layout_mode = 2
-visible = false
 theme_override_constants/separation = 16
 
-[node name="SaveActions" type="VBoxContainer" parent="Center/Saves"]
+[node name="SaveActions" type="VBoxContainer" parent="SaveOverlay/Center/Panel/Saves"]
 layout_mode = 2
 custom_minimum_size = Vector2(230, 0)
 
-[node name="SavesTitle" type="Label" parent="Center/Saves/SaveActions"]
+[node name="SavesTitle" type="Label" parent="SaveOverlay/Center/Panel/Saves/SaveActions"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "ui.play.saves"
 horizontal_alignment = 1
 
-[node name="NewGame" type="VBoxContainer" parent="Center"]
-unique_name_in_owner = true
-layout_mode = 2
-visible = false
-custom_minimum_size = Vector2(230, 0)
-
-[node name="NewGameTitle" type="Label" parent="Center/NewGame"]
-unique_name_in_owner = true
-layout_mode = 2
-text = "ui.play.new"
-horizontal_alignment = 1
-
-[node name="SaveList" type="ItemList" parent="Center/Saves/SaveActions"]
+[node name="SaveList" type="ItemList" parent="SaveOverlay/Center/Panel/Saves/SaveActions"]
 unique_name_in_owner = true
 layout_mode = 2
 custom_minimum_size = Vector2(0, 115)
 
-[node name="Load" type="Button" parent="Center/Saves/SaveActions"]
+[node name="Load" type="Button" parent="SaveOverlay/Center/Panel/Saves/SaveActions"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "ui.voyage.continue"
 
-[node name="Delete" type="Button" parent="Center/Saves/SaveActions"]
+[node name="Delete" type="Button" parent="SaveOverlay/Center/Panel/Saves/SaveActions"]
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
 text = "ui.play.delete"
 
-[node name="Add" type="Button" parent="Center/Saves/SaveActions"]
+[node name="Add" type="Button" parent="SaveOverlay/Center/Panel/Saves/SaveActions"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "ui.play.add"
 
-[node name="Back" type="Button" parent="Center/Saves/SaveActions"]
+[node name="Back" type="Button" parent="SaveOverlay/Center/Panel/Saves/SaveActions"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "ui.common.back"
 
-[node name="Mode" type="OptionButton" parent="Center/NewGame"]
+[node name="IslandPane" type="VBoxContainer" parent="SaveOverlay/Center/Panel/Saves"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+
+[node name="IslandPanel" type="PanelContainer" parent="SaveOverlay/Center/Panel/Saves/IslandPane"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("menu_frame")
+
+[node name="IslandMargin" type="MarginContainer" parent="SaveOverlay/Center/Panel/Saves/IslandPane/IslandPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_bottom = 10
+
+[node name="IslandActions" type="VBoxContainer" parent="SaveOverlay/Center/Panel/Saves/IslandPane/IslandPanel/IslandMargin"]
+layout_mode = 2
+
+[node name="IslandTitle" type="Label" parent="SaveOverlay/Center/Panel/Saves/IslandPane/IslandPanel/IslandMargin/IslandActions"]
+layout_mode = 2
+text = "ui.play.island_saves"
+horizontal_alignment = 1
+
+[node name="IslandList" type="ItemList" parent="SaveOverlay/Center/Panel/Saves/IslandPane/IslandPanel/IslandMargin/IslandActions"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(210, 115)
+
+[node name="LoadIsland" type="Button" parent="SaveOverlay/Center/Panel/Saves/IslandPane/IslandPanel/IslandMargin/IslandActions"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "ui.voyage.continue"
+
+[node name="NewGameOverlay" type="ColorRect" parent="."]
+unique_name_in_owner = true
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.025, 0.04, 0.035, 0.42)
+
+[node name="Center" type="CenterContainer" parent="NewGameOverlay"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 188.0
+mouse_filter = 2
+
+[node name="Panel" type="PanelContainer" parent="NewGameOverlay/Center"]
+theme_override_styles/panel = ExtResource("dialog")
+
+[node name="NewGame" type="VBoxContainer" parent="NewGameOverlay/Center/Panel"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(230, 0)
+
+[node name="NewGameTitle" type="Label" parent="NewGameOverlay/Center/Panel/NewGame"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "ui.play.new"
+horizontal_alignment = 1
+
+[node name="Mode" type="OptionButton" parent="NewGameOverlay/Center/Panel/NewGame"]
 unique_name_in_owner = true
 layout_mode = 2
 item_count = 2
@@ -259,69 +321,35 @@ popup/item_0/id = 0
 popup/item_1/text = "ui.play.endless"
 popup/item_1/id = 1
 
-[node name="SkipLessons" type="CheckButton" parent="Center/NewGame"]
+[node name="SkipLessons" type="CheckButton" parent="NewGameOverlay/Center/Panel/NewGame"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "ui.story.skip_tutorial"
 
-[node name="EndlessOptions" type="VBoxContainer" parent="Center/NewGame"]
+[node name="EndlessOptions" type="VBoxContainer" parent="NewGameOverlay/Center/Panel/NewGame"]
 unique_name_in_owner = true
 layout_mode = 2
 visible = false
 
-[node name="WavesOption" type="CheckButton" parent="Center/NewGame/EndlessOptions"]
+[node name="WavesOption" type="CheckButton" parent="NewGameOverlay/Center/Panel/NewGame/EndlessOptions"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "ui.play.waves"
 
-[node name="TimerOption" type="CheckButton" parent="Center/NewGame/EndlessOptions"]
+[node name="TimerOption" type="CheckButton" parent="NewGameOverlay/Center/Panel/NewGame/EndlessOptions"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "ui.play.timer"
 
-[node name="Start" type="Button" parent="Center/NewGame"]
+[node name="Start" type="Button" parent="NewGameOverlay/Center/Panel/NewGame"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "ui.play.start"
 
-[node name="CancelNew" type="Button" parent="Center/NewGame"]
+[node name="CancelNew" type="Button" parent="NewGameOverlay/Center/Panel/NewGame"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "ui.common.back"
-
-[node name="IslandPane" type="VBoxContainer" parent="Center/Saves"]
-unique_name_in_owner = true
-visible = false
-layout_mode = 2
-
-[node name="IslandPanel" type="PanelContainer" parent="Center/Saves/IslandPane"]
-layout_mode = 2
-theme_override_styles/panel = SubResource("menu_frame")
-
-[node name="IslandMargin" type="MarginContainer" parent="Center/Saves/IslandPane/IslandPanel"]
-layout_mode = 2
-theme_override_constants/margin_left = 12
-theme_override_constants/margin_top = 10
-theme_override_constants/margin_right = 12
-theme_override_constants/margin_bottom = 10
-
-[node name="IslandActions" type="VBoxContainer" parent="Center/Saves/IslandPane/IslandPanel/IslandMargin"]
-layout_mode = 2
-
-[node name="IslandTitle" type="Label" parent="Center/Saves/IslandPane/IslandPanel/IslandMargin/IslandActions"]
-layout_mode = 2
-text = "ui.play.island_saves"
-horizontal_alignment = 1
-
-[node name="IslandList" type="ItemList" parent="Center/Saves/IslandPane/IslandPanel/IslandMargin/IslandActions"]
-unique_name_in_owner = true
-layout_mode = 2
-custom_minimum_size = Vector2(210, 115)
-
-[node name="LoadIsland" type="Button" parent="Center/Saves/IslandPane/IslandPanel/IslandMargin/IslandActions"]
-unique_name_in_owner = true
-layout_mode = 2
-text = "ui.voyage.continue"
 
 [node name="ConfirmDelete" type="ConfirmationDialog" parent="."]
 unique_name_in_owner = true

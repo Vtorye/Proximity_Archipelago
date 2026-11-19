@@ -124,6 +124,17 @@ func _run() -> void:
 		await _layout_only()
 		_finish()
 		return
+	var menu: Screen = Router._current
+	await click(menu.get_node("%Play"))
+	expect(menu.get_node("%Actions").is_visible_in_tree(), "opening saves keeps the front menu visible")
+	await click(menu.get_node("%Add"))
+	expect(menu.get_node("%Saves").is_visible_in_tree(), "new game opens above the save list")
+	await click_at(menu.get_node("%Maps").get_global_rect().get_center())
+	expect(Router._current == menu and menu.get_node("%NewGame").is_visible_in_tree(), "modal backdrop blocks background actions")
+	await key(KEY_ESCAPE)
+	expect(get_viewport().gui_get_focus_owner() == menu.get_node("%Add"), "closing new game restores save-list focus")
+	await key(KEY_ESCAPE)
+	expect(get_viewport().gui_get_focus_owner() == menu.get_node("%Play"), "closing saves restores menu focus")
 	await capture("01-main-menu")
 	await key(KEY_TAB)
 	expect(get_viewport().gui_get_focus_owner() != null, "keyboard focus is visible")
