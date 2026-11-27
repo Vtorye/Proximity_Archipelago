@@ -124,6 +124,17 @@ func _run() -> void:
 		await _layout_only()
 		_finish()
 		return
+	var menu: Screen = Router._current
+	await click(menu.get_node("%Play"))
+	expect(menu.get_node("%Actions").is_visible_in_tree(), "opening saves keeps the front menu visible")
+	await click(menu.get_node("%Add"))
+	expect(menu.get_node("%Saves").is_visible_in_tree(), "new game opens above the save list")
+	await click_at(menu.get_node("%Maps").get_global_rect().get_center())
+	expect(Router._current == menu and menu.get_node("%NewGame").is_visible_in_tree(), "modal backdrop blocks background actions")
+	await key(KEY_ESCAPE)
+	expect(get_viewport().gui_get_focus_owner() == menu.get_node("%Add"), "closing new game restores save-list focus")
+	await key(KEY_ESCAPE)
+	expect(get_viewport().gui_get_focus_owner() == menu.get_node("%Play"), "closing saves restores menu focus")
 	await capture("01-main-menu")
 	await key(KEY_TAB)
 	expect(get_viewport().gui_get_focus_owner() != null, "keyboard focus is visible")
@@ -163,15 +174,16 @@ func _run() -> void:
 	expect((screen.world.registry.at(Vector2i(24, 25)) as House).residents.size() == 5, "starter nest owns five residents")
 	expect(screen.world.population.agents().any(func(ant: AntAgent): return ant.status == AntAgent.Status.WALKING), "starter ants visibly leave home")
 	await capture("06-colony")
+	await _check_canteen_popup()
 	await click_at(Vector2(320, 200))
 	expect(not Router.has_overlay(), "left click never opens construction")
 	await click_at(cell_point(Vector2i(26, 25)), MOUSE_BUTTON_RIGHT)
 	expect(not Router.has_overlay(), "right click no longer opens the retired construction popup")
-	await key(KEY_SPACE)
-	expect(Router.top_overlay() is ConstructionMenu and get_tree().paused, "space opens the construction planner")
+	await key(KEY_B)
+	expect(screen._construction != null and screen.hud.controls[&"build"].button_pressed, "B opens the construction planner")
 	await capture("07-construction-planner")
-	await key(KEY_SPACE)
-	expect(not Router.has_overlay() and not get_tree().paused, "space commits the plan and resumes")
+	await click(screen._construction.controls[&"cancel"])
+	expect(screen._construction == null and not get_tree().paused, "cancel closes the palette and returns to the map")
 	await click(screen.hud.controls[&"zoom_in"])
 	expect(screen.camera.level == 3, "zoom in button")
 	await click(screen.hud.controls[&"zoom_out"])
@@ -250,6 +262,11 @@ func _run() -> void:
 	await capture("26-return-to-menu")
 	# A result arriving during an exit must never survive that session.
 	await click(Router._current.controls[&"play"])
+	await click(Router._current.get_node("%Add"))
+	var mode: OptionButton = Router._current.get_node("%Mode")
+	mode.select(1)
+	mode.item_selected.emit(1)
+	await click(Router._current.get_node("%Start"))
 	await frames(50)
 	screen = Router._current
 	# Legacy UI regression retains the fixed-goal fixture; task behavior has its own runner.
@@ -260,6 +277,29 @@ func _run() -> void:
 	expect(Router.current_screen_key() == &"main_menu" and not Router.has_overlay() and not get_tree().paused, "completion during navigation cannot reopen a result")
 	AppSettings.reset_defaults()
 	_finish()
+
+func _check_canteen_popup() -> void:
+	var canteen: Canteen = screen.world.registry.canteens()[0]
+	await click_at(cell_point(canteen.cell))
+	var menu: NestMenu = screen.nest_popup
+	expect(menu != null and menu.canteen == canteen and menu._inventory_tab.visible, "clicking the canteen opens its food inventory")
+	if menu == null or menu.canteen != canteen:
+		return
+	expect(menu._stock_labels.keys() == [WorldInventory.FOOD_ID] and not menu.controls.has(&"residents"), "canteen inventory contains food and has no residents tab")
+	await click(menu.controls[&"orders"])
+	expect(menu._orders_tab.visible and not menu._funds.visible and menu._order_rows.size() == 1, "canteen orders show only the food delivery settings")
+	var spins: Dictionary = menu._order_rows[str(WorldInventory.FOOD_ID)].spins
+	spins.max.value = 5
+	spins.min.value = 2
+	var once: SpinBox = spins.once
+	await click(once.get_line_edit())
+	once.get_line_edit().text = "4"
+	await key(KEY_ENTER)
+	expect(canteen.food_minimum == 2 and canteen.food_maximum == 5 and canteen.requested_food == 4, "editing the canteen order changes the actual delivery settings")
+	await capture("06a-canteen-orders")
+	await key(KEY_ESCAPE)
+	expect(screen.nest_popup == null and not get_tree().paused, "escape closes the canteen menu without pausing the match")
+	canteen.restore_delivery_settings({})
 
 func _layout_only() -> void:
 	var dimensions: Vector2i = display_size if display_size != Vector2i.ZERO else get_window().size
@@ -279,8 +319,8 @@ func _layout_only() -> void:
 	open_fixed_match()
 	await frames(50)
 	screen = Router._current
-	await key(KEY_SPACE)
-	var menu := Router.top_overlay() as ConstructionMenu
+	await key(KEY_B)
+	var menu := screen._construction as ConstructionMenu
 	expect(menu != null, "layout opens construction")
 	await choose_building(menu, &"house")
 	for factor: float in [0.5, 0.75, 1.0]:
@@ -288,11 +328,18 @@ func _layout_only() -> void:
 		AppSettings.apply()
 		await frames(5)
 		expect(area.encloses(menu.panel.get_global_rect()), "palette fits at %d%%" % roundi(factor * 100))
-		expect(area.encloses(menu.get_node("Panel/WindowContents/Body/Palette/Readout").get_global_rect()), "inspector fits at %d%%" % roundi(factor * 100))
+		expect(area.encloses(menu.buildings_panel.get_global_rect()), "inspector fits at %d%%" % roundi(factor * 100))
 		expect(area.encloses(screen.hud.controls[&"settings"].get_global_rect()), "HUD settings stays reachable")
-		expect(area.encloses(menu.controls[&"apply"].get_global_rect()), "apply remains reachable")
+		for button: Button in screen.hud.get_node("%Bottom").find_children("*", "Button", true, false):
+			if button.is_visible_in_tree():
+				expect(area.encloses(button.get_global_rect()), "%s stays in bounds at %d%%" % [button.name, roundi(factor * 100)])
 		await capture(tag + "build-%d" % roundi(factor * 100), 1)
-	await key(KEY_SPACE)
+	screen.hud.toast(tr("ui.storage.protected"))
+	await frames(4)
+	var toast: Label = screen.hud.get_node("%Toast")
+	var bottom: Control = screen.hud.get_node("%Bottom")
+	expect(toast.get_global_rect().end.y <= bottom.get_global_rect().position.y, "notifications stay above the wrapped toolbar")
+	await click(menu.controls[&"cancel"])
 	await click(screen.hud.controls[&"settings"])
 	await frames(8)
 	await capture(tag + "pause")

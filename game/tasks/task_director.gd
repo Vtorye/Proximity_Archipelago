@@ -18,8 +18,9 @@ var _busy := false
 var _speed := 1.0
 var message := ""
 var _upgrade_message := ""
+var _construction_progress: Dictionary[StringName, int] = {}
 
-func configure(colony: World, definitions: TaskDeck, random_seed: int = 0) -> void:
+func configure(colony: World, definitions: TaskDeck, random_seed: int = 0, opening_order: TaskSpec = null) -> void:
 	world = colony
 	deck = definitions
 	_rng.seed = random_seed
@@ -29,7 +30,7 @@ func configure(colony: World, definitions: TaskDeck, random_seed: int = 0) -> vo
 	world.build_controller.order_placed.connect(changed.emit)
 	world.build_controller.order_completed.connect(_on_order_completed)
 	world.construction_service.order_cancelled.connect(changed.emit)
-	_next_level()
+	_next_level(opening_order)
 
 func stage() -> TaskStage:
 	return deck.stages[mini(level - 1, deck.stages.size() - 1)]
@@ -37,10 +38,18 @@ func stage() -> TaskStage:
 func placed_order(task: TaskSpec) -> TaskBuildOrder:
 	return world.construction_service.active_order_for(task)
 
-func can_place(order: TaskBuildOrder) -> bool:
-	return order != null and order.task != null and slots.has(order.task) and order.variant != null \
-		and order.task.variants.has(order.variant) and order.variant.building != null \
-		and not pending_reward and world.match_controller.is_active() and placed_order(order.task) == null
+func can_place(order: TaskBuildOrder, drafted := 0) -> bool:
+	if order == null or order.task == null or not slots.has(order.task) or order.variant == null \
+		or not order.task.variants.has(order.variant) or order.variant.building == null \
+		or pending_reward or not world.match_controller.is_active():
+		return false
+	var placed := placed_order(order.task)
+	if order.task.build_count == 1:
+		return placed == null and drafted == 0
+	if placed != null and placed.variant != order.variant:
+		return false
+	var pending := world.construction_service.active_order_count(order.task)
+	return drafted + pending + _construction_progress.get(order.task.id, 0) < order.task.build_count
 
 ## Selecting an offer only prepares placement. A committed site locks its task.
 func start_order(task_id: StringName, variant_id: StringName) -> TaskBuildOrder:
@@ -59,6 +68,12 @@ func _on_order_completed(order: TaskBuildOrder) -> void:
 	var index := slots.find(order.task)
 	if index < 0:
 		return
+	var done: int = _construction_progress.get(order.task.id, 0) + 1
+	if done < order.task.build_count:
+		_construction_progress[order.task.id] = done
+		changed.emit()
+		return
+	_construction_progress.erase(order.task.id)
 	var reward_seconds := order.time_reward()
 	slots[index] = _pool.pop_back() if not _pool.is_empty() else null
 	closed += 1
@@ -130,16 +145,20 @@ func _increase_speed(factor: float) -> void:
 	for ant in world.population.agents(): ant.speed *= factor
 	world.planner.queue_workplace_refresh()
 
-func _next_level() -> void:
+func _next_level(opening_order: TaskSpec = null) -> void:
 	if level > 0: message = _upgrade_message
 	level += 1
 	closed = 0
+	_construction_progress.clear()
 	_pool = stage().tasks.duplicate()
 	for index in range(_pool.size() - 1, 0, -1):
 		var other: int = _rng.randi_range(0, index)
 		var temporary: TaskSpec = _pool[index]
 		_pool[index] = _pool[other]
 		_pool[other] = temporary
+	if opening_order != null and _pool.has(opening_order):
+		_pool.erase(opening_order)
+		_pool.append(opening_order)
 	slots.clear()
 	for index in range(3): slots.append(_pool.pop_back() if not _pool.is_empty() else null)
 	for building in world.registry.all(): _skin(building)
@@ -167,6 +186,7 @@ func capture_state() -> Dictionary:
 		"message": message, "rng": _rng.state,
 		"slots": slots.map(func(task: TaskSpec): return str(task.id) if task != null else ""),
 		"pool": _pool.map(func(task: TaskSpec): return str(task.id)),
+		"construction_progress": _construction_progress.duplicate(),
 	}
 
 func restore_state(state: Dictionary) -> void:
@@ -178,6 +198,7 @@ func restore_state(state: Dictionary) -> void:
 	_rng.state = state.rng
 	level = state.level
 	closed = state.closed
+	_construction_progress.assign(state.get("construction_progress", {}))
 	slots.clear()
 	for id: String in state.slots:
 		slots.append(definitions.get(deck.legacy_task_ids.get(id, id)))

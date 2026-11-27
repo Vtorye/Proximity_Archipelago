@@ -14,7 +14,7 @@ var _placed: TaskBuildOrder
 func configure(director: TaskDirector, definition: TaskSpec, number: int) -> void:
 	task = definition
 	_controller = director.world.build_controller
-	%Title.text = tr("ui.task.numbered_title") % [director.level, number]
+	%Title.text = tr(task.title) if task.build_count > 1 else tr("ui.task.numbered_title") % [director.level, number]
 	_placed = director.placed_order(task)
 	for variant in task.variants:
 		if variant == null or variant.building == null:
@@ -38,9 +38,9 @@ func set_selection(selection: TaskBuildOrder) -> void:
 	for offer in _offers:
 		offer.set_selected(selected != null and selected.task == task and selected.variant == offer.order.variant)
 
-func refresh_prices() -> void:
+func refresh_prices(pending: Dictionary[String, int] = {}) -> void:
 	for offer in _offers:
-		offer.refresh_price(_controller)
+		offer.refresh_price(_controller, pending)
 
 func refresh_availability(director: TaskDirector) -> void:
 	for offer in _offers:

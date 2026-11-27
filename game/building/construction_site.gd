@@ -12,7 +12,6 @@ var progress := 0.0
 var builder: AntAgent
 var active := true
 var _field: NavigationField
-var _revision := -1
 
 func material_count() -> int:
 	var count := 0
@@ -24,12 +23,21 @@ func supplied() -> bool:
 		if delivered.get(item.type.id, 0) < item.amount: return false
 	return true
 
+func entry_cells() -> Array[Vector2i]:
+	return service.controller.construction_entries(option, cell) if service != null else super.entry_cells()
+
 func route(from_cell: Vector2i) -> Route:
+	var navigation := service.controller.route_service
+	if option is TileBuildOption and _field == null:
+		# A tile has one entrance. Reuse a source field when available, with native A* as fallback.
+		return navigation.request_route(from_cell, cell)
+	return navigation.make_route(flow_field().path(from_cell))
+
+func flow_field() -> NavigationField:
 	var navigation: RouteService = service.controller.route_service
-	if _revision != navigation.revision:
-		_field = navigation.reverse_field(entry_cells())
-		_revision = navigation.revision
-	return navigation.make_route(_field.path(from_cell))
+	if _field == null or _field.revision != navigation.revision:
+		_field = navigation.reverse_field(entry_cells(), _field)
+	return _field
 
 func display_title() -> String:
 	return TranslationServer.translate("ui.site.title") % TranslationServer.translate(option.display_name)

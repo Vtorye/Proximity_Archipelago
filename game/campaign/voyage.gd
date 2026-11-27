@@ -7,6 +7,9 @@ var seed_value := 1
 var score := 0
 var offers: Array[Dictionary] = []
 var departed := false
+var requires_evacuation := false
+var travelling_characters: Array[String] = []
+var departure_manifest: Dictionary = {}
 var _destinations: Dictionary[int, LevelData] = {}
 var _rules: VoyageRules
 
@@ -24,6 +27,13 @@ func refresh() -> void:
 
 func _built(building: Building) -> void:
 	if _rules.ship == null or building.option == null or building.option.id != _rules.ship.id or building is ConstructionSite or departed: return
+	if requires_evacuation:
+		return
+	complete_departure()
+
+func complete_departure() -> void:
+	if departed:
+		return
 	departed = true
 	score += world.tasks.completed_count * _rules.points_per_task + maxi(0, roundi(world.match_controller.time_remaining)) + island * _rules.points_per_island
 	offers.clear()
@@ -49,15 +59,19 @@ func travel(index: int) -> Dictionary:
 		return {}
 	var choice: Dictionary = offers[index]
 	layout["journey"] = {"island": island + 1, "seed": choice.seed, "score": score, "wealth": wealth(), "buffs": world.tasks.buffs.duplicate()}
-	layout["wave_mode"] = world.combat != null
+	layout.journey["characters"] = travelling_characters.duplicate()
+	layout["wave_mode"] = world.combat != null and not requires_evacuation
 	return layout
 
 func wealth() -> Dictionary:
+	if requires_evacuation:
+		return departure_manifest.duplicate()
 	var result := {}
 	for type in world.inventory.registered_types(): result[str(type.id)] = world.inventory.quantity(type)
 	return result
 
 func apply(data: Dictionary) -> void:
+	travelling_characters.assign(data.get("characters", []))
 	island = int(data.get("island", 1))
 	seed_value = int(data.get("seed", 1))
 	score = int(data.get("score", 0))
@@ -82,9 +96,14 @@ func capture_state() -> Dictionary:
 	return {
 		"island": island, "seed_value": seed_value, "score": score,
 		"departed": departed, "offers": offers.duplicate(true),
+		"characters": travelling_characters.duplicate(),
+		"evacuation": requires_evacuation, "manifest": departure_manifest.duplicate(),
 	}
 
 func restore_state(state: Dictionary) -> void:
+	requires_evacuation = state.get("evacuation", false)
+	departure_manifest = state.get("manifest", {}).duplicate()
+	travelling_characters.assign(state.get("characters", []))
 	island = state.island
 	seed_value = state.seed_value
 	score = state.score

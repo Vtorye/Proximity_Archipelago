@@ -65,6 +65,12 @@ func _run() -> void:
 	for key in [&"apply", &"cancel", &"demolish"]:
 		expect(not menu.controls[key].is_visible_in_tree(), "plan action closes with the palette")
 	expect(menu.controls[&"undo"].is_visible_in_tree(), "stroke undo stays on the HUD")
+	var undo_button: Button = menu.controls[&"undo"]
+	var pan_button: Button = menu.controls[&"move"]
+	expect(pan_button.get_parent() == undo_button.get_parent() and pan_button.get_index() == undo_button.get_index() + 1 and pan_button.icon != null and undo_button.icon != null, "icon-only pan and undo sit together on the HUD")
+	await click(undo_button)
+	expect(menu.draft.size() == 0, "the HUD undo icon removes the stroke")
+	await click_at(cell_point(start))
 	var undo := InputEventKey.new()
 	undo.physical_keycode = KEY_Z
 	undo.ctrl_pressed = true
@@ -83,12 +89,12 @@ func _run() -> void:
 	var categories: PanelContainer = panel.get_node("%Categories")
 	var task_strip: PanelContainer = panel.get_node("%TaskStrip")
 	var task_scroll: ScrollContainer = panel.get_node("%Scroll")
-	expect(categories.find_children("*", "Button", true, false).size() == 1 and not task_strip.visible, "tasks open with a single construction category")
+	expect(categories.get_node("WindowContents/Content").find_children("*", "Button", true, false).size() == 1 and not task_strip.visible, "tasks open with a single construction category and a separate window toggle")
 	await click(panel.get_node("%Category"))
 	var strip_rect := task_strip.get_global_rect()
 	var categories_rect := categories.get_global_rect()
 	expect(task_strip.visible and is_equal_approx(strip_rect.end.y, build_strip_bottom) and is_equal_approx(categories_rect.end.y, strip_rect.end.y), "the task strip uses the ordinary construction strip's bottom alignment")
-	expect(strip_rect.position.x > categories_rect.end.x and strip_rect.size.y <= get_viewport().get_visible_rect().size.y / 5.0, "the separated task strip is beside the category and at most one fifth of the screen")
+	expect(strip_rect.position.x > categories_rect.end.x and task_scroll.size.y <= get_viewport().get_visible_rect().size.y / 5.0, "the task content stays beside its category and within one fifth of the screen below the title bar")
 	var task: TaskSpec = world.tasks.slots[0]
 	var choice: TaskVariant = task.variant_by_id(&"diversion")
 	for index in range(world.tasks.slots.size()):
@@ -103,7 +109,7 @@ func _run() -> void:
 	AppSettings.apply()
 	await frames(7)
 	var large_card := _offer_card(panel, 0, 1)
-	expect(get_viewport().get_visible_rect().encloses(task_strip.get_global_rect()) and task_strip.size.y <= get_viewport().get_visible_rect().size.y / 5.0, "the task strip keeps its height limit at maximum text size")
+	expect(get_viewport().get_visible_rect().encloses(task_strip.get_global_rect()) and task_scroll.size.y <= get_viewport().get_visible_rect().size.y / 5.0, "task content keeps its height limit at maximum text size")
 	expect(large_card.get_global_rect().encloses(large_card._cost.get_global_rect()), "the price fits inside the card at maximum text size")
 	expect(large_card._cost.get_theme_font_size(&"normal_font_size") == AppSettings.minimum_text_size(), "compact task prices respect the larger text setting")
 	AppSettings.text_size = AppSettings.TYPOGRAPHY.default_index
@@ -133,6 +139,22 @@ func _run() -> void:
 	expect(is_equal_approx(_offer_card(panel, 0, 0).get_global_rect().position.y, card.get_global_rect().position.y), "variants are arranged horizontally")
 	await click(card._info)
 	expect(screen.hud._task_details.visible and screen._construction == null, "the card info opens shared details without selecting the variant")
+	for text_size in [0, AppSettings.TYPOGRAPHY.minimum_sizes.size() - 1]:
+		AppSettings.text_size = text_size
+		AppSettings.apply()
+		await frames(5)
+		var details: BuildDetailsPanel = screen.hud._task_details
+		var description: Label = details.get_node("%Description")
+		var body_size := description.get_theme_font_size(&"font_size")
+		var ordinary_size := maxi(AppSettings.minimum_text_size(), AppSettings.TYPOGRAPHY.body_size)
+		expect(body_size < ordinary_size, "i descriptions use smaller text than the main interface")
+		expect(details.get_node("%Parameters").get_theme_font_size(&"font_size") == body_size and details.get_node("%Price").get_theme_font_size(&"normal_font_size") == body_size, "description, parameters and prices share compact typography")
+		if DisplayServer.get_name() != "headless":
+			await capture("details-text-%d" % text_size, 1)
+	AppSettings.text_size = AppSettings.TYPOGRAPHY.default_index
+	AppSettings.apply()
+	await frames(5)
+	card = _offer_card(panel, 0, 1)
 	await click(card)
 	menu = screen._construction
 	if menu != null: await click(menu.controls[&"cancel"])
@@ -263,7 +285,7 @@ func _run() -> void:
 
 func _check_new_nest_popup(world: World) -> void:
 	var controller := world.build_controller
-	var house_option: SceneBuildOption = preload("res://game/building/options/house.tres")
+	var house_option: SceneBuildOption = preload("res://game/building/options/barracks.tres")
 	var cell := Vector2i(29, 26)
 	var placed := controller.try_build(house_option, cell)
 	var site := controller.construction.at(cell)

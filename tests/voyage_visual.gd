@@ -28,11 +28,18 @@ func _run() -> void:
 	await click(_button(editor, "ui.common.main_menu"))
 	await frames(25)
 	await click(Router._current.controls[&"play"])
+	await click(Router._current.get_node("%Add"))
+	var mode: OptionButton = Router._current.get_node("%Mode")
+	mode.select(1)
+	mode.item_selected.emit(1)
+	await click(Router._current.get_node("%Start"))
 	await frames(30)
 	expect(Router._current.world.map_size == Vector2i(136, 84) and Router._current.world.combat == null, "Play opens the selected standard map")
 	Router.goto(&"main_menu")
 	await frames(30)
-	await click(Router._current.controls[&"waves"])
+	var voyage_layout := LevelStore.load_level(LevelStore.starting_level(true))
+	voyage_layout["wave_mode"] = true
+	Router.goto(&"match", voyage_layout)
 	await frames(30)
 	screen = Router._current
 	var world: World = screen.world
@@ -90,9 +97,16 @@ func _run() -> void:
 	await capture("06-save-game", 30)
 	await click(Router.top_overlay().controls[&"main"])
 	await frames(25)
-	expect(Router._current.controls.has(&"continue"), "saved game exposes Continue in the main menu")
+	await click(Router._current.controls[&"play"])
+	var saves: ItemList = Router._current.get_node("%SaveList")
+	for index in range(saves.item_count):
+		if saves.get_item_metadata(index).path == SessionSave.PATH:
+			saves.select(index)
+			saves.item_selected.emit(index)
+			break
+	expect(not saves.get_selected_items().is_empty() and saves.get_item_metadata(saves.get_selected_items()[0]).path == SessionSave.PATH, "the existing voyage is listed in Play")
 	await capture("07-continue-menu", 25)
-	await click(Router._current.controls[&"continue"])
+	await click(Router._current.get_node("%LoadIsland"))
 	await frames(30)
 	screen = Router._current
 	world = screen.world

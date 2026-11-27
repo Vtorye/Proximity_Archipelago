@@ -3,6 +3,8 @@ extends Node2D
 ## World-local combat owns threats, damage, defenses and traps; it never changes production policy.
 signal changed
 var world: World
+var priority_target: QueenActor
+var automatic_waves := true
 @export var enabled := false
 @export var rules: WaveRules
 @export var enemy_scenes: Array[PackedScene] = []
@@ -11,7 +13,6 @@ var spiders: Array[SpiderAgent] = []
 var traps: Dictionary[Vector2i, SpiderTrap] = {}
 var _health: Dictionary[Building, int] = {}
 var _fields: Dictionary[Building, NavigationField] = {}
-var _revision := -1
 var _time := 0.0
 var _bolts: Array[Dictionary] = []
 
@@ -63,8 +64,19 @@ func _configure_ant(ant: AntAgent) -> void:
 
 func _register(building: Building) -> void:
 	_health[building] = maximum_health(building)
+	if building is Workplace and not building.colony_owned:
+		building.improvement_changed.connect(_reset_improvement_health.bind(building))
+
+func _reset_improvement_health(building: Building) -> void:
+	if _health.has(building):
+		_health[building] = maximum_health(building)
+		changed.emit()
 
 func _unregister(building: Building) -> void:
+	if building is Workplace:
+		var reset := _reset_improvement_health.bind(building)
+		if building.improvement_changed.is_connected(reset):
+			building.improvement_changed.disconnect(reset)
 	_health.erase(building)
 	_fields.erase(building)
 
@@ -98,6 +110,7 @@ func alive(target) -> bool:
 	if not is_instance_valid(target) or not target.is_inside_tree() or target.is_queued_for_deletion(): return false
 	if target is AntAgent: return target.status != AntAgent.Status.DEAD
 	if target is SpiderAgent: return target.health > 0
+	if target is QueenActor: return target.health > 0
 	return target is Building and _health.has(target)
 
 func can_melee(from: Vector2, target: Node2D) -> bool:
@@ -110,30 +123,44 @@ func can_melee(from: Vector2, target: Node2D) -> bool:
 func approach(target: Node2D, from: Vector2i) -> Route:
 	if not alive(target): return Route.invalid()
 	if target is Building:
-		if _revision != world.route_service.revision:
-			_fields.clear()
-			_revision = world.route_service.revision
 		var building := target as Building
-		if not _fields.has(building): _fields[building] = world.route_service.reverse_field(building.entry_cells())
-		return world.route_service.make_route(_fields[building].path(from))
+		var field: NavigationField = _fields.get(building)
+		if field == null or field.revision != world.route_service.revision:
+			field = world.route_service.reverse_field(building.entry_cells(), field)
+			_fields[building] = field
+		return world.route_service.make_route(field.path(from))
 	return world.route_service.request_route(from, world.route_service.world_to_cell(target.global_position))
 
+func is_spider_target(building: Variant) -> bool:
+	if not alive(building):
+		return false
+	if building is QueenActor:
+		return true
+	if not building is Building:
+		return false
+	if building is Workplace:
+		return building.improvement != null or (building.colony_owned and (not building.finite_supply or building.remaining_supply > 0))
+	return building.colony_owned
+
 func prey(cell: Vector2i) -> Node2D:
-	var target: Node2D
+	if alive(priority_target):
+		if approach(priority_target, cell).is_valid():
+			return priority_target
+		# Trace the land route to the queen and break the first blocking structure.
+		var terrain := TileGrid.new()
+		terrain.setup(world.map, [])
+		var pathfinder := preload("res://game/navigation/astar_path_finder.gd").new()
+		pathfinder.build(terrain)
+		for point in pathfinder.find_path(cell, world.route_service.world_to_cell(priority_target.global_position)):
+			var obstruction := world.registry.at(point)
+			if obstruction != null and is_spider_target(obstruction):
+				return obstruction
+		return null
+	var target: Building
 	var best := INF
-	var point: Vector2 = world.route_service.cell_to_world(cell)
-	for ant in world.population.agents():
-		var distance: float = point.distance_to(ant.global_position) / world.route_service.cell_size()
-		if distance > rules.detection_cells: continue
-		var route: Route = approach(ant, cell)
-		if not route.is_valid(): continue
-		var score: float = route.cost * (0.5 if ant.role == AntAgent.Role.WARRIOR else 1.0)
-		if score < best:
-			best = score
-			target = ant
-	if target != null: return target
 	for building in world.registry.all():
-		if building is Workplace and building.finite_supply and building.remaining_supply <= 0 and building.improvement == null: continue
+		if not is_spider_target(building):
+			continue
 		var route: Route = approach(building, cell)
 		if route.is_valid() and route.cost < best:
 			best = route.cost
@@ -152,18 +179,29 @@ func nearest_spider(point: Vector2, cells: float) -> SpiderAgent:
 
 func damage(target: Node2D, amount: int) -> void:
 	if amount <= 0 or not alive(target): return
-	if target is AntAgent:
+	if target is QueenActor:
+		target.take_damage(amount)
+	elif target is AntAgent:
 		target.take_damage(amount, AntAgent.DeathCause.ENEMY)
 	elif target is SpiderAgent:
 		target.take_damage(amount)
 	elif target is Building:
 		var building := target as Building
+		if not is_spider_target(building):
+			return
 		_health[building] -= amount
 		if _health[building] <= 0: _destroy(building)
 	queue_redraw()
 	changed.emit()
 
 func _destroy(building: Building) -> void:
+	if building is Workplace and not building.colony_owned:
+		var improvement_id: StringName = building.improvement.id
+		building.remove_improvement()
+		world.planner.queue_workplace_refresh()
+		world.prices.record(GameEvents.Kind.BUILDING_DEMOLISHED, improvement_id)
+		world.build_controller.changed.emit()
+		return
 	var cells: Array[Vector2i] = building.footprint()
 	if building is ConstructionSite:
 		world.build_controller._remove_site(building)
@@ -178,7 +216,12 @@ func _destroy(building: Building) -> void:
 	if not world.registry.all().any(func(item: Building) -> bool: return item is House): world.match_controller.lose_colony()
 
 func place_trap(cell: Vector2i) -> SpiderTrap:
-	if traps.has(cell) or not world.route_service.walkable(cell) or world.route_service.entry_cost(cell) >= 0.5: return null
+	if traps.has(cell) or not world.route_service.walkable(cell):
+		return null
+	var map := world.map as TerrainMap
+	var surface: TerrainType = map.surface_at(cell) if map != null else null
+	if surface == null or surface.kind != TerrainType.Kind.ROAD:
+		return null
 	var trap := SpiderTrap.new()
 	trap.cell = cell
 	trap.director = self
@@ -197,18 +240,10 @@ func clear_trap(cell: Vector2i) -> bool:
 	changed.emit()
 	return true
 
-func ruin_road(cell: Vector2i) -> bool:
-	if world.route_service.entry_cost(cell) <= 0 or world.route_service.entry_cost(cell) >= 0.5 or rules.ruined_road == null: return false
-	var ground: TileBuildOption = rules.ruined_road
-	var map: TileMapLayer = world.map
-	world.build_controller.apply_surface(ground, cell)
-	world.route_service.update_cells([cell], world.registry.blocked_cells())
-	world.prices.record(GameEvents.Kind.TERRAIN_CHANGED, ground.id)
-	return true
-
 func _physics_process(delta: float) -> void:
 	if not running(): return
-	spawner.tick(delta)
+	if automatic_waves:
+		spawner.tick(delta)
 	for building in world.registry.all():
 		if not building is DefenseBuilding or building.kind != DefenseBuilding.Kind.TOWER: continue
 		building.shot_timer = maxf(0.0, building.shot_timer - delta)

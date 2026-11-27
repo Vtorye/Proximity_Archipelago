@@ -5,10 +5,71 @@ const PATH := "user://voyage.save"
 const VERSION := 1
 const LIMIT := 32 * 1024 * 1024
 
-static func write(world: World, path := PATH) -> Error:
+static func new_path() -> String:
+	return "user://voyage-%s.save" % Crypto.new().generate_random_bytes(16).hex_encode()
+
+static func paths() -> PackedStringArray:
+	var result := PackedStringArray()
+	for filename: String in DirAccess.get_files_at("user://"):
+		var base := filename.trim_suffix(".bak")
+		if not base.begins_with("voyage-") or base.get_extension() != "save":
+			continue
+		var path := "user://".path_join(base)
+		if not result.has(path):
+			result.append(path)
+	if FileAccess.file_exists(PATH) or FileAccess.file_exists(PATH + ".bak"):
+		result.append(PATH)
+	return result
+
+static func delete_slot(path: String) -> Error:
+	if not paths().has(path):
+		return ERR_FILE_NOT_FOUND
+	var checkpoint := FirstChapter.CHECKPOINT if path == PATH else path + ".checkpoint"
+	var files: Array[String] = []
+	files.assign(island_paths(path).values())
+	files.append(checkpoint)
+	files.append(path)
+	for base in files:
+		for suffix in [".tmp", ".bak", ""]:
+			var file_path: String = base + suffix
+			if FileAccess.file_exists(file_path):
+				var error := DirAccess.remove_absolute(file_path)
+				if error != OK:
+					return error
+	return OK
+
+static func island_number(snapshot: Dictionary) -> int:
+	# Voyage counts its starting island as one. The campaign menu starts at zero.
+	var voyage: Dictionary = snapshot.get("voyage", {})
+	return maxi(0, int(voyage.get("island", 1)) - 1)
+
+static func island_paths(path: String) -> Dictionary[int, String]:
+	var result: Dictionary[int, String] = {}
+	var prefix := path.get_file() + ".island-"
+	for filename: String in DirAccess.get_files_at(path.get_base_dir()):
+		var base := filename.trim_suffix(".bak")
+		if not base.begins_with(prefix):
+			continue
+		var number := base.trim_prefix(prefix)
+		if number.is_valid_int() and int(number) >= 0:
+			result[int(number)] = path.get_base_dir().path_join(base)
+	return result
+
+static func write(world: World, path := PATH, tutorial: Dictionary = {}, archive_island := false) -> Error:
 	if world == null or not world.ready_for_play or (world.match_controller.is_finished() and (world.voyage == null or not world.voyage.departed)): return ERR_UNAVAILABLE
-	var bytes: PackedByteArray = var_to_bytes(capture(world))
+	var snapshot := capture(world)
+	if not tutorial.is_empty():
+		snapshot["tutorial"] = tutorial
+	var bytes: PackedByteArray = var_to_bytes(snapshot)
 	if bytes.size() > LIMIT: return ERR_OUT_OF_MEMORY
+	if archive_island:
+		var archive := "%s.island-%d" % [path, island_number(snapshot)]
+		var error := _write_bytes(archive, bytes)
+		if error != OK:
+			return error
+	return _write_bytes(path, bytes)
+
+static func _write_bytes(path: String, bytes: PackedByteArray) -> Error:
 	var file := FileAccess.open(path + ".tmp", FileAccess.WRITE)
 	if file == null: return FileAccess.get_open_error()
 	file.store_buffer(_digest(bytes))
@@ -76,7 +137,13 @@ static func capture(world: World) -> Dictionary:
 	var layout_buildings: Array[Node] = []
 	layout_buildings.assign(buildings)
 	var data := {"save_version": VERSION, "layout": LevelLayout.capture(world.map, layout_buildings), "buildings": [], "ants": [], "sites": []}
+	if world.chapter != null:
+		data["chapter"] = world.chapter.capture_state()
+		data.layout["chapter"] = world.chapter.save_layout_id()
 	data.layout["wave_mode"] = world.combat != null
+	if world.endless:
+		data.layout["endless"] = true
+		data.layout["queen_timer"] = world.match_controller.countdown_enabled
 	data["stock"] = world.inventory.capture_stock()
 	data["time"] = world.match_controller.time_remaining
 	data["finished"] = world.match_controller.is_finished()
@@ -85,12 +152,16 @@ static func capture(world: World) -> Dictionary:
 	for building: Building in buildings:
 		var state := {}
 		if building is House:
-			# incoming is not saved: its carriers lose their order target on load.
+			# Incoming loads are rebuilt from carrier state.
 			state = building.capture_storage_settings()
 			state["stock"] = world.inventory.capture_depot(building)
+		elif building is Canteen:
+			state["stock"] = world.inventory.capture_depot(building)
+			state["food_order"] = building.capture_delivery_settings()
 		if building is Workplace:
 			state = building.capture_production()
 		if building is DefenseBuilding: state["shot_timer"] = building.shot_timer
+		if building is CargoShip: state["manifest"] = building.manifest.duplicate()
 		if world.combat != null: state["health"] = world.combat.health(building)
 		data.buildings.append(state)
 	var sites: Array[ConstructionSite] = world.build_controller.construction.sites if world.build_controller.construction != null else [] as Array[ConstructionSite]
@@ -128,6 +199,11 @@ static func apply(world: World, data: Dictionary) -> void:
 		if building is House:
 			building.restore_storage_settings(state)
 			world.inventory.restore_depot(building, state.get("stock", world.inventory.capture_depot(building)))
+		elif building is Canteen:
+			building.restore_delivery_settings(state.get("food_order", {}))
+			world.inventory.restore_depot(building, state.get("stock", {}))
+		elif building is CargoShip:
+			building.manifest.assign(state.get("manifest", {}))
 		elif building is Workplace:
 			building.restore_production(state, ResourceAmount.unpack(state.output, world.inventory.type_by_id))
 		elif building is DefenseBuilding:
@@ -152,6 +228,12 @@ static func apply(world: World, data: Dictionary) -> void:
 	for id in data.options:
 		if catalog_ids.has(id) and definitions.has(id):
 			options.append(definitions[id])
+	if world.chapter_rules != null:
+		for option in world.chapter_rules.wishes:
+			if data.options.has(str(option.id)) and not options.has(option):
+				options.append(option)
+		if world.chapter_rules is ZeroChapterRules and data.options.has(str(world.chapter_rules.ship.id)):
+			options.append(world.chapter_rules.ship)
 	world.build_controller.set_available_options(options)
 	world.prices.restore_state(data.prices)
 	var legacy_order: TaskBuildOrder
@@ -177,6 +259,7 @@ static func apply(world: World, data: Dictionary) -> void:
 		var candidate: Building
 		if option is SceneBuildOption:
 			candidate = option.scene.instantiate()
+			candidate.colony_owned = true
 			candidate.setup(state.cell, option)
 		var site: ConstructionSite = world.build_controller.construction.instantiate_site()
 		site.order = order
@@ -195,6 +278,13 @@ static func apply(world: World, data: Dictionary) -> void:
 		world.prices.queue_order(option, 1)
 		sites.append(site)
 	world.route_service.rebuild(world.registry.blocked_cells())
+	if world.chapter_rules != null:
+		for building in buildings:
+			if building is CargoShip:
+				building.requirements = world.chapter_rules.minimum_cargo
+				building.accepting_cargo = true
+				building.capacity_per_resource = world.chapter_rules.cargo_capacity
+				world.logistics.cargo_receiver = building
 	for state in data.ants:
 		var home: House = buildings[state.home]
 		var ant: AntAgent = world.population.restore_resident(home, state.role)
@@ -222,6 +312,10 @@ static func _saved_order(director: TaskDirector, task_id: String, variant_id: St
 static func _definitions(world: World) -> Dictionary:
 	var result := {}
 	var options: Array[BuildOption] = world.build_controller.options
+	if world.chapter_rules != null:
+		options.append_array(world.chapter_rules.wishes)
+		options.append(world.chapter_rules.ship)
+		options.append(world.chapter_rules.base_nest)
 	if world.voyage_rules != null:
 		options.append(world.voyage_rules.ship)
 	if world.tasks != null:
@@ -237,4 +331,7 @@ static func _definitions(world: World) -> Dictionary:
 				options.append_array(task.unlocks)
 	for option in options:
 		if option != null: result[str(option.id)] = option
+	if world.chapter_rules is ZeroChapterRules:
+		var statue: SceneBuildOption = world.chapter_rules.statue
+		result[str(statue.id)] = statue
 	return result

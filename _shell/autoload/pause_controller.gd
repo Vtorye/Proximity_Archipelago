@@ -17,7 +17,7 @@ func _input(event: InputEvent) -> void:
 	var top: MenuBase = Router.top_overlay()
 	if top != null:
 		return
-	if _reasons.has(&"result") or _reasons.has(&"voyage_choice"):
+	if _reasons.has(&"result") or _reasons.has(&"voyage_choice") or _reasons.has(&"tutorial_dialogue"):
 		return
 	toggle_manual()
 	get_viewport().set_input_as_handled()

@@ -1,0 +1,10 @@
+[gd_scene format=3]
+
+[node name="Routes" type="Button"]
+theme_type_variation = &"CompactButton"
+mouse_default_cursor_shape = 2
+text = ""
+custom_minimum_size = Vector2(32, 32)
+size_flags_horizontal = 4
+process_mode = 3
+toggle_mode = true

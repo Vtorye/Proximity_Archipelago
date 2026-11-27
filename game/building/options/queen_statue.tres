@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="SceneBuildOption" format=3 uid="uid://bhy6cadrn6nk0"]
+
+[ext_resource type="Script" uid="uid://dohq4yj0b3afb" path="res://game/resources/resource_amount.gd" id="amount"]
+[ext_resource type="Texture2D" uid="uid://cmkjrjevraoj0" path="res://game/assets/ui/royal.svg" id="appearance"]
+[ext_resource type="Resource" path="res://game/resources/queen_statue_variants.tres" id="appearance_variants"]
+[ext_resource type="Script" uid="uid://ctb7np3cfufgu" path="res://game/building/scene_build_option.gd" id="option"]
+[ext_resource type="PackedScene" path="res://game/entities/queen_statue.tscn" id="scene"]
+[ext_resource type="Resource" uid="uid://dnvvlsc4kjs1t" path="res://game/resources/resource_types/stone.tres" id="stone"]
+[ext_resource type="Resource" uid="uid://btsdqgmh3ee22" path="res://game/resources/resource_types/wood.tres" id="wood"]
+
+[sub_resource type="Resource" id="wood_cost"]
+script = ExtResource("amount")
+type = ExtResource("wood")
+amount = 10
+
+[sub_resource type="Resource" id="stone_cost"]
+script = ExtResource("amount")
+type = ExtResource("stone")
+amount = 15
+
+[resource]
+script = ExtResource("option")
+scene = ExtResource("scene")
+appearance_variants = ExtResource("appearance_variants")
+entry_offsets = Array[Vector2i]([Vector2i(0, 1), Vector2i(1, 0), Vector2i(0, -1), Vector2i(-1, 0)])
+id = &"statue"
+display_name = "ui.building.statue_placeholder"
+description = "ui.construction.description.statue"
+icon = ExtResource("appearance")
+costs = Array[ExtResource("amount")]([SubResource("wood_cost"), SubResource("stone_cost")])

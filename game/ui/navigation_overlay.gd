@@ -99,7 +99,9 @@ func _draw() -> void:
 	if mode == 0 or _field == null: return
 	var map: TileMapLayer = world.map
 	var canvas: Transform2D = map.get_global_transform_with_canvas()
-	var screen_size: Vector2 = Vector2(map.tile_set.tile_size) * canvas.get_scale()
+	var canvas_scale := canvas.get_scale()
+	var screen_size := Vector2(map.tile_set.tile_size) * canvas_scale
+	var show_point_labels := canvas_scale.x >= PRESENTATION.navigation_point_label_zoom
 	var font: Font = ColonyStyle.THEME.default_font
 	var view: Rect2 = get_viewport_rect()
 	# Visit only visible cells. A larger ocean never adds work to the overlay.
@@ -109,14 +111,15 @@ func _draw() -> void:
 	for y in range(first.y, last.y + 1):
 		for x in range(first.x, last.x + 1):
 			var cell := Vector2i(x, y)
-			if not world.route_service.walkable(cell) and not _points.has(cell): continue
+			var important := _points.has(cell)
+			if not world.route_service.walkable(cell) and not important: continue
 			var center: Vector2 = (canvas * map.map_to_local(cell)).round()
 			if not view.intersects(Rect2(center - screen_size * 0.5, screen_size)): continue
 			var value: Dictionary = sample(cell)
 			var seconds: float = world.planner.travel_seconds(world.route_service.entry_cost(cell), reference_speed) if mode == 1 else value.score
 			var color: Color = value.color
 			draw_rect(Rect2(center - screen_size * 0.5, screen_size), Color(color.r * PRESENTATION.navigation_cell_brightness, color.g * PRESENTATION.navigation_cell_brightness, color.b * PRESENTATION.navigation_cell_brightness, PRESENTATION.navigation_cell_opacity))
-			if screen_size.x < PRESENTATION.navigation_min_label_width: continue
+			if screen_size.x < PRESENTATION.navigation_min_label_width and not (important and show_point_labels): continue
 			var text: String = "—" if not is_finite(seconds) else ("%d" % roundi(seconds * 1000) if mode == 1 else "%.1f" % seconds)
 			var text_position: Vector2 = center + Vector2(-font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, PRESENTATION.navigation_font_size).x / 2, PRESENTATION.navigation_baseline)
 			draw_string(font, text_position + Vector2.ONE, text, HORIZONTAL_ALIGNMENT_LEFT, -1, PRESENTATION.navigation_font_size, Color.BLACK)

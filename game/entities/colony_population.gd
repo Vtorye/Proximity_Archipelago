@@ -10,6 +10,8 @@ var navigation: RouteService
 var planner: TripPlanner
 var logistics: ColonyLogistics
 var construction: ConstructionService
+## Seconds between the initial departures of residents spawned together in one nest.
+@export_range(0.0, 10.0, 0.05, "or_greater", "suffix:s") var departure_interval := 1.25
 @export var recruitment: RecruitmentCatalog = preload("res://game/resources/recruitment.tres")
 @export var worker_scene: PackedScene
 @export var carrier_scene: PackedScene
@@ -40,7 +42,7 @@ func _on_building_added(building: Building) -> void:
 		if ant == null:
 			push_error("Nest scene must contain an AntAgent root")
 			return
-		ant.departure_delay = index * 1.25
+		ant.departure_delay = index * departure_interval
 		_add_resident(house, ant)
 	changed.emit()
 

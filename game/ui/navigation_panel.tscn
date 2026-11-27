@@ -14,8 +14,9 @@ theme_override_constants/separation = 3
 [node name="WindowHeader" parent="WindowContents" node_paths=PackedStringArray("panel", "body") instance=ExtResource("window_header")]
 unique_name_in_owner = true
 title = "ui.window.navigation"
+action = 1
 dock = 4
-panel_width = 190.0
+panel_width = 192.0
 inset = Vector2(8, 64)
 panel = NodePath("../..")
 body = NodePath("../Content")
@@ -82,6 +83,7 @@ text = "ui.nav.food"
 theme_override_colors/font_color = Color(0.62, 0.89, 0.627, 1)
 
 [node name="Detail" type="RichTextLabel" parent="WindowContents/Content"]
+theme_type_variation = &"DetailsRichText"
 unique_name_in_owner = true
 mouse_filter = 2
 text = "ui.nav.hover"
@@ -90,6 +92,7 @@ fit_content = true
 scroll_active = false
 
 [node name="TrapPrice" type="RichTextLabel" parent="WindowContents/Content"]
+theme_type_variation = &"DetailsRichText"
 unique_name_in_owner = true
 mouse_filter = 2
 fit_content = true

@@ -3,3 +3,4 @@
 [resource]
 script = ExtResource("profile")
 title = "ui.nest.worker"
+speed = 6.0

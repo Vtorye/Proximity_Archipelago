@@ -1,5 +1,7 @@
 @tool
 extends Node2D
+
+const TIMING := preload("res://game/navigation/navigation_timing.gd")
 ## Rasterizes the map's visual data at one texel per cell. The TileMapLayer owns all gameplay data.
 
 const PATCH := preload("res://game/terrain/terrain_surface_patch.tscn")
@@ -10,8 +12,12 @@ const PATCH_SIDE := 128
 const SAMPLE_MARGIN := 16
 
 @export var map: TerrainMap
+@export var road_texture: Texture2D
+@export var upgraded_road_tint := Color.WHITE
 @onready var _water: ColorRect = $Sea/Water
+@onready var _roads: Node2D = $Roads
 var _patches: Dictionary[Vector2i, Sprite2D] = {}
+var _road_cells: Dictionary[Vector2i, Color] = {}
 var _queued := false
 
 func _ready() -> void:
@@ -29,24 +35,37 @@ func _queue_rebuild() -> void:
 	_rebuild.call_deferred()
 
 func _rebuild() -> void:
+	if not TIMING.enabled:
+		_rebuild_surface()
+		return
+	TIMING.begin(&"terrain_surface")
+	_rebuild_surface()
+	TIMING.end()
+
+func _rebuild_surface() -> void:
 	_queued = false
 	if not is_inside_tree():
 		return
 	var samples: Dictionary[Vector2i, Color] = {}
 	var tints: Dictionary[Vector2i, Color] = {}
 	var regions: Dictionary[Vector2i, Rect2i] = {}
+	_road_cells.clear()
+	_roads.queue_redraw()
 	if map.tile_set != null and map.catalog != null and map.tile_set.tile_shape == TileSet.TILE_SHAPE_SQUARE:
 		for cell in map.get_used_cells():
 			var surface := map.surface_at(cell)
 			if surface != null and surface.kind == TerrainType.Kind.WATER:
 				_include_region(Rect2i(cell, Vector2i.ONE), regions)
 				continue
-			# Opaque black protects roads and unmapped atlas tiles while keeping the coast continuous.
-			var blend := surface.surface_blend if surface != null and surface.kind == TerrainType.Kind.LAND else Color.BLACK
+			var ground := map.ground_at(cell) if surface != null else null
+			if surface != null and surface.kind == TerrainType.Kind.ROAD:
+				_road_cells[cell] = upgraded_road_tint if surface.id == &"road_plus" else Color.WHITE
+			# Opaque black reserves unmapped atlas tiles.
+			var blend := ground.surface_blend if ground != null and ground.kind == TerrainType.Kind.LAND else Color.BLACK
 			samples[cell] = Color(blend.r, blend.g, blend.b, 1.0)
 			if blend.r > 0.0 or blend.g > 0.0 or blend.b > 0.0:
-				if surface.surface_tint.a > 0.0:
-					tints[cell] = surface.surface_tint
+				if ground.surface_tint.a > 0.0:
+					tints[cell] = ground.surface_tint
 				_include_region(Rect2i(cell, Vector2i.ONE).grow(1), regions)
 	for key in _patches.keys():
 		if not regions.has(key):
@@ -60,6 +79,13 @@ func _rebuild() -> void:
 	scale = tile_size
 	for key in regions:
 		_update_patch(key, regions[key], samples, tints)
+		move_child(_roads, -1)
+
+func _draw_roads() -> void:
+	if road_texture == null:
+		return
+	for cell in _road_cells:
+		_roads.draw_texture_rect(road_texture, Rect2(Vector2(cell), Vector2.ONE), false, _road_cells[cell])
 
 func _include_region(area: Rect2i, regions: Dictionary[Vector2i, Rect2i]) -> void:
 	var first := Vector2i((Vector2(area.position) / PATCH_SIDE).floor())

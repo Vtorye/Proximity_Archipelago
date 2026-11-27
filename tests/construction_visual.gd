@@ -39,7 +39,7 @@ func _run() -> void:
 	var stone: ResourceType = world.inventory.type_by_id(&"stone")
 	var food: ResourceType = world.inventory.type_by_id(&"food")
 	# Only this fixture changes a price and funds it; shipped definitions keep their balance.
-	var nest: SceneBuildOption = load("res://game/building/options/house.tres").duplicate(true)
+	var nest: SceneBuildOption = load("res://game/building/options/barracks.tres").duplicate(true)
 	nest.costs = [_entry(stone, 5), _entry(food, 20)]
 	world.build_controller.unlock_option(nest, world.build_controller.options[2])
 	world.inventory.add(food, 10)
@@ -231,48 +231,14 @@ func _check_tutorial_and_backdrop() -> void:
 			var point: Vector2 = backdrop.ant_position(index)
 			expect(absf(point.y - center.y) <= 4.0 if index % 2 == 0 else absf(point.x - center.x) <= 4.0, "title ant stays inside its visible road lane")
 	await capture("13-main-menu-road-lanes")
-	await click(Router._current.controls[&"tutorial"])
-	await frames(35)
-	expect(Router.current_screen_key() == &"tutorial" and not get_tree().paused, "tutorial opens as an independent screen")
-	for page in range(4):
-		var tutorial: Control = Router._current
-		expect(tutorial._page == page and not tutorial._body.text.is_empty(), "tutorial displays the requested instruction page")
-		expect(get_viewport().get_visible_rect().encloses(tutorial._body.get_global_rect()), "tutorial text fits the viewport")
-		preload("res://tests/pixel_font_checks.gd").verify(self, tutorial)
-		await capture("14-tutorial-%d" % page)
-		if page < 3: await click(tutorial.controls[&"next"])
-	await click(Router._current.controls[&"previous"])
-	expect(Router._current._page == 2, "tutorial supports paging backwards")
-	for factor in [0.5, 1.0]:
-		AppSettings.text_size = clampi(roundi((factor - 0.5) / 0.25), 0, 2)
-		AppSettings.apply()
-		AppSettings.apply()
-		await frames(5)
-		for page in range(4):
-			Router._current._show_page(page)
-			await frames(3)
-			expect(get_viewport().get_visible_rect().encloses(Router._current._body.get_global_rect()), "tutorial remains readable at the smallest and largest interface scale")
-			expect(Router._current._body.get_visible_line_count() == Router._current._body.get_line_count(), "tutorial never clips instruction lines")
-		await capture("14-tutorial-scale-%d" % roundi(factor * 100))
-	AppSettings.text_size = AppSettings.TYPOGRAPHY.default_index
-	AppSettings.apply()
-	AppSettings.apply()
-	await frames(3)
-	await click(Router._current.controls[&"back"])
-	await frames(35)
-	expect(Router.current_screen_key() == &"main_menu", "tutorial menu button returns to the title screen")
-	await click(Router._current.controls[&"tutorial"])
-	await frames(35)
-	await key(KEY_ESCAPE)
-	await frames(35)
-	expect(Router.current_screen_key() == &"main_menu", "Escape returns from tutorial to the main menu")
-	await click(Router._current.controls[&"tutorial"])
-	await frames(35)
 	await click(Router._current.controls[&"play"])
+	await click(Router._current.get_node("%Add"))
+	await click(Router._current.get_node("%Start"))
 	await frames(45)
-	expect(Router.current_screen_key() == &"match", "tutorial play button starts a real colony")
+	expect(Router.current_screen_key() == &"match" and Router._current._chapter_active, "the new campaign opens the first chapter")
 	Router.goto(&"main_menu")
 	await frames(35)
+
 
 func _check_requested_features() -> void:
 	var world: World = screen.world

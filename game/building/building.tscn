@@ -1,8 +1,0 @@
-[gd_scene load_steps=3 format=3 uid="uid://cwway664illx1"]
-[ext_resource type="Script" path="res://game/entities/base_building.gd" id="script"]
-[ext_resource type="Texture2D" path="res://game/assets/sprites/placeholder.svg" id="texture"]
-[node name="Building" type="Node2D"]
-script = ExtResource("script")
-[node name="Sprite" type="Sprite2D" parent="."]
-texture = ExtResource("texture")
-modulate = Color(0.6, 0.8, 0.9, 1)

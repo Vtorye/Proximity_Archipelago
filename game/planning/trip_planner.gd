@@ -1,22 +1,22 @@
 class_name TripPlanner
 extends Node
+
+const TIMING := preload("res://game/navigation/navigation_timing.gd")
 ## World-local assignment policy. Geometry remains in RouteService; hunger stays in AntNeeds.
 
 signal opportunities_changed
 
-const CARRY_SPEED_RATIO := 0.8
-const LOAD_PENALTY_SECONDS := 0.5
-
 ## Speed as a fraction of normal movement while carrying goods.
-@export_range(0.05, 1.0, 0.05) var carry_speed_ratio := CARRY_SPEED_RATIO
+@export_range(0.05, 1.0, 0.05) var carry_speed_ratio := 0.8
 ## Additional score cost in seconds for each worker assigned to a workplace.
-@export_range(0.0, 60.0, 0.1) var load_penalty_seconds := LOAD_PENALTY_SECONDS
+@export_range(0.0, 60.0, 0.1) var load_penalty_seconds := 0.5
 var satiety_rules: SatietyRules
 var registry: BuildingRegistry
 var navigation: RouteService
 var inventory: WorldInventory
 var logistics: ColonyLogistics
 var food_type: ResourceType
+var _canteens_by_entry: Dictionary[Vector2i, Canteen] = {}
 var _opportunities_queued := false
 var _storage_had_room := true
 var _home_fields: Dictionary[Vector2i, NavigationField] = {}
@@ -36,14 +36,23 @@ func configure(buildings: BuildingRegistry, routes: RouteService, stock: WorldIn
 	registry.changed.connect(refresh_food)
 	inventory.changed.connect(_on_inventory_changed)
 	registry.added.connect(_on_workplace_membership_changed)
-	registry.removed.connect(_on_workplace_membership_changed)
-	navigation.navigation_changed.connect(queue_workplace_refresh)
+	registry.removed.connect(_on_building_removed)
+	navigation.navigation_changed.connect(_on_navigation_changed)
+
+func _on_navigation_changed() -> void:
+	if not navigation.last_change_only_cheaper:
+		queue_workplace_refresh()
 
 func refresh_food() -> void:
-	var cells: Array[Vector2i] = []
+	_canteens_by_entry.clear()
 	for canteen in registry.canteens():
-		cells.append_array(canteen.entry_cells())
-	navigation.set_food_cells(cells)
+		for cell in canteen.entry_cells():
+			if not _canteens_by_entry.has(cell):
+				_canteens_by_entry[cell] = canteen
+	navigation.set_food_cells(_canteens_by_entry.keys())
+
+func canteen_at_entry(cell: Vector2i) -> Canteen:
+	return _canteens_by_entry.get(cell)
 
 func reserve_meal() -> StockReservation:
 	return inventory.reserve(food_type, 1)
@@ -66,7 +75,14 @@ func approach_energy(position: Vector2, cell: Vector2i, speed: float) -> float:
 func _approach_seconds(position: Vector2, cell: Vector2i, speed: float) -> float:
 	return position.distance_to(navigation.cell_to_world(cell)) * navigation.entry_cost(cell) / maxf(speed, 0.01)
 
-func plan_work(agent: Node2D, home: Building, needs: AntNeeds, speed: float, work_time: float, ticket: StockReservation, current: Workplace = null) -> WorkPlan:
+func plan_work(agent: Node2D, home: Building, needs: AntNeeds, speed: float, work_time: float, ticket: StockReservation, current: Workplace = null, carry_capacity: int = 2) -> WorkPlan:
+	if not TIMING.enabled: return _plan_work(agent, home, needs, speed, work_time, ticket, current, carry_capacity)
+	TIMING.begin(&"worker_plan")
+	var result := _plan_work(agent, home, needs, speed, work_time, ticket, current, carry_capacity)
+	TIMING.end()
+	return result
+
+func _plan_work(agent: Node2D, home: Building, needs: AntNeeds, speed: float, work_time: float, ticket: StockReservation, current: Workplace = null, carry_capacity: int = 2) -> WorkPlan:
 	if not is_instance_valid(home) or (agent is AntAgent and agent.role != AntAgent.Role.WORKER):
 		return null
 	if not logistics.accepts_home(home as House, 1):
@@ -82,16 +98,16 @@ func plan_work(agent: Node2D, home: Building, needs: AntNeeds, speed: float, wor
 	var from_node: int = navigation.snapshot().index(from_cell)
 	if from_node < 0:
 		return null
-	var foodless: bool = not food_within_range(from_cell, speed, needs.capacity)
+	var foodless: bool = not inventory.can_consume(ticket) or not food_within_range(from_cell, speed, needs.capacity)
 	var workplaces: Array = _reachable_workplaces(from_node)
 	if foodless and workplaces.is_empty():
 		return null
-	var home_field: NavigationField
-	if not foodless:
-		if ticket == null or not ticket.active:
-			return null
-		prepare_home(home)
-		home_field = _home_fields[home_cell]
+	prepare_home(home)
+	var return_field: NavigationField = _home_fields[home_cell]
+	var outward_field: NavigationField
+	if not workplaces.is_empty():
+		# A worker can be replanned away from home after construction or wandering.
+		outward_field = _work_field(home_cell) if from_cell == home_cell else navigation.distances_from(from_cell)
 	var approach := _approach_seconds(agent.global_position, from_cell, speed)
 	var food_after_home: float = escape_energy(home_cell, speed) if not foodless else INF
 	var best_score := INF
@@ -104,16 +120,36 @@ func plan_work(agent: Node2D, home: Building, needs: AntNeeds, speed: float, wor
 			missing_inputs = true
 			continue
 		for entry: Vector2i in workplace.entry_cells():
-			var field: NavigationField = _work_fields.get(entry)
-			if field == null:
-				continue
-			var to_work: float = approach + travel_seconds(field.cost_at_node(from_node), speed)
+			var cost := outward_field.cost(entry)
+			if not is_finite(cost): continue
+			var to_work: float = approach + travel_seconds(cost, speed)
 			var energy: float = to_work * satiety_rules.walk_rate
+			var delivery_cost := return_field.cost(entry)
+			if not is_finite(delivery_cost): continue
+			var return_energy := travel_energy(delivery_cost, speed * carry_speed_ratio) + satiety_rules.travel_reserve
+			if not foodless:
+				return_energy += food_after_home
+			var work_seconds := work_time
+			if workplace.recipe == null:
+				var rate: float = workplace.resource_rate()
+				if rate <= 0.0: continue
+				var units := carry_capacity
+				if satiety_rules.work_rate > 0.0:
+					var hunger_budget := needs.satiety - energy - return_energy
+					if not foodless:
+						hunger_budget -= satiety_rules.safety_margin
+					units = mini(units, workplace.harvest_units(hunger_budget / satiety_rules.work_rate))
+					# With no meal, the worker must reach home with positive satiety.
+					var trip_energy := energy + (float(units) / rate * satiety_rules.work_rate + return_energy)
+					if foodless and trip_energy >= needs.satiety:
+						units -= 1
+				if units <= 0: continue
+				work_seconds = float(units) / rate
+			energy += work_seconds * satiety_rules.work_rate + return_energy
 			if foodless:
 				if energy >= needs.satiety:
 					continue
 			else:
-				energy += _work_return_energy(work_time, home_field.cost(entry), food_after_home, speed) + satiety_rules.travel_reserve
 				possible_after_meal = possible_after_meal or energy + satiety_rules.safety_margin <= needs.capacity
 				if not needs.can_afford(energy):
 					continue
@@ -129,9 +165,8 @@ func plan_work(agent: Node2D, home: Building, needs: AntNeeds, speed: float, wor
 				best.foodless = foodless
 				best.workplace = workplace
 				best.job_cell = entry
-				best.home_cell = home_cell
 				best.estimated_energy = energy
-				best.navigation_revision = navigation.revision
+				best.work_seconds = work_seconds
 	if not foodless and best == null and (feasible_busy or not possible_after_meal and needs.can_afford(food_after_home + satiety_rules.travel_reserve)):
 		best = WorkPlan.new()
 		best.waiting_for_slot = true
@@ -139,7 +174,7 @@ func plan_work(agent: Node2D, home: Building, needs: AntNeeds, speed: float, wor
 	if best != null and not best.waiting_for_slot:
 		if not best.workplace.has_worker(agent) and not best.workplace.reserve_worker(agent):
 			return null
-		best.outward = navigation.make_route(_work_fields[best.job_cell].path(from_cell))
+		best.outward = navigation.make_route(outward_field.path(best.job_cell))
 	if best != null and is_instance_valid(current) and current != best.workplace:
 		current.release_worker(agent)
 	return best
@@ -156,6 +191,13 @@ func _on_workplace_membership_changed(building: Building) -> void:
 	_workplaces_dirty = true
 	queue_workplace_refresh()
 
+func _on_building_removed(building: Building) -> void:
+	if building is House:
+		for cell in building.entry_cells():
+			_work_fields.erase(cell)
+			_home_fields.erase(cell)
+	_on_workplace_membership_changed(building)
+
 func queue_workplace_refresh() -> void:
 	if _opportunities_queued: return
 	_opportunities_queued = true
@@ -170,32 +212,28 @@ func accessible_entry(building: Building) -> Vector2i:
 	for cell in building.entry_cells():
 		if navigation.walkable(cell):
 			return cell
-	return Vector2i(2147483647, 2147483647)
+	return TileGrid.NO_CELL
 
 func food_route(from_cell: Vector2i) -> Route:
 	return navigation.make_route(navigation.food_field().path(from_cell))
 
-func can_finish_work(cell: Vector2i, home: Building, needs: AntNeeds, speed: float, remaining_work: float) -> bool:
+func can_finish_work(cell: Vector2i, home: Building, needs: AntNeeds, speed: float, remaining_work: float, foodless: bool) -> bool:
 	if not is_instance_valid(home):
 		return false
 	var delivery := home_route(home, cell)
-	return delivery.is_valid() and needs.can_afford(_work_return_energy(
-		remaining_work, delivery.cost, escape_energy(delivery.cells.back(), speed), speed))
-
-func _work_return_energy(work_seconds: float, delivery_cost: float, food_after_delivery: float, speed: float) -> float:
-	return work_seconds * satiety_rules.work_rate + travel_energy(delivery_cost, speed * carry_speed_ratio) + food_after_delivery
+	if not delivery.is_valid():
+		return false
+	var energy := remaining_work * satiety_rules.work_rate + travel_energy(delivery.cost, speed * carry_speed_ratio)
+	return needs.satiety > energy if foodless else needs.can_afford(energy + escape_energy(delivery.cells.back(), speed))
 
 func prepare_home(home: Building) -> void:
-	if _revision != navigation.revision:
+	if _revision != navigation.field_epoch:
 		_home_fields.clear()
-		_revision = navigation.revision
+		_revision = navigation.field_epoch
 	var cell: Vector2i = accessible_entry(home)
 	if not navigation.walkable(cell):
 		return
-	if not _home_fields.has(cell):
-		if _home_fields.size() >= 8:
-			_home_fields.erase(_home_fields.keys()[0])
-		_home_fields[cell] = navigation.reverse_field([cell])
+	_home_fields[cell] = navigation.reverse_field([cell], _home_fields.get(cell))
 
 func home_route(home: Building, from_cell: Vector2i) -> Route:
 	prepare_home(home)
@@ -204,28 +242,29 @@ func home_route(home: Building, from_cell: Vector2i) -> Route:
 		return Route.invalid()
 	return navigation.make_route(_home_fields[cell].path(from_cell))
 
-## Each walkable entrance owns a reverse field on the shared island graph.
-## Keep fields for existing entrances when only the workplace list changes.
+func _work_field(home_cell: Vector2i) -> NavigationField:
+	_work_fields[home_cell] = navigation.distances_from(home_cell, _work_fields.get(home_cell))
+	return _work_fields[home_cell]
+
+## Work selection starts at the home entrance, so one forward field serves every
+## reachable workplace. Only graph invalidation requires a new component index.
 func prepare_workplaces() -> void:
-	if not _workplaces_dirty and _workplace_revision == navigation.revision:
+	if not _workplaces_dirty and _workplace_revision == navigation.field_epoch:
 		return
 	var grid: TileGrid = navigation.snapshot()
-	var fields: Dictionary[Vector2i, NavigationField] = {}
+	if _workplace_revision != navigation.field_epoch:
+		_work_fields.clear()
 	_workplace_components.clear()
 	for workplace in registry.workplaces():
 		for entry in workplace.entry_cells():
 			var component: int = grid.component(entry)
 			if component < 0:
 				continue
-			if not fields.has(entry):
-				var previous: NavigationField = _work_fields.get(entry) if _workplace_revision == navigation.revision else null
-				fields[entry] = previous if previous != null else navigation.reverse_field([entry])
 			if not _workplace_components.has(component):
 				_workplace_components[component] = []
 			if not _workplace_components[component].has(workplace):
 				_workplace_components[component].append(workplace)
-	_work_fields = fields
-	_workplace_revision = navigation.revision
+	_workplace_revision = navigation.field_epoch
 	_workplaces_dirty = false
 
 func _reachable_workplaces(node_id: int) -> Array:

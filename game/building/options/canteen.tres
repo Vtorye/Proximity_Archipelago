@@ -1,16 +1,15 @@
 [gd_resource type="Resource" script_class="SceneBuildOption" format=3 uid="uid://dt2pn38ld5j7f"]
 
-[ext_resource type="Script" uid="uid://clwif6xxyitqt" path="res://game/economy/price_rule.gd" id="4_6jl3x"]
 [ext_resource type="Script" uid="uid://dohq4yj0b3afb" path="res://game/resources/resource_amount.gd" id="amount"]
-[ext_resource type="Texture2D" path="res://game/assets/sprites/canteen2.png" id="icon"]
+[ext_resource type="Texture2D" path="res://game/assets/sprites/canteen_picnic_house.svg" id="icon"]
 [ext_resource type="Script" uid="uid://ctb7np3cfufgu" path="res://game/building/scene_build_option.gd" id="option"]
-[ext_resource type="Resource" path="res://game/resources/dot_treses/royal.tres" id="royal"]
+[ext_resource type="Resource" path="res://game/resources/resource_types/royal.tres" id="royal"]
 [ext_resource type="PackedScene" uid="uid://brf42b54ugjtv" path="res://game/entities/canteen.tscn" id="scene"]
 
 [sub_resource type="Resource" id="cost"]
 script = ExtResource("amount")
 type = ExtResource("royal")
-amount = 3
+amount = 4
 
 [resource]
 script = ExtResource("option")

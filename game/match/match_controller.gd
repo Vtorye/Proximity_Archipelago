@@ -20,6 +20,8 @@ signal completed(summary: MatchSummary)
 @export var tracked_types: Array[ResourceType] = []
 
 var task_mode := false
+var countdown_enabled := true
+var countdown_suspended := false
 var time_remaining: float = 0.0
 var _finished := false
 var _started := false
@@ -61,7 +63,8 @@ func start(stock: WorldInventory) -> bool:
 		if type == null or not stock.is_registered(type):
 			return false
 	_inventory = stock
-	_inventory.changed.connect(_on_inventory_changed)
+	if not _inventory.changed.is_connected(_on_inventory_changed):
+		_inventory.changed.connect(_on_inventory_changed)
 	time_remaining = starting_duration()
 	_started = true
 	_last_seconds = ceili(time_remaining)
@@ -72,7 +75,7 @@ func start(stock: WorldInventory) -> bool:
 
 
 func _process(delta: float) -> void:
-	if _finished or not _started:
+	if _finished or not _started or not countdown_enabled or countdown_suspended:
 		return
 	time_remaining = maxf(0.0, time_remaining - delta)
 	var seconds := ceili(time_remaining)
@@ -133,6 +136,11 @@ func add_time(seconds: float) -> void:
 	if _finished or not _started or seconds < 0 or not is_finite(seconds): return
 	time_remaining += seconds
 	_last_seconds = ceili(time_remaining)
+	time_changed.emit(_last_seconds)
+
+func reset_countdown(seconds: float) -> void:
+	time_remaining = seconds
+	_last_seconds = ceili(seconds)
 	time_changed.emit(_last_seconds)
 
 func complete_objective() -> void:

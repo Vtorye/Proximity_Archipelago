@@ -5,6 +5,9 @@
 [ext_resource type="Script" path="res://game/ui/tile_selection.gd" id="selection"]
 [ext_resource type="PackedScene" path="res://game/ui/match_hud.tscn" id="hud"]
 [ext_resource type="PackedScene" path="res://game/campaign/campaign_panel.tscn" id="campaign"]
+[ext_resource type="PackedScene" path="res://story/story_overlay.tscn" id="story"]
+[ext_resource type="Script" path="res://story/first_chapter.gd" id="chapter"]
+[ext_resource type="PackedScene" path="res://game/ui/conversations.tscn" id="conversations"]
 
 [node name="Match" type="Control"]
 layout_mode = 3
@@ -47,3 +50,14 @@ anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 mouse_filter = 2
+
+[node name="StoryLayer" type="CanvasLayer" parent="."]
+layer = 9
+
+[node name="Story" parent="StoryLayer" instance=ExtResource("story")]
+
+[node name="Chapter" type="Node" parent="."]
+script = ExtResource("chapter")
+
+[node name="Conversations" parent="Interface" instance=ExtResource("conversations")]
+

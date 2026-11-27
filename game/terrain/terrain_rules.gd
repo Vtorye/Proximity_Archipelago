@@ -31,12 +31,14 @@ static func supports(type: TerrainType, kind: int) -> bool:
 	return true
 
 func price_multiplier(option: BuildOption, cell: Vector2i) -> float:
+	if option == null or option.terrain_price_exempt: return 1.0
 	var type: TerrainType = map.ground_at(cell)
 	if type == null: return 1.0
+	var multiplier := type.build_price_multiplier
 	match option.placement_kind:
-		BuildOption.PlacementKind.ROAD: return type.road_price_multiplier
-		BuildOption.PlacementKind.NEST: return type.nest_price_multiplier
-	return 1.0
+		BuildOption.PlacementKind.ROAD: multiplier *= type.road_price_multiplier
+		BuildOption.PlacementKind.NEST: multiplier *= type.nest_price_multiplier
+	return multiplier
 
 func capacity_multiplier(house: House) -> float:
 	var best := 1.0
@@ -78,9 +80,13 @@ static func describe(type: TerrainType) -> String:
 	var yes: String = TranslationServer.translate("ui.terrain.allowed")
 	var no: String = TranslationServer.translate("ui.terrain.forbidden")
 	var lines := PackedStringArray([TranslationServer.translate(type.display_name)])
-	if type.kind == TerrainType.Kind.WATER: return lines[0]
-	lines.append(TranslationServer.translate("ui.terrain.permissions") % [yes if type.roads_allowed else no, yes if type.berries_allowed else no, yes if type.nests_allowed else no])
+	lines.append(TranslationServer.translate("ui.terrain.permissions") % [
+		yes if supports(type, BuildOption.PlacementKind.ROAD) else no,
+		yes if supports(type, BuildOption.PlacementKind.BERRY) else no,
+		yes if supports(type, BuildOption.PlacementKind.NEST) else no])
+	if type.kind == TerrainType.Kind.WATER: return "\n".join(lines)
 	if not is_equal_approx(type.berry_multiplier, 1): lines.append(TranslationServer.translate("ui.terrain.harvest") % roundi(type.berry_multiplier * 100))
+	if not is_equal_approx(type.build_price_multiplier, 1): lines.append(TranslationServer.translate("ui.terrain.build_price") % roundi(type.build_price_multiplier * 100))
 	if not is_equal_approx(type.nest_price_multiplier, 1): lines.append(TranslationServer.translate("ui.terrain.nest_price") % roundi(type.nest_price_multiplier * 100))
 	if not is_equal_approx(type.road_price_multiplier, 1): lines.append(TranslationServer.translate("ui.terrain.road_price") % roundi(type.road_price_multiplier * 100))
 	if type.adjacent_capacity_multiplier > 1: lines.append(TranslationServer.translate("ui.terrain.adjacency") % [roundi((type.adjacent_capacity_multiplier - 1) * 100), type.bonus_radius])

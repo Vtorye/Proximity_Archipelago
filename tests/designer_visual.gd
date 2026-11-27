@@ -23,7 +23,7 @@ func _run() -> void:
 	expect(menu.controls.has(&"base_nest") and (menu.get_node("%Price") as Label).text.trim_prefix(tr("ui.construction.price").get_slice("%s", 0)) == "1 Регалии", "the palette offers a separate base nest priced in crowns")
 	await choose_building(menu, &"house")
 	await capture("03-configured-house-price", 30)
-	var path := "res://game/building/options/house.tres"
+	var path := "res://game/building/options/barracks.tres"
 	var original := FileAccess.get_file_as_string(path)
 	await frames(65)
 	FileAccess.open(path, FileAccess.WRITE).store_string(original.replace("amount = 10", "amount = 15"))
@@ -110,7 +110,7 @@ func _check_storage_and_hover() -> void:
 	await capture("02d-workplace-hover-paused")
 	await click(pause.controls[&"resume"])
 	var cell := Vector2i(27, 27)
-	var nest: BuildOption = load("res://game/building/options/house.tres")
+	var nest: BuildOption = load("res://game/building/options/barracks.tres")
 	expect(screen.world.build_controller.try_build(nest, cell), "fixture builds a small warehouse")
 	for second in range(60):
 		if screen.world.registry.at(cell) is House: break

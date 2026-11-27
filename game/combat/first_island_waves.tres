@@ -1,0 +1,7 @@
+[gd_resource type="Resource" script_class="WaveRules" format=3]
+[ext_resource type="Script" path="res://game/combat/wave_rules.gd" id="rules"]
+[ext_resource type="Resource" path="res://game/combat/defense_catalog.tres" id="defenses"]
+[resource]
+script = ExtResource("rules")
+defenses = ExtResource("defenses")
+spider_speed = 1.3

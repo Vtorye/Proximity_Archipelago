@@ -13,6 +13,7 @@ var _queued := false
 var _selection: TaskBuildOrder
 var _bottom_inset := 0.0
 var _pan_mode := false
+var _pending_prices: Dictionary[String, int] = {}
 @onready var _requests: HBoxContainer = %Requests
 @onready var _waiting: Label = %Waiting
 @onready var _categories: PanelContainer = %Categories
@@ -21,6 +22,8 @@ var _pan_mode := false
 @onready var _scroll: ScrollContainer = %Scroll
 
 func _ready() -> void:
+	%CategoryHeader.collapsed_changed.connect(func(_collapsed: bool): _layout_windows())
+	%StripHeader.collapsed_changed.connect(func(_collapsed: bool): _layout_windows())
 	_category.pressed.connect(AppSettings.play_click)
 	_category.toggled.connect(func(_pressed: bool): _update_strip_visibility())
 	_categories.minimum_size_changed.connect(_layout_windows.call_deferred)
@@ -60,17 +63,23 @@ func _layout_windows() -> void:
 	var margin := PRESENTATION.dock_clearance
 	var bottom := viewport.y - _bottom_inset - margin
 	_categories.reset_size()
-	_categories.position = Vector2(margin, bottom - _categories.size.y)
+	%CategoryHeader.place(Vector2(margin, bottom - _categories.size.y))
 	var left := _categories.position.x + _categories.size.x + margin
 	var available_width := maxf(0.0, viewport.x - left - margin)
 	var height_limit := floorf(viewport.y * PRESENTATION.task_strip_height_ratio)
+	var header_height: float = %StripHeader.get_combined_minimum_size().y
+	header_height += %StripHeader.get_parent().get_theme_constant(&"separation")
+	height_limit += header_height
 	var content := _requests.get_combined_minimum_size() + _strip.get_theme_stylebox(&"panel").get_minimum_size()
+	content.y += header_height
+	if %StripHeader.collapsed:
+		content.y = header_height + _strip.get_theme_stylebox(&"panel").get_minimum_size().y
 	if content.x > available_width:
 		content.y += _scroll.get_h_scroll_bar().get_combined_minimum_size().y
 	if content.y > height_limit:
 		content.x += _scroll.get_v_scroll_bar().get_combined_minimum_size().x
 	_strip.size = Vector2(minf(content.x, available_width), minf(content.y, height_limit))
-	_strip.position = Vector2(left, bottom - _strip.size.y)
+	%StripHeader.place(Vector2(left, bottom - _strip.size.y))
 
 func _queue_refresh() -> void:
 	if _queued:
@@ -97,6 +106,7 @@ func _refresh() -> void:
 		var request: TaskRequest = REQUEST.instantiate()
 		_requests.add_child(request)
 		request.configure(director, task, index + 1)
+		request.refresh_prices(_pending_prices)
 		request.set_selection(_selection)
 		request.order_requested.connect(order_requested.emit)
 		request.info_requested.connect(info_requested.emit)
@@ -108,8 +118,12 @@ func _refresh() -> void:
 
 func _refresh_prices() -> void:
 	for request: TaskRequest in _requests.get_children():
-		request.refresh_prices()
+		request.refresh_prices(_pending_prices)
 	_update_waiting()
+
+func set_pending_prices(pending: Dictionary[String, int]) -> void:
+	_pending_prices = pending
+	_refresh_prices()
 
 func _on_time_changed(_seconds: int) -> void:
 	for request: TaskRequest in _requests.get_children():

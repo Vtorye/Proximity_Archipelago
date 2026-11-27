@@ -19,7 +19,7 @@ layout = {
 }], [79, 47, "Workplace2", {
 "finite_supply": true,
 "remaining_supply": 100
-}], [68, 46, "AppleTree", {
+}], [69, 46, "AppleTree", {
 "finite_supply": false,
 "remaining_supply": 100
 }], [78, 43, "AppleTree", {
@@ -55,10 +55,10 @@ layout = {
 }], [70, 18, "AppleTree", {
 "finite_supply": true,
 "remaining_supply": 40
-}], [98, 40, "AppleTree", {
+}], [97, 40, "AppleTree", {
 "finite_supply": false,
 "remaining_supply": 100
-}], [104, 43, "AppleTree", {
+}], [106, 43, "AppleTree", {
 "finite_supply": false,
 "remaining_supply": 100
 }], [99, 47, "AppleTree", {
@@ -82,7 +82,7 @@ layout = {
 }], [69, 68, "AppleTree", {
 "finite_supply": true,
 "remaining_supply": 40
-}], [18, 15, "AppleTree", {
+}], [17, 15, "AppleTree", {
 "finite_supply": true,
 "remaining_supply": 60
 }], [16, 13, "Workplace", {

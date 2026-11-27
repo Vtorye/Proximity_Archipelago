@@ -3,12 +3,12 @@ set -euo pipefail
 project_root="$(cd "$(dirname "$0")/.." && pwd)"
 editor_root="$(mktemp -d -t colony-editor-XXXXXX)"
 trap 'rm -rf "$editor_root"' EXIT
-python3 - "$project_root" "$editor_root/project" <<'PY'
+source "$project_root/tools/test_project.sh"
+prepare_test_project "$project_root" "$editor_root"
+python3 - "$editor_root/project" <<'PY'
 from pathlib import Path
-import shutil,sys
-source,target=map(Path,sys.argv[1:])
-shutil.copytree(source,target,ignore=shutil.ignore_patterns('.git','.godot'))
-p=target/'project.godot';p.write_text(p.read_text().replace('config/name="archipelago"','config/name="archipelago-editor-validation"'))
+import sys
+target=Path(sys.argv[1])
 p=target/'addons/level_validation/plugin.gd'
 s=p.read_text().replace('\t_scene_changed(EditorInterface.get_edited_scene_root())','\t_scene_changed(EditorInterface.get_edited_scene_root())\n\tvar test = load("res://tests/editor_visual.gd").new()\n\tset_meta(&"editor_test", test)\n\ttest.run.call_deferred(self)')
 p.write_text(s)

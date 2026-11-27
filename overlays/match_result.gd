@@ -27,7 +27,12 @@ func _ready() -> void:
 			%Completed.show()
 	controls[&"again"] = %Again
 	%Again.pressed.connect(AppSettings.play_click)
-	%Again.pressed.connect(Router.restart_current)
+	%Again.pressed.connect(func():
+		var screen: Screen = Router._current
+		if screen != null and screen.has_method("retry_game"):
+			screen.retry_game()
+		else:
+			Router.restart_current())
 	controls[&"main"] = %MainMenu
 	%MainMenu.pressed.connect(AppSettings.play_click)
 	%MainMenu.pressed.connect(_go_to_main_menu)

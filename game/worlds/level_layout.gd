@@ -4,8 +4,9 @@ extends RefCounted
 ## Load lazily because world components also use level layout APIs.
 static var DEFAULT_WORLD: PackedScene:
 	get:
-		return load("res://game/worlds/world_1.tscn") as PackedScene
+		return load("res://game/worlds/starter_island.tscn") as PackedScene
 const VERSION := 1
+const ZERO_ISLAND_ID := "zero_island"
 const CELL_LIMIT := 32768
 const TILE_LIMIT := 262144
 
@@ -22,7 +23,7 @@ static func editor_prototypes(world: World) -> Dictionary[String, Building]:
 	for building in result.values():
 		if building is House:
 			building.is_main_nest = false
-			building.option = load("res://game/building/options/house.tres")
+			building.option = load("res://game/building/options/barracks.tres")
 	for option in world.build_controller.initial_options():
 		if not option is SceneBuildOption or option.scene == null:
 			continue
@@ -116,12 +117,16 @@ static func decode(layout: Dictionary) -> LevelData:
 
 static func create_world(layout: Dictionary) -> World:
 	var data: LevelData = decode(layout)
-	return instantiate_world(data) if data != null else null
+	var template := DEFAULT_WORLD
+	match layout.get("chapter"):
+		"first_island": template = load("res://game/worlds/first_island.tscn")
+		ZERO_ISLAND_ID: template = load("res://game/worlds/zero_island.tscn")
+	return instantiate_world(data, template) if data != null else null
 
-static func instantiate_world(data: LevelData) -> World:
+static func instantiate_world(data: LevelData, template: PackedScene = null) -> World:
 	if data == null or data.tiles.size() > TILE_LIMIT or data.objects.size() > data.tiles.size():
 		return null
-	var world: World = DEFAULT_WORLD.instantiate()
+	var world: World = (template if template != null else DEFAULT_WORLD).instantiate()
 	var map: TileMapLayer = world.map
 	if map is TerrainMap:
 		map.prepare_terrain()
@@ -194,6 +199,11 @@ static func _restore_objects(world: World, map: TileMapLayer, objects: Array[Lev
 					if option is WorkplaceUpgradeOption:
 						improvements[str(option.id)] = option
 	var definitions: Array[BuildOption] = world.build_controller.initial_options()
+	if world.chapter_rules != null:
+		definitions.append_array(world.chapter_rules.wishes)
+		for option in world.chapter_rules.wishes:
+			if option is WorkplaceUpgradeOption:
+				improvements[str(option.id)] = option
 	if world.waves.rules != null and world.waves.rules.defenses != null:
 		definitions.append_array(world.waves.rules.defenses.options)
 	if world.voyage_rules != null and world.voyage_rules.ship != null:
@@ -217,18 +227,21 @@ static func _restore_objects(world: World, map: TileMapLayer, objects: Array[Lev
 				return false
 			building = instance as Building
 			building.option = catalog[kind]
+			building.colony_owned = true
 		else:
 			building = originals[kind].duplicate()
 			# Legacy Home rows mean a starter nest followed by small local nests.
 			if building is House:
 				building.is_main_nest = false
-				building.option = load("res://game/building/options/house.tres")
+				building.option = load("res://game/building/options/barracks.tres")
 		if placement.remaining_supply >= 0:
 			var workplace := building as Workplace
 			if workplace == null:
 				building.free()
 				return false
-			workplace.finite_supply = placement.finite_supply
+			var inexhaustible_timber := world.chapter_rules is ZeroChapterRules and workplace.output != null \
+				and workplace.output.id == &"wood" and not workplace.finite_supply
+			workplace.finite_supply = placement.finite_supply and not inexhaustible_timber
 			workplace.remaining_supply = placement.remaining_supply
 			if placement.improvement_id != &"":
 				var improvement: WorkplaceUpgradeOption = improvements.get(str(placement.improvement_id))

@@ -21,7 +21,7 @@ func run(test: Node) -> void:
 	var service: ConstructionService = controller.construction
 	var wood: ResourceType = world.inventory.type_by_id(&"wood")
 	var stone: ResourceType = world.inventory.type_by_id(&"stone")
-	var option: SceneBuildOption = load("res://game/building/options/house.tres").duplicate(true)
+	var option: SceneBuildOption = load("res://game/building/options/barracks.tres").duplicate(true)
 	option.costs = [test.entry(wood, 4), test.entry(stone, 2)]
 	option.construction_seconds = 2.0
 	controller.unlock_option(option)
@@ -124,13 +124,19 @@ func run(test: Node) -> void:
 	var depot := world.registry.at(Vector2i(12, 2)) as House
 	var primary: House = world.logistics.main_nest
 	test.expect(controller.check(road, remote).code == PlacementCheck.Code.NO_BUILD_SUPPLY, "unreachable treasury stock cannot fund a physical order")
+	var treasury_wood := world.inventory.main_quantity(wood)
+	world.inventory.try_spend_all([test.entry(wood, treasury_wood)], true)
 	before = world.inventory.nest_quantity(primary, primary, wood)
 	world.inventory.deposit(depot, [test.entry(wood, 3)])
-	test.expect(controller.try_build(road, remote) and world.inventory.nest_quantity(primary, primary, wood) == before, "connected base supplies an order without debiting the isolated treasury")
+	depot.set_order(str(wood.id), "min", 20)
+	test.expect(controller.try_build(road, remote) and world.inventory.nest_quantity(primary, primary, wood) == before, "physical construction uses the connected depot even when all its wood is below the logistics minimum")
+	world.inventory.add(wood, treasury_wood)
+	before = treasury_wood
 	# Emulate a saved order that originally paid from the wrong island.
 	site = controller.construction.at(remote, true)
 	var legacy_crate: Array[ResourceAmount] = []
 	legacy_crate.assign(site.crates[depot])
+	var road_wood := BuildController.price_amount(legacy_crate, wood)
 	site.crates.erase(depot)
 	site.crates[primary] = legacy_crate
 	world.inventory.deposit(depot, legacy_crate)
@@ -140,7 +146,9 @@ func run(test: Node) -> void:
 	waiting._timer = 0.0
 	waiting._physics_process(1.0 / 30.0)
 	test.expect(waiting._destination == &"site_pickup", "a carrier waiting for food rechecks funded construction")
-	test.expect(world.inventory.nest_quantity(primary, primary, wood) == before and world.inventory.nest_quantity(depot, primary, wood) == 2, "a stuck saved order refunds unreachable crates and funds them from the connected base")
+	test.expect(world.inventory.nest_quantity(primary, primary, wood) == before
+		and world.inventory.nest_quantity(depot, primary, wood) == 3 - road_wood,
+		"a stuck saved order refunds unreachable crates and funds them from the connected base")
 	await _advance(test, world, 15)
 	test.expect(controller.construction.at(remote, true) == null, "the second island finishes its own construction")
 	world.free()
@@ -151,7 +159,7 @@ func run(test: Node) -> void:
 	var stock: WorldInventory = world.inventory
 	var food: ResourceType = stock.type_by_id(&"food")
 	stock.try_spend_all([test.entry(food, stock.available(food))])
-	var food_order: SceneBuildOption = load("res://game/building/options/apple_tree.tres").duplicate(true)
+	var food_order: SceneBuildOption = load("res://game/building/options/berry_bush.tres").duplicate(true)
 	food_order.costs = [test.entry(food, 1)]
 	controller.unlock_option(food_order)
 	test.expect(stock.available(food) == 0 and controller.try_build(food_order, Vector2i(2, 2)), "construction can pay with berries promised for meals")

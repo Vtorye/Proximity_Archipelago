@@ -5,10 +5,11 @@ var _controller: BuildController
 var _option: BuildOption
 var _cell: Vector2i
 var _source_parameters := PackedStringArray()
+var _pending: Dictionary[String, int] = {}
+@onready var header: WindowHeader = %WindowHeader
 
 func _ready() -> void:
-	%CloseDescription.pressed.connect(AppSettings.play_click)
-	%CloseDescription.pressed.connect(hide)
+	header.close_requested.connect(hide)
 	AppSettings.language_changed.connect(_refresh_language)
 
 func toggle(option: BuildOption, controller: BuildController, cell: Vector2i) -> void:
@@ -22,7 +23,8 @@ func toggle(option: BuildOption, controller: BuildController, cell: Vector2i) ->
 	_refresh_description(_option)
 	show()
 
-func refresh_at(cell: Vector2i) -> void:
+func refresh_at(cell: Vector2i, pending: Dictionary[String, int] = {}) -> void:
+	_pending = pending
 	if not visible or _option == null:
 		return
 	_cell = cell
@@ -32,12 +34,12 @@ func _refresh_language() -> void:
 	if _option == null:
 		return
 	_read_source_template(_option)
-	refresh_at(_cell)
+	refresh_at(_cell, _pending)
 
 func _refresh_description(option: BuildOption) -> void:
-	%BuildingName.text = tr(option.display_name)
+	header.set_title(option.display_name)
 	%Description.text = tr(option.description)
-	var price: Array[ResourceAmount] = _controller.price(option, _cell)
+	var price: Array[ResourceAmount] = _controller.price(option, _cell, _pending)
 	var details := PackedStringArray()
 	var size := _footprint_size(option)
 	details.append(tr("ui.construction.size") % [size.x, size.y])
@@ -92,9 +94,9 @@ func _read_source_template(option: BuildOption) -> void:
 
 func _append_source_parameters(details: PackedStringArray, source: Workplace, slots: int) -> void:
 	details.append(tr("ui.construction.production_slots") % slots)
-	var output: float = source.output_amount * source.terrain_yield_multiplier
+	var output: float = source.resource_rate()
 	details.append(tr("ui.construction.production_rate") % String.num(output, 2).trim_suffix(".0"))
-	details.append(tr("ui.source.remaining") % source.remaining_supply if source.finite_supply else tr("ui.source.infinite"))
+	details.append(tr("ui.source.remaining") % source.remaining_supply if source.finite_supply and _controller.inventory.quantities_known else tr("ui.source.infinite"))
 
 func _footprint_size(option: BuildOption) -> Vector2i:
 	var cells: Array[Vector2i] = _controller.footprint_at(option, Vector2i.ZERO)
@@ -126,10 +128,10 @@ func _update_price_growth(option: BuildOption, details: PackedStringArray) -> vo
 				key = "ui.construction.price_partial_multiplier" if rule.operation == 0 else "ui.construction.price_partial_add"
 			details.append(tr(key) % String.num(rule.value).trim_suffix(".0"))
 		if changes_price:
-			var pending: Dictionary[String, int] = {
-				PriceService.key(event, option.id): 1,
-				PriceService.key(event, &""): 1,
-			}
+			var pending := _pending.duplicate()
+			for subject in [option.id, &""]:
+				var key := PriceService.key(event, subject)
+				pending[key] = pending.get(key, 0) + 1
 			BuildCostText.show_price(next_price, _controller.price(option, _cell, pending),
 				tr("ui.construction.next_price"))
 			next_price.show()

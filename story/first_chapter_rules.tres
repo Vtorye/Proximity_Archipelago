@@ -1,0 +1,66 @@
+[gd_resource type="Resource" script_class="FirstChapterRules" format=3]
+[ext_resource type="Script" path="res://story/first_chapter_rules.gd" id="rules"]
+[ext_resource type="Resource" path="res://game/assets/dialogue/first_chapter.tres" id="dialogue"]
+[ext_resource type="Script" path="res://story/story_character.gd" id="character"]
+[ext_resource type="Resource" path="res://story/queen.tres" id="queen"]
+[ext_resource type="Resource" path="res://story/shuti.tres" id="shuti"]
+[ext_resource type="Resource" path="res://story/planner.tres" id="planner"]
+[ext_resource type="Resource" path="res://story/courier.tres" id="courier"]
+[ext_resource type="Resource" path="res://story/worker.tres" id="worker"]
+[ext_resource type="Script" path="res://game/building/build_option.gd" id="option"]
+[ext_resource type="Resource" path="res://game/building/options/queen_statue.tres" id="statue"]
+[ext_resource type="Resource" path="res://game/building/options/sawmill.tres" id="sawmill"]
+[ext_resource type="Resource" path="res://game/building/options/quarry.tres" id="quarry"]
+[ext_resource type="Resource" path="res://game/building/options/road.tres" id="road"]
+[ext_resource type="Resource" path="res://game/tasks/request_statue_feast.tres" id="opening"]
+[ext_resource type="Resource" path="res://game/tasks/request_statue_feast_b.tres" id="followup"]
+[ext_resource type="Resource" path="res://game/building/options/ground.tres" id="ground"]
+[ext_resource type="Resource" path="res://game/building/options/base_nest.tres" id="base"]
+[ext_resource type="Resource" path="res://game/campaign/ship.tres" id="ship"]
+[ext_resource type="Script" path="res://game/resources/resource_amount.gd" id="amount"]
+[ext_resource type="Resource" path="res://game/resources/resource_types/food.tres" id="food"]
+[ext_resource type="Resource" path="res://game/resources/resource_types/wood.tres" id="wood"]
+[ext_resource type="Resource" path="res://game/resources/resource_types/stone.tres" id="stone"]
+[sub_resource type="Resource" id="food_cargo"]
+script = ExtResource("amount")
+type = ExtResource("food")
+amount = 50
+[sub_resource type="Resource" id="wood_cargo"]
+script = ExtResource("amount")
+type = ExtResource("wood")
+amount = 50
+[sub_resource type="Resource" id="delivery"]
+script = ExtResource("amount")
+type = ExtResource("wood")
+amount = 6
+[sub_resource type="Resource" id="stone_cargo"]
+script = ExtResource("amount")
+type = ExtResource("stone")
+amount = 50
+[sub_resource type="Resource" id="revealed_food"]
+script = ExtResource("amount")
+type = ExtResource("food")
+amount = 150
+[sub_resource type="Resource" id="revealed_wood"]
+script = ExtResource("amount")
+type = ExtResource("wood")
+amount = 20
+[sub_resource type="Resource" id="revealed_stone"]
+script = ExtResource("amount")
+type = ExtResource("stone")
+amount = 12
+[resource]
+script = ExtResource("rules")
+dialogue = ExtResource("dialogue")
+characters = Array[ExtResource("character")]([ExtResource("queen"), ExtResource("shuti"), ExtResource("planner"), ExtResource("courier"), ExtResource("worker")])
+wishes = Array[ExtResource("option")]([ExtResource("statue"), ExtResource("sawmill"), ExtResource("quarry")])
+road = ExtResource("road")
+opening_order = ExtResource("opening")
+followup_order = ExtResource("followup")
+delivery = SubResource("delivery")
+ground = ExtResource("ground")
+base_nest = ExtResource("base")
+ship = ExtResource("ship")
+minimum_cargo = Array[ExtResource("amount")]([SubResource("food_cargo"), SubResource("wood_cargo"), SubResource("stone_cargo")])
+revealed_supplies = Array[ExtResource("amount")]([SubResource("revealed_food"), SubResource("revealed_wood"), SubResource("revealed_stone")])
+route_cells = Array[Vector2i]([Vector2i(26, 26), Vector2i(27, 26), Vector2i(28, 26), Vector2i(29, 26), Vector2i(30, 26), Vector2i(31, 26), Vector2i(32, 26), Vector2i(33, 26), Vector2i(34, 26), Vector2i(35, 26), Vector2i(35, 27), Vector2i(35, 28)])

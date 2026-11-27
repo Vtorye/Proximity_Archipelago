@@ -24,6 +24,14 @@ func _advance(test: Node, world: World, seconds: float) -> void:
 		if frame % 30 == 0: await test.get_tree().process_frame
 
 func run(test: Node) -> void:
+	var queen: QueenActor = preload("res://game/campaign/queen_actor.tscn").instantiate()
+	queen.maximum_health = 20
+	test.add_child(queen)
+	var bar: ProgressBar = queen.get_node("%Health")
+	test.expect(queen.health == 20 and bar.max_value == 20, "queen and health bar use designer maximum")
+	queen.health = 5
+	test.expect(bar.value == 5, "restoring the queen's health refreshes her bar")
+	queen.free()
 	await _roles_and_fleeing(test)
 	await _towers_and_meals(test)
 	await _tower_before_chase(test)
@@ -61,8 +69,8 @@ func _roles_and_fleeing(test: Node) -> void:
 	var spider: SpiderAgent = world.combat.spawn_spider(Vector2i(6, 2))
 	worker._physics_process(0.05)
 	test.expect(worker._destination == &"flee" and worker.status == AntAgent.Status.WALKING and workplace.worker_count() == 0 and spider.health == 6, "a civilian abandons work and runs away without approaching or attacking the spider")
-	world.combat.damage(worker, 1)
-	test.expect(worker.status == AntAgent.Status.DEAD, "one spider attack kills a one-HP worker")
+	spider._physics_process(0.05)
+	test.expect(worker.health == 1 and spider._target is Building, "a spider ignores a nearby worker and targets a colony building")
 	for hit in range(6): world.combat.damage(spider, 1)
 	test.expect(spider.health == 0 and world.combat.spiders.is_empty(), "six one-damage attacks kill a six-HP spider exactly once")
 	await _advance(test, world, 2)
@@ -124,8 +132,19 @@ func _traps_and_destruction(test: Node) -> void:
 	var world: World = _world(test)
 	var combat: CombatDirector = world.combat
 	var cell := Vector2i(2, 3)
+	# Terrain designers can change movement costs independently of road membership.
+	var road_data: TileData = world.map.get_cell_tile_data(cell)
+	var land_data: TileData = world.map.get_cell_tile_data(Vector2i(2, 2))
+	var road_cost: float = road_data.get_custom_data("move_cost")
+	var land_cost: float = land_data.get_custom_data("move_cost")
+	road_data.set_custom_data("move_cost", 1.5)
+	land_data.set_custom_data("move_cost", 0.25)
+	world.route_service.rebuild(world.registry.blocked_cells())
 	var trap: SpiderTrap = combat.place_trap(cell)
 	test.expect(trap != null and combat.place_trap(Vector2i(2, 2)) == null, "spiders place traps only on roads")
+	road_data.set_custom_data("move_cost", road_cost)
+	land_data.set_custom_data("move_cost", land_cost)
+	world.route_service.rebuild(world.registry.blocked_cells())
 	var worker: AntAgent = world.population.agents()[0]
 	worker.global_position = world.route_service.cell_to_world(Vector2i(1, 3))
 	worker._walk(world.route_service.make_route([Vector2i(1, 3), cell]), &"wander")
@@ -138,24 +157,34 @@ func _traps_and_destruction(test: Node) -> void:
 	var before: int = world.inventory.quantity(wood)
 	test.expect(combat.clear_trap(cell) and world.inventory.quantity(wood) == before - 2 and not combat.traps.has(cell), "removing a trap pays its configured composite cost")
 	test.expect(not combat.clear_trap(cell) and world.inventory.quantity(wood) == before - 2, "removed traps cannot charge twice")
-	var revision: int = world.route_service.revision
-	test.expect(combat.ruin_road(Vector2i(3, 3)) and is_equal_approx(world.route_service.entry_cost(Vector2i(3, 3)), 1.6) and world.route_service.revision == revision + 1, "spider sabotage destroys a road and updates navigation")
 	world.inventory.try_spend_all([test.entry(wood, world.inventory.available(wood))])
 	combat.place_trap(cell)
 	var stone_before: int = world.inventory.quantity(stone)
 	test.expect(not combat.clear_trap(cell) and combat.traps.has(cell) and world.inventory.quantity(stone) == stone_before, "unaffordable trap removal leaves the trap and all resources intact")
-	var saboteur: SpiderAgent = combat.spawn_spider(Vector2i(4, 3))
-	saboteur._sabotage = 0
-	saboteur._physics_process(0.001)
-	test.expect(combat.traps.has(Vector2i(4, 3)), "spider execution autonomously places a road trap when its sabotage cooldown expires")
-	saboteur._sabotage = 0
-	saboteur._physics_process(0.001)
-	test.expect(is_equal_approx(world.route_service.entry_cost(Vector2i(4, 3)), 1.6), "a spider can subsequently ruin the trapped road while the trap persists")
-	combat.damage(saboteur, 100)
 	var berries: Workplace = world.registry.at(Vector2i(8, 4)) as Workplace
-	combat.spawn_spider(Vector2i(8, 3))
-	await _advance(test, world, 10)
-	test.expect(not is_instance_valid(berries) or not berries.is_inside_tree(), "an autonomous spider can find and destroy a berry bush")
+	var farm: WorkplaceUpgradeOption = load("res://game/building/options/farm.tres")
+	test.expect(not combat.is_spider_target(berries) and berries.install_improvement(farm), "wild berries become an attack target only after a player improvement")
+	var supply := berries.remaining_supply
+	combat.damage(berries, combat.maximum_health(berries))
+	test.expect(world.registry.at(berries.cell) == berries and berries.improvement == null and berries.remaining_supply == supply, "destroying a farm preserves its wild berry bush")
+	var owned_cell := Vector2i(9, 4)
+	var berry: BuildOption = load("res://game/building/options/berry_bush.tres")
+	var food := world.inventory.type_by_id(&"food")
+	world.inventory.add(food, BuildController.price_amount(world.build_controller.price(berry, owned_cell), food))
+	test.expect(world.build_controller.try_build(berry, owned_cell), "the player can establish a berry bush")
+	var spider := combat.spawn_spider(Vector2i(9, 3))
+	var worker_nearby := world.population.agents()[0]
+	worker_nearby.global_position = spider.global_position
+	for frame in range(30 * 10):
+		spider._physics_process(1.0 / 30.0)
+		if world.registry.at(owned_cell) == null:
+			break
+	test.expect(world.registry.at(owned_cell) == null, "an autonomous spider destroys the player-built bush")
+	await test.get_tree().process_frame
+	spider._physics_process(1.0 / 30.0)
+	test.expect(combat.is_spider_target(spider._target), "a spider finds a new target after the destroyed building is freed")
+	test.expect(worker_nearby.health == 1 and world.registry.at(berries.cell) == berries, "workers and neutral resources remain safe from direct attacks")
+	test.expect(not combat.traps.has(Vector2i(9, 3)) and is_equal_approx(world.route_service.entry_cost(Vector2i(9, 3)), 0.35), "attacking spiders leave roads and traps alone")
 	world.free()
 	await test.get_tree().process_frame
 

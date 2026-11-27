@@ -1,13 +1,13 @@
 [gd_resource type="Resource" script_class="ArtCatalog" format=3 uid="uid://d2kl5l2u8nls1"]
 
-[ext_resource type="Texture2D" path="res://game/assets/sprites/canteen2.png" id="2_dmlrr"]
+[ext_resource type="Texture2D" path="res://game/assets/sprites/canteen_picnic_house.svg" id="2_dmlrr"]
 [ext_resource type="Texture2D" uid="uid://d31fehkeqbli4" path="res://game/assets/sprites/berries.svg" id="berries"]
 [ext_resource type="Texture2D" uid="uid://c46nj7ke08ktq" path="res://game/assets/tiles/grass.png" id="grass"]
 [ext_resource type="Texture2D" uid="uid://c3svnje4dj580" path="res://game/assets/sprites/nest.svg" id="nest"]
-[ext_resource type="Texture2D" uid="uid://c6jthwg8o7ei8" path="res://game/assets/tiles/road.png" id="road"]
+[ext_resource type="Texture2D" path="res://game/assets/tiles/road_pebbles.svg" id="road"]
 [ext_resource type="Script" uid="uid://cp68nt7h0pc5t" path="res://game/art/art_catalog.gd" id="script"]
 [ext_resource type="Texture2D" uid="uid://bitlc3a4akicr" path="res://game/assets/tiles/soil.png" id="soil"]
-[ext_resource type="Texture2D" uid="uid://cgyilhetugbng" path="res://game/assets/sprites/stone.svg" id="stone"]
+[ext_resource type="Texture2D" path="res://game/assets/sprites/stone_cutout_1x1.svg" id="stone"]
 [ext_resource type="Texture2D" uid="uid://clk7nlv07r0pt" path="res://game/assets/sprites/timber.svg" id="timber"]
 [ext_resource type="Texture2D" uid="uid://bvfjp2yfxo6bi" path="res://game/assets/tiles/water.png" id="water"]
 

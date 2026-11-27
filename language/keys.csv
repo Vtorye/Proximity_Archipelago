@@ -6,6 +6,10 @@ ui.menu.tutorial,Tutorial,Обучение
 ui.common.main_menu,Main menu,В меню
 ui.common.back,Back,Назад
 ui.common.next,Next,Далее
+ui.story.queen,Queen,Королева
+ui.story.protagonist,Jesty,Шути
+ui.story.continue,Continue,Далее
+ui.story.skip_tutorial,Skip tutorial,Пропустить обучение
 ui.settings.volume,Volume,Громкость
 ui.settings.fullscreen,Fullscreen,Полный экран
 ui.settings.grid,Tile grid,Сетка клеток
@@ -54,7 +58,7 @@ ui.construction.drag,Pan map,Перетаскивание
 ui.construction.demolish,Demolish: mark a building or road,Снос: отметить здание или дорогу
 ui.construction.undo,Undo stroke (Ctrl+Z),Отменить ход (Ctrl+Z)
 ui.construction.cancel,Cancel all,Отменить всё
-ui.construction.apply,Start construction,Начать строительство
+ui.construction.apply,Build (Enter),Построить (Enter)
 ui.construction.build_hint,LMB: build · RMB: remove layer,ЛКМ: строить · ПКМ: убрать слой
 ui.construction.move_hint,LMB/MMB: pan · wheel: zoom,ЛКМ/СКМ: камера · колесо: зум
 ui.construction.demolish_hint,LMB: demolish · RMB: unmark,ЛКМ: снос · ПКМ: убрать отметку
@@ -84,21 +88,11 @@ ui.building.generic,Building,Строение
 ui.building.timber,Timber grove,Участок древесины
 ui.building.stone,Stone deposit,Каменная россыпь
 ui.building.canteen,Canteen,Столовая
-ui.tutorial.lesson1.title,Colony requests,Запросы колонии
-ui.tutorial.lesson1.body,"Three resource requests are available at a time.\nDeliver resources to gain time and regalia.\nIf the timer reaches zero, the colony loses.\n\nYou need the same stock for requests and building.\nAnts pick nearby jobs with free slots.","Одновременно доступны три запроса ресурсов.\nСдавайте ресурсы и получайте дополнительные секунды и регалии.\nЕсли таймер обнулится, партия закончится поражением.\n\nЗапасы нужны и для заданий, и для строительства.\nМуравьи выбирают близкую и свободную работу."
-ui.tutorial.lesson2.title,Paths and food,Дороги и пища
-ui.tutorial.lesson2.body,"Paths speed up trips to work and home.\nTrees provide wood, quarries stone, and bushes food.\n\nAnts need food and a safe route to the canteen.\nA new nest adds five residents; they also need food.\nWorkplace load shows working+en route / slots.","Тропинки ускоряют дорогу на работу и домой.\nДеревья дают древесину, каменоломни — камень, кусты — пищу.\n\nМуравьям нужны еда и безопасный путь к столовой.\nНовый муравейник даёт пять жителей; им тоже нужна пища.\nНагрузка предприятия показана как работают+идут / места."
-ui.tutorial.lesson3.title,Build while paused,Стройка на паузе
-ui.tutorial.lesson3.body,Press B to open construction. Space pauses or resumes the simulation independently.\nChoose a building and drag across tiles. A road and a building can share a tile.\nRight-click removes the latest addition on the selected tile. Ctrl+Z undoes a stroke. The cross cancels the whole plan. The triangle applies it.,B открывает стройку. Пробел отдельно ставит игру на паузу или продолжает её.\nВыберите постройку и проведите по клеткам. Дорога и здание помещаются на одной клетке.\nПКМ снимает последнее добавление на клетке. Ctrl+Z отменяет мазок. Крестик отменяет весь план. Треугольник применяет его.
-ui.tutorial.lesson4.title,Camera and demolition,Камера и снос
-ui.tutorial.lesson4.body,"Use the wheel to zoom, and MMB, arrows or WASD to pan.\nIn construction, the Move tool lets you pan with LMB.\n\nThe Demolish tool marks buildings and roads for removal.\nRemoval happens when you apply the plan, with no refund.\nDemolishing a nest kills residents and needs confirmation.\nThe top menu offers settings, restart, and exit.","Колесо меняет масштаб, СКМ, стрелки и WASD двигают камеру.\nВ стройке инструмент «Перемещение» включает перенос ЛКМ.\n\nИнструмент «Снос» отмечает здания и дороги для удаления.\nОтметки применяются вместе с планом, без возврата ресурсов.\nСнос муравейника убивает жителей и требует подтверждения.\nМеню вверху содержит настройки, перезапуск и выход."
 ui.menu.language,Language: English,Язык: Русский
 ui.hud.missing_inputs,Waiting for inputs: %d,Ждут сырья: %d
 ui.hud.storage_full,Base storage full: %d,Склады баз полны: %d
 ui.placement.unbuildable,This terrain cannot be built on,Это покрытие запрещает строительство
 ui.placement.impassable,Tile is impassable,Клетка непроходима
-ui.tutorial.progress.title,Rewards and upgrades,Награды и развитие
-ui.tutorial.progress.body,"Each level has five requests in random order.\nSkipping usually costs one third and gives no reward.\nHover over Skip to see its price.\n\nClosing a level grants faster paths, cheaper building or faster ants.\nSpend regalia on new canteens.","На уровне пять запросов в случайном порядке.\nОтказ обычно стоит треть цены, не даёт награды и закрывает запрос.\nЦена отказа видна в подсказке кнопки.\n\nЗакрытие уровня даёт быструю дорогу, скидку или скорость муравьёв.\nЗа регалии можно строить новые столовые."
 ui.menu.maps,Maps,Карты
 ui.map.new,New,Новая
 ui.map.name,Map name,Имя карты
@@ -134,6 +128,11 @@ ui.order.range,Min %d · Max %d,Мин %d · Макс %d
 ui.order.owed,Requested: %d,Запрошено: %d
 ui.order.arriving,On the way: %d,В пути: %d
 ui.order.max,Max,Макс.
+ui.order.min_hint,"Below this amount, the warehouse requests a refill. Carriers leave this amount at the source.","Если запас ниже этого числа, склад заказывает пополнение. У отправителя носильщики оставляют этот остаток."
+ui.order.max_hint,"Refills aim for this amount. Above it, carriers redistribute stock to warehouses below their maximum.","До этого количества склад пополняется. Если запас выше, носильщики развозят излишки на склады, где «Макс.» ещё не достигнут."
+ui.canteen.min_hint,"The canteen requests a refill when its food stock drops below this amount.","Если запас еды падает ниже этого числа, столовая заказывает пополнение."
+ui.canteen.max_hint,"Automatic refills and deliveries of surplus food stop at this amount.","Автопополнение и доставка излишков доводят запас еды до этого количества."
+ui.canteen.once_hint,"Amount of food still to be delivered. Decreases as food arrives.","Сколько еды ещё нужно привезти. Значение уменьшается по мере доставки."
 ui.storage.in_main,In main nest %d,В главном складе %d
 ui.storage.protected,The starter base and nonempty stores cannot be demolished,Стартовый или непустой склад нельзя снести
 ui.terrain.entry,Entry %d ms,Вход %d мс
@@ -195,6 +194,7 @@ ui.terrain.allowed,yes,да
 ui.terrain.forbidden,no,нет
 ui.terrain.permissions,Roads: %s · berries: %s\nNests: %s,Дороги: %s · кусты: %s\nМуравейники: %s
 ui.terrain.harvest,Berry yield: %d%%,Урожай ягод: %d%%
+ui.terrain.build_price,Construction price: %d%%,Стоимость строительства: %d%%
 ui.terrain.nest_price,Nest price: %d%%,Цена муравейника: %d%%
 ui.terrain.road_price,Road price: %d%%,Цена дороги: %d%%
 ui.terrain.adjacency,Adjacent nest capacity: +%d%%\nRadius: %d; does not stack,Вместимость рядом: +%d%%\nРадиус: %d; не суммируется
@@ -295,13 +295,13 @@ ui.colony.focus_hint,Center the camera on this nest,Навести камеру 
 ui.world.generated_title,Island %d,Остров %d
 ui.result.level,Level: %d,Уровень: %d
 ui.result.task_counts,Completed: %d · declined: %d,Выполнено: %d · пропущено: %d
-ui.building.statue_placeholder,Placeholder statue,Статуя (плейсхолдер)
+ui.building.statue_placeholder,Statue of the Queen,Статуя королевы
 ui.building.feast,Royal feast,Королевский пир
 ui.construction.description.statue,"A passive monument that blocks movement. Placeholder art.","Пассивный монумент, преграждающий проход. Графика временная."
 ui.construction.description.feast,"A temporary royal feast. It disappears ten seconds after construction.","Временный королевский пир. Исчезает через 10 секунд после постройки."
-ui.task.request_statue,A royal monument is requested,Король требует установить монумент
+ui.task.request_statue,A royal monument is requested,Королева требует установить монумент
 ui.placement.instance_limit,Building limit reached,Достигнут лимит построек
-ui.task.request_feast,A royal feast is requested,Король требует устроить пир
+ui.task.request_feast,A royal feast is requested,Королева требует устроить пир
 ui.task.build,Build requested,Построить требуемое
 ui.task.diversion,Arrange a diversion,Отвлечь внимание
 ui.task.cancel,Decline,Отказ
@@ -355,12 +355,11 @@ ui.world.tidal_shards_description,Link the central islands with trails. Stone li
 ui.world.five_soils,Five Soils,Пять земель
 ui.world.five_soils_description,Fertile valleys alternate with dry hills and rocky deposits. Wet banks expand nearby nests. Sandy beaches make trails more expensive. Painted terrain is saved with the map.,"Плодородные долины, сухие возвышенности и каменистые месторождения. Влажные берега расширяют соседние муравейники; песчаные пляжи удорожают дороги. Нарисованные почвы сохраняются вместе с картой."
 ui.window.close,Close,Закрыть
-ui.tutorial.previous,Previous page,Предыдущая страница
 ui.hud.pause,Pause [Space],Пауза [Пробел]
 ui.hud.unpause,Resume [Space],Продолжить [Пробел]
-ui.hud.tab_build,Build,Стройка
-ui.hud.tab_colony,Colony,Колония
-ui.hud.tab_tasks,Tasks,Задачи
+ui.hud.tab_build,Build (B),Стройка (B)
+ui.hud.tab_colony,Colony (C),Колония (C)
+ui.hud.tab_tasks,Tasks (T),Задачи (T)
 ui.settings.minimum_text,Minimum text size,Мин. размер текста
 ui.settings.text_pixels,%d px,%d пкс
 ui.construction.demolish_short,Demolish,Снос
@@ -375,8 +374,229 @@ ui.construction.price_partial_add,Part of the price increases by %s after each b
 ui.construction.next_price,Next build: %s,Следующая постройка: %s
 ui.construction.production_resource,Resource:,Ресурс:
 ui.construction.production_slots,Work slots: %d,Рабочие места: %d
-ui.construction.production_rate,Output per work cycle: %s,Добыча за рабочий цикл: %s
+ui.construction.production_rate,Output per second: %s,Добыча в секунду: %s
 ui.construction.source_target,Hover over a compatible source to see its output and supply.,"Наведите курсор на подходящий источник, чтобы увидеть добычу и запас."
 ui.construction.speed_multiplier,Movement speed: ×%s of base,Скорость движения: ×%s от базовой
 ui.trap.clear_action,Remove trap,Убрать ловушку
 ui.task.building_variant,Under construction: %s,Строится: %s
+ui.story.tutorial.wake,"Oh, good. You're awake. Come closer. I want to see if I got your eyes right.","О, ты проснулась. Подойди. Хочу посмотреть, получились ли у тебя глаза, как я задумала."
+ui.story.tutorial.purpose,"I made you to build me statues and throw me feasts. The kingdom came with the job.","Я создала тебя, чтобы ты строила мне статуи и устраивала пиры. Королевство шло в комплекте."
+ui.story.tutorial.before,"Who was running it before me?","А кто управлял им до меня?"
+ui.story.tutorial.my_fault,"Me. That's why you have a job. I'd offer you a tour, but you've already seen my best feature.","Я. Поэтому у тебя есть работа. Я бы устроила экскурсию, но главную достопримечательность ты уже видишь."
+ui.story.tutorial.colony,"The nest has residents. There's a canteen, wood, stone, and berries. I started a road to the canteen before I remembered I was queen.","Муравейник заселён. Есть столовая, лес, камень и ягоды. Я начала прокладывать дорогу к столовой, а потом вспомнила, что я королева."
+ui.story.tutorial.delivery,"I'll draw the road and apply the plan. The ants will deliver the materials and build it. Then they'll get to the canteen faster.","Я проложу дорогу на плане и применю его. Муравьи доставят материалы и построят её. Тогда до столовой они будут добираться быстрее."
+ui.story.tutorial.road_hint,"Build (B) → Road. Place it on the gold tile by the nest, then start construction.","Стройка (B) → Дорога. Поставь её на золотую клетку у муравейника и начни строительство."
+ui.story.tutorial.road_done,"We have a road! Now I can stop telling everyone the shortcut is a secret.","У нас есть дорога! Теперь можно перестать всем врать, что короткий путь засекречен."
+ui.story.tutorial.choice,"First royal order. A feast, because I'm hungry. Or a statue, because I'm vain. Pick whichever makes you think of me more fondly.","Первый королевский заказ. Пир, потому что я голодная. Или статуя, потому что я тщеславная. Выбирай то, от чего я тебе больше нравлюсь."
+ui.story.tutorial.choice_cost,"A feast takes food and wood. A statue takes stone and wood. I'll pick one in Tasks and apply the plan.","На пир уйдут еда и древесина, на статую — камень и древесина. Выберу один вариант в «Задачах» и применю план."
+ui.story.tutorial.order_hint,"Tasks → Requests → first order. Place a feast or statue on the gold tile, then start construction.","Задачи → Запросы → первый заказ. Поставь пир или статую на золотую клетку и начни строительство."
+ui.story.tutorial.feast,"I saved you a seat next to me. And the last berry. The seat's still free.","Я приберегла тебе место рядом с собой. И последнюю ягоду. Место всё ещё свободно."
+ui.story.tutorial.statue,"You even made me taller. Now I'll have to stand on tiptoe whenever you look at me.","Ты даже сделала меня выше. Теперь мне придётся вставать на цыпочки, когда ты на меня смотришь."
+ui.story.tutorial.more_time,"The timer starts now. Finishing orders adds time. I'll check Tasks for the next one.","Теперь пойдёт отсчёт. За выполненные заказы дают время. Следующий посмотрю в «Задачах»."
+ui.story.tutorial.farewell,"If you pull this off, it was my brilliant plan. If you don't, come find me. We'll think of someone to blame.","Если справишься, это был мой гениальный план. Если нет… приходи ко мне, придумаем, на кого свалить."
+ui.story.guided.wait,"The ants are delivering materials. Let them finish.","Муравьи несут материалы. Дай им закончить стройку."
+ui.story.guided.impatient,"Queen: Let them finish! Shouting only works when I do it.","Королева: Дай им достроить! Кричать на рабочих можно только мне."
+ui.story.guided.road_only,"Queen: Excuse me, who ordered that? I asked for a road to the canteen.","Королева: И кто это заказал? Я просила дорогу к столовой."
+ui.story.guided.order_only,"Queen: Other orders can wait. I want the feast or my statue. The first request!","Королева: Остальные дела подождут. Пир или моя статуя. Первый запрос!"
+ui.story.guided.cell,"Queen: The gold tile. I even pointed it out for you!","Королева: На золотую клетку. Я же тебе её подсветила!"
+ui.story.tutorial.first_reprimand,"Hey, eyes on the lesson! I go to all the trouble of creating a genius, and she gets distracted just like me. Come on, try again.","Эй, не отвлекайся! Столько сил потратила, чтобы создать гения, а ты отвлекаешься точь-в-точь как я. Ну-ка, попробуй ещё раз."
+ui.story.name.title,"Your name","Твоё имя"
+ui.story.name.placeholder,"Enter your name…","Введи своё имя…"
+ui.story.tutorial.ask_name,"Now... what should I call you...","Так… как тебя назвать…"
+ui.story.tutorial.never_mind,"Oh, I know!","О, придумала!"
+ui.story.tutorial.given_name,"I'll call you Jesty. My very own jester. Now make your queen smile.","Будешь Шути. Моя личная шутиха. А теперь порадуй свою королеву."
+ui.chapter.planner,"Planner","Планировщица"
+ui.chapter.courier,"Courier","Логистка"
+ui.chapter.worker,"Worker","Рабочая"
+ui.chapter.conversations,"Talk","Разговоры"
+ui.chapter.colony_intro,"Look at my kingdom! Nests, sawmills, walls, towers. Impressive, isn't it? You may improve it. First, let me show you the pause button. Space. Even I need a break.","Посмотри на моё королевство! Муравейники, лесопилки, стены, башни. Впечатляет? Можешь немного обустроить его. Для начала — Пробел ставит мир на паузу. Даже мне нужен отдых."
+ui.chapter.food_intro,"Everyone eats in the canteen because I said so. Watch that hungry ant. No one has to tell her where lunch is.","Все едят в столовой, потому что я так решила. Вон та уже проголодалась. Посмотри, как она сама пойдёт обедать."
+ui.chapter.observe_food,"Watch the hungry worker go to the canteen.","Посмотри, как голодная рабочая идёт в столовую."
+ui.chapter.worker_appears,"Oh! That's Worker. She can build just about anything. Say hello.","О!!! Это Рабочая. Она почти всё умеет строить. Поздоровайся."
+ui.chapter.worker_hello,"Hi. I work, I eat, I go home. Where else would I go? My home's here.","Привет. Работаю, ем, домой хожу. А куда попрёшь? Дом-то здесь."
+ui.chapter.free_intro,"Now upgrade the timber grove with a sawmill and the stone deposit with a quarry. Pick the spots yourself. And roads! Make it look like I planned it.","Теперь улучши лес лесопилкой и каменную россыпь каменоломней. Места выбирай сама. И дороги! Пусть выглядит так, будто я всё спланировала."
+ui.chapter.wish_hint,"Build the queen's three wishes. Roads are optional.","Выполни три строительных пожелания королевы. Дороги можно прокладывать по желанию."
+ui.chapter.wish,"Wish %d / %d — %s. Open Build (B) and place it.","Пожелание %d / %d — %s. Открой стройку (B) и выбери место."
+ui.chapter.planner_shock,"What... who let you build all this? I calculated the remaining supplies yesterday!","Что… кто разрешил тебе всё это строить? Я только вчера сводила остатки!"
+ui.chapter.planner_reply,"The queen asked me to—","Королева попросила меня—"
+ui.chapter.planner_materials,"We can't afford this pace. Soon we won't have enough to repair even the walls. Stop building. You need to demolish the new structures. I'll show you which ones.","Материалов на всё это не хватит. Скоро нечем будет чинить даже стены. Прекрати стройку. Снеси новые постройки сама. Я покажу какие."
+ui.chapter.demolition_goal,"Open Build (B) → Demolish. Click the gold-marked structure, then apply the plan. Remove only the marked new construction.","Открой стройку (B) → Снести. Отметь подсвеченный объект и примени план. Убирай только отмеченные новые постройки."
+ui.chapter.queen_accuses,"Are you saying my kingdom cannot afford my plans?","Ты говоришь, что моё королевство не может позволить себе мои планы?"
+ui.chapter.planner_truth,"I'm saying our supplies are finite. The spent materials are gone. I stopped the new projects to save what's left for—","Я говорю, что запасы конечны. Потраченное уже не вернуть. Я убрала новые постройки, чтобы сохранить остатки для—"
+ui.chapter.execution,"Execute her. I don't need news that spoils my mood.","Казнить её. Мне не нужны новости, которые портят настроение."
+ui.chapter.execution_reaction,"She was trying to help us. The queen didn't even let her finish.","Она ведь пыталась помочь. Королева даже не дала ей договорить."
+ui.chapter.work_intro,"Rebuild the sawmill first. Then the workers can get back to producing wood.","Для начала верни лесопилку. Тогда рабочие смогут снова добывать дерево."
+ui.chapter.observe_work,"Watch a worker gather resources and return to her own nest.","Проследи за рабочей до предприятия и обратно к её муравейнику."
+ui.chapter.carry_command,"Worker, take this to the next warehouse.","Рабочая, отнеси это в соседний склад."
+ui.chapter.no,"No.","Нет."
+ui.chapter.not_question,"That wasn't a question.","Это не вопрос."
+ui.chapter.home,"I've worked already. Now I'm going home.","Я уже работала. Теперь домой."
+ui.chapter.always,"She always does this.","Она всегда так делает."
+ui.chapter.find_me,"At least you always know where to find me.","Зато ты всегда знаешь, где меня искать."
+ui.chapter.job,"I know where to find everyone. It's my job.","Я знаю, где искать всех. Это моя работа."
+ui.chapter.coffee,"Sure. Can you find coffee too?","Конечно. И кофе ты тоже найдёшь?"
+ui.chapter.no_coffee,"No. The queen banned everything except berries.","Нет. Королева запретила всё, кроме ягод."
+ui.chapter.berry,"Then I'll bring you a berry. Home, obviously.","Тогда я принесу тебе ягоду. Домой, конечно."
+ui.chapter.explain_transport,"Workers bring output to their own nest. The barracks is full. In Orders, a negative One-time value sends goods elsewhere. Set wood to minus six first.","Рабочие несут добытое в свой муравейник. Казарма уже забита. В «Заказах» минус в поле «Однократно» означает отправку. Сначала поставь у древесины минус шесть."
+ui.chapter.observe_transport,"Wait for six wood to arrive at the western barracks.","Дождись доставки шести древесины в западную казарму."
+ui.chapter.work_choice,"A worker compares travel time and workload. A nearby full workplace can lose to a farther free one. And she needs enough food to get back.","Рабочая учитывает путь и загрузку. Близкое занятое предприятие может проиграть дальнему свободному. И сил на возвращение должно хватить."
+ui.chapter.work_return,"I go where there's work. Then home.","Я иду туда, где работа. Потом домой."
+ui.chapter.recruit_intro,"Open a nest and hire a worker in the Ants tab. It costs food and materials, and every nest has a population limit.","Открой муравейник и найми рабочую на вкладке «Муравьи». Нужны еда и материалы. У каждого муравейника есть предел жителей."
+ui.chapter.recruit_goal,"Open a nest and recruit one worker.","Открой муравейник и найми одну рабочую."
+ui.chapter.magic_intro,"I don't build roads around inconvenient land. I command the land to become convenient. A crown pays for a nest. Instantly.","Я не строю дорогу вокруг неудобного места. Я приказываю месту стать удобным. За корону будет муравейник. Немедленно."
+ui.chapter.magic_command,"Watch the queen change the island.","Посмотри, как королева меняет остров."
+ui.chapter.magic_failed,"The queen needs a crown and a clear place for her miracle.","Для чуда королеве нужна корона и свободное место."
+ui.chapter.supplies_intro,"Let's stock up before anything happens. We need at least fifty food, wood and stone for the ship, plus materials for building it and completing the road. The goal includes a food reserve.","Давай подготовим запасы, пока ничего не случилось. На корабль нужны хотя бы по пятьдесят еды, дерева и камня. Ещё нужны материалы на сам корабль, дорогу и еда рабочим. Всё учтено в цели."
+ui.chapter.supplies_worker,"I'll gather what I can. Then home.","Добуду, что смогу. Потом домой."
+ui.chapter.stock_goal,"Prepare supplies and construction materials.","Накопи припасы и материалы для эвакуации."
+ui.chapter.spiders_warning,"Spiders at the western shore. They tried to talk before. Something about drying up the island. The queen wouldn't listen.","Пауки у западного берега. Они и раньше пытались говорить. Что-то про высохший остров. Королева не слушала."
+ui.chapter.defend,"Towers, stop them! Walls, hold formation! ...Why is everything falling apart?","Башни, остановить их! Стены, держать строй! …Почему всё разваливается?"
+ui.chapter.spiders_target,"They're not coming for us.","Они не идут к нам."
+ui.chapter.queen_target,"No. They're coming for her. Those old defenses won't hold.","Нет. Они идут к ней. Эта старая оборона их не задержит."
+ui.chapter.queen_fear,"Why are they looking at me? Build a ship. A big, beautiful one. Immediately.","Почему они смотрят на меня? Постройте корабль. Большой. Красивый. И немедленно."
+ui.chapter.ship_plan,"I've marked the coast. Build the ship and let the carriers load it. At least fifty of each supply. It can hold up to a hundred of each.","Я отметила берег. Построй корабль, носильщики его загрузят. Нужно хотя бы по пятьдесят каждого припаса. Помещается до ста каждого."
+ui.chapter.and_road,"And the road?","А дорогу?"
+ui.chapter.what_road,"What road?","Какую дорогу?"
+ui.chapter.road_rule,"You only walk on roads. We need a continuous path to the ship. Once the cargo is ready, Shuti gives the evacuation order.","Ты ходишь только по дорогам. Нужен непрерывный путь к кораблю. Когда припасы будут на борту, Шути отдаст приказ об эвакуации."
+ui.chapter.royal_road,"I walk on royal roads.","Я хожу по королевским дорогам."
+ui.chapter.build_ship,"Build the ship on the marked coast and connect the golden road tiles.","Построй корабль на отмеченном берегу и соедини золотые клетки дорогой."
+ui.chapter.evacuate_goal,"Ship, cargo, road, then the queen.","Корабль, припасы, дорога, затем королева."
+ui.chapter.road_missing,"Complete a continuous road to the landing.","Дострой непрерывную дорогу к причалу."
+ui.chapter.evacuate,"Lead the queen aboard","Вести королеву на борт"
+ui.chapter.escort_hint,"The queen is walking to the ship. Keep the road open!","Королева идёт к кораблю. Сохрани дорогу!"
+ui.chapter.strategic,"That was a strategic evacuation. Exactly as I planned.","Это была стратегическая эвакуация. Именно так я и планировала."
+ui.chapter.of_course,"Of course.","Разумеется."
+ui.chapter.can_home,"Can I go home now?","Можно теперь домой?"
+ui.chapter.no_home,"We don't have a home anymore.","У нас больше нет дома."
+ui.chapter.closer,"Then I'll go wherever's closer.","Тогда пойду туда, где ближе."
+ui.chapter.board,"Get aboard, you stubborn ant. I'm not leaving you here.","Залезай на борт, упрямица. Я тебя здесь не оставлю."
+ui.chapter.depart,"All aboard. We're leaving.","Все на борт. Отплываем."
+ui.chapter.wrong_action,"Queen: Focus, Jesty. Follow the current task before inventing another one.","Королева: Соберись, Шути. Сначала текущее поручение, потом выдумывай новые."
+ui.chapter.nest_secret,"Don't think about it :)","Не думай об этом :)"
+ui.chapter.resource_question,"Where do all the supplies come from?","А откуда вообще берутся все материалы?"
+ui.chapter.resource_answer,"No idea, lol. They appear. That's what subjects are for.","Хз лол. Появляются. Для этого и существуют подданные."
+ui.chapter.shuti_topic,"Newly born, immediately employed as a jester. I keep wondering why I can create ants too.","Только родилась, а уже работаю шутихой. Интересно, почему я тоже могу создавать муравьёв?"
+ui.chapter.planner_topic,"I used to keep the accounts on paper. Then Her Majesty decided the numbers looked depressing.","Раньше я вела расчёты на бумаге. Потом Её Величество решило, что цифры выглядят уныло."
+ui.chapter.courier_topic,"I like horror stories about wasps. At least fictional wasps don't need their warehouse routes explained twice.","Люблю ужастики про ос. Хотя бы выдуманным осам не надо дважды объяснять маршрут до склада."
+ui.chapter.worker_topic,"I like romance novels. The kind where both of them get to come home.","Я люблю романтические книжки. Такие, где обе в конце возвращаются домой."
+ui.chapter.rebuild_sawmill,"Rebuild the sawmill on a timber grove. Let the workers complete it.","Восстанови лесопилку на участке древесины. Дождись окончания стройки."
+ui.chapter.request_delivery,"Step 1: open the western barracks → Orders. Reduce the wood One-time field to −6.","Шаг 1: открой западную казарму → Заказы. Уменьши поле «Однократно» у древесины до −6."
+ui.chapter.place_base,"Open Build → Base nest. Place it on the gold tile. A crown pays for instant construction.","Открой стройку → Базовый муравейник. Поставь его на золотую клетку. За корону он появится сразу."
+ui.chapter.ship_not_ready,"Load at least 50 of each supply and complete the road, then click the ship to evacuate.","Загрузи хотя бы по 50 припасов и дострой дорогу. Затем нажми на корабль для эвакуации."
+ui.story.controls.pause_intro,"First, a royal privilege. Freeze time for me. Space, or the pause button up there.","Сначала королевская привилегия. Останови для меня время. Пробелом или кнопкой паузы наверху."
+ui.story.controls.pause,"Press Space or the highlighted pause button.","Нажми Пробел или подсвеченную кнопку паузы."
+ui.story.controls.resume,"Time is stopped. Press Space or the pause button again to continue.","Время остановилось. Ещё раз нажми Пробел или кнопку паузы, чтобы продолжить."
+ui.story.controls.move_intro,"Now move the camera. Drag the map, or use WASD or the arrows. I want you to see the whole place I leave you in charge of.","Теперь подвигай камеру. Потяни карту мышью или нажми WASD либо стрелки. Хочу, чтобы ты видела всё, что я на тебя свалила."
+ui.story.controls.move,"Move the camera. Drag with LMB or MMB, or hold WASD or an arrow key. Press Done when you finish.","Подвинь камеру: потяни карту ЛКМ или СКМ, либо зажми WASD или стрелку. Когда закончишь, нажми «Готово»."
+ui.story.controls.zoom_intro,"And try the zoom. Mouse wheel, or the plus and minus buttons below. You may need a closer look at me.","И попробуй масштаб. Колёсико мыши или плюс и минус внизу. Вдруг захочешь рассмотреть меня поближе."
+ui.story.controls.zoom,"Change the zoom with the wheel or the − / + buttons. Press Done when you finish.","Измени масштаб колёсиком или кнопками − / +. Когда закончишь, нажми «Готово»."
+ui.story.controls.talk,"Open Talk below and ask the courier about building roads.","Открой «Разговоры» внизу и спроси Логистку о строительстве дорог."
+ui.story.road.ask_advice,"A road... Who can I ask how to build one?","Дорога… А у кого тут можно спросить, как её строить?"
+ui.story.road.advice,"Open Build with B, choose Road, and draw a plan. Press Start construction. We'll deliver the materials and build it. Start with the gold tile by the nest.","Открой стройку кнопкой B, выбери дорогу и нарисуй план. Нажми «Начать строительство». Мы доставим материалы и построим. Начни с золотой клетки у муравейника."
+ui.story.road.why_build,"Wait. Why do couriers build things? Aren't you supposed to carry them?","Погоди. А почему курьеры строят? Вы же должны носить вещи?"
+ui.story.road.also_build,"I do carry them. To the building site. Then it turns out there's no one to build it either.","Я и ношу. До стройки. А потом оказывается, что строить тоже некому."
+ui.story.road.why_not_builders,"So why aren't you called builders?","Так почему вы тогда не строители?"
+ui.story.road.better_fed,"They'd feed builders better...","Строителей бы лучше кормили…"
+ui.chapter.board_ready,"Cargo loaded. Click the ship to start the evacuation.","Припасы загружены. Нажми на корабль, чтобы начать эвакуацию."
+"ui.chapter.statue_blocks","And the statue? Can anyone walk through it?","А статуя? Сквозь неё ведь не пройти?"
+"ui.chapter.statue_whatever","Of course not. It is a monument, not a doorway. Walk around. What can you do?","Разумеется. Это памятник, а не дверной проём. Обойдёте. А чёж поделаешь?"
+"ui.chapter.feast_expires","A feast disappears after a while. Then she asks for another one.","А пир через некоторое время пропадает. Потом она просит новый."
+"ui.chapter.distraction","They keep me entertained. You would not want a bored queen, would you?","Это просто то, на что я могу отвлечься. Ты же не хочешь, чтобы королева заскучала?"
+"ui.chapter.other_request","Now give me whichever you did not choose. I require variety. Open Tasks again.","А теперь сделай то, что не выбрала в первый раз. Мне нужно разнообразие. Снова открой «Задачи»."
+"ui.chapter.second_order","Build %s on the gold tile.","Построй «%s» на золотой клетке."
+"ui.chapter.upgrade_request","Worker! Come explain what to do with the timber grove.","Рабочая! Подойди, объясни ей, что делать с лесом."
+"ui.chapter.worker_where","I should ask the Worker what this improvement is for.","Спрошу у Рабочей, зачем это улучшение."
+"ui.chapter.worker_called","Here. Open Talk below. I can explain why we need a sawmill.","Я тут. Открой «Разговоры» внизу. Расскажу, зачем нам лесопилка."
+"ui.chapter.ask_worker","Open Talk and ask the Worker what the improvement is for.","Открой «Разговоры» и спроси Рабочую, зачем нужно улучшение."
+"ui.chapter.worker_improvements","A sawmill adds workplaces at a wood source. More of us can work together and bring more home. A quarry does the same for stone. Neither creates a new deposit.","Лесопилка добавляет рабочие места у дерева. Сможем работать вместе и носить домой больше. Каменоломня делает то же самое для камня. Новых залежей они не создают."
+"ui.chapter.worker_info","Each building card has an i tab. Open it for its description, price, extra workplaces and production. Read it before spending materials.","На карточке постройки есть вкладка i. Там описание, цена, рабочие места и добыча. Загляни туда, прежде чем тратить материалы."
+"ui.chapter.upgrade_reply","An instruction manual? We have those?","Инструкция? У нас бывают инструкции?"
+"ui.chapter.worker_upgrade_task","Yes. Open Build, find the sawmill, check i, then improve a wood source.","Бывают. Открой стройку, найди лесопилку, загляни в i и улучши источник дерева."
+"ui.storage.signed_request","Positive: receive goods. Negative: send goods to another nest. Counts down toward zero.","Плюс: получить. Минус: отправить в другой муравейник. Значение уменьшается по мере перевозки."
+ui.chapter.wait_export,"Step 2: order accepted. Wait for couriers to pick up 6 wood and deliver it to another nest.","Шаг 2: заказ принят. Дождись, пока курьеры заберут 6 древесины и доставят в другой муравейник."
+"ui.chapter.infinite_claim","There is an infinity sign. Infinite materials, obviously. Build whatever I tell you.","Видишь значок бесконечности? Материалы бесконечные, очевидно. Строй всё, что я скажу."
+"ui.chapter.infinite_question","But she said the materials were infinite. The stock display even had an infinity sign.","Но она сказала, что материалы бесконечные. Там даже значок был."
+"ui.chapter.finite_truth","She ordered that sign put there. These are the real figures. Almost nothing is left. The island deposits are finite too.","Она велела поставить этот значок. А вот настоящие цифры. Почти ничего не осталось. И залежи на острове тоже конечные."
+"ui.storage.unlimited","Supplies: ∞","Запасы: ∞"
+ui.chapter.demolition_wait,"Wait for the work on the marked tile to finish. Then remove the next highlighted structure.","Дождись завершения работ на отмеченной клетке. Затем убери следующую подсвеченную постройку."
+ui.story.controls.done,Done,Готово
+ui.play.saves,Saved games,Сохранения
+ui.play.new,New game,Новая игра
+ui.play.add,+ New game,+ Новая игра
+ui.play.campaign,Campaign,Кампания
+ui.play.endless,Endless,Бесконечно
+ui.play.waves,Enemy waves,Волны врагов
+ui.play.timer,Queen timer,Таймер королевы
+ui.play.start,Start,Начать
+ui.play.legacy,Previous save,Прежнее сохранение
+ui.play.island_saves,Island autosaves,Автосохранения по островам
+ui.play.island_number,Island %d,Остров %d
+ui.play.delete,Delete save,Удалить сохранение
+ui.play.confirm_delete,Delete this save and all its island snapshots?,Удалить это сохранение и снимки всех его островов?
+ui.play.delete_failed,Could not delete the save (%s).,Не удалось удалить сохранение (%s).
+ui.zero.skip_lines,"Skip lines","Пропустить реплики"
+ui.zero.military,"Scout","Военная"
+ui.zero.spider,"Spider","Паук"
+ui.zero.old_stone,"Northern outcrop","Северный камень"
+ui.zero.finite_stone,"Distant quarry","Дальний камень"
+ui.zero.power,"I made you to entertain me. I meant to give you a little authority, but it was fiddly. So you get the whole colony. I'm keeping the crown.","Я создала тебя для развлечений. Хотела выдать тебе чуточку власти, но там столько возни. В общем, колония твоя. Корона моя."
+ui.zero.berries,"Another basket of berries. Anyone want to trade?","Ещё корзина ягод. Никто махнуться не хочет?"
+ui.zero.shortcut,"Look at their tracks. Berries, berries, berries. Nobody's going as far as the other stone. Where would you put a road?","По следам посмотри. Ягоды, ягоды, ягоды. До второго камня никто не идёт. Где бы ты провела дорогу?"
+ui.zero.navigation_goal,"I check the travel times with N. Press it again and you can see which jobs they'll pick.","Я смотрю время в пути на N. Нажмёшь ещё раз — увидишь, за какую работу они возьмутся в первую очередь."
+ui.zero.stone_home,"Stone's in my nest. If you need it somewhere else, ask her.","Камень у меня в муравейнике. Если нужен в другом месте, это к ней."
+ui.zero.source_target,"The west barracks wants stone. Put the order there. I'll find a store with some to spare.","Западным нужен камень. Закажи его у них, а я посмотрю, у кого есть лишний."
+ui.zero.min_explain,"Min is when I should come. At the sending store, I leave that much behind.","По «Мин.» я вижу, когда идти. А на складе, откуда забираю, столько оставлю про запас."
+ui.zero.max_explain,"Max tells me when the shelves are full enough. Any extra, I'll bring to a store with room below its own max.","По «Макс.» я вижу, когда хватит. Если припасов больше, отнесу туда, где до своего «Макс.» ещё есть место."
+ui.zero.once_explain,"Use One-time when you only need a single delivery. A positive number asks for goods here. A negative number asks carriers to take goods from here to another store.","«Однократно» пригодится для разовой перевозки. Плюс заказывает груз сюда. Минус просит вывезти груз отсюда на другой склад."
+ui.zero.order_delivered,"There. One store's lost it and the other's got it.","Довезла. На одном складе убыло, на другом прибавилось."
+ui.zero.wall_line,"A wall, about here. A queen ought to have something to stand in front of.","Поставь мне здесь стенку. У королевы должно быть что-нибудь за спиной, когда она позирует."
+ui.zero.wall_goal,"Build a wall on the marked tile.","Построй стену на отмеченной клетке."
+ui.zero.statues_line,"It looks a little empty. Three statues of me by that stone. You'll get my good side from every direction.","Пустовато. Поставь у камня три мои статуи. Куда ни глянь, везде моя удачная сторона."
+ui.zero.statues_goal,"Tasks → Three statues. Mark all three sites. Finished %d/%d.","Задачи → «Три статуи». Отметь все три места. Готово %d/%d."
+ui.zero.statue_price,"Each commissioned statue raises the next price. See the combined price before applying the plan.","С каждой заказанной статуей растёт цена следующей. Общая цена видна до применения плана."
+ui.zero.planner_shock,"Who approved three statues in front of a working quarry? I need that stone in the stores, not on a pedestal.","Кто согласовал три статуи у действующей добычи? Мне камень нужен на складе. На постамент я его уже списала."
+ui.zero.real_stock,"The queen asked me to put the infinity sign there. Here are the real numbers. I was saving that stone for the walls.","Знак бесконечности велела поставить королева. А вот сколько у нас на самом деле. Я этот камень на починку стен откладывала."
+ui.zero.remove_wall_line,"See those three wall sections in the middle? Mark them all for demolition, then apply the plan once.","Видишь три секции стены посередине? Отметь все три на снос, потом примени план один раз."
+ui.zero.remove_wall_goal,"Build → Demolish. Mark the three highlighted wall sections.","Стройка → Снос. Отметь три подсвеченные секции стены."
+ui.zero.remove_statue_line,"I've never taken down a statue before. Let's do just one. One opening is enough.","Я ещё ни разу не сносила статуи. Давай пока одну. Одного прохода хватит."
+ui.zero.remove_statue_goal,"Mark a statue for demolition and apply.","Отметь одну статую на снос и примени план."
+ui.zero.caught,"Why is there one less of me? I was gone for one minute.","Почему меня стало на одну меньше? Я же на минуту отошла."
+ui.zero.blocked,"Your statues blocked every approach. That source hasn't run out of stone in living memory.","Статуи закрыли все подходы. А камень там на моей памяти ни разу не кончался."
+ui.zero.remove_source_line,"So the stone was in the way. Shu, remove it. Leave my statues where they are.","Значит, мешал камень. Шу, убери его. Остальных меня не трогай."
+ui.zero.remove_source_goal,"Demolish the northern outcrop.","Снеси северный источник камня."
+ui.zero.mentor_order,"On second thought, Planner, keep an eye on Shu. I can't spend all day explaining what I meant.","Вот ещё что. Планировщица, возьми Шу к себе. Я не могу весь день объяснять, что имела в виду."
+ui.zero.mentor_reply,"I've got two ledgers waiting. Come here a moment. Watch where they're going.","Мне ещё два склада сводить. Подойди на минутку. Посмотри, куда они идут."
+ui.zero.finite_explain,"The other quarry can run out. See what its card says. There's a long walk back from there, too.","Тот камень может кончиться. Посмотри остаток в карточке. И сколько оттуда ещё идти обратно."
+ui.zero.quarry_ask,"I need a fresh batch from that outcrop. I'll keep count in the ledger.","Мне нужна партия камня оттуда. Сколько добудут, я запишу."
+ui.zero.quarry_goal,"Mine stone from the distant outcrop (%d/%d).","Добудь камень из дальнего месторождения (%d/%d)."
+ui.zero.briefing,"For the inspection, I need a loaded barge at the east landing. I've set aside a starting budget. You'll have to produce the rest.","К проверке мне нужна гружёная баржа у восточного причала. Стартовый запас я выделила. Остальное добудете сами."
+ui.zero.plan,"Go straight through the yard and open the partition, or use the longer road around it. See what you can afford before you start breaking walls.","Можно расчистить проход через двор или обойти перегородку по старой дороге. Сначала посмотри, на что хватит запасов."
+ui.zero.load,"The east barracks is sitting on its stone. They'll hand over what's above Min. You'll need some of it on the barge.","У восточных камень лежит про запас. Носильщики заберут то, что выше «Мин.». Часть этого камня нам нужна на барже."
+ui.zero.ship_goal,"Build a barge at the eastern landing.","Построй баржу у восточного причала."
+ui.zero.ship_done,"Barge ready","Баржа готова"
+ui.zero.escape_road_goal,"Connect camp to the landing with a continuous road.","Соедини лагерь и причал непрерывной дорогой."
+ui.zero.road_done,"The landing is connected","Дорога к причалу готова"
+ui.zero.report,"Something big is coming up to the west wall. Where's the guard?","К западной стене идёт что-то здоровое. Где караул?"
+ui.zero.watch,"I have three towers on the map.","На карте у меня три башни."
+ui.zero.no_watch,"I ran past all three. They're empty.","Я мимо всех трёх пробежала. Пустые."
+ui.zero.spider_first,"I smelled a crown.","Чую корону."
+ui.zero.spider_last,"Send out your queen.","Отдайте королеву."
+ui.zero.run,"Shu. The barge. Now.","Шу. На баржу. Сейчас."
+ui.zero.board_goal,"Click the loaded barge to take the queen aboard.","Нажми на гружёную баржу, чтобы провести королеву на борт."
+ui.zero.on_board,"All aboard. I checked.","Все на борту. Я проверила."
+ui.zero.leave,"Well. At least I had you build the road.","Ну. Главное, что я велела тебе построить дорогу."
+ui.zero.check_goal,"Check the current objective.","Сверься с текущей задачей."
+ui.zero.work_topic,"I pick a job I can reach, do the work, then take the haul to my nest. If our store's full, I look for space nearby.","Выбираю работу, до которой могу дойти. Добычу несу в свой муравейник. Если там всё забито, ищу место поблизости."
+ui.zero.order_question,"Will the feast or the statue cost us much?","А пир или статуя нам дорого обойдутся?"
+ui.zero.stone_question,"Why are they still bringing berries? Where are we getting stone now?","Почему все так и носят ягоды? Откуда теперь брать камень?"
+ui.zero.statue_order,"Three statues","Три статуи"
+ui.zero.worker_upgrades,"Sure. See that wood and stone? Mark a sawmill and a quarry in the same plan.","Бывают. Видишь дерево и камень? Отметь лесопилку и каменоломню одним планом."
+ui.zero.upgrades_goal,"Mark a sawmill and quarry on the highlighted sources, then apply the plan.","Отметь лесопилку и каменоломню на подсвеченных источниках и примени план."
+ui.zero.sawmill_upgrade_goal,"Upgrade the highlighted timber source with a sawmill.","Поставь лесопилку на подсвеченном источнике дерева."
+ui.zero.quarry_upgrade_goal,"Upgrade the highlighted stone source with a quarry.","Поставь каменоломню на подсвеченном камне."
+ui.zero.set_max,"West barracks → Orders → Stone. Try Max %d. That's how much you'd like to have there.","Западная казарма → «Заказы» → камень. Попробуй «Макс.» %d. Столько хочется видеть на складе."
+ui.zero.set_min,"Now try Min %d. Below that, it's time for a delivery.","Теперь попробуй «Мин.» %d. Меньше этого — пора везти."
+ui.zero.wait_transfer,"Follow the carrier. The next stone delivery goes to the west barracks.","Проследи за носильщиком. Камень везут в западную казарму."
+ui.zero.reserve_hint,"Stone staying in storage? Check Min at the east barracks.","Камень остаётся на складе? Проверь «Мин.» восточной казармы."
+ui.zero.housing,"If the walk is still too long, put barracks by the quarry. The crew will live there. For a bigger store and space to hire, use a base nest. A crown puts it up on the spot.","Если всё равно далеко, поставь у камня казарму. Рабочие будут жить там. Нужен большой склад и место для найма — ставь муравейник. За корону он встанет сразу."
+ui.zero.preparation_timer,Inspection in %d:%02d,До проверки %d:%02d

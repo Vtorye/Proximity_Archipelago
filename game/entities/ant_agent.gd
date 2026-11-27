@@ -1,5 +1,7 @@
 class_name AntAgent
 extends Node2D
+
+const TIMING := preload("res://game/navigation/navigation_timing.gd")
 ## Executes plans; needs, route execution, and assignment policy are separate objects.
 
 enum Role { WORKER, CARRIER, WARRIOR }
@@ -78,14 +80,21 @@ func _ready() -> void:
 	_refresh_visual()
 
 func refresh_meal_reservation() -> void:
-	if _is_foodless():
+	if not _can_reach_canteen():
 		planner.inventory.release(_meal)
 		_meal = null
 	elif _meal == null or not _meal.active:
 		_meal = planner.reserve_meal()
 
+func _can_reach_canteen() -> bool:
+	return planner.food_within_range(route_service.world_to_cell(global_position), speed, needs.capacity)
+
 func _is_foodless() -> bool:
-	return not planner.food_within_range(route_service.world_to_cell(global_position), speed, needs.capacity)
+	if role == Role.WORKER:
+		var stock := planner.inventory
+		if not stock.can_consume(_meal) and stock.available(planner.food_type) < 1:
+			return true
+	return not _can_reach_canteen()
 
 func _exit_tree() -> void:
 	if combat != null: combat.leave_tower()
@@ -140,8 +149,7 @@ func _physics_process(delta: float) -> void:
 		Status.EATING:
 			_timer -= delta
 			if _timer <= 0.0:
-				if planner.inventory.consume(_meal):
-					needs.eat()
+				_finish_meal()
 				_meal = null
 				if role == Role.WARRIOR:
 					_set_status(Status.HOME)
@@ -162,6 +170,14 @@ func _physics_process(delta: float) -> void:
 	_refresh_visual()
 
 func _decide() -> void:
+	if not TIMING.enabled:
+		_decide_inner()
+		return
+	TIMING.begin(&"ant_decide")
+	_decide_inner()
+	TIMING.end()
+
+func _decide_inner() -> void:
 	if combat != null and role == Role.WARRIOR:
 		combat.decide()
 		return
@@ -171,8 +187,8 @@ func _decide() -> void:
 	if not transport.cargo.is_empty():
 		resume_delivery()
 		return
-	var foodless: bool = _is_foodless()
 	refresh_meal_reservation()
+	var foodless := _is_foodless()
 	if construction != null and status in [Status.HOME, Status.WAITING_FOR_FOOD, Status.WANDERING] and construction.decide(): return
 	if role == Role.CARRIER:
 		transport.decide_pickup(foodless)
@@ -213,7 +229,16 @@ func _can_recover() -> bool:
 	if not needs.can_afford(planner.escape_energy(route_service.world_to_cell(global_position), speed)):
 		return false
 	refresh_meal_reservation()
-	return _meal != null and _meal.active
+	return planner.inventory.can_consume(_meal)
+
+func _finish_meal() -> void:
+	var cell := route_service.world_to_cell(global_position)
+	var meal_site: Building = home if _destination == &"combat_meal" else planner.canteen_at_entry(cell)
+	var ticket := _meal
+	if planner.inventory.consume(ticket, meal_site as Canteen):
+		needs.eat()
+		if is_instance_valid(meal_site):
+			meal_site.show_stock_change(ticket.type, -ticket.amount)
 
 func _seek_food() -> void:
 	if combat != null and role == Role.WARRIOR:
@@ -242,12 +267,22 @@ func _go_home() -> void:
 	if not is_instance_valid(home):
 		_seek_food()
 		return
-	var entry: Vector2i = planner.accessible_entry(home)
-	var route: Route = planner.home_route(home, route_service.world_to_cell(global_position))
-	if not route.is_valid() or not needs.can_afford(planner.travel_energy(route.cost, movement_speed()) + planner.escape_energy(entry, speed)):
+	var cell := route_service.world_to_cell(global_position)
+	var route := planner.home_route(home, cell)
+	var foodless := _is_foodless()
+	if route.is_valid():
+		var pace := movement_speed()
+		var energy := planner.travel_energy(route.cost, pace) + planner.approach_energy(global_position, cell, pace)
+		var can_return := needs.satiety > energy if foodless else needs.can_afford(energy + planner.escape_energy(route.cells.back(), speed))
+		if can_return:
+			_walk(route, &"home")
+			return
+	if foodless:
+		# Seeking a meal here would immediately repeat the same decision.
+		_set_status(Status.WAITING_FOR_FOOD)
+		_timer = 1.0
+	else:
 		_seek_food()
-		return
-	_walk(route, &"home")
 
 func _walk(route: Route, destination: StringName) -> void:
 	_destination = destination
@@ -293,13 +328,14 @@ func step_clear_of_construction(cell: Vector2i) -> void:
 	cell_changed.emit(previous, cell)
 
 func _on_navigation_changed() -> void:
-	_queue_reconsideration(true)
+	if not route_service.last_change_only_cheaper:
+		_queue_reconsideration(true)
 
 func _on_food_sources_changed() -> void:
 	if status == Status.WALKING and _destination == &"food" or status == Status.EATING:
 		_seek_food()
 	else:
-		_on_navigation_changed()
+		_queue_reconsideration(true)
 
 func _on_work_opportunities_changed() -> void:
 	if status == Status.WANDERING or (status == Status.HOME and work.waiting_for_work):

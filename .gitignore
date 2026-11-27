@@ -1,8 +1,17 @@
 # Godot 4+ specific ignores
 .godot/
+/native/navigation/bin/
 /android/
 # Validation media belongs outside the source tree.
 *.log
 roadmap_11-24_nov_corrected.pptx
 Регистрация и баллы.xlsx
-/addons
+# Keep project-required editor plugins in Git.
+/addons/*
+!/addons/dialogue_manager/
+!/addons/level_validation/
+/.presentation_work
+game/assets/sprites/visual_novel/ant_queen/main_menu_queen_throne_sideways.png
+
+/.godot_test_roaming/
+.~lock.*#

@@ -7,6 +7,9 @@ const CARD: PackedScene = preload("res://game/ui/construction_card.tscn")
 ## Construction editor. The draft owns edits; the controller commits the final plan.
 signal map_inspection_requested(cell: Vector2i)
 signal pan_mode_changed(enabled: bool)
+signal restricted_action(reason: StringName)
+signal placement_drafted
+signal draft_pricing_changed(pending: Dictionary[String, int])
 var order: TaskBuildOrder
 
 var context: ConstructionContext
@@ -41,7 +44,7 @@ var category_buttons: Array[Button] = []
 var _category_for: Dictionary[StringName, Button] = {}
 var _active_category: Button
 
-var _pricing_cell := Vector2i(2147483647, 2147483647)
+var _pricing_cell := TileGrid.NO_CELL
 var _bottom_inset := 8.0
 var _top_edge := 0.0
 
@@ -61,12 +64,16 @@ func set_palette_visible(shown: bool) -> void:
 func _update_buildings_visibility() -> void:
 	buildings_panel.visible = panel.visible and not _map_drag and not _task_mode and _active_category != null
 
-func show_catalog() -> void:
+func show_catalog(selected_id: StringName = &"") -> void:
 	if _task_mode:
 		_task_mode = false
 		_select(null)
 		_update_mode()
 	set_palette_visible(true)
+	var card := controls.get(selected_id) as ConstructionCard
+	if card != null:
+		show_category_for(selected_id)
+		_select(card.option)
 
 func select_order(task_order: TaskBuildOrder = null) -> void:
 	_task_mode = true
@@ -79,14 +86,21 @@ func _update_mode() -> void:
 		button.visible = not _task_mode
 	for id in _category_for:
 		controls[id].visible = not _task_mode and _category_for[id] == _active_category
-	%Demolish.disabled = _task_mode
 	description_panel.hide()
 	_update_buildings_visibility()
+	_refresh()
 
-func detach_undo() -> void:
+func detach_toolbar() -> void:
+	controls[&"apply"].pressed.disconnect(apply_plan)
+	controls[&"apply"].pressed.disconnect(AppSettings.play_click)
+	controls[&"apply"].disabled = true
 	controls[&"undo"].pressed.disconnect(_undo)
 	controls[&"undo"].pressed.disconnect(AppSettings.play_click)
 	controls[&"undo"].disabled = true
+	context.pan_button.pressed.disconnect(AppSettings.play_click)
+	context.pan_button.toggled.disconnect(_set_map_drag)
+	context.pan_button.set_pressed_no_signal(false)
+	context.pan_button.disabled = true
 
 func dock_between(bar_height: float, top_edge: float) -> void:
 	_bottom_inset = bar_height + PRESENTATION.dock_clearance
@@ -99,7 +113,9 @@ func _layout_windows() -> void:
 	var margin: float = PRESENTATION.dock_clearance
 	var bottom: float = viewport.y - _bottom_inset
 	if _task_mode:
-		bottom -= floorf(viewport.y * PRESENTATION.task_strip_height_ratio) + margin
+		if context.task_bounds.is_valid():
+			for bounds: Rect2 in context.task_bounds.call():
+				bottom = minf(bottom, bounds.position.y - margin)
 	var fixed_height: float = panel.get_combined_minimum_size().y - _category_scroll.get_combined_minimum_size().y
 	var available_height: float = maxf(0.0, bottom - _top_edge - fixed_height)
 	_category_scroll.custom_minimum_size.y = minf(available_height, _category_list.get_combined_minimum_size().y)
@@ -109,20 +125,27 @@ func _layout_windows() -> void:
 	var left := margin
 	if _task_mode:
 		left = maxf(margin, viewport.x - panel.size.x - margin)
-	panel.position = Vector2(left, bottom - panel.size.y)
+	%CategoryHeader.place(Vector2(left, bottom - panel.size.y))
 	var strip_left: float = panel.position.x + panel.size.x + margin
 	var available_width: float = maxf(0.0, viewport.x - strip_left - margin)
 	if content.x > available_width:
 		content.y += _building_scroll.get_h_scroll_bar().get_combined_minimum_size().y
-	buildings_panel.size = Vector2(minf(content.x, available_width), minf(content.y, viewport.y / 6.0))
-	buildings_panel.position = Vector2(strip_left, bottom - buildings_panel.size.y)
+	var header_height: float = %BuildingsHeader.get_combined_minimum_size().y
+	header_height += %BuildingsHeader.get_parent().get_theme_constant(&"separation")
+	content.y += header_height
+	if %BuildingsHeader.collapsed:
+		content.y = header_height + frame.y
+	buildings_panel.size = Vector2(minf(content.x, available_width), minf(content.y, viewport.y / 6.0 + header_height))
+	%BuildingsHeader.place(Vector2(strip_left, bottom - buildings_panel.size.y))
 	description_panel.size = Vector2(minf(400.0, viewport.x - 2.0 * margin), 0.0)
-	description_panel.position = Vector2(viewport.x - description_panel.size.x - margin,
-		maxf(margin, buildings_panel.position.y - description_panel.size.y - margin))
+	description_panel.header.place(Vector2(viewport.x - description_panel.size.x - margin,
+		maxf(margin, buildings_panel.position.y - description_panel.size.y - margin)))
 
 func _ready() -> void:
 	%PreviewCategory.hide()
 	%PreviewCard.hide()
+	%CategoryHeader.collapsed_changed.connect(func(_collapsed: bool): _layout_windows())
+	%BuildingsHeader.collapsed_changed.connect(func(_collapsed: bool): _layout_windows())
 	_pointer = get_viewport().get_mouse_position()
 	dismissable = false
 	visibility_changed.connect(_on_visibility_changed)
@@ -139,16 +162,17 @@ func _ready() -> void:
 	context.controller.map.get_parent().add_child(_preview)
 	controls[&"undo"] = context.undo_button
 	controls[&"demolish"] = %Demolish
-	controls[&"apply"] = %Apply
+	controls[&"apply"] = context.apply_button
 	controls[&"cancel"] = %Cancel
-	controls[&"move"] = %Move
+	controls[&"move"] = context.pan_button
+	context.pan_button.disabled = false
 	for action in [&"undo", &"apply", &"cancel", &"demolish", &"move"]:
 		controls[action].pressed.connect(AppSettings.play_click)
 	controls[&"undo"].pressed.connect(_undo)
 	controls[&"demolish"].pressed.connect(select_demolition)
 	controls[&"cancel"].pressed.connect(_cancel)
 	controls[&"apply"].pressed.connect(apply_plan)
-	%Move.toggled.connect(_set_map_drag)
+	context.pan_button.toggled.connect(_set_map_drag)
 	controls[&"confirm_demolish"] = %Confirm
 	%Confirm.pressed.connect(AppSettings.play_click)
 	%Confirm.pressed.connect(_commit)
@@ -171,6 +195,7 @@ func _ready() -> void:
 	if not context.controller.registry.removed.is_connected(draft.forget_removal):
 		context.controller.registry.removed.connect(draft.forget_removal)
 	context.controller.registry.changed.connect(_queue_refresh)
+	context.controller.changed.connect(_queue_refresh)
 	AppSettings.language_changed.connect(_queue_refresh)
 	draft.changed.connect(_queue_refresh)
 	_refresh()
@@ -180,7 +205,6 @@ func _populate_categories() -> void:
 	var remaining: Array[BuildOption] = context.controller.options.filter(
 		func(option: BuildOption) -> bool: return option != null and option.show_in_palette)
 	var catalog: BuildCatalog = context.controller.catalog
-	var production: Button
 	if catalog != null:
 		for category in catalog.categories:
 			if category == null:
@@ -194,12 +218,8 @@ func _populate_categories() -> void:
 						available.append(option)
 						remaining.erase(option)
 						break
-			var entry: Button = _add_category(category.title, available)
-			if category.title == "ui.construction.category.production":
-				production = entry
+			_add_category(category.title, available)
 	_add_category("ui.construction.category.other", remaining)
-	# Move starts before the generated categories, so the old index puts it directly after Production.
-	%CategoryList.move_child(%Move, production.get_index() if production != null else -1)
 
 func _add_category(title: String, options: Array[BuildOption]) -> Button:
 	if options.is_empty():
@@ -225,6 +245,9 @@ func _add_card(option: BuildOption) -> ConstructionCard:
 	entry.info_requested.connect(_toggle_description)
 	_choices.add_child(entry)
 	entry.configure(option, context.art)
+	if not context.prices_visible:
+		entry.get_node("%Cost").hide()
+		entry.get_node("%Info").hide()
 	controls[option.id] = entry
 	return entry
 
@@ -247,6 +270,8 @@ func _show_category(category: Button) -> void:
 	_layout_windows.call_deferred()
 
 func _toggle_description(option: BuildOption) -> void:
+	if not context.prices_visible:
+		return
 	description_panel.toggle(option, context.controller, _pricing_cell)
 	_layout_windows.call_deferred()
 
@@ -263,6 +288,13 @@ func _exit_tree() -> void:
 	if is_instance_valid(_preview): _preview.queue_free()
 
 func _select(option: BuildOption, task_order: TaskBuildOrder = null) -> void:
+	if option != null and not _tool_allowed(option, task_order):
+		var card: Button = controls.get(option.id)
+		if card != null:
+			card.set_pressed_no_signal(false)
+		if _selected != null and controls.has(_selected.id):
+			controls[_selected.id].set_pressed_no_signal(true)
+		return
 	if _map_drag: _set_map_drag(false)
 	_end_stroke()
 	if order == null and _selected != null and controls.has(_selected.id):
@@ -285,7 +317,7 @@ func _set_map_drag(enabled: bool) -> void:
 	context.camera.dragging = false
 	_map_drag = enabled
 	pan_mode_changed.emit(enabled)
-	%Move.set_pressed_no_signal(enabled)
+	context.pan_button.set_pressed_no_signal(enabled)
 	_update_buildings_visibility()
 	if enabled:
 		description_panel.hide()
@@ -294,6 +326,9 @@ func _set_map_drag(enabled: bool) -> void:
 	_refresh()
 
 func select_demolition() -> void:
+	if not _tool_allowed(null, null):
+		controls[&"demolish"].set_pressed_no_signal(false)
+		return
 	if _map_drag: _set_map_drag(false)
 	if _tool == &"demolish":
 		if _selected != null:
@@ -312,15 +347,29 @@ func select_demolition() -> void:
 	_preview.queue_redraw()
 	_refresh()
 
+func _tool_allowed(option: BuildOption, task_order: TaskBuildOrder) -> bool:
+	if not _tool_available(option, task_order):
+		restricted_action.emit(&"action")
+		return false
+	return true
+
+func _tool_available(option: BuildOption, task_order: TaskBuildOrder = null) -> bool:
+	return not context.allow_tool.is_valid() or context.allow_tool.call(option, task_order)
+
 func _cancel_confirmation() -> void:
 	if _confirmation != null: _confirmation.hide()
 
 func _refresh() -> void:
 	_refresh_queued = false
+	var pending: Dictionary[String, int] = {}
+	if context.controller.prices != null:
+		pending = context.controller.prices.pending_after(draft.commands())
 	for control in controls.values():
 		var card := control as ConstructionCard
 		if card != null and card.option != null:
-			card.set_price(context.controller.price(card.option, _pricing_cell))
+			card.disabled = not _tool_available(card.option)
+			card.set_price(context.controller.price(card.option, _pricing_cell, pending))
+	draft_pricing_changed.emit(pending)
 	var budget: PlacementCheck = draft.budget_check()
 	BuildCostText.show_price(_cost, draft.costs(), tr("ui.construction.cost") % [draft.size(), "%s"])
 	var orders := draft.task_orders()
@@ -333,14 +382,20 @@ func _refresh() -> void:
 			seconds += task_order.time_reward()
 		BuildCostText.show_reward(_reward, rewards, seconds, tr("ui.construction.plan_reward"))
 	_cost.add_theme_color_override("default_color", ColonyStyle.color(&"text") if budget.allowed() else ColonyStyle.color(&"danger"))
+	%Demolish.visible = not _task_mode and _tool_available(null)
+	%Demolish.disabled = not %Demolish.visible
 	controls[&"demolish"].set_pressed_no_signal(_tool == &"demolish")
 	controls[&"undo"].disabled = not draft.can_undo()
 	controls[&"apply"].disabled = draft.size() == 0 or not budget.allowed()
 	var reason: PlacementCheck = budget if not budget.allowed() else draft.last_result
 	_status.text = PlacementMessages.text(reason.code)
-	_status.visible = not reason.allowed()
+	_status.visible = not _status.text.is_empty()
 	_status.add_theme_color_override("font_color", ColonyStyle.color(&"danger") if not reason.allowed() else ColonyStyle.color(&"muted"))
-	description_panel.refresh_at(_pricing_cell)
+	if not context.prices_visible:
+		_cost.hide()
+		_reward.hide()
+		_status.hide()
+	description_panel.refresh_at(_pricing_cell, pending)
 	_preview.queue_redraw()
 
 func _queue_refresh() -> void:
@@ -358,7 +413,7 @@ func _cancel() -> void:
 	close_requested.emit(self)
 
 func apply_plan() -> void:
-	if draft.size() == 0: return
+	if controls[&"apply"].disabled or _confirmation.visible: return
 	_end_stroke()
 	var residents: int = draft.residents_to_demolish()
 	if residents > 0:
@@ -383,6 +438,10 @@ func _input(event: InputEvent) -> void:
 		return
 	if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_Z and event.ctrl_pressed:
 		_undo()
+		get_viewport().set_input_as_handled()
+	elif event.is_action_pressed(&"commit_construction") and not _confirmation.visible and not controls[&"apply"].disabled:
+		AppSettings.play_click()
+		apply_plan()
 		get_viewport().set_input_as_handled()
 	elif event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_ESCAPE:
 		if not context.dismiss_map_popup.is_valid() or not context.dismiss_map_popup.call():
@@ -459,6 +518,13 @@ func _point_allowed(point: Vector2) -> bool:
 		if obstacle.has_point(point): return false
 	return true
 
+func visible_bounds() -> Array[Rect2]:
+	var bounds: Array[Rect2] = []
+	for window: Control in [panel, buildings_panel, description_panel]:
+		if window.is_visible_in_tree():
+			bounds.append(window.get_global_rect())
+	return bounds
+
 func _cell(point: Vector2) -> Vector2i:
 	var map: TileMapLayer = context.controller.map
 	return map.local_to_map(map.get_global_transform_with_canvas().affine_inverse() * point)
@@ -486,7 +552,11 @@ func _paint_to(point: Vector2) -> void:
 
 func _paint_cell(cell: Vector2i) -> void:
 	if _tool == &"demolish": draft.demolish(cell)
-	elif _tool == &"build" and _selected != null: draft.paint(_selected, cell, order)
+	elif _tool == &"build" and _selected != null:
+		if draft.paint(_selected, cell, order):
+			placement_drafted.emit()
+		elif draft.last_result.code == PlacementCheck.Code.TUTORIAL_RESTRICTED:
+			restricted_action.emit(&"cell")
 
 func _end_stroke() -> void:
 	_painting = false

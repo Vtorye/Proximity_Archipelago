@@ -2,10 +2,9 @@
 
 [ext_resource type="Script" uid="uid://dohq4yj0b3afb" path="res://game/resources/resource_amount.gd" id="amount"]
 [ext_resource type="Resource" path="res://game/combat/defense_catalog.tres" id="defenses"]
-[ext_resource type="Resource" uid="uid://bwanb45ketron" path="res://game/building/options/ground.tres" id="ground"]
 [ext_resource type="Script" uid="uid://oiiq6e5tb276" path="res://game/combat/wave_rules.gd" id="rules"]
-[ext_resource type="Resource" uid="uid://dnvvlsc4kjs1t" path="res://game/resources/dot_treses/stone.tres" id="stone"]
-[ext_resource type="Resource" uid="uid://btsdqgmh3ee22" path="res://game/resources/dot_treses/wood.tres" id="wood"]
+[ext_resource type="Resource" uid="uid://dnvvlsc4kjs1t" path="res://game/resources/resource_types/stone.tres" id="stone"]
+[ext_resource type="Resource" uid="uid://btsdqgmh3ee22" path="res://game/resources/resource_types/wood.tres" id="wood"]
 
 [sub_resource type="Resource" id="wood_cost"]
 script = ExtResource("amount")
@@ -21,5 +20,4 @@ script = ExtResource("rules")
 first_wave_seconds = 60.0
 wave_interval_seconds = 70.0
 trap_removal_costs = Array[ExtResource("amount")]([SubResource("wood_cost"), SubResource("stone_cost")])
-ruined_road = ExtResource("ground")
 defenses = ExtResource("defenses")

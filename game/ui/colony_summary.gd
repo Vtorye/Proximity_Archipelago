@@ -96,4 +96,4 @@ func _on_row_input(event: InputEvent, nest: House) -> void:
 func _append_stock(label: RichTextLabel, type: ResourceType, amount: int) -> void:
 	if not label.get_parsed_text().is_empty():
 		label.add_text(BuildCostText.RESOURCE_GAP)
-	BuildCostText.append_resource(label, type, str(amount))
+	BuildCostText.append_resource(label, type, _world.inventory.display_amount(type, amount))

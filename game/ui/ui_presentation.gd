@@ -16,6 +16,8 @@ extends Resource
 @export var navigation_cell_brightness: float
 @export var navigation_cell_opacity: float
 @export var navigation_min_label_width: float
+## Buildings and construction sites get labels at this camera zoom.
+@export_range(0.25, 6.0, 0.05) var navigation_point_label_zoom := 1.0
 @export var navigation_font_size: int
 @export var navigation_baseline: float
 @export var grid_color: Color
@@ -27,8 +29,6 @@ extends Resource
 
 @export_group("Menu Backdrop")
 @export var backdrop_tile_size: float
-@export var backdrop_shore_radius_squared: float
-@export var backdrop_shore_variation: float
 @export var backdrop_ant_count: int
 @export var backdrop_ant_speed: float
 @export var backdrop_ant_stride_frequency: float

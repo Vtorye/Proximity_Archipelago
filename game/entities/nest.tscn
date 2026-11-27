@@ -1,0 +1,18 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://game/entities/nest.gd" id="1_house"]
+[ext_resource type="Texture2D" path="res://game/assets/sprites/nest.svg" id="2_tex"]
+[ext_resource type="PackedScene" uid="uid://c6y7xv8tmtn8m" path="res://game/entities/ant_resident.tscn" id="3_human"]
+[ext_resource type="PackedScene" path="res://game/ui/stock_transfer_feedback.tscn" id="4_transfer"]
+
+[node name="House" type="Node2D" node_paths=PackedStringArray("stock_transfer_feedback")]
+script = ExtResource("1_house")
+capacity = 5
+human_scene = ExtResource("3_human")
+stock_transfer_feedback = NodePath("StockTransferOrigin")
+
+[node name="Sprite" type="Sprite2D" parent="."]
+texture = ExtResource("2_tex")
+
+[node name="StockTransferOrigin" parent="." instance=ExtResource("4_transfer")]
+position = Vector2(0, -32)

@@ -1,7 +1,7 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" uid="uid://7kcyh32g7h1t" path="res://game/entities/base_building.gd" id="building"]
-[ext_resource type="Texture2D" path="res://game/assets/sprites/picnic/picnic_red.svg" id="icon"]
+[ext_resource type="Texture2D" path="res://game/assets/sprites/picnic/picnic_red_marker.svg" id="icon"]
 
 [node name="Feast" type="Node2D"]
 script = ExtResource("building")

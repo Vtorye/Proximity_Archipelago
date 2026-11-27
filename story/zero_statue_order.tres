@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="TaskSpec" format=3]
+
+[ext_resource type="Script" path="res://game/tasks/task_spec.gd" id="spec"]
+[ext_resource type="Script" path="res://game/tasks/task_variant.gd" id="variant"]
+[ext_resource type="Resource" path="res://story/zero_statue.tres" id="statue"]
+
+[sub_resource type="Resource" id="commission"]
+script = ExtResource("variant")
+id = &"statues"
+building = ExtResource("statue")
+
+[resource]
+script = ExtResource("spec")
+id = &"zero_statues"
+title = "ui.zero.statue_order"
+build_count = 3
+reward_seconds = 0.0
+variants = Array[ExtResource("variant")]([SubResource("commission")])

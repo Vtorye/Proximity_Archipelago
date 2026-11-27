@@ -23,8 +23,8 @@ func _ready() -> void:
 
 func _save() -> void:
 	var current: Node = Router._current
-	if current != null and current.get("world") is World:
-		var error: Error = SessionSave.write(current.world)
+	if current != null and current.has_method("save_game"):
+		var error: Error = current.save_game()
 		%Save.text = "ui.voyage.saved" if error == OK else "ui.voyage.save_failed"
 
 func _open_settings() -> void:

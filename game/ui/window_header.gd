@@ -9,6 +9,7 @@ enum Action { NONE, FOLD, CLOSE }
 enum Dock { CENTER, BOTTOM_LEFT, BOTTOM_RIGHT, TOP_LEFT, TOP_RIGHT, TOP_CENTER }
 
 @export var title: String
+@export var title_style: StringName = &"Caption"
 @export var action: Action = Action.NONE
 @export var draggable := true
 @export_range(0.0, 624.0, 1.0) var collapsed_width := 0.0
@@ -16,19 +17,23 @@ enum Dock { CENTER, BOTTOM_LEFT, BOTTOM_RIGHT, TOP_LEFT, TOP_RIGHT, TOP_CENTER }
 ## Preferred width in logical pixels independent of text size.
 @export_range(64.0, 624.0, 1.0) var panel_width := 260.0
 @export var inset := Vector2(8, 8)
-@export var panel: PanelContainer
+@export var panel: Control
 @export var body: Control
+## The containing UI supplies size and default position for docked strips.
+@export var external_layout := false
 
 var collapsed := false
 var _dragging := false
 var _floating := false
+var _floating_position := Vector2.ZERO
 var _layout_pending := false
 
 @onready var handle: Label = %Handle
-@onready var toggle: Button = %Toggle
+@onready var toggle: Button = %FoldToggle if action == Action.FOLD else %Toggle
 
 func _ready() -> void:
 	handle.text = title
+	handle.theme_type_variation = title_style
 	if draggable:
 		handle.gui_input.connect(_drag_input)
 	else:
@@ -75,6 +80,8 @@ func queue_layout() -> void:
 
 func _layout() -> void:
 	_layout_pending = false
+	if external_layout:
+		return
 	if not is_instance_valid(panel) or not panel.is_visible_in_tree():
 		return
 	var viewport_size: Vector2 = get_viewport_rect().size
@@ -93,6 +100,13 @@ func _layout() -> void:
 			Dock.TOP_LEFT: panel.position = Vector2(area.x, inset.y)
 			Dock.TOP_RIGHT: panel.position = Vector2(far.x, inset.y)
 			Dock.TOP_CENTER: panel.position = Vector2(mid.x, inset.y)
+	else:
+		panel.position = _floating_position
+	_clamp_panel()
+
+## Retains a dragged position when the containing UI refreshes its dock layout.
+func place(default_position: Vector2) -> void:
+	panel.position = _floating_position if _floating else default_position
 	_clamp_panel()
 
 func _notification(what: int) -> void:
@@ -120,4 +134,5 @@ func _input(event: InputEvent) -> void:
 		_floating = true
 		panel.position += event.relative
 		_clamp_panel()
+		_floating_position = panel.position
 		get_viewport().set_input_as_handled()

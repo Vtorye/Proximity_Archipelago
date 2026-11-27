@@ -1,0 +1,8 @@
+[gd_scene format=3]
+
+[node name="TasksTab" type="Button"]
+theme_type_variation = &"CompactButton"
+custom_minimum_size = Vector2(0, 28)
+text = "ui.hud.tab_tasks"
+toggle_mode = true
+mouse_default_cursor_shape = 2

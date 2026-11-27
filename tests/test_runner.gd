@@ -1,6 +1,6 @@
 extends Node
 ## Executable regressions: a failure changes the process exit code.
-const WORLD := preload("res://game/worlds/world_1.tscn")
+const WORLD := preload("res://game/worlds/starter_island.tscn")
 const ASTAR := preload("res://game/navigation/astar_path_finder.gd")
 const DIJKSTRA := preload("res://game/navigation/dijkstra_path_finder.gd")
 var failures: Array[String] = []
@@ -29,6 +29,11 @@ func _ready() -> void:
 	_run.call_deferred()
 
 func _run() -> void:
+	if OS.get_cmdline_user_args().has("navigation-only"):
+		_test_navigation()
+		print("NAV REGRESSION ", JSON.stringify({"assertions": assertions, "failures": failures}))
+		get_tree().quit(0 if failures.is_empty() else 1)
+		return
 	seed(20261025)
 	await preload("res://tests/voyage_regressions.gd").new().run(self)
 	await _test_translations()
@@ -44,6 +49,7 @@ func _run() -> void:
 	islands.test_physical_logistics(self)
 	islands.test_multiple_bases(self)
 	islands.test_orders(self)
+	islands.test_canteen_delivery(self)
 	await islands.test_authored_map(self)
 	islands.test_recruitment(self)
 	_test_resident_pruning()
@@ -61,6 +67,7 @@ func _run() -> void:
 	await preload("res://tests/terrain_regressions.gd").new().run(self)
 	await _test_simulation()
 	await _test_satiety_rules()
+	await _test_level_editor_layout()
 	print("TEST REPORT ", JSON.stringify({"assertions": assertions, "failures": failures, "metrics": metrics}))
 	print("TESTS PASS" if failures.is_empty() else "TESTS FAIL")
 	get_tree().quit(0 if failures.is_empty() else 1)
@@ -135,8 +142,9 @@ func _test_navigation() -> void:
 		var grid := TileGrid.new()
 		var costs := PackedFloat32Array()
 		for index in range(81):
-			costs.append(0.0 if rng.randf() < 0.2 else [0.5, 1.0, 2.0][rng.randi_range(0, 2)])
+			costs.append(0.0 if rng.randf() < 0.2 else [0.35, 1.0, 2.0][rng.randi_range(0, 2)])
 		grid.configure(Rect2i(-2, -3, 9, 9), costs)
+		_check_road_field_repair(grid)
 		var astar: PathAlgorithm = ASTAR.new()
 		var dijkstra: PathAlgorithm = DIJKSTRA.new()
 		astar.build(grid)
@@ -182,6 +190,41 @@ func _test_navigation() -> void:
 	expect(service._fields.size() <= RouteService.MAX_CACHED_FIELDS, "navigation cache stays bounded")
 	metrics["navigation_100x100"] = {"cold_field_ms": cold_us / 1000.0, "10000_cached_reads_ms": hits_us / 1000.0, "field_bytes": field.costs.size() * 4 + field.parents.size(), "cache_limit": RouteService.MAX_CACHED_FIELDS}
 	service.free()
+
+func _check_road_field_repair(grid: TileGrid) -> void:
+	var cells := grid.walkable_cells()
+	if cells.is_empty(): return
+	var seeds: Array[Vector2i] = [cells.front(), cells.back()]
+	var next := grid
+	var changed := PackedInt32Array()
+	# Lower adjacent costs and costs on different components in one revision.
+	for id in range(0, cells.size(), 4):
+		next = next.with_cost(cells[id], next.cost(cells[id]) * 0.35)
+		changed.append(id)
+	for reverse in [false, true]:
+		var repaired := GridSearch.build(grid, seeds, reverse)
+		GridSearch.repair(repaired, next, changed)
+		var fresh := GridSearch.build(next, seeds, reverse)
+		var matches := true
+		for cell in cells:
+			var distance := fresh.cost(cell)
+			if is_inf(distance):
+				matches = matches and repaired.path(cell).is_empty()
+				continue
+			var path := repaired.path(cell)
+			if path.is_empty():
+				matches = false
+				continue
+			var path_cost := 0.0
+			for step in range(1, path.size()):
+				path_cost += next.cost(path[step])
+			matches = matches and is_equal_approx(repaired.cost(cell), distance)
+			matches = matches and is_equal_approx(path_cost, distance)
+			if reverse:
+				matches = matches and seeds.has(path.back()) and path.back() == repaired.destination(cell)
+			else:
+				matches = matches and seeds.has(path.front())
+		expect(matches, "road repair preserves optimal weighted routes and seed reachability")
 
 func _reference(grid: TileGrid, start: Vector2i, finish: Vector2i) -> float:
 	if not grid.walkable(start) or not grid.walkable(finish):
@@ -274,7 +317,7 @@ func _test_worlds() -> void:
 	plan = first.planner.plan_work(ant, ant.home, ant.needs, ant.speed, ant.work_time, ant._meal)
 	expect(plan != null and plan.estimated_energy + ant.needs.safety_margin <= ant.needs.satiety, "healthy ant receives a complete feasible plan")
 	if plan != null and plan.workplace != null: plan.workplace.release_worker(ant)
-	var nest: SceneBuildOption = load("res://game/building/options/house.tres").duplicate(true) as SceneBuildOption
+	var nest: SceneBuildOption = load("res://game/building/options/barracks.tres").duplicate(true) as SceneBuildOption
 	nest.blocks_movement = true
 	nest.costs = [entry(wood, 0)]
 	first.build_controller.unlock_option(nest)
@@ -302,7 +345,7 @@ func _test_worlds() -> void:
 	var stock_before: int = first.inventory.quantity(wood)
 	expect(not first.build_controller.try_build(invalid, Vector2i(28, 29)), "invalid nest setup fails")
 	expect(first.inventory.quantity(wood) == stock_before and first.registry.at(Vector2i(28, 29)) == null, "invalid setup leaves stock and world unchanged")
-	var far: BuildOption = load("res://game/building/options/house.tres")
+	var far: BuildOption = load("res://game/building/options/barracks.tres")
 	expect(first.build_controller.check(far, Vector2i(9, 10)).allowed(), "nest with unreachable feeding can be placed")
 	var slow: SceneBuildOption = far.duplicate(true) as SceneBuildOption
 	slow.spawn_speed = 1.0
@@ -347,7 +390,7 @@ func _test_assignment_load() -> void:
 			if world.registry.at(cell) != null: continue
 			var workplace := Workplace.new()
 			workplace.output = world.inventory.type_by_id(&"wood")
-			workplace.output_amount = 2
+			workplace.output_per_second = 2.0
 			workplace.position = world.route_service.cell_to_world(cell)
 			workplace.setup(cell, null)
 			world.buildings.add_child(workplace)
@@ -363,20 +406,24 @@ func _test_assignment_load() -> void:
 			var cell := Vector2i(x, y)
 			if world.route_service.snapshot().connected(ant.home.cell, cell):
 				origins.append(cell)
-	expect(origins.size() > RouteService.MAX_CACHED_FIELDS, "assignment load fixture exceeds the manual overlay's origin cache")
+	expect(not origins.is_empty(), "assignment load fixture includes reachable cells away from the nest")
 	var searches_before: int = world.route_service.search_count
 	var started: int = Time.get_ticks_usec()
 	var assigned := 0
-	for request in range(1000):
-		var origin: Vector2i = origins[request % origins.size()]
+	var origin := world.planner.accessible_entry(ant.home)
+	for _request in range(1000):
 		ant.global_position = world.route_service.cell_to_world(origin)
 		var plan: WorkPlan = world.planner.plan_work(ant, ant.home, ant.needs, ant.speed, ant.work_time, ant._meal)
 		if plan != null and plan.workplace != null:
 			assigned += 1
 			plan.workplace.release_worker(ant)
 	var elapsed_ms: float = (Time.get_ticks_usec() - started) / 1000.0
-	expect(assigned == 1000, "one thousand assignments remain feasible with many POIs and starting cells")
-	expect(world.route_service.search_count == searches_before and world.route_service._fields.is_empty(), "assignments from different cells never build origin fields")
+	expect(assigned == 1000, "one thousand assignments remain feasible with many workplaces")
+	expect(world.route_service.search_count - searches_before <= 1 and world.planner._work_fields.size() == 1, "a thousand departures share one forward field")
+	var away: Vector2i = origins.back()
+	ant.global_position = world.route_service.cell_to_world(away)
+	var replan := world.planner.plan_work(ant, ant.home, ant.needs, ant.speed, ant.work_time, ant._meal)
+	expect(replan != null and replan.outward != null and replan.outward.cells.front() == away, "a worker replans from its real cell away from home")
 	metrics["assignment_load"] = {"requests": 1000, "origins": origins.size(), "workplaces": world.registry.workplaces().size(), "work_fields": world.planner._work_fields.size(), "preparation_ms": preparation_ms, "wall_ms": elapsed_ms, "new_searches": world.route_service.search_count - searches_before}
 	world.free()
 	await get_tree().process_frame
@@ -421,7 +468,8 @@ func _test_art_resolution() -> void:
 	var art: ArtCatalog = load("res://game/art/colony_art.tres") as ArtCatalog
 	expect(art.validate().is_empty(), "default art catalog valid")
 	var replacement: ArtCatalog = art.duplicate() as ArtCatalog
-	var image := Image.create(32, 32, false, Image.FORMAT_RGBA8)
+	var resolution := art.tile_resolution() * 2
+	var image := Image.create(resolution, resolution, false, Image.FORMAT_RGBA8)
 	image.fill(Color.GREEN)
 	replacement.grass = ImageTexture.create_from_image(image)
 	var world: World = WORLD.instantiate() as World
@@ -429,11 +477,11 @@ func _test_art_resolution() -> void:
 	world.build_controller.physical_construction = false
 	world.art = replacement
 	add_child(world)
-	expect(world.ready_for_play and world.art.tile_resolution() == 32 and (world.get_node("Map") as TileMapLayer).tile_set.tile_size == Vector2i(16, 16), "sprite catalog replacement preserves the authored map tile geometry")
+	expect(world.ready_for_play and world.art.tile_resolution() == resolution and world.map.tile_set.tile_size == Vector2i(16, 16), "sprite catalog replacement preserves the authored map tile geometry")
 	expect(is_equal_approx(world.route_service.cell_size(), 16.0), "texture resolution does not change physical cell size")
 	var cell := Vector2i(24, 25)
-	expect(world.route_service.world_to_cell(world.route_service.cell_to_world(cell)) == cell, "32px replacement preserves coordinate roundtrip")
-	expect(world.population.count() == 5, "32px replacement preserves population")
+	expect(world.route_service.world_to_cell(world.route_service.cell_to_world(cell)) == cell, "texture replacement preserves coordinate roundtrip")
+	expect(world.population.count() == 5, "texture replacement preserves population")
 	world.free()
 	await get_tree().process_frame
 
@@ -442,6 +490,9 @@ func _test_simulation() -> void:
 	for roads in [false, true]:
 		seed(20261025)
 		var world: World = make_world()
+		var barracks: BuildOption = preload("res://game/building/options/barracks.tres")
+		var timber_camp := Vector2i(21, 23)
+		var timber_camp_built := false
 		if roads:
 			var road: BuildOption = load("res://game/building/options/road.tres")
 			var network: Array[Vector2i] = []
@@ -450,9 +501,12 @@ func _test_simulation() -> void:
 				for y in range(item.y, item.z + 1): network.append(Vector2i(item.x, y))
 			for cell in network:
 				expect(world.build_controller.try_build(road, cell), "safe road network can be built from starting stock")
-			expect(world.build_controller.try_build(load("res://game/building/options/house.tres"), Vector2i(29, 22)), "player can place another nest near the stone workplace")
+			expect(world.build_controller.try_build(barracks, Vector2i(29, 22)), "player can place another nest near the stone workplace")
 		var deaths: Array[int] = [0]
 		var work: Array[int] = [0]
+		world.population.spawned.connect(func(ant: AntAgent):
+			ant.died.connect(func(_ant: Node2D, _cause: int): deaths[0] += 1)
+			ant.work_completed.connect(func(_ant: Node2D, _place: Node2D): work[0] += 1))
 		for ant in world.population.agents():
 			ant.died.connect(func(_ant: Node2D, _cause: int): deaths[0] += 1)
 			ant.work_completed.connect(func(_ant: Node2D, _place: Node2D): work[0] += 1)
@@ -463,9 +517,12 @@ func _test_simulation() -> void:
 		for step in range(60 * 180 + 1):
 			for ant in world.population.agents(): ant._physics_process(1.0 / 60.0)
 			world.match_controller._process(1.0 / 60.0)
-			if step % 60 == 0: await get_tree().process_frame
+			if step % 60 == 0:
+				if roads and not timber_camp_built:
+					timber_camp_built = world.build_controller.try_build(barracks, timber_camp)
+				await get_tree().process_frame
 			if world.match_controller.is_finished(): break
-		expect(deaths[0] == 0 and world.population.count() == (10 if roads else 5), "full match has no starvation deaths")
+		expect(deaths[0] == 0 and world.population.count() == (15 if roads else 5), "full match has no starvation deaths and the developed colony opens both camps")
 		expect(outcomes.size() == 1 and outcomes[0].won == roads, "idle loses; roads and purposeful nest placement win within three minutes")
 		var stock := {}
 		for type in world.inventory.registered_types(): stock[String(type.id)] = world.inventory.quantity(type)
@@ -506,7 +563,7 @@ func _test_translations() -> void:
 		TranslationServer.set_locale(header[column])
 		for row in rows:
 			expect(TranslationServer.translate(row[0]) == row[column].c_unescape(), "translation matches CSV: %s / %s" % [header[column], row[0]])
-		for scene in ["screens/main_menu", "screens/tutorial", "overlays/settings_menu", "overlays/pause_menu", "overlays/match_result"]:
+		for scene in ["screens/main_menu", "story/story_overlay", "overlays/settings_menu", "overlays/pause_menu", "overlays/match_result"]:
 			var screen: Control = load("res://%s.tscn" % scene).instantiate()
 			add_child(screen)
 			await get_tree().process_frame
@@ -540,3 +597,30 @@ func _test_language_toggle() -> void:
 	AppSettings.language = original_language
 	AppSettings.save()
 	TranslationServer.set_locale(original_locale)
+
+func _test_level_editor_layout() -> void:
+	var previous_size := AppSettings.text_size
+	AppSettings.text_size = AppSettings.TYPOGRAPHY.minimum_sizes.size() - 1
+	AppSettings.apply()
+	var editor: Control = preload("res://screens/level_editor.tscn").instantiate()
+	add_child(editor)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var viewport := get_viewport().get_visible_rect()
+	var top: Control = editor.get_node("%Top")
+	var bottom: Control = editor.get_node("%Bottom")
+	expect(viewport.encloses(top.get_global_rect()) and viewport.encloses(bottom.get_global_rect())
+		and top.get_global_rect().end.y < bottom.get_global_rect().position.y, "map editor toolbars fit at the largest text size")
+	var workplace := editor._objects.get_node("Workplace") as Workplace
+	var sprite := workplace.get_node("Sprite") as Sprite2D
+	expect((sprite.texture.get_size() * sprite.scale).is_equal_approx(Vector2(editor._map.tile_set.tile_size)), "map editor scales building artwork to the tile footprint")
+	var open: Button = editor.get_node("%OpenGeneration")
+	editor._open_options(open, true)
+	await get_tree().process_frame
+	var submit: Button = editor.get_node("%GenerateMap")
+	expect(submit.is_visible_in_tree() and viewport.encloses(submit.get_global_rect()), "generation opens with its submit button on screen")
+	editor._close_options()
+	expect(get_viewport().gui_get_focus_owner() == open, "closing map options restores keyboard focus")
+	editor.free()
+	AppSettings.text_size = previous_size
+	AppSettings.apply()

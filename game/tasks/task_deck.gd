@@ -46,6 +46,8 @@ func _validate_request(task: TaskSpec, stock: WorldInventory, prices: PriceServi
 	ids[task.id] = true
 	if task.reward_seconds < 0 or not is_finite(task.reward_seconds): errors.append(resource_path + ": invalid time reward")
 	if task.variants.is_empty(): errors.append(resource_path + ": request needs at least one variant")
+	if task.build_count < 1 or task.build_count > 1 and task.variants.size() != 1:
+		errors.append(resource_path + ": a multi-build request needs exactly one variant")
 	var variant_ids: Dictionary[StringName, bool] = {}
 	var rewards := task.rewards.duplicate()
 	for variant in task.variants:

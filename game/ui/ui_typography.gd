@@ -9,3 +9,8 @@ extends Resource
 @export_range(1, 128) var compact_button_size: int
 @export_range(1, 128) var body_size: int
 @export_range(1, 128) var heading_size: int
+@export_group("Building Details")
+@export_range(8, 24) var details_body_size := 12
+@export_range(8, 28) var details_heading_size := 14
+## Increase details more gently than the main interface at larger text settings.
+@export_range(0, 4) var details_size_step := 1

@@ -26,6 +26,10 @@ var options: Array[BuildOption]:
 		return _options.duplicate()
 var _options: Array[BuildOption] = []
 var can_place_order: Callable
+## Optional session restriction for player-initiated building and demolition.
+var placement_allowed: Callable
+## Optional limit for the current player demolition plan. Zero allows any number of targets.
+var demolition_limit := 0
 var _committing := false
 var last_result := PlacementCheck.new()
 
@@ -74,6 +78,8 @@ func check(option: BuildOption, cell: Vector2i) -> PlacementCheck:
 func placement_check(option: BuildOption, cell: Vector2i, removed: Array[Building] = [], order: TaskBuildOrder = null) -> PlacementCheck:
 	if _committing:
 		return PlacementCheck.result(PlacementCheck.Code.BUSY)
+	if placement_allowed.is_valid() and not placement_allowed.call(option, cell, order):
+		return PlacementCheck.result(PlacementCheck.Code.TUTORIAL_RESTRICTED)
 	if option == null:
 		return PlacementCheck.result(PlacementCheck.Code.INVALID_OPTION)
 	if order != null and (not can_place_order.is_valid() or not can_place_order.call(order) or order.variant.building != option):
@@ -157,23 +163,43 @@ func _funding(quotes: Dictionary, removed: Array[Building]) -> Dictionary:
 	var costs: Array[ResourceAmount] = []
 	for quote: Array in quotes.values():
 		costs.append_array(quote)
-	if not inventory.can_afford_all(costs, true, true):
+	if not inventory.can_afford_all(costs, construction == null, true):
 		return {"code": PlacementCheck.Code.RESOURCES}
 	var allocations := {}
 	if construction != null:
+		var immediate: Array[ResourceAmount] = []
+		for command: BuildCommand in quotes:
+			if not ConstructionService.needs_builders(command.option, quotes[command]):
+				immediate.append_array(quotes[command])
+		if not inventory.can_afford_all(immediate, true, true):
+			return {"code": PlacementCheck.Code.RESOURCES}
 		var planned := {}
+		# Instant purchases still need the treasury. Reserve their share before allocating crates.
+		var treasury := {}
+		for item in immediate:
+			treasury[item.type.id] = int(treasury.get(item.type.id, 0)) + item.amount
+		if not treasury.is_empty():
+			planned[logistics.main_nest] = treasury
 		for command: BuildCommand in quotes:
 			if not ConstructionService.needs_builders(command.option, quotes[command]):
 				continue
-			var entries: Array[Vector2i] = [command.cell]
-			if command.option is SceneBuildOption:
-				entries = command.option.entries_at(command.cell)
+			var entries := construction_entries(command.option, command.cell)
 			var sources: Array[House] = logistics.construction_sources(entries, removed)
 			var crates: Variant = inventory.allocate_build_materials(quotes[command], logistics.main_nest, sources, planned)
 			if crates == null:
 				return {"code": PlacementCheck.Code.NO_BUILD_SUPPLY}
 			allocations[command] = crates
 	return {"code": PlacementCheck.Code.OK, "crates": allocations, "costs": costs}
+
+func construction_entries(option: BuildOption, cell: Vector2i) -> Array[Vector2i]:
+	if option is SceneBuildOption:
+		return option.entries_at(cell)
+	if option is WorkplaceUpgradeOption:
+		var workplace := registry.at(cell) as Workplace
+		if workplace != null:
+			return workplace.entry_cells()
+		return []
+	return [cell]
 
 func try_build(option: BuildOption, cell: Vector2i, order: TaskBuildOrder = null) -> bool:
 	return try_build_plan([BuildCommand.create(cell, option, order)])
@@ -199,6 +225,12 @@ func try_build_plan(commands: Array[BuildCommand]) -> bool:
 			last_result = PlacementCheck.result(PlacementCheck.Code.INVALID_OPTION)
 			return false
 		if command.is_removal():
+			if demolition_limit > 0 and removed.size() + removed_improvements.size() >= demolition_limit:
+				last_result = PlacementCheck.result(PlacementCheck.Code.INSTANCE_LIMIT)
+				return false
+			if placement_allowed.is_valid() and not placement_allowed.call(null, command.cell, null):
+				last_result = PlacementCheck.result(PlacementCheck.Code.TUTORIAL_RESTRICTED)
+				return false
 			var building: Building = command.removed_building
 			if not is_instance_valid(building) or demolition_target(command.cell) != building or removed.has(building) or (building is Workplace and removed_improvements.has(building)):
 				last_result = PlacementCheck.result(PlacementCheck.Code.NO_BUILDING)
@@ -219,7 +251,7 @@ func try_build_plan(commands: Array[BuildCommand]) -> bool:
 	var occupied: Dictionary[Vector2i, bool] = {}
 	var terrain: Dictionary[Vector2i, bool] = {}
 	var planned_instances: Dictionary[StringName, int] = {}
-	var planned_tasks: Dictionary[TaskSpec, bool] = {}
+	var planned_tasks: Dictionary[TaskSpec, int] = {}
 	var candidates: Array[Building] = []
 	for command in placements:
 		var cell: Vector2i = command.cell
@@ -228,10 +260,11 @@ func try_build_plan(commands: Array[BuildCommand]) -> bool:
 		if not last_result.allowed():
 			break
 		if command.order != null:
-			if planned_tasks.has(command.order.task):
+			var prior: int = planned_tasks.get(command.order.task, 0)
+			if prior >= command.order.task.build_count or prior > 0 and not can_place_order.call(command.order, prior):
 				last_result = PlacementCheck.result(PlacementCheck.Code.INSTANCE_LIMIT)
 				break
-			planned_tasks[command.order.task] = true
+			planned_tasks[command.order.task] = prior + 1
 		if option is SceneBuildOption:
 			var already_planned: int = planned_instances.get(option.id, 0)
 			if not allows_another(option, removed, already_planned):
@@ -254,6 +287,7 @@ func try_build_plan(commands: Array[BuildCommand]) -> bool:
 				last_result = PlacementCheck.result(PlacementCheck.Code.INVALID_BUILDING)
 				break
 			var building: Building = candidate as Building
+			building.colony_owned = true
 			candidates.append(building)
 			if not building.setup(cell, option):
 				last_result = PlacementCheck.result(PlacementCheck.Code.INVALID_BUILDING)
@@ -391,6 +425,8 @@ func demolition_target(cell: Vector2i) -> Building:
 func demolition_check(cell: Vector2i) -> PlacementCheck:
 	if _committing:
 		return PlacementCheck.result(PlacementCheck.Code.BUSY)
+	if placement_allowed.is_valid() and not placement_allowed.call(null, cell, null):
+		return PlacementCheck.result(PlacementCheck.Code.TUTORIAL_RESTRICTED)
 	var building: Building = demolition_target(cell)
 	if construction != null and (construction.at(cell) != null or construction.at(cell, true) != null): return PlacementCheck.new()
 	if building is House and logistics != null and not logistics.can_remove(building):
@@ -459,7 +495,7 @@ func _footprint(option: BuildOption, origin: Vector2i) -> Array[Vector2i]:
 func _safety() -> ConstructionSafety:
 	return ConstructionSafety.new(map, registry, population, route_service)
 
-func price(option: BuildOption, cell := Vector2i(2147483647, 2147483647), pending: Dictionary[String, int] = {}) -> Array[ResourceAmount]:
+func price(option: BuildOption, cell := TileGrid.NO_CELL, pending: Dictionary[String, int] = {}) -> Array[ResourceAmount]:
 	return prices.quote_at(option, cell, pending) if prices != null else option.costs
 
 func apply_surface(option: TileBuildOption, cell: Vector2i) -> void:

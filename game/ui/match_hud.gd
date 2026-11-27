@@ -1,6 +1,10 @@
 class_name MatchHud
 extends Control
 
+@export_group("Tutorial Hints")
+@export var control_highlight := Color(1.5, 1.25, 0.55)
+@export_range(0.1, 2.0, 0.05) var highlight_seconds := 0.45
+
 const PRESENTATION: UiPresentation = preload("res://game/ui/ui_presentation.tres")
 const ResourceChip = preload("res://game/ui/hud_resource_chip.gd")
 signal nest_selected(nest: House)
@@ -22,13 +26,16 @@ var progress: Dictionary[StringName, ProgressBar] = {}
 @onready var _zoom: Label = %Zoom
 @onready var _toast: Label = %Toast
 var _toast_time := 0.0
+var _economy_visible := true
+var _highlighted_control: StringName
+var _highlight_tween: Tween
 @onready var _warning: Label = %Warning
 @onready var _waiting: Label = %Waiting
 var _zoom_level := 2
 var _active_section: StringName
 @onready var _objectives: PanelContainer = %Objectives
 var navigation: NavigationOverlay
-var navigation_panel: NavigationPanel
+@onready var navigation_panel: NavigationPanel = %NavigationPanel
 var task_panel: TaskPanel
 @onready var _bottom: PanelContainer = %Bottom
 @onready var _task_details: BuildDetailsPanel = %TaskDetails
@@ -40,8 +47,16 @@ func configure(session: World, routes: NavigationOverlay) -> void:
 		_build_hud()
 
 func _ready() -> void:
+	for control: Control in [colony_summary, %Counters, %Routes, %Pause, %Build, %ColonyTab, %TasksTab,
+			%TalkTab, %ZoomOut, %Zoom, %ZoomIn]:
+		_update_tutorial_slot(control)
+		control.minimum_size_changed.connect(_update_tutorial_slot.bind(control))
 	if world != null:
 		_build_hud()
+
+func _update_tutorial_slot(control: Control) -> void:
+	var slot := control.get_parent() as MarginContainer
+	slot.custom_minimum_size = control.get_combined_minimum_size()
 
 func _build_hud() -> void:
 	colony_summary.configure(world)
@@ -86,7 +101,11 @@ func _build_hud() -> void:
 	%ColonyTab.pressed.connect(AppSettings.play_click)
 	%ColonyTab.pressed.connect(func(): section_requested.emit(&"colony"))
 	%TasksTab.pressed.connect(AppSettings.play_click)
+	controls[&"tasks"] = %TasksTab
 	%TasksTab.pressed.connect(func(): section_requested.emit(&"tasks"))
+	controls[&"talk"] = %TalkTab
+	%TalkTab.pressed.connect(AppSettings.play_click)
+	%TalkTab.pressed.connect(func(): section_requested.emit(&"talk"))
 	_bottom.resized.connect(construction_bounds_changed.emit)
 	colony_summary.resized.connect(construction_bounds_changed.emit)
 	controls[&"zoom_out"] = %ZoomOut
@@ -110,10 +129,7 @@ func _build_hud() -> void:
 		get_viewport().size_changed.connect(_layout_task_panel)
 		_layout_task_panel.call_deferred()
 	if navigation != null:
-		navigation_panel = preload("res://game/ui/navigation_panel.tscn").instantiate()
-		navigation_panel.process_mode = Node.PROCESS_MODE_ALWAYS
-		navigation_panel.overlay = navigation
-		add_child(navigation_panel)
+		navigation_panel.configure(navigation)
 	if world.combat != null:
 		%WaveTimer.show()
 		world.combat.changed.connect(_refresh_wave_timer)
@@ -128,7 +144,7 @@ func _build_hud() -> void:
 func refresh() -> void:
 	for type in world.inventory.registered_types():
 		if stock_chips.has(type.id):
-			stock_chips[type.id].set_amount(world.inventory.quantity(type))
+			stock_chips[type.id].set_display_amount(world.inventory.display_amount(type, world.inventory.quantity(type)))
 		if progress.has(type.id):
 			progress[type.id].value = world.inventory.quantity(type)
 	var agents: Array[AntAgent] = world.population.agents()
@@ -149,7 +165,7 @@ func refresh() -> void:
 		_waiting.text += ("\n" if not _waiting.text.is_empty() else "") + tr("ui.hud.missing_inputs") % missing_inputs
 	if storage_full > 0:
 		_waiting.text += ("\n" if not _waiting.text.is_empty() else "") + tr("ui.hud.storage_full") % storage_full
-	_waiting.visible = busy > 0 or unsafe_work > 0 or missing_inputs > 0 or storage_full > 0
+	_waiting.visible = _economy_visible and (busy > 0 or unsafe_work > 0 or missing_inputs > 0 or storage_full > 0)
 	var food: ResourceType = world.inventory.type_by_id(&"food")
 	_warning.text = "ui.hud.need_food" if world.inventory.available(food) < PRESENTATION.low_food_threshold else ""
 
@@ -165,8 +181,56 @@ func _refresh_wave_timer() -> void:
 	%WaveTimer.text = tr("ui.hud.wave_timer") % [seconds / 60, seconds % 60]
 
 func _on_time_changed(seconds: int) -> void:
-	_timer.text = tr("ui.hud.match_timer") % [seconds / 60, seconds % 60]
+	var label := "ui.zero.preparation_timer" if world.chapter_rules is ZeroChapterRules else "ui.hud.match_timer"
+	_timer.text = tr(label) % [seconds / 60, seconds % 60]
 	_timer.add_theme_color_override("font_color", ColonyStyle.color(&"danger") if seconds <= PRESENTATION.timer_warning_seconds else ColonyStyle.color(&"accent"))
+
+func set_tutorial_controls(chapter: FirstChapter) -> void:
+	%Pause.visible = chapter.shows_control(&"pause")
+	%Routes.visible = chapter.shows_control(&"routes")
+	%MatchControls.self_modulate.a = 1.0 if %Routes.visible or %Pause.visible else 0.0
+	%Zoom.visible = chapter.shows_control(&"zoom")
+	%ZoomIn.visible = %Zoom.visible
+	%ZoomOut.visible = %Zoom.visible
+	%ColonyTab.visible = chapter.shows_control(&"colony")
+	colony_summary.visible = %ColonyTab.visible
+	_refresh_counters()
+	%TalkTab.visible = chapter.shows_control(&"talk")
+	%Build.visible = chapter.shows_control(&"build")
+	%TasksTab.visible = chapter.shows_control(&"tasks")
+	_bottom.visible = %Zoom.visible or %Build.visible or %ColonyTab.visible or %TalkTab.visible or %TasksTab.visible
+
+func set_construction_controls_visible(enabled: bool) -> void:
+	%Undo.visible = enabled
+	%Apply.visible = enabled
+	%Move.visible = enabled
+
+func set_countdown_visible(enabled: bool) -> void:
+	_timer.visible = enabled
+
+func highlight_control(id: StringName) -> void:
+	if _highlighted_control == id:
+		return
+	if _highlight_tween != null and _highlight_tween.is_valid():
+		_highlight_tween.kill()
+	if controls.has(_highlighted_control):
+		controls[_highlighted_control].self_modulate = Color.WHITE
+	_highlighted_control = id
+	if controls.has(id):
+		var button := controls[id]
+		_highlight_tween = create_tween().set_loops()
+		_highlight_tween.tween_property(button, "self_modulate", control_highlight, highlight_seconds)
+		_highlight_tween.tween_property(button, "self_modulate", Color.WHITE, highlight_seconds)
+
+func set_economy_visible(enabled: bool) -> void:
+	_economy_visible = enabled
+	colony_summary.get_node("%Totals").visible = enabled
+	_refresh_counters()
+	_warning.visible = enabled
+	_waiting.visible = enabled
+
+func _refresh_counters() -> void:
+	%MatchStatus.visible = _economy_visible and colony_summary.visible
 
 func set_zoom(value: int) -> void:
 	_zoom_level = value
@@ -182,9 +246,11 @@ func _refresh_pause_indicator(paused: bool) -> void:
 
 func build_obstacles() -> Array[Rect2]:
 	var result: Array[Rect2] = []
-	result.append(%MatchStatus.get_global_rect())
+	if %MatchStatus.visible:
+		result.append(%MatchStatus.get_global_rect())
 	result.append(%MatchControls.get_global_rect())
-	result.append(_bottom.get_global_rect())
+	if _bottom.visible:
+		result.append(_bottom.get_global_rect())
 	if task_panel != null:
 		result.append_array(task_panel.visible_bounds())
 	elif _objectives.is_visible_in_tree():
@@ -211,8 +277,14 @@ func toast(message: String, danger: bool = false) -> void:
 func construction_undo_button() -> Button:
 	return %Undo
 
+func construction_apply_button() -> Button:
+	return %Apply
+
+func construction_pan_button() -> Button:
+	return %Move
+
 func bottom_bar_height() -> float:
-	return _bottom.size.y
+	return _bottom.size.y if _bottom.visible else 0.0
 
 func colony_panel_bottom() -> float:
 	return colony_summary.get_global_rect().end.y
@@ -222,6 +294,7 @@ func set_section(section: StringName) -> void:
 	%Build.set_pressed_no_signal(section == &"build")
 	%ColonyTab.set_pressed_no_signal(section == &"colony")
 	%TasksTab.set_pressed_no_signal(section == &"tasks")
+	%TalkTab.set_pressed_no_signal(section == &"talk")
 	colony_summary.set_expanded(section == &"colony")
 	var goals_panel: Control = task_panel if task_panel != null else _objectives
 	goals_panel.visible = section == &"tasks"
@@ -234,6 +307,11 @@ func set_task_selection(order: TaskBuildOrder) -> void:
 	if task_panel != null:
 		task_panel.set_selection(order)
 
+func set_draft_prices(pending: Dictionary[String, int]) -> void:
+	if task_panel != null:
+		task_panel.set_pending_prices(pending)
+	_task_details.refresh_at(TileGrid.NO_CELL, pending)
+
 func set_task_pan_mode(enabled: bool) -> void:
 	if task_panel != null:
 		task_panel.set_pan_mode(enabled)
@@ -242,7 +320,7 @@ func _layout_task_panel() -> void:
 	task_panel.dock_above(bottom_bar_height())
 
 func _show_task_details(option: BuildOption) -> void:
-	_task_details.toggle(option, world.build_controller, Vector2i(2147483647, 2147483647))
+	_task_details.toggle(option, world.build_controller, TileGrid.NO_CELL)
 	_task_details.reset_size()
 
 func _request_task_order(task_id: StringName, variant_id: StringName) -> void:

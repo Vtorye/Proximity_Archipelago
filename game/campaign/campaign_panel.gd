@@ -7,6 +7,9 @@ const REWARD_DETAILS: Array[String] = ["ui.voyage.road_detail", "ui.voyage.disco
 const DESTINATION_NAMES: Array[String] = ["ui.voyage.fertile_short", "ui.voyage.dry_short", "ui.voyage.rocky_short"]
 const DESTINATION_DETAILS: Array[String] = ["ui.voyage.fertile_island", "ui.voyage.dry_island", "ui.voyage.rocky_island"]
 
+signal save_requested
+signal travel_requested(layout: Dictionary)
+
 var world: World
 var controls: Array[Button] = []
 var _signature := ""
@@ -60,12 +63,12 @@ func _show_rewards() -> void:
 
 func _choose_reward(index: int) -> void:
 	if world.tasks.choose_reward(index):
-		SessionSave.write(world)
+		save_requested.emit()
 		hide()
 		PauseController.release(&"voyage_choice")
 
 func _show_destinations() -> void:
-	SessionSave.write(world)
+	save_requested.emit()
 	%DepartureHeading.text = "ui.voyage.departure"
 	%Score.text = tr("ui.voyage.score") % world.voyage.score
 	%NextIsland.text = tr("ui.voyage.next_island") % (world.voyage.island + 1)
@@ -84,4 +87,4 @@ func _show_destinations() -> void:
 func _travel(index: int) -> void:
 	var selected: Dictionary = world.voyage.travel(index)
 	if not selected.is_empty():
-		Router.goto(&"match", selected)
+		travel_requested.emit(selected)

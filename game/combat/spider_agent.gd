@@ -2,20 +2,18 @@ class_name SpiderAgent
 extends Node2D
 ## Mobile predator; target selection and world damage are owned by CombatDirector.
 var director: CombatDirector
-var health := 6
+var health: int
 var motion := AntMotion.new()
 var _target: Node2D
 var _retarget := 0.0
 var _attack := 0.0
-var _sabotage := 0.0
-var _last_target_cell := Vector2i(2147483647, 2147483647)
+var _last_target_cell := TileGrid.NO_CELL
 var _revision := -1
 var _animation := 0.0
 
 func _ready() -> void:
 	motion.navigation = director.world.route_service
 	health = director.rules.spider_health
-	_sabotage = director.rules.sabotage_seconds
 
 func take_damage(amount: int) -> void:
 	if health <= 0 or amount <= 0: return
@@ -29,21 +27,15 @@ func _physics_process(delta: float) -> void:
 	if health <= 0 or not director.running(): return
 	_animation += delta
 	_attack = maxf(0.0, _attack - delta)
-	_sabotage -= delta
 	var navigation: RouteService = director.world.route_service
 	var cell: Vector2i = navigation.world_to_cell(global_position)
-	if _sabotage <= 0:
-		if navigation.entry_cost(cell) > 0 and navigation.entry_cost(cell) < 0.5:
-			if director.traps.has(cell): director.ruin_road(cell)
-			else: director.place_trap(cell)
-			_sabotage = director.rules.sabotage_seconds
 	_retarget -= delta
-	if _retarget <= 0 or not director.alive(_target):
-		var next_target: Node2D = director.prey(cell)
-		if next_target != _target: _last_target_cell = Vector2i(2147483647, 2147483647)
+	if _retarget <= 0 or not director.is_spider_target(_target):
+		var next_target := director.prey(cell)
+		if next_target != _target: _last_target_cell = TileGrid.NO_CELL
 		_target = next_target
-		_retarget = 1.0
-	if not director.alive(_target): return
+		_retarget = director.rules.spider_retarget_seconds
+	if not director.is_spider_target(_target): return
 	if director.can_melee(global_position, _target):
 		if _attack <= 0:
 			director.damage(_target, director.rules.attack_damage)
@@ -73,10 +65,9 @@ func _draw() -> void:
 	draw_rect(Rect2(-5, -8, 10.0 * health / maxi(1, director.rules.spider_health), 1), Color("e58b76"))
 
 func capture_state() -> Dictionary:
-	return {"scene": scene_file_path, "position": position, "health": health, "_attack": _attack, "_sabotage": _sabotage}
+	return {"scene": scene_file_path, "position": position, "health": health, "_attack": _attack}
 
 func restore_state(state: Dictionary) -> void:
 	position = state.position
 	health = state.health
 	_attack = state._attack
-	_sabotage = state._sabotage

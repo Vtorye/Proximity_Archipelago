@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="StoryCharacter" format=3]
+[ext_resource type="Script" path="res://story/story_character.gd" id="script"]
+[ext_resource type="Texture2D" path="res://game/assets/sprites/visual_novel/workers/ant_worker.png" id="portrait"]
+[resource]
+script = ExtResource("script")
+id = &"Worker"
+display_name = "ui.chapter.worker"
+portrait = ExtResource("portrait")
+characters_per_second = 38.0
+voice_pitch = 0.85
+topic = &"worker_topic"
