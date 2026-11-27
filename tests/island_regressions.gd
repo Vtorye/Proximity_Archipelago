@@ -89,6 +89,7 @@ func test_foodless_colonies(test: Node) -> void:
 	test.expect(world != null, "restore a map with no canteens")
 	if world == null:
 		return
+	world.starting_resources = world.get_starting_resources().duplicate()
 	for index in range(world.starting_resources.size()):
 		var entry: ResourceAmount = world.starting_resources[index]
 		if entry.type.id == &"food":

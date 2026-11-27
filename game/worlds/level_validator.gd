@@ -75,8 +75,9 @@ static func validate_world(world: World, path: String) -> Array[String]:
 			if not building.entry_cells().any(grid.walkable):
 				errors.append(prefix + ": no accessible entry")
 		var stock := WorldInventory.new()
+		var starting_resources: Array[ResourceAmount] = world.get_starting_resources()
 		var types: Dictionary[StringName, bool] = {}
-		for entry in world.starting_resources:
+		for entry in starting_resources:
 			if entry == null or entry.type == null or entry.type.id == &"" or entry.amount < 0: errors.append(path + ": invalid starting resource")
 			elif types.has(entry.type.id): errors.append(path + ": duplicate resource " + str(entry.type.id))
 			else: types[entry.type.id] = true
@@ -125,7 +126,7 @@ static func validate_world(world: World, path: String) -> Array[String]:
 					else: errors.append(prefix + ": scene root is not a Building")
 					candidate.free()
 		if world.task_deck != null and errors.is_empty():
-			stock.configure(world.starting_resources)
+			stock.configure(starting_resources)
 			errors.append_array(world.task_deck.validate(stock))
 		prices.free()
 		stock.free()

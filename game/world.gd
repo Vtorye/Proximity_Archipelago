@@ -5,6 +5,9 @@ class_name World
 @export var art: ArtCatalog
 @export var auto_start := true
 @export var map: TileMapLayer
+## External starting stock when no scene-local entries are supplied.
+@export var starting_stock: StartingStock
+## Scene-local entries override the external stock when populated.
 @export var starting_resources: Array[ResourceAmount] = []
 @export var task_deck: TaskDeck
 @export var voyage_rules: VoyageRules
@@ -62,7 +65,7 @@ func _ready() -> void:
 	if map.tile_set == null or map.get_used_cells().is_empty():
 		push_error("World requires a painted TileMapLayer with a TileSet")
 		return
-	if not inventory.configure(starting_resources):
+	if not inventory.configure(get_starting_resources()):
 		return
 	route_service.setup(map)
 	route_service.rebuild()
@@ -151,6 +154,11 @@ func _prepare_initial_routes() -> void:
 			planner.prepare_home(building)
 	for ant in population.agents():
 		ant.refresh_meal_reservation()
+
+func get_starting_resources() -> Array[ResourceAmount]:
+	if not starting_resources.is_empty() or starting_stock == null:
+		return starting_resources
+	return starting_stock.entries
 
 func start() -> void:
 	if not ready_for_play:

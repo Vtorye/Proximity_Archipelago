@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="StartingStock" format=3]
+
+[ext_resource type="Script" path="res://game/worlds/starting_stock.gd" id="stock"]
+[ext_resource type="Script" path="res://game/resources/resource_amount.gd" id="amount"]
+[ext_resource type="Resource" path="res://game/resources/resource_types/wood.tres" id="wood"]
+[ext_resource type="Resource" path="res://game/resources/resource_types/stone.tres" id="stone"]
+[ext_resource type="Resource" path="res://game/resources/resource_types/food.tres" id="food"]
+[ext_resource type="Resource" path="res://game/resources/resource_types/royal.tres" id="royal"]
+
+[sub_resource type="Resource" id="wood_stock"]
+script = ExtResource("amount")
+type = ExtResource("wood")
+amount = 60
+
+[sub_resource type="Resource" id="stone_stock"]
+script = ExtResource("amount")
+type = ExtResource("stone")
+amount = 40
+
+[sub_resource type="Resource" id="food_stock"]
+script = ExtResource("amount")
+type = ExtResource("food")
+amount = 20
+
+[sub_resource type="Resource" id="royal_stock"]
+script = ExtResource("amount")
+type = ExtResource("royal")
+amount = 0
+
+[resource]
+script = ExtResource("stock")
+entries = Array[ExtResource("amount")]([SubResource("wood_stock"), SubResource("stone_stock"), SubResource("food_stock"), SubResource("royal_stock")])
