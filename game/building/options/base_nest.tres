@@ -2,11 +2,10 @@
 
 [ext_resource type="Script" uid="uid://dohq4yj0b3afb" path="res://game/resources/resource_amount.gd" id="amount"]
 [ext_resource type="Script" uid="uid://bdsukqwfreh8j" path="res://game/building/nest_build_option.gd" id="option"]
+[ext_resource type="Texture2D" uid="uid://d0a5ig1ad4qd1" path="res://graphics/sprites/nest_paper_large.svg" id="paper_art"]
 [ext_resource type="Script" uid="uid://clwif6xxyitqt" path="res://game/economy/price_rule.gd" id="price_rule"]
-[ext_resource type="Resource" path="res://game/resources/resource_types/royal.tres" id="royal"]
+[ext_resource type="Resource" uid="uid://xbva3bw7pxdj" path="res://game/resources/resource_types/royal.tres" id="royal"]
 [ext_resource type="PackedScene" path="res://game/entities/base_nest.tscn" id="scene"]
-
-[ext_resource type="Texture2D" path="res://graphics/sprites/nest_paper_large.svg" id="paper_art"]
 
 [sub_resource type="Resource" id="cost"]
 script = ExtResource("amount")
@@ -21,7 +20,6 @@ value = 6.0
 script = ExtResource("option")
 resident_capacity = 20
 scene = ExtResource("scene")
-icon = ExtResource("paper_art")
 occupied_cells = Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1)])
 blocks_movement = false
 spawn_count = 5
@@ -29,5 +27,6 @@ placement_kind = 3
 id = &"base_nest"
 display_name = "ui.storage.main"
 description = "ui.construction.description.base_nest"
+icon = ExtResource("paper_art")
 costs = Array[ExtResource("amount")]([SubResource("cost")])
 price_rules = Array[ExtResource("price_rule")]([SubResource("growth")])

@@ -85,7 +85,7 @@ commit_construction={
 [internationalization]
 
 locale/translations=PackedStringArray("res://visual_novel/localization/keys.en.translation", "res://visual_novel/localization/keys.ru.translation")
-locale/translations_pot_files=PackedStringArray("res://visual_novel/dialogues/tutorial.dialogue", "res://visual_novel/dialogues/first_chapter.dialogue", "res://visual_novel/dialogues/zero_chapter.dialogue")
+locale/translations_pot_files=PackedStringArray("res://visual_novel/dialogues/tutorial.dialogue", "res://visual_novel/dialogues/first_chapter.dialogue", "res://visual_novel/dialogues/zero_chapter.dialogue", "res://game/assets/dialogue/first_chapter.dialogue", "res://game/assets/dialogue/tutorial.dialogue", "res://game/assets/dialogue/zero_chapter.dialogue")
 
 [physics]
 

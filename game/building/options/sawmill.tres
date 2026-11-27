@@ -1,7 +1,8 @@
 [gd_resource type="Resource" script_class="WorkplaceUpgradeOption" format=3 uid="uid://dr0o3v3n5o1dt"]
 
+[ext_resource type="Script" uid="uid://clwif6xxyitqt" path="res://game/economy/price_rule.gd" id="5_fw0we"]
 [ext_resource type="Script" uid="uid://dohq4yj0b3afb" path="res://game/resources/resource_amount.gd" id="amount"]
-[ext_resource type="Texture2D" path="res://graphics/sprites/sawmill_simple.png" id="icon"]
+[ext_resource type="Texture2D" uid="uid://dxjclreae86p4" path="res://graphics/sprites/sawmill_simple.png" id="icon"]
 [ext_resource type="Script" uid="uid://h1ws6w2g6pxi" path="res://game/building/workplace_upgrade_option.gd" id="option"]
 [ext_resource type="Resource" uid="uid://dnvvlsc4kjs1t" path="res://game/resources/resource_types/stone.tres" id="stone"]
 [ext_resource type="Resource" uid="uid://btsdqgmh3ee22" path="res://game/resources/resource_types/wood.tres" id="wood"]

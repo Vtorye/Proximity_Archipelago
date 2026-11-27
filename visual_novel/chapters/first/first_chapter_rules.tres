@@ -1,54 +1,63 @@
-[gd_resource type="Resource" script_class="FirstChapterRules" format=3]
-[ext_resource type="Script" path="res://visual_novel/chapters/first/first_chapter_rules.gd" id="rules"]
-[ext_resource type="Resource" path="res://visual_novel/dialogues/first_chapter.tres" id="dialogue"]
-[ext_resource type="Script" path="res://visual_novel/characters/story_character.gd" id="character"]
-[ext_resource type="Resource" path="res://visual_novel/characters/queen.tres" id="queen"]
-[ext_resource type="Resource" path="res://visual_novel/characters/shuti.tres" id="shuti"]
-[ext_resource type="Resource" path="res://visual_novel/characters/planner.tres" id="planner"]
+[gd_resource type="Resource" script_class="FirstChapterRules" format=3 uid="uid://dherubqaer36b"]
+
+[ext_resource type="Script" uid="uid://dohq4yj0b3afb" path="res://game/resources/resource_amount.gd" id="amount"]
+[ext_resource type="Resource" uid="uid://cwg6he5xyq7c7" path="res://game/building/options/base_nest.tres" id="base"]
+[ext_resource type="Script" uid="uid://d2k7ymcr08bl5" path="res://visual_novel/characters/story_character.gd" id="character"]
 [ext_resource type="Resource" path="res://visual_novel/characters/courier.tres" id="courier"]
+[ext_resource type="Resource" path="res://visual_novel/dialogues/first_chapter.tres" id="dialogue"]
+[ext_resource type="Resource" uid="uid://ydqdslbxer1c" path="res://game/tasks/request_statue_feast_b.tres" id="followup"]
+[ext_resource type="Resource" uid="uid://bc4vd8o7qyldd" path="res://game/resources/resource_types/food.tres" id="food"]
+[ext_resource type="Resource" uid="uid://bwanb45ketron" path="res://game/building/options/ground.tres" id="ground"]
+[ext_resource type="Resource" uid="uid://hd7mbi1by4i2" path="res://game/tasks/request_statue_feast.tres" id="opening"]
+[ext_resource type="Script" uid="uid://cdmimrfnsanfy" path="res://game/building/build_option.gd" id="option"]
+[ext_resource type="Resource" path="res://visual_novel/characters/planner.tres" id="planner"]
+[ext_resource type="Resource" uid="uid://bkba8o70hl54c" path="res://game/building/options/quarry.tres" id="quarry"]
+[ext_resource type="Resource" path="res://visual_novel/characters/queen.tres" id="queen"]
+[ext_resource type="Resource" uid="uid://b3bspiavx16wa" path="res://game/building/options/road.tres" id="road"]
+[ext_resource type="Script" uid="uid://eoh7qv5y7wbl" path="res://visual_novel/chapters/first/first_chapter_rules.gd" id="rules"]
+[ext_resource type="Resource" uid="uid://dr0o3v3n5o1dt" path="res://game/building/options/sawmill.tres" id="sawmill"]
+[ext_resource type="Resource" uid="uid://copapubq0gp67" path="res://game/campaign/ship.tres" id="ship"]
+[ext_resource type="Resource" path="res://visual_novel/characters/shuti.tres" id="shuti"]
+[ext_resource type="Resource" uid="uid://bhy6cadrn6nk0" path="res://game/building/options/queen_statue.tres" id="statue"]
+[ext_resource type="Resource" uid="uid://dnvvlsc4kjs1t" path="res://game/resources/resource_types/stone.tres" id="stone"]
+[ext_resource type="Resource" uid="uid://btsdqgmh3ee22" path="res://game/resources/resource_types/wood.tres" id="wood"]
 [ext_resource type="Resource" path="res://visual_novel/characters/worker.tres" id="worker"]
-[ext_resource type="Script" path="res://game/building/build_option.gd" id="option"]
-[ext_resource type="Resource" path="res://game/building/options/queen_statue.tres" id="statue"]
-[ext_resource type="Resource" path="res://game/building/options/sawmill.tres" id="sawmill"]
-[ext_resource type="Resource" path="res://game/building/options/quarry.tres" id="quarry"]
-[ext_resource type="Resource" path="res://game/building/options/road.tres" id="road"]
-[ext_resource type="Resource" path="res://game/tasks/request_statue_feast.tres" id="opening"]
-[ext_resource type="Resource" path="res://game/tasks/request_statue_feast_b.tres" id="followup"]
-[ext_resource type="Resource" path="res://game/building/options/ground.tres" id="ground"]
-[ext_resource type="Resource" path="res://game/building/options/base_nest.tres" id="base"]
-[ext_resource type="Resource" path="res://game/campaign/ship.tres" id="ship"]
-[ext_resource type="Script" path="res://game/resources/resource_amount.gd" id="amount"]
-[ext_resource type="Resource" path="res://game/resources/resource_types/food.tres" id="food"]
-[ext_resource type="Resource" path="res://game/resources/resource_types/wood.tres" id="wood"]
-[ext_resource type="Resource" path="res://game/resources/resource_types/stone.tres" id="stone"]
-[sub_resource type="Resource" id="food_cargo"]
-script = ExtResource("amount")
-type = ExtResource("food")
-amount = 50
-[sub_resource type="Resource" id="wood_cargo"]
-script = ExtResource("amount")
-type = ExtResource("wood")
-amount = 50
+
 [sub_resource type="Resource" id="delivery"]
 script = ExtResource("amount")
 type = ExtResource("wood")
 amount = 6
+
+[sub_resource type="Resource" id="food_cargo"]
+script = ExtResource("amount")
+type = ExtResource("food")
+amount = 50
+
+[sub_resource type="Resource" id="wood_cargo"]
+script = ExtResource("amount")
+type = ExtResource("wood")
+amount = 50
+
 [sub_resource type="Resource" id="stone_cargo"]
 script = ExtResource("amount")
 type = ExtResource("stone")
 amount = 50
+
 [sub_resource type="Resource" id="revealed_food"]
 script = ExtResource("amount")
 type = ExtResource("food")
 amount = 150
+
 [sub_resource type="Resource" id="revealed_wood"]
 script = ExtResource("amount")
 type = ExtResource("wood")
 amount = 20
+
 [sub_resource type="Resource" id="revealed_stone"]
 script = ExtResource("amount")
 type = ExtResource("stone")
 amount = 12
+
 [resource]
 script = ExtResource("rules")
 dialogue = ExtResource("dialogue")

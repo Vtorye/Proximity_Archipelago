@@ -1,5 +1,6 @@
 [gd_resource type="Resource" script_class="WorkplaceUpgradeOption" format=3 uid="uid://0byesl65qnvb"]
 
+[ext_resource type="Script" uid="uid://clwif6xxyitqt" path="res://game/economy/price_rule.gd" id="5_4bbwi"]
 [ext_resource type="Script" uid="uid://dohq4yj0b3afb" path="res://game/resources/resource_amount.gd" id="amount"]
 [ext_resource type="Resource" uid="uid://bc4vd8o7qyldd" path="res://game/resources/resource_types/food.tres" id="food"]
 [ext_resource type="Texture2D" uid="uid://kvw4n2vj1gs5" path="res://graphics/sprites/farm.svg" id="icon"]

@@ -1,6 +1,7 @@
 [gd_resource type="Resource" script_class="SceneBuildOption" format=3 uid="uid://c62wo80ihkc7y"]
 
-[ext_resource type="Texture2D" path="res://graphics/sprites/picnic/picnic_red_marker.svg" id="4_ajvmo"]
+[ext_resource type="Texture2D" uid="uid://cqu81rcqaw7mu" path="res://graphics/sprites/picnic/picnic_red_marker.svg" id="4_ajvmo"]
+[ext_resource type="Script" uid="uid://clwif6xxyitqt" path="res://game/economy/price_rule.gd" id="6_b2ibf"]
 [ext_resource type="Script" uid="uid://dohq4yj0b3afb" path="res://game/resources/resource_amount.gd" id="amount"]
 [ext_resource type="Resource" path="res://graphics/sprites/feast_variants.tres" id="appearance_variants"]
 [ext_resource type="Resource" uid="uid://bc4vd8o7qyldd" path="res://game/resources/resource_types/food.tres" id="food"]
@@ -25,8 +26,8 @@ appearance_variants = ExtResource("appearance_variants")
 entry_offsets = Array[Vector2i]([Vector2i(0, 1), Vector2i(1, 0), Vector2i(0, -1), Vector2i(-1, 0)])
 lifetime_seconds = 10.0
 id = &"feast"
-terrain_price_exempt = true
 display_name = "ui.building.feast"
 description = "ui.construction.description.feast"
 icon = ExtResource("4_ajvmo")
+terrain_price_exempt = true
 costs = Array[ExtResource("amount")]([SubResource("wood_cost"), SubResource("food_cost")])

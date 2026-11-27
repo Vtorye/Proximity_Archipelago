@@ -3,7 +3,7 @@
 [ext_resource type="Script" uid="uid://dohq4yj0b3afb" path="res://game/resources/resource_amount.gd" id="amount"]
 [ext_resource type="Script" uid="uid://cdmimrfnsanfy" path="res://game/building/build_option.gd" id="build_option"]
 [ext_resource type="Resource" uid="uid://c62wo80ihkc7y" path="res://game/building/options/feast.tres" id="feast"]
-[ext_resource type="Resource" path="res://game/resources/resource_types/royal.tres" id="royal"]
+[ext_resource type="Resource" uid="uid://xbva3bw7pxdj" path="res://game/resources/resource_types/royal.tres" id="royal"]
 [ext_resource type="Resource" uid="uid://bhy6cadrn6nk0" path="res://game/building/options/queen_statue.tres" id="statue"]
 [ext_resource type="Script" uid="uid://bmf8btgjq0fm3" path="res://game/tasks/task_spec.gd" id="task"]
 [ext_resource type="Resource" uid="uid://dr0o3v3n5o1dt" path="res://game/building/options/sawmill.tres" id="unlock"]
