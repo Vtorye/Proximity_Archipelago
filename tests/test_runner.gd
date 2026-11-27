@@ -60,6 +60,7 @@ func _run() -> void:
 	await _test_assignment_load()
 	await _test_rules()
 	await _test_art_resolution()
+	await _test_camera_settings()
 	await preload("res://tests/designer_regressions.gd").new().run(self)
 	await preload("res://tests/task_regressions.gd").new().run(self)
 	await preload("res://tests/construction_regressions.gd").new().run(self)
@@ -483,6 +484,26 @@ func _test_art_resolution() -> void:
 	expect(world.route_service.world_to_cell(world.route_service.cell_to_world(cell)) == cell, "texture replacement preserves coordinate roundtrip")
 	expect(world.population.count() == 5, "texture replacement preserves population")
 	world.free()
+	await get_tree().process_frame
+
+func _test_camera_settings() -> void:
+	var camera := WorldCamera.new()
+	var settings := camera.get("settings") as Resource
+	expect(settings != null, "camera uses editable zoom settings")
+	if settings == null:
+		camera.free()
+		return
+	settings = settings.duplicate()
+	settings.set("zoom_steps", PackedFloat32Array([0.75, 1.5, 3.0]))
+	settings.set("initial_level", 0)
+	camera.set("settings", settings)
+	add_child(camera)
+	expect(camera.zoom.is_equal_approx(Vector2.ONE * 1.5), "camera initializes from its assigned settings")
+	camera.set_level(99)
+	expect(camera.zoom.is_equal_approx(Vector2.ONE * 3.0), "zoom clamps to the end of the configured steps")
+	camera.set_level(-99)
+	expect(camera.zoom.is_equal_approx(Vector2.ONE * 0.75), "zoom clamps to the start of the configured steps")
+	camera.queue_free()
 	await get_tree().process_frame
 
 func _test_simulation() -> void:

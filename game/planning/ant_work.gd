@@ -19,7 +19,7 @@ func decide(foodless: bool) -> void:
 			ant._go_home()
 		else:
 			ant._set_status(AntAgent.Status.HOME)
-			ant._timer = 0.75
+			ant._timer = ant.definition.work_queue_wait_seconds
 	elif plan != null:
 		waiting_for_work = false
 		ant._set_waiting_reason(WorkPlan.WaitReason.NONE)

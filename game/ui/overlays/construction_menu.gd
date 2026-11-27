@@ -135,9 +135,9 @@ func _layout_windows() -> void:
 	content.y += header_height
 	if %BuildingsHeader.collapsed:
 		content.y = header_height + frame.y
-	buildings_panel.size = Vector2(minf(content.x, available_width), minf(content.y, viewport.y / 6.0 + header_height))
+	buildings_panel.size = Vector2(minf(content.x, available_width), minf(content.y, viewport.y * PRESENTATION.construction_palette_height_ratio + header_height))
 	%BuildingsHeader.place(Vector2(strip_left, bottom - buildings_panel.size.y))
-	description_panel.size = Vector2(minf(400.0, viewport.x - 2.0 * margin), 0.0)
+	description_panel.size = Vector2(minf(PRESENTATION.construction_details_width, viewport.x - 2.0 * margin), 0.0)
 	description_panel.header.place(Vector2(viewport.x - description_panel.size.x - margin,
 		maxf(margin, buildings_panel.position.y - description_panel.size.y - margin)))
 
@@ -436,14 +436,14 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.physical_keycode in [KEY_LEFT, KEY_RIGHT, KEY_UP, KEY_DOWN]:
 		get_viewport().set_input_as_handled()
 		return
-	if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_Z and event.ctrl_pressed:
+	if event.is_action_pressed(&"undo_construction"):
 		_undo()
 		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed(&"commit_construction") and not _confirmation.visible and not controls[&"apply"].disabled:
 		AppSettings.play_click()
 		apply_plan()
 		get_viewport().set_input_as_handled()
-	elif event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_ESCAPE:
+	elif event.is_action_pressed(&"ui_cancel"):
 		if not context.dismiss_map_popup.is_valid() or not context.dismiss_map_popup.call():
 			set_palette_visible(false)
 		get_viewport().set_input_as_handled()
@@ -578,9 +578,7 @@ func _update_hover(point: Vector2) -> void:
 func _process(delta: float) -> void:
 	if not is_visible_in_tree() or context == null: return
 	if not _painting:
-		var direction: Vector2 = WorldCamera.keyboard_direction()
-		if not direction.is_zero_approx():
-			context.camera.pan(-direction.normalized() * delta * 100.0)
+		context.camera.pan_from_input(delta)
 	_update_hover(_pointer)
 
 func _notification(what: int) -> void:

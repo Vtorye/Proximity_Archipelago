@@ -90,7 +90,7 @@ func deliver() -> void:
 		_idle_with_cargo()
 	else:
 		ant._set_status(AntAgent.Status.WAITING_FOR_FOOD)
-		ant._timer = 1.0
+		ant._timer = ant.definition.retry_seconds
 
 ## Home storage when it has room for this cargo, otherwise null.
 func _home_storage(count: int) -> House:

@@ -12,7 +12,7 @@ func tick(delta: float) -> void:
 	if remaining > 0: return
 	var cells: Array[Vector2i] = spawn_cells()
 	if cells.is_empty():
-		remaining = 1.0
+		remaining = director.rules.spawn_retry_seconds
 		return
 	number += 1
 	var count: int = mini(director.rules.maximum_spiders - director.spiders.size(), director.rules.initial_spiders + (number - 1) * director.rules.spiders_per_wave)
@@ -53,4 +53,4 @@ func spawn_cells() -> Array[Vector2i]:
 				elif is_equal_approx(seconds, shortest_shore): shore_fallback.append(cell)
 				if seconds <= director.rules.maximum_shore_approach_seconds: candidates.append(cell)
 				break
-	return candidates if not candidates.is_empty() else (shore_fallback if not shore_fallback.is_empty() else (fallback if farthest >= 3.0 else []))
+	return candidates if not candidates.is_empty() else (shore_fallback if not shore_fallback.is_empty() else (fallback if farthest >= director.rules.minimum_fallback_distance_cells else []))

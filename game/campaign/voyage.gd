@@ -16,7 +16,7 @@ var _rules: VoyageRules
 func configure(colony: World, rules: VoyageRules) -> void:
 	world = colony
 	_rules = rules
-	seed_value = randi_range(1, 1000000000)
+	seed_value = randi_range(1, _rules.random_seed_max)
 	world.tasks.changed.connect(refresh)
 	world.registry.added.connect(_built)
 	refresh()
@@ -37,6 +37,7 @@ func complete_departure() -> void:
 	departed = true
 	score += world.tasks.completed_count * _rules.points_per_task + maxi(0, roundi(world.match_controller.time_remaining)) + island * _rules.points_per_island
 	offers.clear()
+	# Preserve deterministic destinations for the existing three biome IDs.
 	for index in range(3):
 		offers.append({"seed": seed_value + island * 7919 + index * 1543, "difficulty": island, "biome": index})
 	world.match_controller.complete_objective()

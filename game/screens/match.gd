@@ -3,6 +3,8 @@ extends Screen
 
 ## Manual check of the end-of-match overlay: enable in the Inspector and start the match.
 @export var debug_show_result := false
+@export_range(0.0, 600.0, 1.0, "or_greater", "suffix:s") var debug_result_time_left := 83.0
+@export var initial_camera_offset := Vector2(0, -8)
 var world: World
 @onready var camera: WorldCamera = $ColonyCamera
 @onready var navigation_overlay: NavigationOverlay = $Navigation
@@ -71,11 +73,11 @@ func _ready() -> void:
 	move_child(world, 0)
 	world.match_controller.completed.connect(_on_completed)
 	camera.bounds = world.map_bounds()
-	camera.position = camera.bounds.get_center() - Vector2(0, 8)
+	camera.position = camera.bounds.get_center() + initial_camera_offset
 	camera.make_current()
 	navigation_overlay.configure(world)
 	selection.map = world.map
-	hud.configure(world, navigation_overlay)
+	hud.configure(world, navigation_overlay, camera)
 	hud.set_countdown_visible(world.match_controller.countdown_enabled)
 	if _chapter_active:
 		chapter.configure(world, story)
@@ -119,7 +121,7 @@ func on_focus() -> void:
 		if error != OK:
 			push_warning("Could not save session: %s" % error_string(error))
 	if debug_show_result:
-		_on_completed(MatchSummary.capture(true, &"target_reached", 83.0, world.inventory))
+		_on_completed(MatchSummary.capture(true, &"target_reached", debug_result_time_left, world.inventory))
 
 func on_blur() -> void:
 	story.finish()
@@ -164,7 +166,7 @@ func _input(event: InputEvent) -> void:
 		camera.pan(event.relative)
 		get_viewport().set_input_as_handled()
 		return
-	if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_N and _navigation_available():
+	if event.is_action_pressed(&"toggle_navigation") and _navigation_available():
 		_toggle_navigation()
 		get_viewport().set_input_as_handled()
 		return

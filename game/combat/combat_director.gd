@@ -8,6 +8,12 @@ var automatic_waves := true
 @export var enabled := false
 @export var rules: WaveRules
 @export var enemy_scenes: Array[PackedScene] = []
+@export_group("Appearance")
+@export var health_bar_offset := Vector2(-6, -10)
+@export var health_bar_size := Vector2(12, 2)
+@export_range(0.01, 2.0, 0.01, "suffix:s") var bolt_lifetime := 0.12
+@export_range(0.1, 8.0, 0.1) var bolt_width := 1.0
+@export_range(0.05, 4.0, 0.05, "suffix:s") var display_refresh_seconds := 0.25
 var spawner := WaveSpawner.new()
 var spiders: Array[SpiderAgent] = []
 var traps: Dictionary[Vector2i, SpiderTrap] = {}
@@ -118,7 +124,7 @@ func can_melee(from: Vector2, target: Node2D) -> bool:
 	var navigation: RouteService = world.route_service
 	var origin: Vector2i = navigation.world_to_cell(from)
 	var cell: Vector2i = navigation.world_to_cell(target.global_position)
-	return absi(origin.x - cell.x) + absi(origin.y - cell.y) <= 1 and from.distance_to(target.global_position) <= navigation.cell_size() * 1.15
+	return absi(origin.x - cell.x) + absi(origin.y - cell.y) <= 1 and from.distance_to(target.global_position) <= navigation.cell_size() * rules.melee_reach_cells
 
 func approach(target: Node2D, from: Vector2i) -> Route:
 	if not alive(target): return Route.invalid()
@@ -250,13 +256,13 @@ func _physics_process(delta: float) -> void:
 		if not building.staffed() or building.shot_timer > 0: continue
 		var target: SpiderAgent = nearest_spider(building.global_position, rules.tower_range_cells)
 		if target != null:
-			_bolts.append({"from": to_local(building.global_position), "to": to_local(target.global_position), "life": 0.12})
+			_bolts.append({"from": to_local(building.global_position), "to": to_local(target.global_position), "life": bolt_lifetime})
 			damage(target, rules.attack_damage)
 			building.shot_timer = rules.tower_shot_seconds
 	for bolt in _bolts: bolt.life -= delta
 	_bolts = _bolts.filter(func(bolt: Dictionary) -> bool: return bolt.life > 0)
 	_time += delta
-	if _time >= 0.25:
+	if _time >= display_refresh_seconds:
 		_time = 0
 		changed.emit()
 	queue_redraw()
@@ -265,10 +271,10 @@ func _draw() -> void:
 	for building in _health:
 		var maximum: int = maximum_health(building)
 		if _health[building] >= maximum: continue
-		var point: Vector2 = to_local(building.global_position) + Vector2(-6, -10)
-		draw_rect(Rect2(point, Vector2(12, 2)), Color("292a27"))
-		draw_rect(Rect2(point, Vector2(12.0 * _health[building] / maximum, 2)), Color("e58b76"))
-	for bolt in _bolts: draw_line(bolt.from, bolt.to, Color("e2c887"), 1)
+		var point: Vector2 = to_local(building.global_position) + health_bar_offset
+		draw_rect(Rect2(point, health_bar_size), ColonyStyle.color(&"enemy_bar_background"))
+		draw_rect(Rect2(point, Vector2(health_bar_size.x * _health[building] / maximum, health_bar_size.y)), ColonyStyle.color(&"health_fill"))
+	for bolt in _bolts: draw_line(bolt.from, bolt.to, ColonyStyle.color(&"tower_bolt"), bolt_width)
 
 func restore_building_health(building: Building, value: int) -> void:
 	_health[building] = value

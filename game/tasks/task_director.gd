@@ -1,6 +1,6 @@
 class_name TaskDirector
 extends RefCounted
-## Three royal orders without replacement; completion is tied to finished construction.
+## Royal orders without replacement; completion is tied to finished construction.
 signal changed
 enum Reward { ROAD, DISCOUNT, SPEED, SATIETY }
 var world: World
@@ -112,8 +112,9 @@ func reward_factor(kind: int) -> float:
 	return 1.0
 
 func choose_reward(index: int) -> bool:
-	if not pending_reward or index < 0 or index >= 3 or not world.match_controller.is_active(): return false
-	grant_buff(reward_choices()[index])
+	var choices := reward_choices()
+	if not pending_reward or index < 0 or index >= choices.size() or not world.match_controller.is_active(): return false
+	grant_buff(choices[index])
 	pending_reward = false
 	advance()
 	changed.emit()
@@ -159,7 +160,7 @@ func _next_level(opening_order: TaskSpec = null) -> void:
 		_pool.erase(opening_order)
 		_pool.append(opening_order)
 	slots.clear()
-	for index in range(3): slots.append(_pool.pop_back() if not _pool.is_empty() else null)
+	for index in range(deck.visible_order_count): slots.append(_pool.pop_back() if not _pool.is_empty() else null)
 	for building in world.registry.all(): _skin(building)
 	if level > 1: world.prices.record(GameEvents.Kind.LEVEL_ADVANCED, StringName(str(level)))
 	changed.emit()

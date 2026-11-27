@@ -72,7 +72,7 @@ func arrive(destination: StringName) -> void:
 			job.source.show_stock_transfer(job.materials, false)
 			if not resume():
 				ant._set_status(AntAgent.Status.WAITING_FOR_FOOD)
-				ant._timer = 1.0
+				ant._timer = ant.definition.retry_seconds
 		&"site_delivery":
 			service.deliver(job)
 			job = null

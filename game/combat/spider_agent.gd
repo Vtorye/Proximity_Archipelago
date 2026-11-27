@@ -9,6 +9,15 @@ var _retarget := 0.0
 var _attack := 0.0
 var _last_target_cell := TileGrid.NO_CELL
 var _revision := -1
+@export_group("Appearance")
+@export var body_shape := Rect2(-3, -4, 6, 7)
+@export var marking_shape := Rect2(-2, -3, 4, 3)
+@export var head_shape := Rect2(-2, 3, 4, 3)
+@export var eyes: Array[Rect2] = [Rect2(-2, 5, 1, 1), Rect2(1, 5, 1, 1)]
+@export var health_bar := Rect2(-5, -8, 10, 1)
+@export_range(0.0, 32.0, 0.1, "or_greater") var stride_frequency := 12.0
+@export_range(0.0, 8.0, 0.1, "or_greater") var stride_amplitude := 1.5
+
 var _animation := 0.0
 
 func _ready() -> void:
@@ -53,16 +62,16 @@ func _physics_process(delta: float) -> void:
 func _draw() -> void:
 	for side in [-1, 1]:
 		for index in range(4):
-			var stride: int = roundi(sin(_animation * 12 + index) * 1.5)
-			draw_line(Vector2(side * 2, index * 2 - 3), Vector2(side * 6, index * 3 - 5 + stride), Color("302326"), 1)
-	draw_rect(Rect2(-3, -4, 6, 7), Color("45303c"))
-	draw_rect(Rect2(-2, -3, 4, 3), Color("765068"))
-	draw_rect(Rect2(-2, 3, 4, 3), Color("31252a"))
-	draw_rect(Rect2(-2, 5, 1, 1), Color("f49a80"))
-	draw_rect(Rect2(1, 5, 1, 1), Color("f49a80"))
+			var stride: int = roundi(sin(_animation * stride_frequency + index) * stride_amplitude)
+			draw_line(Vector2(side * 2, index * 2 - 3), Vector2(side * 6, index * 3 - 5 + stride), ColonyStyle.color(&"spider_legs"), 1)
+	draw_rect(body_shape, ColonyStyle.color(&"spider_body"))
+	draw_rect(marking_shape, ColonyStyle.color(&"spider_marking"))
+	draw_rect(head_shape, ColonyStyle.color(&"spider_head"))
+	for eye in eyes:
+		draw_rect(eye, ColonyStyle.color(&"spider_eyes"))
 	if health >= director.rules.spider_health: return
-	draw_rect(Rect2(-5, -8, 10, 1), Color("292a27"))
-	draw_rect(Rect2(-5, -8, 10.0 * health / maxi(1, director.rules.spider_health), 1), Color("e58b76"))
+	draw_rect(health_bar, ColonyStyle.color(&"enemy_bar_background"))
+	draw_rect(Rect2(health_bar.position, Vector2(health_bar.size.x * health / maxi(1, director.rules.spider_health), health_bar.size.y)), ColonyStyle.color(&"health_fill"))
 
 func capture_state() -> Dictionary:
 	return {"scene": scene_file_path, "position": position, "health": health, "_attack": _attack}

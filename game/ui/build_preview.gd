@@ -50,7 +50,7 @@ func _draw_option(cell: Vector2i, definition: BuildOption, tint: Color, border: 
 	var rect := Rect2(center - footprint_size / 2.0, footprint_size)
 	var texture := _preview_texture(definition, cell)
 	if definition.id == &"house":
-		tint *= House.BARRACKS_TINT
+		tint *= ColonyStyle.color(&"barracks_tint")
 	if texture != null:
 		draw_texture_rect(texture, rect, false, Color(tint, PRESENTATION.ghost_opacity * tint.a))
 	for target in occupied:

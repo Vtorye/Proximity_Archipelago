@@ -2,19 +2,17 @@ class_name WorldCamera
 extends Camera2D
 signal zoom_changed(level: int)
 signal panned_by_player(distance: float)
-const MIN_LEVEL := -1
-const MAX_LEVEL := 4
-const ZOOMS := {-1: 0.25, 0: 0.5, 1: 1.0, 2: 2.0, 3: 4.0, 4: 6.0}
-var level := 2
+@export var settings: CameraSettings = preload("res://game/ui/default_camera.tres")
+var level: int
 @export var enabled_input := true
-var bounds := Rect2(0, 0, 800, 800)
+@export var bounds := Rect2(0, 0, 800, 800)
 var dragging := false
 var left_button_drag := true
 var _focused_nest: House
 
 func _ready() -> void:
-	zoom = Vector2.ONE * ZOOMS[level]
-	position_smoothing_enabled = false
+	level = settings.clamp_level(settings.initial_level)
+	zoom = Vector2.ONE * settings.zoom_at(level)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not enabled_input:
@@ -59,25 +57,22 @@ func _center_on_nest() -> void:
 func _process(delta: float) -> void:
 	if not enabled_input:
 		return
-	var direction: Vector2 = keyboard_direction()
-	if not direction.is_zero_approx():
-		pan(-direction.normalized() * delta * 100.0)
-	elif is_instance_valid(_focused_nest):
+	if not pan_from_input(delta) and is_instance_valid(_focused_nest):
 		_center_on_nest()
 
-static func keyboard_direction() -> Vector2:
-	var right: bool = Input.is_physical_key_pressed(KEY_D) or Input.is_physical_key_pressed(KEY_RIGHT)
-	var left: bool = Input.is_physical_key_pressed(KEY_A) or Input.is_physical_key_pressed(KEY_LEFT)
-	var down: bool = Input.is_physical_key_pressed(KEY_S) or Input.is_physical_key_pressed(KEY_DOWN)
-	var up: bool = Input.is_physical_key_pressed(KEY_W) or Input.is_physical_key_pressed(KEY_UP)
-	return Vector2(float(right) - float(left), float(down) - float(up))
+func pan_from_input(delta: float) -> bool:
+	var direction := Input.get_vector(&"camera_left", &"camera_right", &"camera_up", &"camera_down")
+	if direction.is_zero_approx():
+		return false
+	pan(-direction * delta * settings.pan_speed)
+	return true
 
 func set_level(value: int) -> void:
-	var next := clampi(value, MIN_LEVEL, MAX_LEVEL)
+	var next := settings.clamp_level(value)
 	if next == level:
 		return
 	level = next
-	zoom = Vector2.ONE * ZOOMS[level]
+	zoom = Vector2.ONE * settings.zoom_at(level)
 	if is_instance_valid(_focused_nest):
 		_center_on_nest()
 	else:

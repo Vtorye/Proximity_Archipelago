@@ -1,0 +1,15 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://game/application/autoload/app_settings.gd" id="script"]
+
+[sub_resource type="AudioStreamWAV" id="click"]
+format = 1
+mix_rate = 22050
+data = PackedByteArray("AAAZAwEGmwjLCn4Mow0xDiQOgQ1SDKUKjwgpBo0D2AAp/pv7SPlJ97D1jvTr88zzMPQQ9WD2EPgM+j78jP7dABoDKwX6BnYIkAk+CnwKSQqpCaUISwepBdQD3wHh/+39Gfx5+hv5Dvhb9wf3FfeC90f4Wvmv+jb83f2T/0QB3wJUBJQFkQZEB6UHswdvB90GBQbwBK0DSQLTAF3/9f2p/If7m/rt+YP5YfmF+e75lvp0+378qf3m/igAYgGIAo0DZwQOBXsFrAWfBVcF1wQnBE0DVQJIATMAI/8g/jb9b/zS+2T7Kvsk+1L7svs9/O38u/2d/or/dQBYASgC3QJwA9wDHAQvBBUE0ANjA9UCLAJuAaUA2v8U/1z+uf0x/cr8h/xq/HX8pfz3/Gn99P2S/jz/6/+WADkBywFHAqkC7AIPAxED8QKzAloC6QFmAdcAQQCt/x7/nP4q/s/9jf1m/Vz9bv2b/eH9PP6o/iH/oP8gAJwAEAF2AcsBCwIzAkQCPAIcAuYBngFFAeEAdQAGAJv/Nf/Z/ov+T/4l/hH+Ef4m/k7+iP7Q/iT/fv/d/zoAlADmACwBZQGOAaUBqwGeAYABUwEZAdQAiAA3AOf/mf9Q/xD/2/60/pv+kv6Y/q3+z/7+/jf/dv+7/wAARACEAL4A7gAUAS0BOQE4ASoBEAHrAL0AiABOABIA2P+f/2z/QP8d/wT/9v7z/vz+D/8s/1H/ff+t/+D/EwBEAHIAmgC6ANMA4gDnAOMA1QC/AKEAfQBUACkA/v/T/6r/hv9o/1H/Qf86/zv/Rf9W/27/i/+t/9H/9/8bAD8AXwB7AJEAoACoAKoApACXAIQAbQBRADIAEgDy/9P/t/+e/4n/ev9x/27/cf96/4n/nP+z/83/6P8DAB4ANwBOAGEAbwB5AH0AfAB2AGoAWwBIADMAHAAEAO3/1//D/7L/pP+b/5b/lf+Z/6H/rf+9/87/4v/2/woAHQAvAD8ASwBVAFoAXABaAFQASgA+AC8AHwAOAP3/7P/c/87/wv+5/7T/sf+y/7b/vf/H/9P/4f/w////DAAbACcAMgA6AEAAQwBDAEEAOwAzACoAHgASAAUA+f/t/+L/2P/Q/8r/x//G/8j/zP/S/9n/4//t//j/AgANABcAIAAnAC0AMAAyADEALgAqACMAHAATAAoAAAD4/+//5//g/9v/2P/W/9b/2P/b/+D/5v/t//X//f8FAAwAEwAZAB4AIgAkACQAIwAhAB0AGAASAAsABAD+//j/8f/s/+f/5P/i/+H/4f/j/+b/6v/v//X/+v8AAAUACwAQABQAFwAZABsAGgAZABcAFAAQAAsABgABAP3/+P/0//D/7f/r/+n/6f/q/+z/7v/x//X/+f/+/wEABQAJAA0AEAASABMAEwATABIAEAANAAoABwADAAAA/f/5//b/8//x//D/7//v//D/8v/0//b/+f/8/wAAAgAFAAgACgAMAA0ADgAOAA4ADQALAAkABwAEAAEA///9//r/+P/2//X/9P/0//T/9f/2//j/+v/8//7/AAACAAQABgAIAAkACgAKAAoACgAJAAcABgAEAAIAAAD///3/+//6//n/+P/3//f/+P/4//n/+//8//7/AAAAAAIABAAFAAYABwAHAAcABwAHAAYABQAEAAIAAQAAAP///f/8//v/+v/6//r/+v/6//v//P/9//7///8AAAEAAgADAAQABQAFAAUABQAFAAUABAADAAIAAQAAAAAA")
+
+[node name="AppSettings" type="Node"]
+process_mode = 3
+script = ExtResource("script")
+
+[node name="Click" type="AudioStreamPlayer" parent="."]
+stream = SubResource("click")

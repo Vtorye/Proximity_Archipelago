@@ -44,6 +44,8 @@ uniform float waveline_cutoff = 0.00000001;
 uniform bool draw_grass_blades = true;
 uniform float grass_blades_hight = 0.007;
 uniform float grass_blades_ampletude = 70;
+uniform float grass_sway_speed : hint_range(0.0, 8.0, 0.05) = 1.3;
+uniform float grass_sway_distance : hint_range(0.0, 0.02, 0.0001) = 0.002;
 
 varying float scale_change;
 
@@ -135,7 +137,7 @@ vec3 terrain_color(vec3 curr_col, vec2 uv) {
 	//vec3 curr_col_with_grass = curr_col.xyz;
 	
 	if (draw_grass_blades && curr_col.g > land_types_cutoff) { // grass blades 
-		float grass_offset = tringle(uv.x + sin(TIME * 1.3) * 0.002, grass_blades_ampletude, -grass_blades_hight) * scale_change;
+		float grass_offset = tringle(uv.x + sin(TIME * grass_sway_speed) * grass_sway_distance, grass_blades_ampletude, -grass_blades_hight) * scale_change;
 		
 		soil_uv.y += grass_offset;
 		vec3 grass_blades = sample_mask(soil_uv).xyz;

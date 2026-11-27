@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="AppDefaults" format=3]
+
+[ext_resource type="Script" path="res://game/application/app_defaults.gd" id="defaults"]
+
+[resource]
+script = ExtResource("defaults")
+master_volume = 70.0
+fullscreen = false
+show_grid = false

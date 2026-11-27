@@ -32,3 +32,25 @@ extends Resource
 @export var backdrop_ant_count: int
 @export var backdrop_ant_speed: float
 @export var backdrop_ant_stride_frequency: float
+
+@export_range(0.05, 1.0, 0.01) var backdrop_landmark_scale := 0.65
+@export_range(0.05, 2.0, 0.01) var backdrop_ant_scale := 0.9
+@export_range(0, 500) var backdrop_grain_count := 76
+@export var backdrop_berries_position := Vector2(0.48, 0.18)
+@export var backdrop_timber_position := Vector2(0.59, 0.28)
+@export var backdrop_stone_position := Vector2(0.43, 0.82)
+@export var backdrop_nest_position := Vector2(0.39, 0.31)
+@export var backdrop_canteen_position := Vector2(0.57, 0.48)
+@export_range(0.0, 2.0, 0.01) var backdrop_spider_speed_ratio := 0.6
+@export_range(0.0, 1.0, 0.01) var backdrop_spider_start_phase := 0.68
+
+@export_range(0, 50) var backdrop_ant_overhang := 8
+@export_range(0.0, 50.0, 1.0) var backdrop_spider_overhang := 18.0
+@export var backdrop_spider_lane_offset := Vector2(-8.0, -7.0)
+@export var backdrop_spider_stride_frequencies := Vector2(9.0, 8.0)
+@export var backdrop_lane_sway := Vector2(2.5, 2.5)
+
+@export_group("Construction")
+@export_range(0.05, 1.0, 0.01) var construction_palette_height_ratio := 1.0 / 6.0
+@export_range(32.0, 1000.0, 1.0, "or_greater", "suffix:px") var construction_details_width := 400.0
+@export_range(0.0, 1.0, 0.01) var inactive_offer_opacity := 0.55

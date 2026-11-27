@@ -12,6 +12,19 @@
 
 Инструменты проекта лежат в [`tools/`](tools/), проверки — в [`tests/`](tests/), плагины Godot — в [`addons/`](addons/).
 
+## Где менять настройки в Godot
+
+| Что менять | Где открыть Inspector |
+| --- | --- |
+| Скорость, переносимый груз и паузы между действиями муравьёв | Профили [`game/ants/`](game/ants/), группа **Action Timing** |
+| Темп волн, дальность атаки и повторная попытка появления врагов | Ресурс **Rules** узла **Waves** на карте, например [`default_waves.tres`](game/combat/default_waves.tres) |
+| Количество одновременно видимых королевских заданий | Поле **Visible Order Count** в ресурсе **Task Deck** конкретной карты |
+| Ступени масштаба, начальный масштаб и скорость прокрутки | [`default_camera.tres`](game/ui/default_camera.tres) или ресурс **Settings**, назначенный камере сцены |
+| Цвета интерфейса, индикаторов и юнитов | [`colony_theme.tres`](graphics/ui/colony_theme.tres), раздел **UiPalette** |
+| Размеры, прозрачность и параметры анимаций интерфейса | [`ui_presentation.tres`](game/ui/ui_presentation.tres) и поля соответствующих сцен |
+| Оттенок портрета и скорость реплик | Ресурс персонажа в [`visual_novel/characters/`](visual_novel/characters/) |
+| Настройки по умолчанию и звук кнопок | [`app_defaults.tres`](game/application/app_defaults.tres) и узел **Click** в [`app_settings.tscn`](game/application/autoload/app_settings.tscn) |
+
 ## Запуск и редактирование
 
 Откройте `project.godot` в Godot 4.7.2 и нажмите F5. После обновления завершите прежний запущенный экземпляр игры.

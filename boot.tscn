@@ -1,4 +1,4 @@
-[gd_scene format=3 uid="uid://b1fvi7tj4tjxy"]
+[gd_scene format=3 uid="uid://cnvoa6myiurne"]
 
 [ext_resource type="Script" path="res://_shell/boot.gd" id="1_segco"]
 [ext_resource type="Resource" path="res://manifest.tres" id="2_m6jb1"]

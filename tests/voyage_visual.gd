@@ -14,7 +14,7 @@ func _run() -> void:
 	await click(_button(editor, "ui.voyage.generate"))
 	expect(editor._map.get_used_cells().size() == 2500 and editor._dirty, "generator controls produce an editable 50 by 50 seeded archipelago")
 	await capture("01-generator-and-islands", 35)
-	editor._camera.set_level(WorldCamera.MIN_LEVEL)
+	editor._camera.set_level(editor._camera.settings.minimum_level)
 	editor._camera.position.y -= 80
 	await capture("01b-whole-generated-archipelago", 35)
 	editor._title.text = "Пробный архипелаг"

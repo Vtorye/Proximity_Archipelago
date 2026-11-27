@@ -3,7 +3,7 @@ extends Building
 signal delivery_requested(resource_id: String, amount: int)
 signal stock_order_changed
 
-const BARRACKS_TINT := Color("91b7df")
+@export var base_footprint_offsets: Array[Vector2i] = [Vector2i.ZERO, Vector2i.RIGHT, Vector2i.DOWN, Vector2i.ONE]
 @export var capacity: int = 5
 @export var is_main_nest := false
 ## Population limit used only by the main nest.
@@ -42,7 +42,15 @@ func show_stock_transfer(cargo: Array[ResourceAmount], incoming_stock: bool) -> 
 func refresh_appearance() -> void:
 	var sprite := get_node_or_null("Sprite") as Sprite2D
 	if sprite != null:
-		sprite.modulate = development_tint * (Color.WHITE if is_main_nest else BARRACKS_TINT)
+		sprite.modulate = development_tint * (Color.WHITE if is_main_nest else ColonyStyle.color(&"barracks_tint"))
+
+func footprint() -> Array[Vector2i]:
+	if not is_main_nest or option is SceneBuildOption:
+		return super.footprint()
+	var cells: Array[Vector2i] = []
+	for offset in base_footprint_offsets:
+		cells.append(cell + offset)
+	return cells
 
 func display_title() -> String:
 	return "ui.storage.main" if is_main_nest else "ui.storage.local"

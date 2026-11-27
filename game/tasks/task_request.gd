@@ -1,5 +1,7 @@
 class_name TaskRequest
 extends PanelContainer
+
+const PRESENTATION: UiPresentation = preload("res://game/ui/ui_presentation.tres")
 ## A task's authored variants are separate cards, sharing one placement status.
 
 signal order_requested(task_id: StringName, variant_id: StringName)
@@ -28,7 +30,7 @@ func configure(director: TaskDirector, definition: TaskSpec, number: int) -> voi
 			if _placed.variant == variant:
 				offer.placement.tooltip_text = tr("ui.task.building_variant") % tr(offer.placement.tooltip_text)
 			else:
-				offer.modulate.a = 0.55
+				offer.modulate.a = PRESENTATION.inactive_offer_opacity
 		offer.order_requested.connect(order_requested.emit)
 		offer.info_requested.connect(info_requested.emit)
 		_offers.append(offer)

@@ -14,6 +14,7 @@ const PAUSE_REASON := &"tutorial_dialogue"
 @export_range(0.0, 24.0, 1.0) var portrait_bob_height := 8.0
 @export_range(0.05, 0.5, 0.01) var portrait_bob_seconds := 0.22
 @export_range(0.05, 0.6, 0.01) var name_swipe_seconds := 0.24
+@export_range(0.05, 0.95, 0.05) var portrait_bob_rise_fraction := 0.4
 @export var dialogue_inset := Vector2(12, 12)
 @export_range(0.3, 1.0, 0.05) var dialogue_max_height_ratio := 0.6
 @export_range(16.0, 200.0, 1.0) var dialogue_min_text_height := 26.0
@@ -197,7 +198,7 @@ func _request_line(id: String, skip := false) -> void:
 	%Scroll.scroll_vertical = 0
 	var portrait_path := _line.get_tag_value("portrait")
 	var texture := load(portrait_path) as Texture2D if not portrait_path.is_empty() else (character.portrait if character != null else null)
-	_portrait.self_modulate = Color(1.0, 0.6, 0.55) if _line.character == "Planner" else Color.WHITE
+	_portrait.self_modulate = character.portrait_tint if character != null else Color.WHITE
 	%PaperHat.visible = _line.character == "Planner"
 	if texture != _portrait.texture:
 		_portrait.texture = texture
@@ -275,8 +276,8 @@ func _bob_portrait() -> void:
 		_portrait_tween.kill()
 	_portrait.position.y = 0.0
 	_portrait_tween = create_tween().set_trans(Tween.TRANS_SINE)
-	_portrait_tween.tween_property(_portrait, "position:y", -portrait_bob_height, portrait_bob_seconds * 0.4).set_ease(Tween.EASE_OUT)
-	_portrait_tween.tween_property(_portrait, "position:y", 0.0, portrait_bob_seconds * 0.6).set_ease(Tween.EASE_IN_OUT)
+	_portrait_tween.tween_property(_portrait, "position:y", -portrait_bob_height, portrait_bob_seconds * portrait_bob_rise_fraction).set_ease(Tween.EASE_OUT)
+	_portrait_tween.tween_property(_portrait, "position:y", 0.0, portrait_bob_seconds * (1.0 - portrait_bob_rise_fraction)).set_ease(Tween.EASE_IN_OUT)
 
 func _set_modal(enabled: bool) -> void:
 	if is_modal != enabled:

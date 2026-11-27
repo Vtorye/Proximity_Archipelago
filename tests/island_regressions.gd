@@ -346,7 +346,7 @@ func test_multiple_bases(test: Node) -> void:
 	test.expect(not barracks.is_main_nest and barracks.resident_limit() == 5 and barracks.display_title() == "ui.storage.local", "a barracks keeps five resident slots and its own title")
 	var base_tint: Color = (base.get_node("Sprite") as Sprite2D).modulate
 	var barracks_tint: Color = (barracks.get_node("Sprite") as Sprite2D).modulate
-	test.expect(base_tint.is_equal_approx(Color.WHITE) and barracks_tint.is_equal_approx(House.BARRACKS_TINT), "barracks have a different tint from base nests: %s / %s" % [base_tint, barracks_tint])
+	test.expect(base_tint.is_equal_approx(Color.WHITE) and barracks_tint.is_equal_approx(ColonyStyle.color(&"barracks_tint")), "barracks have a different tint from base nests: %s / %s" % [base_tint, barracks_tint])
 	test.expect(stock.can_deposit(base, WorldInventory.base_capacity()) and not stock.can_deposit(base, WorldInventory.base_capacity() + 1) and stock.can_deposit(barracks, barracks.storage_capacity) and not stock.can_deposit(barracks, barracks.storage_capacity + 1), "each base caps its store at base_capacity() while barracks keep their own limit")
 	var initial: int = stock.quantity(wood)
 	stock.deposit(barracks, [test.entry(wood, 8)])

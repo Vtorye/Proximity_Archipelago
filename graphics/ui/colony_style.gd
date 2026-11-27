@@ -2,6 +2,7 @@ class_name ColonyStyle
 extends RefCounted
 
 const THEME: Theme = preload("res://graphics/ui/colony_theme.tres")
+const TYPOGRAPHY: UiTypography = preload("res://graphics/ui/ui_typography.tres")
 static var _text_themes: Dictionary[int, Theme] = {}
 
 static func color(role: StringName) -> Color:
@@ -10,7 +11,7 @@ static func color(role: StringName) -> Color:
 static func theme_for_text_size(index: int) -> Theme:
 	if _text_themes.has(index):
 		return _text_themes[index]
-	var typography: UiTypography = AppSettings.TYPOGRAPHY
+	var typography: UiTypography = TYPOGRAPHY
 	var minimum := typography.minimum_sizes[index]
 	# Configure the variant before any Control observes it. Fonts and styles are shared.
 	var theme := THEME.duplicate() as Theme

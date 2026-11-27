@@ -74,7 +74,7 @@ func _civilian() -> bool:
 			director.damage(threat, ant.attack_damage)
 			_attack = director.rules.attack_seconds
 		ant._set_status(AntAgent.Status.WANDERING)
-		ant._timer = 0.3
+		ant._timer = director.rules.cornered_flee_wait_seconds
 	return false
 
 func decide() -> void:
@@ -178,7 +178,7 @@ func seek_meal() -> void:
 	var route: Route = ant.logistics.route_to(ant.home, _cell())
 	if ant._meal == null or not route.is_valid():
 		ant._set_status(AntAgent.Status.WAITING_FOR_FOOD)
-		ant._timer = 1.0
+		ant._timer = ant.definition.retry_seconds
 	else:
 		ant._walk(route, &"combat_meal")
 

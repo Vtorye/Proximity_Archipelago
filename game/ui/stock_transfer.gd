@@ -2,6 +2,8 @@ extends Node2D
 
 @export var rise := 22.0
 @export_range(0.1, 3.0, 0.05) var duration := 0.85
+@export_range(0.0, 1.0, 0.01) var scale_duration_fraction := 0.25
+@export_range(0.0, 1.0, 0.01) var fade_start_fraction := 0.55
 @export_range(0.1, 1.0, 0.05) var initial_scale := 0.65
 @export var incoming_color := Color("#bcff9c")
 ## Keep world feedback readable when the camera is zoomed out.
@@ -25,7 +27,7 @@ func play(resource: ResourceType, amount: int) -> void:
 	scale = Vector2.ONE * initial_scale
 
 	var animation := create_tween().set_parallel()
-	animation.tween_property(self, "scale", Vector2.ONE, duration * 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	animation.tween_property(self, "scale", Vector2.ONE, duration * scale_duration_fraction).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	animation.tween_property(self, "position:y", position.y - rise, duration).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	animation.tween_property(self, "modulate:a", 0.0, duration * 0.45).set_delay(duration * 0.55)
+	animation.tween_property(self, "modulate:a", 0.0, duration * (1.0 - fade_start_fraction)).set_delay(duration * fade_start_fraction)
 	animation.chain().tween_callback(queue_free)

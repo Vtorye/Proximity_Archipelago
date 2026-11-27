@@ -2,6 +2,7 @@ class_name TaskDeck
 extends Resource
 @export var requests: Array[TaskSpec] = []
 @export var stages: Array[TaskStage] = []
+@export_range(1, 24) var visible_order_count := 3
 @export var choose_upgrades := false
 @export var loop_last_stage := true
 @export var unlocked_road: TileBuildOption

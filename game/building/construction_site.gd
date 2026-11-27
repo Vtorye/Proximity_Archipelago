@@ -1,6 +1,16 @@
 class_name ConstructionSite
 extends Building
 ## A non-operational reservation. Materials and assembly progress belong to this site.
+@export_group("Appearance")
+@export_range(0.0, 1.0, 0.01) var preview_opacity := 0.38
+@export_range(0.0, 1.0, 0.01) var delivery_progress_share := 0.5
+@export var corner_inset := 2.0
+@export var corner_length := 3.0
+@export_range(1, 12) var progress_indicators := 3
+@export var indicator_size := Vector2(2, 2)
+@export var indicator_spacing := 1.0
+@export var indicator_bottom_inset := 4.0
+
 var service: ConstructionService
 var order: TaskBuildOrder
 var candidate: Building
@@ -72,11 +82,13 @@ func _draw() -> void:
 		var sprite := candidate.get_node_or_null("Sprite") as Sprite2D
 		if sprite != null and sprite.texture != null:
 			icon = sprite.texture
-	if icon != null: draw_texture_rect(icon, rect, false, Color(1, 1, 1, 0.38))
+	if icon != null: draw_texture_rect(icon, rect, false, Color(Color.WHITE, preview_opacity))
 	for corner in [Vector2(-1, -1), Vector2(1, -1), Vector2(-1, 1), Vector2(1, 1)]:
-		var point: Vector2 = rect.get_center() + corner * (footprint_size * 0.5 - Vector2.ONE * 2)
-		draw_line(point, point - Vector2(corner.x * 3, 0), Color("d7bc73"), 1)
-		draw_line(point, point - Vector2(0, corner.y * 3), Color("d7bc73"), 1)
-	var fraction: float = progress / option.construction_seconds if supplied() else float(material_count()) / maxi(1, WorldInventory.cargo_size(required)) * 0.5
-	for index in range(3):
-		draw_rect(Rect2(center_offset.x - 4 + index * 3, rect.end.y - 4, 2, 2), Color("d7bc73") if fraction >= float(index + 1) / 3.0 else Color("423d32"))
+		var point: Vector2 = rect.get_center() + corner * (footprint_size * 0.5 - Vector2.ONE * corner_inset)
+		draw_line(point, point - Vector2(corner.x * corner_length, 0), ColonyStyle.color(&"carried_goods"), 1)
+		draw_line(point, point - Vector2(0, corner.y * corner_length), ColonyStyle.color(&"carried_goods"), 1)
+	var fraction: float = progress / option.construction_seconds if supplied() else float(material_count()) / maxi(1, WorldInventory.cargo_size(required)) * delivery_progress_share
+	var spacing := indicator_size.x + indicator_spacing
+	var row_width := spacing * progress_indicators - indicator_spacing
+	for index in range(progress_indicators):
+		draw_rect(Rect2(Vector2(center_offset.x - row_width * 0.5 + index * spacing, rect.end.y - indicator_bottom_inset), indicator_size), ColonyStyle.color(&"carried_goods") if fraction >= float(index + 1) / progress_indicators else ColonyStyle.color(&"construction_tick_empty"))

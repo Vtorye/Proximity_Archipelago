@@ -4,46 +4,37 @@ signal text_size_changed
 signal language_changed
 signal grid_visibility_changed
 const PATH := "user://settings.cfg"
-var master_volume := 70.0
-var fullscreen := false
-var show_grid := false
+@export var defaults: AppDefaults = preload("res://game/application/app_defaults.tres")
+var master_volume: float
+var fullscreen: bool
+var show_grid: bool
 ## Empty keeps the system locale until the player chooses a language.
 var language := ""
-const TYPOGRAPHY: UiTypography = preload("res://graphics/ui/ui_typography.tres")
+const TYPOGRAPHY: UiTypography = ColonyStyle.TYPOGRAPHY
 var text_size: int = clampi(TYPOGRAPHY.default_index, 0, TYPOGRAPHY.minimum_sizes.size() - 1):
 	set(value):
 		text_size = clampi(value, 0, TYPOGRAPHY.minimum_sizes.size() - 1)
-var _click: AudioStreamPlayer
+@onready var _click: AudioStreamPlayer = $Click
 var _applied_text_size := text_size
 var _applied_show_grid := show_grid
 
 func _ready() -> void:
-	process_mode = Node.PROCESS_MODE_ALWAYS
+	master_volume = defaults.master_volume
+	fullscreen = defaults.fullscreen
+	show_grid = defaults.show_grid
 	var config := ConfigFile.new()
 	if config.load(PATH) == OK:
 		language = str(config.get_value("interface", "language", ""))
 		if language not in ["en", "ru"]:
 			language = ""
-		master_volume = clampf(float(config.get_value("audio", "master", 70.0)), 0.0, 100.0)
-		fullscreen = bool(config.get_value("video", "fullscreen", false))
-		show_grid = bool(config.get_value("interface", "grid", false))
+		master_volume = clampf(float(config.get_value("audio", "master", defaults.master_volume)), 0.0, 100.0)
+		fullscreen = bool(config.get_value("video", "fullscreen", defaults.fullscreen))
+		show_grid = bool(config.get_value("interface", "grid", defaults.show_grid))
 		var migrated: int = TYPOGRAPHY.default_index
 		if config.has_section_key("interface", "scale"):
 			var legacy: float = float(config.get_value("interface", "scale"))
 			migrated = roundi((legacy - 0.5) / 0.25)
 		text_size = int(config.get_value("interface", "text_size", migrated))
-	_click = AudioStreamPlayer.new()
-	var sound := AudioStreamWAV.new()
-	sound.format = AudioStreamWAV.FORMAT_16_BITS
-	sound.mix_rate = 22050
-	var samples := PackedByteArray()
-	samples.resize(660 * 2)
-	for index in range(660):
-		var wave: float = sin(index * TAU * 720.0 / 22050.0) * exp(-index / 100.0) * 0.12
-		samples.encode_s16(index * 2, int(wave * 32767.0))
-	sound.data = samples
-	_click.stream = sound
-	add_child(_click)
 	apply()
 
 func minimum_text_size() -> int:
@@ -84,9 +75,9 @@ func save() -> Error:
 	return config.save(PATH)
 
 func reset_defaults() -> Error:
-	master_volume = 70.0
-	fullscreen = false
-	show_grid = false
+	master_volume = defaults.master_volume
+	fullscreen = defaults.fullscreen
+	show_grid = defaults.show_grid
 	text_size = TYPOGRAPHY.default_index
 	return save()
 

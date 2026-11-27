@@ -31,7 +31,8 @@ var _highlighted_control: StringName
 var _highlight_tween: Tween
 @onready var _warning: Label = %Warning
 @onready var _waiting: Label = %Waiting
-var _zoom_level := 2
+var _camera_settings: CameraSettings = preload("res://game/ui/default_camera.tres")
+var _zoom_level := _camera_settings.clamp_level(_camera_settings.initial_level)
 var _active_section: StringName
 @onready var _objectives: PanelContainer = %Objectives
 var navigation: NavigationOverlay
@@ -40,7 +41,9 @@ var task_panel: TaskPanel
 @onready var _bottom: PanelContainer = %Bottom
 @onready var _task_details: BuildDetailsPanel = %TaskDetails
 
-func configure(session: World, routes: NavigationOverlay) -> void:
+func configure(session: World, routes: NavigationOverlay, camera: WorldCamera) -> void:
+	_camera_settings = camera.settings
+	_zoom_level = camera.level
 	world = session
 	navigation = routes
 	if is_node_ready():
@@ -138,7 +141,7 @@ func _build_hud() -> void:
 	set_section(&"")
 	refresh()
 	_on_time_changed(ceili(world.match_controller.starting_duration()))
-	set_zoom(2)
+	set_zoom(_zoom_level)
 	set_navigation_mode(0)
 
 func refresh() -> void:
@@ -234,9 +237,9 @@ func _refresh_counters() -> void:
 
 func set_zoom(value: int) -> void:
 	_zoom_level = value
-	_zoom.text = "%sx" % str(WorldCamera.ZOOMS[value])
-	controls[&"zoom_in"].disabled = value >= WorldCamera.MAX_LEVEL
-	controls[&"zoom_out"].disabled = value <= WorldCamera.MIN_LEVEL
+	_zoom.text = "%sx" % str(_camera_settings.zoom_at(value))
+	controls[&"zoom_in"].disabled = value >= _camera_settings.maximum_level()
+	controls[&"zoom_out"].disabled = value <= _camera_settings.minimum_level
 
 func _refresh_pause_indicator(paused: bool) -> void:
 	var manual: bool = PauseController.is_manually_paused()
@@ -265,8 +268,8 @@ func build_obstacles() -> Array[Rect2]:
 
 func lock_zoom(locked: bool) -> void:
 	_toast.visible = _toast_time > 0.0 and not locked
-	controls[&"zoom_in"].disabled = locked or _zoom_level >= WorldCamera.MAX_LEVEL
-	controls[&"zoom_out"].disabled = locked or _zoom_level <= WorldCamera.MIN_LEVEL
+	controls[&"zoom_in"].disabled = locked or _zoom_level >= _camera_settings.maximum_level()
+	controls[&"zoom_out"].disabled = locked or _zoom_level <= _camera_settings.minimum_level
 
 func toast(message: String, danger: bool = false) -> void:
 	_toast.text = message

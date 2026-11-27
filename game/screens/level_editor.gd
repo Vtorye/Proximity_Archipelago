@@ -1,6 +1,9 @@
 extends Screen
 ## Edits a preview of authored map data without starting a match.
 
+@export_range(0.0, 1000.0, 1.0, "or_greater", "suffix:px") var camera_margin := 160.0
+@export_range(1, 1000000000) var random_seed_max := 1000000
+
 var _template: World
 var _prototypes: Dictionary[String, Building]
 var _map: TileMapLayer
@@ -76,7 +79,7 @@ func _configure_controls() -> void:
 	for index in range(_starting_maps.size()):
 		var choice: OptionButton = _starting_maps[index]
 		choice.item_selected.connect(func(item: int): _set_starting_map(index == 1, choice, item))
-	_generator_seed.value = randi_range(1, 1000000)
+	_generator_seed.value = randi_range(1, random_seed_max)
 	var rules := _template.island_generation
 	var default_extent := clampi(rules.default_extent, rules.extent_limits.x, rules.extent_limits.y)
 	var extents := rules.editor_extents.duplicate()
@@ -189,7 +192,7 @@ func _show_world(world: World) -> void:
 	_selection.clear()
 	var region: Rect2i = _map.get_used_rect()
 	var tile_size := Vector2(_map.tile_set.tile_size)
-	_camera.bounds = (_map.transform * Rect2(Vector2(region.position) * tile_size, Vector2(region.size) * tile_size)).grow(160.0)
+	_camera.bounds = (_map.transform * Rect2(Vector2(region.position) * tile_size, Vector2(region.size) * tile_size)).grow(camera_margin)
 	_camera.position = _camera.bounds.get_center()
 	_camera.set_level(1)
 	_dirty = false
@@ -335,9 +338,7 @@ func _play(waves := false) -> void:
 func _process(delta: float) -> void:
 	if not _active or _options.visible or get_viewport().gui_get_focus_owner() is LineEdit or _saved.get_popup().visible or _brush.get_popup().visible:
 		return
-	var direction: Vector2 = WorldCamera.keyboard_direction()
-	if not direction.is_zero_approx():
-		_camera.pan(-direction.normalized() * delta * 100.0)
+	_camera.pan_from_input(delta)
 
 func _input(event: InputEvent) -> void:
 	if not _active or _drag_button == MOUSE_BUTTON_NONE:
@@ -395,7 +396,7 @@ func _paint(cell: Vector2i) -> void:
 		(_map as TerrainMap).paint_tile(cell, brush, true)
 		TerrainPainter.grow_wet_shore(_map, cell, _objects.get_children())
 		var size := Vector2(_map.tile_set.tile_size)
-		_camera.bounds = _camera.bounds.merge(Rect2(_map.to_global(_map.map_to_local(cell)) - size / 2, size).grow(160.0))
+		_camera.bounds = _camera.bounds.merge(Rect2(_map.to_global(_map.map_to_local(cell)) - size / 2, size).grow(camera_margin))
 		_mark_dirty()
 	elif brush == &"move":
 		if is_instance_valid(_pending_move):

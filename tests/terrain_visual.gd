@@ -24,7 +24,7 @@ func _run() -> void:
 			found = true
 	expect(found, "the bundled soil map appears in the ordinary map picker")
 	await click(_button(editor, "ui.map.load"))
-	editor._camera.set_level(WorldCamera.MIN_LEVEL)
+	editor._camera.set_level(editor._camera.settings.minimum_level)
 	expect(editor._title.text == "Пять земель", "the five-soil archipelago loads as an editable painted map")
 	for source in range(5, 10):
 		expect(editor._brushes.has(Vector4i(source, 0, 0, 0)), "the editor exposes each soil as a normal tile brush")
@@ -37,7 +37,7 @@ func _run() -> void:
 	await frames(35)
 	screen = Router._current
 	expect(Router.current_screen_key() == &"match", "the styled map launches from the editor")
-	screen.camera.set_level(WorldCamera.MIN_LEVEL)
+	screen.camera.set_level(screen.camera.settings.minimum_level)
 	screen.hud.hide()
 	await capture("02a-five-soils-in-play", 60)
 	screen.hud.show()

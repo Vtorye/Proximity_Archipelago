@@ -28,6 +28,12 @@ var inventory: WorldInventory
 		if is_node_ready():
 			refresh_appearance()
 @export var improvement: WorkplaceUpgradeOption
+
+@export_group("Expanded Deposit")
+@export var expanded_deposit_type: ResourceType = preload("res://game/resources/resource_types/stone.tres")
+@export_range(0, 1000000) var expanded_deposit_threshold := 200
+@export var expanded_deposit_offsets: Array[Vector2i] = [Vector2i.ZERO, Vector2i.RIGHT]
+@export_group("")
 var _source_texture: Texture2D
 var _improvement_slots := 0
 var _pending_output: Array[ResourceAmount] = []
@@ -129,6 +135,14 @@ func refresh_appearance(source: Texture2D = null) -> void:
 	sprite.texture = improvement.icon if improvement != null else _source_texture
 	sprite.visible = improvement != null or not finite_supply or remaining_supply > 0
 	_fit_appearance(sprite)
+
+func footprint() -> Array[Vector2i]:
+	if not finite_supply or remaining_supply <= expanded_deposit_threshold or output == null or expanded_deposit_type == null or output.id != expanded_deposit_type.id:
+		return super.footprint()
+	var cells: Array[Vector2i] = []
+	for offset in expanded_deposit_offsets:
+		cells.append(cell + offset)
+	return cells
 
 func display_title() -> String:
 	return improvement.display_name if improvement != null else super.display_title()

@@ -4,6 +4,9 @@ extends Resource
 @export var ship: SceneBuildOption
 @export_range(1, 100, 1, "or_greater") var ship_unlock_level := 5
 
+@export_group("Island Generation")
+@export_range(1, 2147483647) var random_seed_max := 1000000000
+
 @export_group("Scoring")
 @export_range(0, 1000, 1, "or_greater") var points_per_task := 100
 @export_range(0, 1000, 1, "or_greater") var points_per_island := 500

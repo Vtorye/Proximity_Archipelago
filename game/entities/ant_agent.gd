@@ -16,6 +16,9 @@ signal waiting_changed
 const DEFAULT_PROFILE: AntProfile = preload("res://game/ants/worker.tres")
 
 @export var profile: AntProfile
+var definition: AntProfile:
+	get:
+		return profile if profile != null else DEFAULT_PROFILE
 var speed: float = DEFAULT_PROFILE.speed
 var work_time: float = DEFAULT_PROFILE.work_seconds
 var carry_capacity: int = DEFAULT_PROFILE.carry_capacity
@@ -48,7 +51,6 @@ var _reconsider_queued := false
 var _navigation_pending := false
 
 func apply_profile() -> void:
-	var definition: AntProfile = profile if profile != null else DEFAULT_PROFILE
 	needs.configure(definition.satiety_capacity)
 	speed = definition.speed
 	work_time = definition.work_seconds
@@ -58,7 +60,7 @@ func apply_profile() -> void:
 	attack_damage = definition.damage
 
 func meal_fraction() -> float:
-	return (profile if profile != null else DEFAULT_PROFILE).meal_fraction
+	return definition.meal_fraction
 
 func configure(nest: House, policy: TripPlanner, navigation: RouteService, storage: ColonyLogistics) -> void:
 	home = nest
@@ -75,7 +77,7 @@ func _ready() -> void:
 	route_service.navigation_changed.connect(_on_navigation_changed)
 	route_service.food_sources_changed.connect(_on_food_sources_changed)
 	planner.opportunities_changed.connect(_on_work_opportunities_changed)
-	_timer = departure_delay + randf_range(0.3, 0.5)
+	_timer = departure_delay + randf_range(definition.departure_wait_range.x, definition.departure_wait_range.y)
 	refresh_meal_reservation()
 	_refresh_visual()
 
@@ -153,7 +155,7 @@ func _physics_process(delta: float) -> void:
 				_meal = null
 				if role == Role.WARRIOR:
 					_set_status(Status.HOME)
-					_timer = 0.3
+					_timer = definition.warrior_meal_wait_seconds
 				elif transport.cargo.is_empty() and not (construction != null and construction.has_cargo()):
 					transport.carrying = false
 					_go_home()
@@ -200,14 +202,14 @@ func resume_delivery() -> void:
 	if construction != null and construction.has_cargo():
 		if not construction.resume():
 			_set_status(Status.WAITING_FOR_FOOD)
-			_timer = 1.0
+			_timer = definition.retry_seconds
 		return
 	transport.deliver()
 
 func _wander() -> void:
 	var cell: Vector2i = route_service.world_to_cell(global_position)
 	var origin: Vector2i = planner.accessible_entry(home) if is_instance_valid(home) else cell
-	var radius: int = maxi(2, absi(cell.x - origin.x) + absi(cell.y - origin.y))
+	var radius: int = maxi(definition.wander_radius, absi(cell.x - origin.x) + absi(cell.y - origin.y))
 	var neighbors: Array[Vector2i] = route_service.snapshot().neighbors(cell)
 	var nearby := neighbors.filter(func(next: Vector2i) -> bool:
 		return absi(next.x - origin.x) + absi(next.y - origin.y) <= radius)
@@ -221,7 +223,7 @@ func _wander() -> void:
 			return
 	if nearby.is_empty():
 		_set_status(Status.WANDERING)
-		_timer = 1.0
+		_timer = definition.retry_seconds
 	else:
 		_walk(route_service.make_route([cell, nearby.pick_random()]), &"wander")
 
@@ -254,12 +256,12 @@ func _seek_food() -> void:
 		_meal = planner.reserve_meal()
 	if _meal == null:
 		_set_status(Status.WAITING_FOR_FOOD)
-		_timer = 1.0
+		_timer = definition.retry_seconds
 		return
 	var route: Route = planner.food_route(route_service.world_to_cell(global_position))
 	if not route.is_valid():
 		_set_status(Status.WAITING_FOR_FOOD)
-		_timer = 1.0
+		_timer = definition.retry_seconds
 		return
 	_walk(route, &"food")
 
@@ -280,7 +282,7 @@ func _go_home() -> void:
 	if foodless:
 		# Seeking a meal here would immediately repeat the same decision.
 		_set_status(Status.WAITING_FOR_FOOD)
-		_timer = 1.0
+		_timer = definition.retry_seconds
 	else:
 		_seek_food()
 
@@ -292,7 +294,7 @@ func _walk(route: Route, destination: StringName) -> void:
 func _arrive() -> void:
 	if _destination == &"flee":
 		_set_status(Status.WANDERING)
-		_timer = 0.2
+		_timer = definition.flee_wait_seconds
 		return
 	if _destination in [&"combat_chase", &"combat_tower", &"combat_meal", &"combat_patrol"]:
 		combat.arrive(_destination)
@@ -309,14 +311,14 @@ func _arrive() -> void:
 			transport.load_pickup()
 		&"wander":
 			_set_status(Status.WANDERING)
-			_timer = randf_range(0.2, 0.7)
+			_timer = randf_range(definition.wander_wait_range.x, definition.wander_wait_range.y)
 		&"food":
 			_set_status(Status.EATING)
 			_timer = needs.rules.meal_seconds
 		&"home":
 			transport.carrying = false
 			_set_status(Status.HOME)
-			_timer = 0.5
+			_timer = definition.return_home_wait_seconds
 
 func movement_speed() -> float:
 	return speed * (planner.carry_speed_ratio if transport.carrying else 1.0)
