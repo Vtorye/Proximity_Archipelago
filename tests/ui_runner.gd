@@ -116,7 +116,7 @@ func use_immediate_construction_fixture(world: World) -> void:
 func _run() -> void:
 	seed(20261025)
 	AppSettings.reset_defaults()
-	var boot: Node = load("res://boot.tscn").instantiate()
+	var boot: Node = load("res://game/application/boot.tscn").instantiate()
 	get_viewport().add_child(boot)
 	await frames(35)
 	expect(Router.current_screen_key() == &"main_menu", "main menu starts")

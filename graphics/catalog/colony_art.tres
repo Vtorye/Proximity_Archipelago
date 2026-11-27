@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="ArtCatalog" format=3 uid="uid://d2kl5l2u8nls1"]
+
+[ext_resource type="Texture2D" path="res://graphics/sprites/canteen_picnic_house.svg" id="2_dmlrr"]
+[ext_resource type="Texture2D" uid="uid://d31fehkeqbli4" path="res://graphics/sprites/berries.svg" id="berries"]
+[ext_resource type="Texture2D" uid="uid://c46nj7ke08ktq" path="res://graphics/tiles/grass.png" id="grass"]
+[ext_resource type="Texture2D" uid="uid://c3svnje4dj580" path="res://graphics/sprites/nest.svg" id="nest"]
+[ext_resource type="Texture2D" path="res://graphics/tiles/road_pebbles.svg" id="road"]
+[ext_resource type="Script" uid="uid://cp68nt7h0pc5t" path="res://graphics/catalog/art_catalog.gd" id="script"]
+[ext_resource type="Texture2D" uid="uid://bitlc3a4akicr" path="res://graphics/tiles/soil.png" id="soil"]
+[ext_resource type="Texture2D" path="res://graphics/sprites/stone_cutout_1x1.svg" id="stone"]
+[ext_resource type="Texture2D" uid="uid://clk7nlv07r0pt" path="res://graphics/sprites/timber.svg" id="timber"]
+[ext_resource type="Texture2D" uid="uid://bvfjp2yfxo6bi" path="res://graphics/tiles/water.png" id="water"]
+
+[resource]
+script = ExtResource("script")
+grass = ExtResource("grass")
+soil = ExtResource("soil")
+road = ExtResource("road")
+water = ExtResource("water")
+nest = ExtResource("nest")
+canteen = ExtResource("2_dmlrr")
+berries = ExtResource("berries")
+timber = ExtResource("timber")
+stone = ExtResource("stone")

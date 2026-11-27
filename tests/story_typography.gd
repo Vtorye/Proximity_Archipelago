@@ -6,7 +6,7 @@ extends "res://tests/ui_runner.gd"
 func _run() -> void:
 	# This matrix measures layout; the gameplay runner exercises dialogue audio.
 	story.get_node("%Voice").stream = null
-	for rules: FirstChapterRules in [preload("res://story/zero_chapter_rules.tres"), preload("res://story/first_chapter_rules.tres")]:
+	for rules: FirstChapterRules in [preload("res://visual_novel/chapters/zero/zero_chapter_rules.tres"), preload("res://visual_novel/chapters/first/first_chapter_rules.tres")]:
 		story.characters = rules.characters
 		story.dialogue_resource = rules.dialogue
 		story.set_lesson_skip(rules is ZeroChapterRules)

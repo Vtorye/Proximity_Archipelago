@@ -2,7 +2,7 @@ extends "res://tests/ui_runner.gd"
 func _run() -> void:
 	seed(20261031)
 	AppSettings.reset_defaults()
-	get_viewport().add_child(load("res://boot.tscn").instantiate())
+	get_viewport().add_child(load("res://game/application/boot.tscn").instantiate())
 	await frames(40)
 	open_fixed_match()
 	await frames(40)

@@ -7,7 +7,7 @@ var _rules: ZeroChapterRules
 func _run() -> void:
 	Engine.time_scale = 6.0
 	seed(20261118)
-	get_viewport().add_child(load("res://boot.tscn").instantiate())
+	get_viewport().add_child(load("res://game/application/boot.tscn").instantiate())
 	await _navigation()
 	AppSettings.language = "ru"
 	AppSettings.apply()

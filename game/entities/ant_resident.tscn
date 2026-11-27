@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://c6y7xv8tmtn8m"]
 [ext_resource type="Script" path="res://game/entities/ant_resident.gd" id="script"]
-[ext_resource type="PackedScene" path="res://game/ants/ant_visual.tscn" id="visual"]
+[ext_resource type="PackedScene" path="res://graphics/ants/ant_visual.tscn" id="visual"]
 [node name="Ant" type="Node2D"]
 script = ExtResource("script")
 

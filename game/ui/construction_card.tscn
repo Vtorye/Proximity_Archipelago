@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://game/ui/construction_card.gd" id="script"]
 
-[ext_resource type="Texture2D" path="res://game/assets/sprites/wall.svg" id="preview_wall"]
+[ext_resource type="Texture2D" path="res://graphics/sprites/wall.svg" id="preview_wall"]
 [ext_resource type="PackedScene" path="res://game/ui/construction_info_button.tscn" id="info"]
 
 [node name="ConstructionCard" type="Button"]

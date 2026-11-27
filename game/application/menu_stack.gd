@@ -1,0 +1,52 @@
+class_name MenuStack
+extends Control
+
+signal stack_emptied
+
+var _stack: Array[MenuBase] = []
+
+func push(menu: MenuBase) -> void:
+	if not is_instance_valid(menu):
+		return
+	if not _stack.is_empty():
+		_stack.back().hide()
+	menu.close_requested.connect(_on_close_requested)
+	_stack.append(menu)
+	add_child(menu)
+	menu.grab_focus_default()
+
+func pop() -> void:
+	if _stack.is_empty():
+		return
+	var popped_menu: MenuBase = _stack.pop_back()
+	if is_instance_valid(popped_menu):
+		popped_menu.hide()
+		popped_menu.process_mode = Node.PROCESS_MODE_DISABLED
+		popped_menu.queue_free()
+	if not _stack.is_empty():
+		_stack.back().show()
+		_stack.back().grab_focus_default()
+	else:
+		stack_emptied.emit()
+
+func clear() -> void:
+	if _stack.is_empty():
+		return
+	for menu in _stack:
+		if is_instance_valid(menu):
+			menu.queue_free()
+	_stack.clear()
+	stack_emptied.emit()
+
+func has_menus() -> bool:
+	return not _stack.is_empty()
+
+func top() -> MenuBase:
+	return _stack.back() if not _stack.is_empty() else null
+
+## Only the topmost meny may pop itself
+## This guards against a hidden menu emitting close_requested by accident
+func _on_close_requested(menu: MenuBase) -> void:
+	if _stack.is_empty() or _stack.back() != menu:
+		return
+	pop()

@@ -1,7 +1,0 @@
-[gd_scene format=3]
-
-[ext_resource type="Script" path="res://game/ants/ant_visual.gd" id="visual"]
-
-[node name="Visual" type="Node2D"]
-scale = Vector2(0.5, 0.5)
-script = ExtResource("visual")

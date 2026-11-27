@@ -1,0 +1,19 @@
+[remap]
+
+importer="csv_translation"
+type="Translation"
+uid="uid://dl8d72u26n27m"
+
+[deps]
+
+files=["res://visual_novel/localization/keys.en.translation", "res://visual_novel/localization/keys.ru.translation"]
+
+source_file="res://visual_novel/localization/keys.csv"
+dest_files=["res://visual_novel/localization/keys.en.translation", "res://visual_novel/localization/keys.ru.translation"]
+
+[params]
+
+compress=1
+delimiter=0
+unescape_keys=false
+unescape_translations=true

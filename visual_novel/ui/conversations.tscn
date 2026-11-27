@@ -1,0 +1,40 @@
+[gd_scene format=3]
+[ext_resource type="Script" path="res://visual_novel/ui/conversations.gd" id="script"]
+[ext_resource type="StyleBox" path="res://graphics/ui/dialog_panel.tres" id="panel"]
+[ext_resource type="Script" path="res://game/ui/ui_text_binding.gd" id="ui_text_binding"]
+
+[ext_resource type="PackedScene" path="res://game/ui/window_header.tscn" id="window_header"]
+
+[node name="Conversations" type="Control"]
+visible = false
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+script = ExtResource("script")
+
+[node name="Panel" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+theme_override_styles/panel = ExtResource("panel")
+
+[node name="WindowContents" type="VBoxContainer" parent="Panel"]
+
+[node name="WindowHeader" parent="Panel/WindowContents" node_paths=PackedStringArray("panel", "body") instance=ExtResource("window_header")]
+unique_name_in_owner = true
+title = "ui.chapter.conversations"
+action = 1
+external_layout = true
+panel = NodePath("../..")
+body = NodePath("../Scroll")
+
+[node name="Scroll" type="ScrollContainer" parent="Panel/WindowContents"]
+custom_minimum_size = Vector2(0, 36)
+vertical_scroll_mode = 0
+
+[node name="People" type="HBoxContainer" parent="Panel/WindowContents/Scroll"]
+unique_name_in_owner = true
+theme_override_constants/separation = 6
+
+[node name="UiText" type="Node" parent="." node_paths=PackedStringArray("target")]
+script = ExtResource("ui_text_binding")
+target = NodePath("..")

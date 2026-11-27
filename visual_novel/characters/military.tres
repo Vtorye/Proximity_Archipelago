@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="StoryCharacter" format=3]
+
+[ext_resource type="Script" path="res://visual_novel/characters/story_character.gd" id="character"]
+
+[resource]
+script = ExtResource("character")
+id = &"Military"
+display_name = "ui.zero.military"
+voice_pitch = 0.75

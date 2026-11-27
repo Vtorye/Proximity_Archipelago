@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="SpriteVariantSet" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://graphics/sprites/sprite_variant_set.gd" id="script"]
+[ext_resource type="Texture2D" path="res://graphics/sprites/picnic/picnic_blue_marker.svg" id="blue"]
+[ext_resource type="Texture2D" path="res://graphics/sprites/picnic/picnic_red_marker.svg" id="red"]
+[ext_resource type="Texture2D" path="res://graphics/sprites/picnic/picnic_sage_marker.svg" id="sage"]
+[ext_resource type="Texture2D" path="res://graphics/sprites/picnic/picnic_sun_marker.svg" id="sun"]
+
+[resource]
+script = ExtResource("script")
+textures = Array[Texture2D]([ExtResource("blue"), ExtResource("red"), ExtResource("sage"), ExtResource("sun")])

@@ -3,8 +3,8 @@
 [ext_resource type="PackedScene" path="res://game/ui/window_header.tscn" id="window_header"]
 [ext_resource type="Script" path="res://game/tasks/task_panel.gd" id="script"]
 [ext_resource type="PackedScene" path="res://game/ui/palette_entry.tscn" id="entry"]
-[ext_resource type="StyleBox" path="res://game/ui/dialog_panel.tres" id="category_style"]
-[ext_resource type="StyleBox" path="res://game/ui/construction_strip.tres" id="strip_style"]
+[ext_resource type="StyleBox" path="res://graphics/ui/dialog_panel.tres" id="category_style"]
+[ext_resource type="StyleBox" path="res://graphics/ui/construction_strip.tres" id="strip_style"]
 
 [sub_resource type="StyleBoxFlat" id="scroll_track"]
 content_margin_top = 2.0

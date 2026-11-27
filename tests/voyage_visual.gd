@@ -3,7 +3,7 @@ extends "res://tests/ui_runner.gd"
 func _run() -> void:
 	seed(8123)
 	AppSettings.reset_defaults()
-	get_viewport().add_child(load("res://boot.tscn").instantiate())
+	get_viewport().add_child(load("res://game/application/boot.tscn").instantiate())
 	await frames(35)
 	await click(Router._current.controls[&"maps"])
 	await frames(10)

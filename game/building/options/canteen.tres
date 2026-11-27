@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="SceneBuildOption" format=3 uid="uid://dt2pn38ld5j7f"]
 
 [ext_resource type="Script" uid="uid://dohq4yj0b3afb" path="res://game/resources/resource_amount.gd" id="amount"]
-[ext_resource type="Texture2D" path="res://game/assets/sprites/canteen_picnic_house.svg" id="icon"]
+[ext_resource type="Texture2D" path="res://graphics/sprites/canteen_picnic_house.svg" id="icon"]
 [ext_resource type="Script" uid="uid://ctb7np3cfufgu" path="res://game/building/scene_build_option.gd" id="option"]
 [ext_resource type="Resource" path="res://game/resources/resource_types/royal.tres" id="royal"]
 [ext_resource type="PackedScene" uid="uid://brf42b54ugjtv" path="res://game/entities/canteen.tscn" id="scene"]

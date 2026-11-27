@@ -5,15 +5,12 @@ extends Building
 const YIELD_ROUNDING_TOLERANCE := 0.000001
 
 signal produced(type: ResourceType, amount: int)
-signal load_changed
 signal supply_changed
 signal improvement_changed
 
 @export var recipe: WorkRecipe
 var terrain_yield_multiplier := 1.0
 var inventory: WorldInventory
-signal worker_arrived(worker: Node2D)
-signal worker_left(worker: Node2D)
 
 @export_range(1, 1000) var work_slots: int = 1
 ## Raw resource output rate. The worker's work period determines the amount collected.
@@ -62,9 +59,6 @@ func begin_work(worker: Node2D) -> bool:
 		return false
 	if not _working.has(worker):
 		_working.append(worker)
-		on_worker_arrived(worker)
-		worker_arrived.emit(worker)
-		load_changed.emit()
 	return true
 
 func has_free_slot() -> bool:
@@ -91,21 +85,13 @@ func reserve_worker(human: Node2D) -> bool:
 	if not is_instance_valid(human) or _workers.has(human) or not has_free_slot():
 		return false
 	_workers.append(human)
-	load_changed.emit()
 	return true
 
 
 func release_worker(human: Node2D) -> void:
 	if _workers.has(human):
-		on_worker_left(human)
-		worker_left.emit(human)
 		_workers.erase(human)
 		_working.erase(human)
-		load_changed.emit()
-
-
-func work_complete(_human: Node2D) -> void:
-	pass
 
 func accepts_improvement(definition: WorkplaceUpgradeOption) -> bool:
 	return matches_improvement(definition) and improvement == null and (not finite_supply or remaining_supply > 0)
@@ -120,7 +106,6 @@ func install_improvement(definition: WorkplaceUpgradeOption) -> bool:
 	_improvement_slots = definition.added_slots
 	work_slots += _improvement_slots
 	refresh_appearance()
-	load_changed.emit()
 	improvement_changed.emit()
 	return true
 
@@ -131,7 +116,6 @@ func remove_improvement() -> void:
 	_improvement_slots = 0
 	improvement = null
 	refresh_appearance()
-	load_changed.emit()
 	improvement_changed.emit()
 
 func refresh_appearance(source: Texture2D = null) -> void:
@@ -176,7 +160,6 @@ func _complete_recipe_cycle(human: Node2D, keep_output: bool) -> bool:
 	if not inventory.try_spend_all(recipe.inputs):
 		inventory.end_update()
 		return false
-	work_complete(human)
 	for entry in recipe.outputs: _produce(entry.type, entry.amount, keep_output)
 	inventory.end_update()
 	return true
@@ -186,7 +169,6 @@ func complete_work_period(human: Node2D, seconds: float, keep_output: bool = fal
 		return _complete_recipe_cycle(human, keep_output)
 	if not _workers.has(human) or output == null or not can_run_recipe(): return false
 	if keep_output and not _pending_output.is_empty(): return true
-	work_complete(human)
 	var amount := harvest_units(seconds)
 	if amount > 0: _produce(output, amount, keep_output)
 	return true
@@ -255,13 +237,6 @@ func can_run_recipe() -> bool:
 	for entry in recipe.outputs:
 		if not inventory.is_registered(entry.type): return false
 	return inventory.can_afford_all(recipe.inputs)
-
-## Extension hooks for specialized workplaces. The registry still owns membership.
-func on_worker_arrived(_worker: Node2D) -> void:
-	pass
-
-func on_worker_left(_worker: Node2D) -> void:
-	pass
 
 func capture_production() -> Dictionary:
 	return {"output": ResourceAmount.pack(_pending_output)}

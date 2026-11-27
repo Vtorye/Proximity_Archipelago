@@ -5,7 +5,7 @@ const ROUNDED_ROCK := Vector2i(9, 8)
 func _run() -> void:
 	seed(20261108)
 	AppSettings.reset_defaults()
-	get_viewport().add_child(load("res://boot.tscn").instantiate())
+	get_viewport().add_child(load("res://game/application/boot.tscn").instantiate())
 	await frames(35)
 	if get_viewport() is Window:
 		await RenderingServer.frame_post_draw

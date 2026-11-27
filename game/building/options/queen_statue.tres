@@ -1,8 +1,8 @@
 [gd_resource type="Resource" script_class="SceneBuildOption" format=3 uid="uid://bhy6cadrn6nk0"]
 
 [ext_resource type="Script" uid="uid://dohq4yj0b3afb" path="res://game/resources/resource_amount.gd" id="amount"]
-[ext_resource type="Texture2D" uid="uid://cmkjrjevraoj0" path="res://game/assets/ui/royal.svg" id="appearance"]
-[ext_resource type="Resource" path="res://game/resources/queen_statue_variants.tres" id="appearance_variants"]
+[ext_resource type="Texture2D" uid="uid://cmkjrjevraoj0" path="res://graphics/ui/assets/royal.svg" id="appearance"]
+[ext_resource type="Resource" path="res://graphics/sprites/queen_statue_variants.tres" id="appearance_variants"]
 [ext_resource type="Script" uid="uid://ctb7np3cfufgu" path="res://game/building/scene_build_option.gd" id="option"]
 [ext_resource type="PackedScene" path="res://game/entities/queen_statue.tscn" id="scene"]
 [ext_resource type="Resource" uid="uid://dnvvlsc4kjs1t" path="res://game/resources/resource_types/stone.tres" id="stone"]

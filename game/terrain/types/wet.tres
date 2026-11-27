@@ -1,6 +1,6 @@
 [gd_resource type="Resource" script_class="TerrainType" format=3 uid="uid://cloyg2mctulia"]
 
-[ext_resource type="Texture2D" uid="uid://bc21ph25cdw7g" path="res://game/assets/tiles/wet.svg" id="texture"]
+[ext_resource type="Texture2D" uid="uid://bc21ph25cdw7g" path="res://graphics/tiles/wet.svg" id="texture"]
 [ext_resource type="Script" uid="uid://dpryvfum3wfo2" path="res://game/terrain/terrain_type.gd" id="type"]
 
 [resource]

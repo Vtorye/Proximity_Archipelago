@@ -73,7 +73,7 @@ func _run() -> void:
 	get_tree().quit(0 if failures.is_empty() else 1)
 
 func _test_manifest() -> void:
-	var manifest: Manifest = load("res://manifest.tres") as Manifest
+	var manifest: Manifest = load("res://game/application/manifest.tres") as Manifest
 	expect(manifest.validate().is_empty(), "registered screens and overlays have valid roots")
 	var invalid: Manifest = manifest.duplicate() as Manifest
 	invalid.screens = manifest.screens.duplicate()
@@ -465,7 +465,7 @@ func _test_rules() -> void:
 	stock.free()
 
 func _test_art_resolution() -> void:
-	var art: ArtCatalog = load("res://game/art/colony_art.tres") as ArtCatalog
+	var art: ArtCatalog = load("res://graphics/catalog/colony_art.tres") as ArtCatalog
 	expect(art.validate().is_empty(), "default art catalog valid")
 	var replacement: ArtCatalog = art.duplicate() as ArtCatalog
 	var resolution := art.tile_resolution() * 2
@@ -552,19 +552,26 @@ func _test_assignment_lifecycle() -> void:
 
 func _test_translations() -> void:
 	var original_locale := TranslationServer.get_locale()
-	var csv := FileAccess.open("res://language/keys.csv", FileAccess.READ)
+	var csv := FileAccess.open("res://visual_novel/localization/keys.csv", FileAccess.READ)
 	var header := csv.get_csv_line()
 	var rows: Array[PackedStringArray] = []
 	while not csv.eof_reached():
 		var row := csv.get_csv_line()
 		if row.size() == header.size():
 			rows.append(row)
+	var scene_paths := [
+		"res://game/screens/main_menu.tscn",
+		"res://visual_novel/ui/story_overlay.tscn",
+		"res://game/ui/overlays/settings_menu.tscn",
+		"res://game/ui/overlays/pause_menu.tscn",
+		"res://game/ui/overlays/match_result.tscn",
+	]
 	for column in [1, 2]:
 		TranslationServer.set_locale(header[column])
 		for row in rows:
 			expect(TranslationServer.translate(row[0]) == row[column].c_unescape(), "translation matches CSV: %s / %s" % [header[column], row[0]])
-		for scene in ["screens/main_menu", "story/story_overlay", "overlays/settings_menu", "overlays/pause_menu", "overlays/match_result"]:
-			var screen: Control = load("res://%s.tscn" % scene).instantiate()
+		for scene_path: String in scene_paths:
+			var screen: Control = load(scene_path).instantiate()
 			add_child(screen)
 			await get_tree().process_frame
 			for control in screen.find_children("*", "Control", true, false):
@@ -579,7 +586,7 @@ func _test_translations() -> void:
 func _test_language_toggle() -> void:
 	var original_locale := TranslationServer.get_locale()
 	var original_language := AppSettings.language
-	var menu: Control = load("res://screens/main_menu.tscn").instantiate()
+	var menu: Control = load("res://game/screens/main_menu.tscn").instantiate()
 	add_child(menu)
 	TranslationServer.set_locale("en")
 	for expected in ["ru", "en"]:
@@ -602,7 +609,7 @@ func _test_level_editor_layout() -> void:
 	var previous_size := AppSettings.text_size
 	AppSettings.text_size = AppSettings.TYPOGRAPHY.minimum_sizes.size() - 1
 	AppSettings.apply()
-	var editor: Control = preload("res://screens/level_editor.tscn").instantiate()
+	var editor: Control = preload("res://game/screens/level_editor.tscn").instantiate()
 	add_child(editor)
 	await get_tree().process_frame
 	await get_tree().process_frame

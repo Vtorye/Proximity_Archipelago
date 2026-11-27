@@ -3,7 +3,7 @@ extends Node2D
 ## Persistent enemy hazard. Stepping on it never consumes the trap.
 var cell: Vector2i
 var director: CombatDirector
-const ICON := preload("res://game/assets/sprites/spider_trap.svg")
+const ICON := preload("res://graphics/sprites/spider_trap.svg")
 
 func trigger(ant: AntAgent) -> void:
 	if ant.status == AntAgent.Status.DEAD: return

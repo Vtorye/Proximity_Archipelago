@@ -1,6 +1,6 @@
 [gd_resource type="Resource" script_class="TerrainType" format=3 uid="uid://cp44tj0gaqxty"]
 
-[ext_resource type="Texture2D" uid="uid://cm6m5swipnpj8" path="res://game/assets/tiles/rocky.svg" id="texture"]
+[ext_resource type="Texture2D" uid="uid://cm6m5swipnpj8" path="res://graphics/tiles/rocky.svg" id="texture"]
 [ext_resource type="Script" uid="uid://dpryvfum3wfo2" path="res://game/terrain/terrain_type.gd" id="type"]
 
 [resource]

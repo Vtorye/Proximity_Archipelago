@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://game/ui/ui_text_binding.gd" id="ui_text_binding"]
 [ext_resource type="Script" path="res://game/campaign/campaign_panel.gd" id="script"]
-[ext_resource type="StyleBox" path="res://game/ui/dialog_panel.tres" id="dialog_style"]
+[ext_resource type="StyleBox" path="res://graphics/ui/dialog_panel.tres" id="dialog_style"]
 [ext_resource type="PackedScene" path="res://game/ui/window_header.tscn" id="window_header"]
 
 [node name="Campaign" type="Control"]

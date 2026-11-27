@@ -42,7 +42,7 @@ func _ready() -> void:
 	toggle.pressed.connect(AppSettings.play_click)
 	toggle.visible = action != Action.NONE
 	if action == Action.CLOSE:
-		toggle.icon = preload("res://game/assets/ui/build_cancel.svg")
+		toggle.icon = preload("res://graphics/ui/assets/build_cancel.svg")
 		toggle.text = ""
 		toggle.tooltip_text = "ui.window.close"
 		toggle.pressed.connect(close_requested.emit)

@@ -5,8 +5,8 @@
 [ext_resource type="Resource" path="res://game/resources/resource_types/stone.tres" id="stone"]
 [ext_resource type="Resource" path="res://game/resources/resource_types/food.tres" id="food"]
 [ext_resource type="Resource" path="res://game/resources/resource_types/royal.tres" id="royal"]
-[ext_resource type="Resource" path="res://story/first_chapter_rules.tres" id="chapter"]
-[ext_resource type="Resource" path="res://story/first_chapter_tasks.tres" id="chapter_tasks"]
+[ext_resource type="Resource" path="res://visual_novel/chapters/first/first_chapter_rules.tres" id="chapter"]
+[ext_resource type="Resource" path="res://visual_novel/chapters/first/first_chapter_tasks.tres" id="chapter_tasks"]
 [ext_resource type="Resource" path="res://game/combat/first_island_waves.tres" id="waves"]
 [ext_resource type="PackedScene" path="res://game/campaign/queen_actor.tscn" id="queen"]
 [ext_resource type="PackedScene" path="res://game/entities/nest.tscn" id="barracks"]
@@ -19,9 +19,9 @@
 [ext_resource type="Resource" path="res://game/building/options/berry_bush.tres" id="berry_option"]
 [ext_resource type="Resource" path="res://game/building/options/sawmill.tres" id="sawmill"]
 [ext_resource type="PackedScene" path="res://game/entities/resource_source.tscn" id="source"]
-[ext_resource type="Texture2D" path="res://game/assets/sprites/timber.svg" id="timber_art"]
+[ext_resource type="Texture2D" path="res://graphics/sprites/timber.svg" id="timber_art"]
 
-[ext_resource type="Texture2D" path="res://game/assets/sprites/stone_cutout_2x1.svg" id="stone_large"]
+[ext_resource type="Texture2D" path="res://graphics/sprites/stone_cutout_2x1.svg" id="stone_large"]
 
 [sub_resource type="Resource" id="wood_stock"]
 script = ExtResource("amount")

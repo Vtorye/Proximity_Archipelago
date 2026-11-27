@@ -2,7 +2,6 @@ class_name CargoShip
 extends Building
 ## Cargo is outside the colony ledger once physically unloaded on board.
 
-signal cargo_changed
 @export_range(1, 1000, 1) var capacity_per_resource := 100
 var accepting_cargo := false
 var manifest: Dictionary[String, int] = {}
@@ -32,12 +31,8 @@ func receive(cargo: Array[ResourceAmount], inventory: WorldInventory) -> bool:
 		var id := str(item.type.id)
 		manifest[id] = manifest.get(id, 0) + item.amount
 	inventory.end_update()
-	cargo_changed.emit()
 	return true
 
 func supplied() -> bool:
 	return not requirements.is_empty() and requirements.all(func(item: ResourceAmount): return manifest.get(str(item.type.id), 0) >= item.amount)
-
-func fulfil(_id: String, _amount: int) -> void:
-	cargo_changed.emit()
 

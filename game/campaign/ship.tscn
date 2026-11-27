@@ -1,6 +1,6 @@
 [gd_scene load_steps=3 format=3]
 [ext_resource type="Script" path="res://game/campaign/cargo_ship.gd" id="building"]
-[ext_resource type="Texture2D" path="res://game/assets/sprites/ship.svg" id="icon"]
+[ext_resource type="Texture2D" path="res://graphics/sprites/ship.svg" id="icon"]
 [node name="Ship" type="Node2D"]
 script = ExtResource("building")
 [node name="Sprite" type="Sprite2D" parent="."]

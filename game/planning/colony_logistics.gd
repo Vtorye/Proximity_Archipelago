@@ -15,7 +15,6 @@ var _fields: Dictionary[Building, NavigationField] = {}
 signal shipment_delivered(target: Building, type: ResourceType, amount: int)
 signal export_delivered(source: House, type: ResourceType, amount: int)
 signal stock_transferred(source: House, target: Building, type: ResourceType, amount: int)
-signal worker_deposited(house: House, type: ResourceType, amount: int)
 
 func configure(stock: WorldInventory, routes: RouteService, registry: BuildingRegistry) -> void:
 	inventory = stock
@@ -115,11 +114,7 @@ func field_to(house: House) -> NavigationField:
 	return _field(house) if owns(house) else null
 
 func deposit(house: House, cargo: Array[ResourceAmount]) -> bool:
-	if not owns(house) or not inventory.deposit(store_of(house), cargo):
-		return false
-	for item in cargo:
-		worker_deposited.emit(house, item.type, item.amount)
-	return true
+	return owns(house) and inventory.deposit(store_of(house), cargo)
 
 ## Every owned nest; the first base is main_nest and is stored under the null key in WorldInventory.
 func nests() -> Array[House]:

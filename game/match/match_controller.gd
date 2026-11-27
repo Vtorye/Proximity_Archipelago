@@ -11,8 +11,6 @@ enum Reason { TARGET_REACHED, TIME_UP, COLONY_DESTROYED }
 
 ## Emitted once per whole second left (and once at start).
 signal time_changed(seconds_left: int)
-signal match_won(reason: Reason)
-signal match_lost(reason: Reason)
 signal completed(summary: MatchSummary)
 
 @export var match_duration: float = 180.0
@@ -123,10 +121,6 @@ func _finish(result: Result, reason: Reason) -> void:
 	set_process(false)
 	var cause: StringName = &"colony_destroyed" if reason == Reason.COLONY_DESTROYED else (&"target_reached" if reason == Reason.TARGET_REACHED else &"time_up")
 	var summary: MatchSummary = MatchSummary.capture(result == Result.WIN, cause, time_remaining, _inventory)
-	if result == Result.WIN:
-		match_won.emit(reason)
-	else:
-		match_lost.emit(reason)
 	completed.emit(summary)
 
 func lose_colony() -> void:

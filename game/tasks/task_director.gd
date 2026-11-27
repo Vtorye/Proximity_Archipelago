@@ -14,7 +14,6 @@ var skipped_count := 0
 var slots: Array[TaskSpec] = []
 var _pool: Array[TaskSpec] = []
 var _rng := RandomNumberGenerator.new()
-var _busy := false
 var _speed := 1.0
 var message := ""
 var _upgrade_message := ""

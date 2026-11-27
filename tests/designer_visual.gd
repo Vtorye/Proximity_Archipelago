@@ -1,7 +1,7 @@
 extends "res://tests/ui_runner.gd"
 func _run() -> void:
 	AppSettings.reset_defaults()
-	get_viewport().add_child(load("res://boot.tscn").instantiate())
+	get_viewport().add_child(load("res://game/application/boot.tscn").instantiate())
 	await frames(40)
 	open_fixed_match()
 	await frames(40)
@@ -35,7 +35,7 @@ func _run() -> void:
 	await key(KEY_SPACE)
 	await key(KEY_N)
 	expect(screen.navigation_overlay.mode == 0, "third N restores the ordinary map")
-	expect(screen.hud.theme.get_stylebox("panel", "PanelContainer").texture == load("res://game/assets/ui/panel.svg"), "ordinary HUD transparency returns when navigation is hidden")
+	expect(screen.hud.theme.get_stylebox("panel", "PanelContainer").texture == load("res://graphics/ui/assets/panel.svg"), "ordinary HUD transparency returns when navigation is hidden")
 	await _check_paused_navigation()
 	await _check_storage_and_hover()
 	screen.world.population.agents()[0].speed = 30.0

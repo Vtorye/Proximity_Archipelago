@@ -1,0 +1,163 @@
+[gd_scene format=3]
+[ext_resource type="Script" path="res://game/ui/ui_text_binding.gd" id="ui_text_binding"]
+[ext_resource type="Script" path="res://game/ui/overlays/settings_menu.gd" id="script"]
+[ext_resource type="StyleBox" path="res://graphics/ui/dialog_panel.tres" id="dialog_style"]
+[ext_resource type="PackedScene" path="res://game/ui/window_header.tscn" id="window_header"]
+
+[node name="SettingsMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("script")
+
+[node name="Shade" type="ColorRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.5)
+
+[node name="Center" type="Control" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Dialog" type="PanelContainer" parent="Center"]
+unique_name_in_owner = true
+metadata/ui_manual_layout = true
+theme_override_styles/panel = ExtResource("dialog_style")
+
+[node name="WindowContents" type="VBoxContainer" parent="Center/Dialog"]
+theme_override_constants/separation = 2
+
+[node name="WindowHeader" parent="Center/Dialog/WindowContents" node_paths=PackedStringArray("panel", "body") instance=ExtResource("window_header")]
+unique_name_in_owner = true
+title = "ui.menu.settings"
+action = 2
+dock = 0
+panel_width = 512.0
+inset = Vector2(8, 8)
+panel = NodePath("../..")
+body = NodePath("../Margin")
+
+[node name="Margin" type="MarginContainer" parent="Center/Dialog/WindowContents"]
+theme_override_constants/margin_left = 6
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 6
+theme_override_constants/margin_bottom = 6
+
+[node name="Scroll" type="ScrollContainer" parent="Center/Dialog/WindowContents/Margin"]
+custom_minimum_size = Vector2(0, 189)
+horizontal_scroll_mode = 0
+
+[node name="Content" type="VBoxContainer" parent="Center/Dialog/WindowContents/Margin/Scroll"]
+size_flags_horizontal = 3
+unique_name_in_owner = true
+theme_override_constants/separation = 5
+
+[node name="Volume" type="HBoxContainer" parent="Center/Dialog/WindowContents/Margin/Scroll/Content"]
+theme_override_constants/separation = 5
+
+[node name="Caption" type="Label" parent="Center/Dialog/WindowContents/Margin/Scroll/Content/Volume"]
+mouse_filter = 2
+text = "ui.settings.volume"
+custom_minimum_size = Vector2(115, 0)
+
+[node name="Slider" type="HSlider" parent="Center/Dialog/WindowContents/Margin/Scroll/Content/Volume"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(74, 24)
+size_flags_horizontal = 3
+max_value = 100.0
+step = 1.0
+
+[node name="VolumeValue" type="Label" parent="Center/Dialog/WindowContents/Margin/Scroll/Content/Volume"]
+unique_name_in_owner = true
+mouse_filter = 2
+text = "80%"
+custom_minimum_size = Vector2(44, 0)
+
+[node name="Scale" type="HBoxContainer" parent="Center/Dialog/WindowContents/Margin/Scroll/Content"]
+theme_override_constants/separation = 5
+
+[node name="Caption" type="Label" parent="Center/Dialog/WindowContents/Margin/Scroll/Content/Scale"]
+mouse_filter = 2
+text = "ui.settings.minimum_text"
+size_flags_horizontal = 3
+
+[node name="TextMinus" type="Button" parent="Center/Dialog/WindowContents/Margin/Scroll/Content/Scale"]
+unique_name_in_owner = true
+mouse_default_cursor_shape = 2
+text = "-"
+custom_minimum_size = Vector2(32, 28)
+
+[node name="TextValue" type="Label" parent="Center/Dialog/WindowContents/Margin/Scroll/Content/Scale"]
+unique_name_in_owner = true
+mouse_filter = 2
+text = "10 px"
+custom_minimum_size = Vector2(125, 0)
+horizontal_alignment = 1
+
+[node name="TextPlus" type="Button" parent="Center/Dialog/WindowContents/Margin/Scroll/Content/Scale"]
+unique_name_in_owner = true
+mouse_default_cursor_shape = 2
+text = "+"
+custom_minimum_size = Vector2(32, 28)
+
+[node name="FullscreenRow" type="HBoxContainer" parent="Center/Dialog/WindowContents/Margin/Scroll/Content"]
+
+[node name="Caption" type="Label" parent="Center/Dialog/WindowContents/Margin/Scroll/Content/FullscreenRow"]
+mouse_filter = 2
+text = "ui.settings.fullscreen"
+size_flags_horizontal = 3
+
+[node name="Fullscreen" type="Button" parent="Center/Dialog/WindowContents/Margin/Scroll/Content/FullscreenRow"]
+unique_name_in_owner = true
+mouse_default_cursor_shape = 2
+text = "[ ]"
+custom_minimum_size = Vector2(48, 28)
+toggle_mode = true
+
+[node name="ShowGridRow" type="HBoxContainer" parent="Center/Dialog/WindowContents/Margin/Scroll/Content"]
+
+[node name="Caption" type="Label" parent="Center/Dialog/WindowContents/Margin/Scroll/Content/ShowGridRow"]
+mouse_filter = 2
+text = "ui.settings.grid"
+size_flags_horizontal = 3
+
+[node name="ShowGrid" type="Button" parent="Center/Dialog/WindowContents/Margin/Scroll/Content/ShowGridRow"]
+unique_name_in_owner = true
+mouse_default_cursor_shape = 2
+text = "[ ]"
+custom_minimum_size = Vector2(48, 28)
+toggle_mode = true
+
+[node name="Saved" type="Label" parent="Center/Dialog/WindowContents/Margin/Scroll/Content"]
+unique_name_in_owner = true
+mouse_filter = 2
+text = "ui.settings.saved"
+theme_override_colors/font_color = Color(0.6667, 0.651, 0.6118, 1)
+
+[node name="Actions" type="HBoxContainer" parent="Center/Dialog/WindowContents/Margin/Scroll/Content"]
+theme_override_constants/separation = 5
+
+[node name="Reset" type="Button" parent="Center/Dialog/WindowContents/Margin/Scroll/Content/Actions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 28)
+mouse_default_cursor_shape = 2
+text = "ui.settings.reset"
+size_flags_horizontal = 3
+
+[node name="VolumeSaveTimer" type="Timer" parent="."]
+wait_time = 0.2
+one_shot = true
+ignore_time_scale = true
+
+[node name="UiText" type="Node" parent="." node_paths=PackedStringArray("target")]
+script = ExtResource("ui_text_binding")
+target = NodePath("..")

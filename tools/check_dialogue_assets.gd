@@ -1,6 +1,6 @@
 extends SceneTree
 
-const DIALOGUE_DIR := "res://game/assets/dialogue/"
+const DIALOGUE_DIR := "res://visual_novel/dialogues/"
 const DIALOGUES := ["first_chapter", "tutorial", "zero_chapter"]
 
 
@@ -26,7 +26,7 @@ func _initialize() -> void:
 				or saved.character_names != imported.character_names:
 			push_error("Dialogue asset is out of date: %s.tres. Run this script with -- --write." % base)
 			failed = true
-	if not write and not ResourceLoader.load("res://screens/match.tscn") is PackedScene:
+	if not write and not ResourceLoader.load("res://game/screens/match.tscn") is PackedScene:
 		push_error("Cannot load the match scene.")
 		failed = true
 	quit(1 if failed else 0)

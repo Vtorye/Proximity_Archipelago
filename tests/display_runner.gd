@@ -32,7 +32,7 @@ func click(control: Control) -> void:
 
 func _run() -> void:
 	AppSettings.reset_defaults()
-	var boot: Node = load("res://boot.tscn").instantiate()
+	var boot: Node = load("res://game/application/boot.tscn").instantiate()
 	get_tree().root.add_child(boot)
 	await frames(30)
 	await click(Router._current.controls[&"settings"])

@@ -1,6 +1,6 @@
 [gd_scene format=3]
 
-[ext_resource type="Texture2D" path="res://game/assets/ui/menu_dots.svg" id="menu_icon"]
+[ext_resource type="Texture2D" path="res://graphics/ui/assets/menu_dots.svg" id="menu_icon"]
 
 [node name="Settings" type="Button"]
 expand_icon = true

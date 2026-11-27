@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="StoryCharacter" format=3]
+[ext_resource type="Script" path="res://visual_novel/characters/story_character.gd" id="script"]
+[ext_resource type="Texture2D" path="res://graphics/portraits/protagonist/protagonist_ant.png" id="portrait"]
+[resource]
+script = ExtResource("script")
+id = &"Planner"
+display_name = "ui.chapter.planner"
+portrait = ExtResource("portrait")
+characters_per_second = 52.0
+voice_pitch = 1.12
+topic = &"planner_topic"

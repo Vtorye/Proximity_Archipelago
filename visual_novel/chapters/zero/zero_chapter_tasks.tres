@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="TaskDeck" format=3]
+
+[ext_resource type="Script" path="res://game/tasks/task_deck.gd" id="deck"]
+[ext_resource type="Script" path="res://game/tasks/task_stage.gd" id="stage"]
+[ext_resource type="Script" path="res://game/tasks/task_spec.gd" id="task"]
+[ext_resource type="Resource" path="res://game/tasks/request_statue_feast.tres" id="opening"]
+[ext_resource type="Resource" path="res://game/tasks/request_statue_feast_b.tres" id="followup"]
+[ext_resource type="Resource" path="res://game/tasks/request_quarry_feast.tres" id="later"]
+[ext_resource type="Resource" path="res://visual_novel/chapters/zero/zero_statue_order.tres" id="statues"]
+
+[sub_resource type="Resource" id="chapter_stage"]
+script = ExtResource("stage")
+tasks = Array[ExtResource("task")]([ExtResource("opening"), ExtResource("followup"), ExtResource("later"), ExtResource("statues")])
+upgrade = 1
+
+[resource]
+script = ExtResource("deck")
+requests = Array[ExtResource("task")]([ExtResource("opening"), ExtResource("followup"), ExtResource("later"), ExtResource("statues")])
+stages = Array[ExtResource("stage")]([SubResource("chapter_stage")])

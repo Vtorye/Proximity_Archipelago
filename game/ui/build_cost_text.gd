@@ -3,7 +3,7 @@ extends RefCounted
 ## Shared wording for individual options and the total construction budget.
 
 const RESOURCE_GAP := "   "
-const TIME_ICON: Texture2D = preload("res://game/assets/ui/task_time.svg")
+const TIME_ICON: Texture2D = preload("res://graphics/ui/assets/task_time.svg")
 
 ## The template can add a localized title around the price.
 static func show_price(label: RichTextLabel, costs: Array[ResourceAmount], template := "%s", free_text := "") -> void:

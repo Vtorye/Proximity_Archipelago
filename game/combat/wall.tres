@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="SceneBuildOption" format=3 uid="uid://b1cb1yi67d0ms"]
 
 [ext_resource type="Script" uid="uid://dohq4yj0b3afb" path="res://game/resources/resource_amount.gd" id="amount"]
-[ext_resource type="Texture2D" uid="uid://bir1mjanntsr3" path="res://game/assets/sprites/wall.svg" id="icon"]
+[ext_resource type="Texture2D" uid="uid://bir1mjanntsr3" path="res://graphics/sprites/wall.svg" id="icon"]
 [ext_resource type="Script" uid="uid://ctb7np3cfufgu" path="res://game/building/scene_build_option.gd" id="option"]
 [ext_resource type="PackedScene" path="res://game/combat/wall.tscn" id="scene"]
 [ext_resource type="Resource" uid="uid://dnvvlsc4kjs1t" path="res://game/resources/resource_types/stone.tres" id="stone"]

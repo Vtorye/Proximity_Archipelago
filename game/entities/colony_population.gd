@@ -4,7 +4,6 @@ extends Node
 
 signal changed
 signal spawned(agent: AntAgent)
-signal cell_changed(old: Vector2i, next: Vector2i)
 var units: Node2D
 var navigation: RouteService
 var planner: TripPlanner
@@ -116,7 +115,6 @@ func _add_resident(house: House, ant: AntAgent) -> void:
 	house.add_resident(ant)
 	ant.position = units.to_local(navigation.cell_to_world(entry))
 	units.add_child(ant)
-	ant.cell_changed.connect(func(old: Vector2i, next: Vector2i): cell_changed.emit(old, next))
 	ant.status_changed.connect(func(_status: AntAgent.Status): changed.emit())
 	ant.waiting_changed.connect(func(): changed.emit())
 	ant.died.connect(func(_ant: Node2D, _cause: int): changed.emit())

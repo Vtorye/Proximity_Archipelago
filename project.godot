@@ -11,15 +11,15 @@ config_version=5
 [application]
 
 config/name="archipelago"
-run/main_scene="res://boot.tscn"
+run/main_scene="res://game/application/boot.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
-config/icon="res://game/assets/ui/project_icon.svg"
+config/icon="res://graphics/ui/assets/project_icon.svg"
 
 [autoload]
 
-AppSettings="*res://_shell/autoload/app_settings.gd"
-Router="*res://_shell/autoload/router.gd"
-PauseController="*res://_shell/autoload/pause_controller.gd"
+AppSettings="*res://game/application/autoload/app_settings.gd"
+Router="*res://game/application/autoload/router.gd"
+PauseController="*res://game/application/autoload/pause_controller.gd"
 DialogueManager="*res://addons/dialogue_manager/dialogue_manager.gd"
 
 [display]
@@ -39,12 +39,12 @@ enabled=PackedStringArray("res://addons/level_validation/plugin.cfg", "res://add
 [file_customization]
 
 folder_colors={
-"res://_shell/": "gray"
+"res://game/application/": "gray"
 }
 
 [gui]
 
-theme/custom="res://game/ui/colony_theme.tres"
+theme/custom="res://graphics/ui/colony_theme.tres"
 
 [input]
 
@@ -84,8 +84,8 @@ commit_construction={
 
 [internationalization]
 
-locale/translations=PackedStringArray("res://language/keys.en.translation", "res://language/keys.ru.translation")
-locale/translations_pot_files=PackedStringArray("res://game/assets/dialogue/tutorial.dialogue", "res://game/assets/dialogue/first_chapter.dialogue", "res://game/assets/dialogue/zero_chapter.dialogue")
+locale/translations=PackedStringArray("res://visual_novel/localization/keys.en.translation", "res://visual_novel/localization/keys.ru.translation")
+locale/translations_pot_files=PackedStringArray("res://visual_novel/dialogues/tutorial.dialogue", "res://visual_novel/dialogues/first_chapter.dialogue", "res://visual_novel/dialogues/zero_chapter.dialogue")
 
 [physics]
 

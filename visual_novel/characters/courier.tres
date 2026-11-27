@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="StoryCharacter" format=3]
+[ext_resource type="Script" path="res://visual_novel/characters/story_character.gd" id="script"]
+[ext_resource type="Texture2D" path="res://graphics/portraits/advisors/logistics_advisor.png" id="portrait"]
+[resource]
+script = ExtResource("script")
+id = &"Courier"
+display_name = "ui.chapter.courier"
+portrait = ExtResource("portrait")
+characters_per_second = 90.0
+voice_pitch = 1.35
+topic = &"courier_topic"

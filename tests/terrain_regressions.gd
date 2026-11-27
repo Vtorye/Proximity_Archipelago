@@ -195,7 +195,7 @@ func _texture_replacement(test: Node) -> void:
 	type.id = &"texture_probe"
 	type.display_name = "Probe"
 	type.tile = Vector4i(50, 0, 0, 0)
-	type.texture = load("res://game/assets/tiles/fertile.svg")
+	type.texture = load("res://graphics/tiles/fertile.svg")
 	var catalog := TerrainCatalog.new()
 	catalog.default_ground = type
 	catalog.types = [type]
@@ -203,6 +203,6 @@ func _texture_replacement(test: Node) -> void:
 	map.prepare_terrain()
 	var source := map.tile_set.get_source(50) as TileSetAtlasSource
 	test.expect(source.texture == type.texture, "the terrain resource supplies a new palette texture")
-	type.texture = load("res://game/assets/tiles/dry.svg")
+	type.texture = load("res://graphics/tiles/dry.svg")
 	test.expect(source.texture == type.texture, "replacing a terrain texture refreshes an already prepared TileSet without code or new source IDs")
 	world.free()

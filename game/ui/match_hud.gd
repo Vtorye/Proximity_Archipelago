@@ -240,7 +240,7 @@ func set_zoom(value: int) -> void:
 
 func _refresh_pause_indicator(paused: bool) -> void:
 	var manual: bool = PauseController.is_manually_paused()
-	%Pause.icon = preload("res://game/assets/ui/build_apply.svg") if manual else preload("res://game/assets/ui/pause.svg")
+	%Pause.icon = preload("res://graphics/ui/assets/build_apply.svg") if manual else preload("res://graphics/ui/assets/pause.svg")
 	%Pause.tooltip_text = "ui.hud.unpause" if manual else "ui.hud.pause"
 	%Pause.disabled = paused and not manual
 
@@ -343,7 +343,7 @@ func set_navigation_mode(mode: int) -> void:
 	routes.text = ["ui.hud.routes", "ui.hud.routes_cells", "ui.hud.routes_priority"][mode]
 	if navigation_panel != null:
 		navigation_panel.refresh()
-	var texture: Texture2D = preload("res://game/assets/ui/opaque_panel.svg") if mode > 0 else preload("res://game/assets/ui/panel.svg")
+	var texture: Texture2D = preload("res://graphics/ui/assets/opaque_panel.svg") if mode > 0 else preload("res://graphics/ui/assets/panel.svg")
 	# Keep world labels behind readable HUD surfaces without clipping the map layer.
 	for style in [theme.get_stylebox("panel", "PanelContainer"), theme.get_stylebox("panel", "TooltipPanel"), _toast.get_theme_stylebox("normal")]:
 		(style as StyleBoxTexture).texture = texture
