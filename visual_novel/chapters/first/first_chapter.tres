@@ -1,9 +1,9 @@
-[gd_resource type="Resource" script_class="DialogueResource" format=3]
+[gd_resource type="Resource" script_class="DialogueResource" format=3 uid="uid://dxxj03568xqht"]
 
-[ext_resource type="Script" path="res://addons/dialogue_manager/dialogue_resource.gd" id="1_tj8gq"]
+[ext_resource type="Script" path="res://addons/dialogue_manager/dialogue_resource.gd" id="1_urro1"]
 
 [resource]
-script = ExtResource("1_tj8gq")
+script = ExtResource("1_urro1")
 using_states = PackedStringArray()
 cues = {
 "after_both": "83",
@@ -51,7 +51,6 @@ lines = {
 &"id": "1",
 &"next_id": "2",
 &"static_id": "",
-&"tags": PackedStringArray("portrait=res://graphics/portraits/ant_queen/ant_queen_pleased.png"),
 &"text": "ui.story.tutorial.wake",
 &"type": "dialogue"
 },
@@ -655,7 +654,7 @@ lines = {
 &"id": "174",
 &"next_id": "175",
 &"static_id": "",
-&"tags": PackedStringArray("portrait=res://graphics/portraits/ant_queen/ant_queen_angry.png"),
+&"tags": PackedStringArray("portrait=angry"),
 &"text": "ui.story.tutorial.first_reprimand",
 &"type": "dialogue"
 },
@@ -839,7 +838,7 @@ lines = {
 &"id": "2",
 &"next_id": "3",
 &"static_id": "",
-&"tags": PackedStringArray("name_input", "portrait=res://graphics/portraits/ant_queen/ant_queen_thinking.png"),
+&"tags": PackedStringArray("name_input", "portrait=thinking"),
 &"text": "ui.story.tutorial.ask_name",
 &"type": "dialogue"
 },
@@ -884,7 +883,7 @@ lines = {
 &"id": "23",
 &"next_id": "24",
 &"static_id": "",
-&"tags": PackedStringArray("portrait=res://graphics/portraits/ant_queen/ant_queen_thinking.png"),
+&"tags": PackedStringArray("portrait=thinking"),
 &"text": "ui.story.tutorial.colony",
 &"type": "dialogue"
 },
@@ -917,7 +916,6 @@ lines = {
 &"id": "27",
 &"next_id": "28",
 &"static_id": "",
-&"tags": PackedStringArray("portrait=res://graphics/portraits/protagonist/protagonist_ant.png"),
 &"text": "ui.story.road.ask_advice",
 &"type": "dialogue"
 },
@@ -942,7 +940,6 @@ lines = {
 &"id": "3",
 &"next_id": "4",
 &"static_id": "",
-&"tags": PackedStringArray("portrait=res://graphics/portraits/ant_queen/ant_queen_pleased.png"),
 &"text": "ui.story.tutorial.never_mind",
 &"type": "dialogue"
 },
@@ -1019,7 +1016,6 @@ lines = {
 &"id": "4",
 &"next_id": "5",
 &"static_id": "",
-&"tags": PackedStringArray("portrait=res://graphics/portraits/ant_queen/ant_queen_pleased.png"),
 &"text": "ui.story.tutorial.given_name",
 &"type": "dialogue"
 },
@@ -1053,7 +1049,6 @@ lines = {
 &"id": "44",
 &"next_id": "45",
 &"static_id": "",
-&"tags": PackedStringArray("portrait=res://graphics/portraits/ant_queen/ant_queen_pleased.png"),
 &"text": "ui.story.tutorial.road_done",
 &"type": "dialogue"
 },
@@ -1062,7 +1057,7 @@ lines = {
 &"id": "45",
 &"next_id": "46",
 &"static_id": "",
-&"tags": PackedStringArray("portrait=res://graphics/portraits/ant_queen/ant_queen_eating_berries.png"),
+&"tags": PackedStringArray("portrait=eating"),
 &"text": "ui.story.tutorial.choice",
 &"type": "dialogue"
 },
@@ -1071,7 +1066,6 @@ lines = {
 &"id": "46",
 &"next_id": "47",
 &"static_id": "",
-&"tags": PackedStringArray("portrait=res://graphics/portraits/protagonist/protagonist_ant.png"),
 &"text": "ui.story.tutorial.choice_cost",
 &"type": "dialogue"
 },
@@ -1097,7 +1091,6 @@ lines = {
 &"id": "5",
 &"next_id": "6",
 &"static_id": "",
-&"tags": PackedStringArray("portrait=res://graphics/portraits/ant_queen/ant_queen_pleased.png"),
 &"text": "ui.story.tutorial.purpose",
 &"type": "dialogue"
 },
@@ -1132,7 +1125,7 @@ lines = {
 &"id": "54",
 &"next_id": "55",
 &"static_id": "",
-&"tags": PackedStringArray("portrait=res://graphics/portraits/ant_queen/ant_queen_eating_berries.png"),
+&"tags": PackedStringArray("portrait=eating"),
 &"text": "ui.story.tutorial.feast",
 &"type": "dialogue"
 },
@@ -1174,7 +1167,6 @@ lines = {
 &"id": "6",
 &"next_id": "7",
 &"static_id": "",
-&"tags": PackedStringArray("portrait=res://graphics/portraits/protagonist/protagonist_ant.png"),
 &"text": "ui.story.tutorial.before",
 &"type": "dialogue"
 },
@@ -1183,7 +1175,6 @@ lines = {
 &"id": "60",
 &"next_id": "61",
 &"static_id": "",
-&"tags": PackedStringArray("portrait=res://graphics/portraits/ant_queen/ant_queen_pleased.png"),
 &"text": "ui.story.tutorial.statue",
 &"type": "dialogue"
 },
@@ -1254,7 +1245,7 @@ lines = {
 &"id": "7",
 &"next_id": "8",
 &"static_id": "",
-&"tags": PackedStringArray("portrait=res://graphics/portraits/ant_queen/ant_queen_thinking.png"),
+&"tags": PackedStringArray("portrait=thinking"),
 &"text": "ui.story.tutorial.my_fault",
 &"type": "dialogue"
 },
@@ -1268,7 +1259,7 @@ lines = {
 &"id": "71",
 &"next_id": "72",
 &"static_id": "",
-&"tags": PackedStringArray("portrait=res://graphics/portraits/ant_queen/ant_queen_eating_berries.png"),
+&"tags": PackedStringArray("portrait=eating"),
 &"text": "ui.story.tutorial.feast",
 &"type": "dialogue"
 },
@@ -1310,7 +1301,6 @@ lines = {
 &"id": "77",
 &"next_id": "78",
 &"static_id": "",
-&"tags": PackedStringArray("portrait=res://graphics/portraits/ant_queen/ant_queen_pleased.png"),
 &"text": "ui.story.tutorial.statue",
 &"type": "dialogue"
 },

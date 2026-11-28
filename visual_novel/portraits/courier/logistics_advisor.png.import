@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bp4l0qe0gn3rj"
-path="res://.godot/imported/main_menu_queen_throne_sideways.png-b1dbee42e628aa332d9f2c521ef46391.ctex"
+uid="uid://bohqd5ek2c3n3"
+path="res://.godot/imported/logistics_advisor.png-96af6e9cde300ea4079364addd5cd5ce.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://graphics/ui/backdrop/main_menu_queen_throne_sideways.png"
-dest_files=["res://.godot/imported/main_menu_queen_throne_sideways.png-b1dbee42e628aa332d9f2c521ef46391.ctex"]
+source_file="res://visual_novel/portraits/courier/logistics_advisor.png"
+dest_files=["res://.godot/imported/logistics_advisor.png-96af6e9cde300ea4079364addd5cd5ce.ctex"]
 
 [params]
 

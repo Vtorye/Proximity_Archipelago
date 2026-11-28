@@ -120,6 +120,11 @@ func _run() -> void:
 	get_viewport().add_child(boot)
 	await frames(35)
 	expect(Router.current_screen_key() == &"main_menu", "main menu starts")
+	if "--speed-only" in OS.get_cmdline_user_args():
+		await _check_match_speed()
+		print("SPEED CHECKS ", assertions - failures.size(), "/", assertions)
+		get_tree().quit(0 if failures.is_empty() else 1)
+		return
 	if "--layout-only" in OS.get_cmdline_user_args():
 		await _layout_only()
 		_finish()
@@ -300,6 +305,53 @@ func _check_canteen_popup() -> void:
 	await key(KEY_ESCAPE)
 	expect(screen.nest_popup == null and not get_tree().paused, "escape closes the canteen menu without pausing the match")
 	canteen.restore_delivery_settings({})
+
+func _check_match_speed() -> void:
+	open_fixed_match()
+	await frames(50)
+	screen = Router._current
+	var normal: Button = screen.hud.get_node_or_null("%SpeedNormal")
+	var fast: Button = screen.hud.get_node_or_null("%SpeedFast")
+	var fastest: Button = screen.hud.get_node_or_null("%SpeedFastest")
+	expect(normal != null and fast != null and fastest != null, "match HUD offers all three speeds")
+	if normal == null or fast == null or fastest == null:
+		return
+	expect(normal.button_pressed and Engine.time_scale == 1.0, "match starts at normal speed")
+	var physics_rate := Engine.physics_ticks_per_second
+	var controller: MatchController = screen.world.match_controller
+	# A real-time timer lets us compare game time at each speed.
+	var start: float = controller.time_remaining
+	await get_tree().create_timer(0.5, false, false, true).timeout
+	var normal_elapsed := start - controller.time_remaining
+	await click(fast)
+	expect(fast.button_pressed and not normal.button_pressed and Engine.time_scale == 2.0, "2x selects double speed")
+	start = controller.time_remaining
+	await get_tree().create_timer(0.5, false, false, true).timeout
+	expect(absf(start - controller.time_remaining - normal_elapsed * 2.0) < 0.12, "2x doubles the countdown rate")
+	await click(screen.hud.controls[&"pause"])
+	var paused_time: float = screen.world.match_controller.time_remaining
+	await click(fastest)
+	expect(get_tree().paused and screen.world.match_controller.time_remaining == paused_time, "selecting speed keeps the match paused")
+	expect(fastest.button_pressed and not fast.button_pressed and Engine.time_scale == 4.0, "4x selects quadruple speed")
+	expect(Engine.physics_ticks_per_second == physics_rate, "speed leaves the physics tick rate fixed")
+	await click(screen.hud.controls[&"pause"])
+	expect(not get_tree().paused and Engine.time_scale == 4.0, "resume keeps the selected speed")
+	start = controller.time_remaining
+	await get_tree().create_timer(0.5, false, false, true).timeout
+	expect(absf(start - controller.time_remaining - normal_elapsed * 4.0) < 0.24, "4x quadruples the countdown rate")
+	await click(normal)
+	expect(normal.button_pressed and Engine.time_scale == 1.0, "1x restores normal speed")
+	await click(fastest)
+	Router.restart_current()
+	await frames(50)
+	screen = Router._current
+	normal = screen.hud.get_node("%SpeedNormal")
+	expect(normal.button_pressed and Engine.time_scale == 1.0, "restart restores normal speed and selection")
+	fast = screen.hud.get_node("%SpeedFast")
+	await click(fast)
+	Router.goto(&"main_menu")
+	await frames(50)
+	expect(Router.current_screen_key() == &"main_menu" and Engine.time_scale == 1.0, "leaving a fast match restores normal engine speed")
 
 func _layout_only() -> void:
 	var dimensions: Vector2i = display_size if display_size != Vector2i.ZERO else get_window().size

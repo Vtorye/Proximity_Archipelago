@@ -31,6 +31,8 @@ var _warning_key := ""
 var _spoken_text := ""
 var _characters_revealed := 0.0
 var _line_speed := 45.0
+var _portrait_scene: PackedScene
+var _portrait_instance: Control
 var _portrait_tween: Tween
 var _name_tween: Tween
 var _name_dismissing := false
@@ -44,7 +46,7 @@ var _dialogue_layout_pending := false
 @onready var _dialogue_text: VBoxContainer = %Text
 @onready var _dialogue_contents: VBoxContainer = %DialogueContents
 @onready var _dialogue_actions: HBoxContainer = %DialogueActions
-@onready var _portrait: TextureRect = %Portrait
+@onready var _portrait: Control = %Portrait
 @onready var _continue: Button = %Continue
 @onready var _hint_panel: PanelContainer = %HintPanel
 @onready var _hint: Label = %Hint
@@ -96,11 +98,7 @@ func _layout_dialogue() -> void:
 	%DialogueHeader.place(Vector2(dialogue_inset.x, get_viewport_rect().size.y - window.size.y - dialogue_inset.y))
 	var mount: Control = %PortraitMount
 	var portrait_top := window.size.y - mount.size.y - portrait_bottom_inset
-	if _portrait.texture != null:
-		var texture_size := _portrait.texture.get_size()
-		var drawn_height := texture_size.y * minf(mount.size.x / texture_size.x, mount.size.y / texture_size.y)
-		var letterbox := (mount.size.y - drawn_height) * 0.5
-		portrait_top = minf(portrait_top, -portrait_protrusion - letterbox)
+	portrait_top = minf(portrait_top, -portrait_protrusion)
 	mount.position.y = maxf(portrait_top, -window.position.y)
 
 func play(title: String) -> void:
@@ -196,13 +194,16 @@ func _request_line(id: String, skip := false) -> void:
 	_characters_revealed = 0.0
 	set_process(true)
 	%Scroll.scroll_vertical = 0
-	var portrait_path := _line.get_tag_value("portrait")
-	var texture := load(portrait_path) as Texture2D if not portrait_path.is_empty() else (character.portrait if character != null else null)
-	_portrait.self_modulate = character.portrait_tint if character != null else Color.WHITE
-	%PaperHat.visible = _line.character == "Planner"
-	if texture != _portrait.texture:
-		_portrait.texture = texture
-		_bob_portrait()
+	var emotion := StringName(_line.get_tag_value("portrait"))
+	var portrait_scene: PackedScene
+	if _line.has_tag("portrait"):
+		if character != null and not emotion.is_empty():
+			portrait_scene = character.portraits.get(emotion)
+		if portrait_scene == null:
+			push_warning("Unknown portrait tag '%s' for speaker '%s'." % [emotion, _line.character])
+	if portrait_scene == null and character != null:
+		portrait_scene = character.default_portrait
+	_set_portrait(portrait_scene)
 	_continue.disabled = false
 	_set_modal(true)
 
@@ -271,10 +272,28 @@ func _close_name_input() -> void:
 	_name_window.hide()
 	_name_input.clear()
 
-func _bob_portrait() -> void:
+func _set_portrait(scene: PackedScene) -> void:
+	if scene == _portrait_scene:
+		return
+	if _portrait_instance != null:
+		_portrait.remove_child(_portrait_instance)
+		_portrait_instance.queue_free()
+		_portrait_instance = null
 	if _portrait_tween != null and _portrait_tween.is_valid():
 		_portrait_tween.kill()
 	_portrait.position.y = 0.0
+	_portrait_scene = scene
+	if scene == null:
+		return
+	var instance := scene.instantiate()
+	if not instance is Control:
+		if instance != null:
+			instance.free()
+		push_warning("Portrait scene '%s' must have a Control root." % scene.resource_path)
+		return
+	_portrait_instance = instance as Control
+	_portrait.add_child(_portrait_instance)
+	_portrait_instance.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_portrait_tween = create_tween().set_trans(Tween.TRANS_SINE)
 	_portrait_tween.tween_property(_portrait, "position:y", -portrait_bob_height, portrait_bob_seconds * portrait_bob_rise_fraction).set_ease(Tween.EASE_OUT)
 	_portrait_tween.tween_property(_portrait, "position:y", 0.0, portrait_bob_seconds * (1.0 - portrait_bob_rise_fraction)).set_ease(Tween.EASE_IN_OUT)
@@ -285,6 +304,7 @@ func _set_modal(enabled: bool) -> void:
 		if enabled:
 			PauseController.acquire(PAUSE_REASON)
 		else:
+			_set_portrait(null)
 			PauseController.release(PAUSE_REASON)
 		modal_changed.emit(enabled)
 	_refresh_visibility()

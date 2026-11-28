@@ -10,6 +10,7 @@ const ResourceChip = preload("res://game/match/hud/hud_resource_chip.gd")
 signal nest_selected(nest: House)
 signal settings_requested
 signal pause_requested
+signal speed_requested(multiplier: float)
 signal navigation_requested
 signal construction_requested
 signal order_requested(task_id: StringName, variant_id: StringName)
@@ -93,6 +94,11 @@ func _build_hud() -> void:
 	controls[&"pause"] = %Pause
 	%Pause.pressed.connect(AppSettings.play_click)
 	%Pause.pressed.connect(func(): pause_requested.emit())
+	%SpeedNormal.pressed.connect(speed_requested.emit.bind(1.0))
+	%SpeedFast.pressed.connect(speed_requested.emit.bind(2.0))
+	%SpeedFastest.pressed.connect(speed_requested.emit.bind(4.0))
+	for button: Button in [%SpeedNormal, %SpeedFast, %SpeedFastest]:
+		button.pressed.connect(AppSettings.play_click)
 	PauseController.pause_changed.connect(_refresh_pause_indicator)
 	_refresh_pause_indicator(get_tree().paused)
 	controls[&"settings"] = %Settings
@@ -190,6 +196,7 @@ func _on_time_changed(seconds: int) -> void:
 
 func set_tutorial_controls(chapter: FirstChapter) -> void:
 	%Pause.visible = chapter.shows_control(&"pause")
+	%SpeedControls.visible = %Pause.visible
 	%Routes.visible = chapter.shows_control(&"routes")
 	%MatchControls.self_modulate.a = 1.0 if %Routes.visible or %Pause.visible else 0.0
 	%Zoom.visible = chapter.shows_control(&"zoom")
@@ -246,6 +253,8 @@ func _refresh_pause_indicator(paused: bool) -> void:
 	%Pause.icon = preload("res://graphics/ui/icons/build_apply.svg") if manual else preload("res://graphics/ui/icons/pause.svg")
 	%Pause.tooltip_text = "ui.hud.unpause" if manual else "ui.hud.pause"
 	%Pause.disabled = paused and not manual
+	for button: Button in [%SpeedNormal, %SpeedFast, %SpeedFastest]:
+		button.disabled = %Pause.disabled
 
 func build_obstacles() -> Array[Rect2]:
 	var result: Array[Rect2] = []

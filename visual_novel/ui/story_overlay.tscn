@@ -1,10 +1,9 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://d28up5ks4fnc2"]
 
-[ext_resource type="PackedScene" path="res://game/ui/components/window_header.tscn" id="window_header"]
-[ext_resource type="Script" path="res://visual_novel/ui/story_overlay.gd" id="script"]
+[ext_resource type="AudioStream" uid="uid://dqy6l8u3048of" path="res://visual_novel/ui/dialogue_blip.wav" id="blip"]
 [ext_resource type="StyleBox" path="res://graphics/ui/theme/dialog_panel.tres" id="panel"]
-[ext_resource type="Resource" path="res://visual_novel/chapters/first/first_chapter.tres" id="dialogue"]
-[ext_resource type="AudioStream" path="res://visual_novel/ui/dialogue_blip.wav" id="blip"]
+[ext_resource type="Script" uid="uid://dnv2aerko8fqw" path="res://visual_novel/ui/story_overlay.gd" id="script"]
+[ext_resource type="PackedScene" path="res://game/ui/components/window_header.tscn" id="window_header"]
 
 [sub_resource type="StyleBoxFlat" id="dialogue_style"]
 content_margin_left = 108.0
@@ -18,29 +17,30 @@ border_width_right = 1
 border_width_bottom = 1
 border_color = Color(0.82, 0.67, 0.42, 0.59)
 
-
-
-[node name="StoryOverlay" type="Control"]
-visible = false
+[node name="StoryOverlay" type="Control" unique_id=1299976627]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("script")
-dialogue_resource = ExtResource("dialogue")
 
-[node name="Shade" type="ColorRect" parent="."]
+[node name="Shade" type="ColorRect" parent="." unique_id=1521791356]
 unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 color = Color(0.08, 0.06, 0.04, 0.22)
 
-[node name="DialogueWindow" type="Control" parent="."]
+[node name="DialogueWindow" type="Control" parent="." unique_id=1462995071]
 unique_name_in_owner = true
 layout_mode = 1
+anchors_preset = 12
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -50,74 +50,78 @@ offset_right = -12.0
 offset_bottom = -12.0
 mouse_filter = 2
 
-[node name="DialoguePanel" type="PanelContainer" parent="DialogueWindow"]
+[node name="DialoguePanel" type="PanelContainer" parent="DialogueWindow" unique_id=1354282171]
 unique_name_in_owner = true
 layout_mode = 1
+anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 theme_override_styles/panel = SubResource("dialogue_style")
 
-[node name="DialogueContents" type="VBoxContainer" parent="DialogueWindow/DialoguePanel"]
+[node name="DialogueContents" type="VBoxContainer" parent="DialogueWindow/DialoguePanel" unique_id=178276810]
 unique_name_in_owner = true
+layout_mode = 2
 
-[node name="DialogueHeader" parent="DialogueWindow/DialoguePanel/DialogueContents" node_paths=PackedStringArray("panel", "body") instance=ExtResource("window_header")]
+[node name="DialogueHeader" parent="DialogueWindow/DialoguePanel/DialogueContents" unique_id=1224132859 node_paths=PackedStringArray("panel", "body") instance=ExtResource("window_header")]
 unique_name_in_owner = true
+layout_mode = 2
 title_style = &"DetailsHeading"
 action = 1
-external_layout = true
 panel = NodePath("../../..")
 body = NodePath("../Text")
+external_layout = true
 
-[node name="Text" type="VBoxContainer" parent="DialogueWindow/DialoguePanel/DialogueContents"]
+[node name="Text" type="VBoxContainer" parent="DialogueWindow/DialoguePanel/DialogueContents" unique_id=873354940]
 unique_name_in_owner = true
+layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 4
 
-[node name="Scroll" type="ScrollContainer" parent="DialogueWindow/DialoguePanel/DialogueContents/Text"]
+[node name="Scroll" type="ScrollContainer" parent="DialogueWindow/DialoguePanel/DialogueContents/Text" unique_id=643998379]
 unique_name_in_owner = true
+layout_mode = 2
 size_flags_vertical = 3
 horizontal_scroll_mode = 0
 
-[node name="Dialogue" type="Label" parent="DialogueWindow/DialoguePanel/DialogueContents/Text/Scroll"]
+[node name="Dialogue" type="Label" parent="DialogueWindow/DialoguePanel/DialogueContents/Text/Scroll" unique_id=901073952]
 unique_name_in_owner = true
 auto_translate_mode = 2
-visible_characters_behavior = 1
+layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-autowrap_mode = 3
 vertical_alignment = 1
+autowrap_mode = 3
+visible_characters_behavior = 1
 
-[node name="DialogueActions" type="HBoxContainer" parent="DialogueWindow/DialoguePanel/DialogueContents/Text"]
+[node name="DialogueActions" type="HBoxContainer" parent="DialogueWindow/DialoguePanel/DialogueContents/Text" unique_id=1356464870]
 unique_name_in_owner = true
+layout_mode = 2
 theme_override_constants/separation = 8
 alignment = 2
 
-[node name="SkipDialogue" type="Button" parent="DialogueWindow/DialoguePanel/DialogueContents/Text/DialogueActions"]
-theme_type_variation = &"CompactButton"
+[node name="SkipDialogue" type="Button" parent="DialogueWindow/DialoguePanel/DialogueContents/Text/DialogueActions" unique_id=1000360319]
 unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"CompactButton"
 text = "ui.story.skip_tutorial"
 
-[node name="SkipLessons" type="Button" parent="DialogueWindow/DialoguePanel/DialogueContents/Text/DialogueActions"]
-theme_type_variation = &"CompactButton"
+[node name="SkipLessons" type="Button" parent="DialogueWindow/DialoguePanel/DialogueContents/Text/DialogueActions" unique_id=1804114388]
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
+theme_type_variation = &"CompactButton"
 text = "ui.story.skip_tutorial"
 
-[node name="NameBeat" type="Timer" parent="."]
+[node name="Continue" type="Button" parent="DialogueWindow/DialoguePanel/DialogueContents/Text/DialogueActions" unique_id=410063170]
 unique_name_in_owner = true
-wait_time = 1.0
-one_shot = true
-ignore_time_scale = true
-
-[node name="Continue" type="Button" parent="DialogueWindow/DialoguePanel/DialogueContents/Text/DialogueActions"]
+layout_mode = 2
 theme_type_variation = &"CompactButton"
-unique_name_in_owner = true
 text = "ui.story.continue"
 
-[node name="PortraitMount" type="Control" parent="DialogueWindow"]
+[node name="PortraitMount" type="Control" parent="DialogueWindow" unique_id=1809625879]
 unique_name_in_owner = true
 layout_mode = 1
+anchors_preset = 2
 anchor_top = 1.0
 anchor_bottom = 1.0
 offset_left = 1.0
@@ -126,32 +130,42 @@ offset_right = 101.0
 offset_bottom = -3.0
 mouse_filter = 2
 
-[node name="Portrait" type="TextureRect" parent="DialogueWindow/PortraitMount"]
+[node name="Portrait" type="Control" parent="DialogueWindow/PortraitMount" unique_id=1405410524]
 unique_name_in_owner = true
+process_mode = 3
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 mouse_filter = 2
-expand_mode = 1
-stretch_mode = 5
+mouse_behavior_recursive = 1
 
-[node name="HintPanel" type="PanelContainer" parent="."]
+[node name="NameBeat" type="Timer" parent="." unique_id=2110136280]
 unique_name_in_owner = true
+one_shot = true
+ignore_time_scale = true
+
+[node name="HintPanel" type="PanelContainer" parent="." unique_id=1859660712]
+unique_name_in_owner = true
+visible = false
 layout_mode = 1
+anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
 offset_left = -98.0
-offset_right = 98.0
 offset_top = 52.0
-visible = false
+offset_right = 98.0
 grow_horizontal = 2
 theme_override_styles/panel = ExtResource("panel")
 
-[node name="WindowContents" type="VBoxContainer" parent="HintPanel"]
+[node name="WindowContents" type="VBoxContainer" parent="HintPanel" unique_id=410668096]
+layout_mode = 2
 
-[node name="HintHeader" parent="HintPanel/WindowContents" node_paths=PackedStringArray("panel", "body") instance=ExtResource("window_header")]
+[node name="HintHeader" parent="HintPanel/WindowContents" unique_id=1692005451 node_paths=PackedStringArray("panel", "body") instance=ExtResource("window_header")]
 unique_name_in_owner = true
+layout_mode = 2
 title = "ui.menu.tutorial"
 action = 1
 dock = 5
@@ -160,34 +174,38 @@ inset = Vector2(8, 52)
 panel = NodePath("../..")
 body = NodePath("../HintContent")
 
-[node name="HintContent" type="VBoxContainer" parent="HintPanel/WindowContents"]
+[node name="HintContent" type="VBoxContainer" parent="HintPanel/WindowContents" unique_id=1435976054]
+layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="Hint" type="Label" parent="HintPanel/WindowContents/HintContent"]
-theme_type_variation = &"Caption"
+[node name="Hint" type="Label" parent="HintPanel/WindowContents/HintContent" unique_id=1173684543]
 unique_name_in_owner = true
+layout_mode = 2
 size_flags_horizontal = 3
-autowrap_mode = 3
+theme_type_variation = &"Caption"
 vertical_alignment = 1
+autowrap_mode = 3
 
-[node name="PracticeDone" type="Button" parent="HintPanel/WindowContents/HintContent"]
+[node name="PracticeDone" type="Button" parent="HintPanel/WindowContents/HintContent" unique_id=1037288586]
 unique_name_in_owner = true
 visible = false
-disabled = true
-theme_type_variation = &"CompactButton"
-text = "ui.story.controls.done"
+layout_mode = 2
 mouse_default_cursor_shape = 2
+theme_type_variation = &"CompactButton"
+disabled = true
+text = "ui.story.controls.done"
 
-[node name="Warning" type="Timer" parent="."]
+[node name="Warning" type="Timer" parent="." unique_id=746005585]
 unique_name_in_owner = true
 wait_time = 2.8
 one_shot = true
 
-[node name="NameWindow" type="Control" parent="."]
-custom_minimum_size = Vector2(312, 90)
+[node name="NameWindow" type="Control" parent="." unique_id=298882434]
 unique_name_in_owner = true
 visible = false
+custom_minimum_size = Vector2(312, 90)
 layout_mode = 1
+anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
@@ -198,42 +216,39 @@ offset_right = 156.0
 offset_bottom = -14.0
 mouse_filter = 2
 
-[node name="Panel" type="PanelContainer" parent="NameWindow"]
+[node name="Panel" type="PanelContainer" parent="NameWindow" unique_id=744502184]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 theme_override_styles/panel = ExtResource("panel")
 
-[node name="WindowContents" type="VBoxContainer" parent="NameWindow/Panel"]
+[node name="WindowContents" type="VBoxContainer" parent="NameWindow/Panel" unique_id=616425563]
+layout_mode = 2
 
-[node name="NameHeader" parent="NameWindow/Panel/WindowContents" node_paths=PackedStringArray("panel", "body") instance=ExtResource("window_header")]
+[node name="NameHeader" parent="NameWindow/Panel/WindowContents" unique_id=1574743071 node_paths=PackedStringArray("panel", "body") instance=ExtResource("window_header")]
 unique_name_in_owner = true
+layout_mode = 2
 title = "ui.story.name.title"
 action = 1
 panel_width = 312.0
 panel = NodePath("../../..")
 body = NodePath("../Content")
 
-[node name="Content" type="VBoxContainer" parent="NameWindow/Panel/WindowContents"]
+[node name="Content" type="VBoxContainer" parent="NameWindow/Panel/WindowContents" unique_id=1202261872]
+layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="NameInput" type="LineEdit" parent="NameWindow/Panel/WindowContents/Content"]
+[node name="NameInput" type="LineEdit" parent="NameWindow/Panel/WindowContents/Content" unique_id=1038645126]
 unique_name_in_owner = true
+layout_mode = 2
 placeholder_text = "ui.story.name.placeholder"
 keep_editing_on_text_submit = true
 context_menu_enabled = false
-virtual_keyboard_enabled = true
 
-[node name="Voice" type="AudioStreamPlayer" parent="."]
+[node name="Voice" type="AudioStreamPlayer" parent="." unique_id=750274486]
 unique_name_in_owner = true
 stream = ExtResource("blip")
 volume_db = -12.0
-
-[node name="PaperHat" type="Polygon2D" parent="DialogueWindow/PortraitMount/Portrait"]
-unique_name_in_owner = true
-visible = false
-position = Vector2(49, 43)
-scale = Vector2(0.56, 0.56)
-polygon = PackedVector2Array(-31, 0, 0, -26, 32, 0, 22, 13, -22, 13)
-color = Color(0.93, 0.9, 0.77, 1)

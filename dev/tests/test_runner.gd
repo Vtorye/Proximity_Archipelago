@@ -69,6 +69,7 @@ func _run() -> void:
 	await _test_simulation()
 	await _test_satiety_rules()
 	await _test_level_editor_layout()
+	await _test_match_conversation_without_scene_dialogue()
 	print("TEST REPORT ", JSON.stringify({"assertions": assertions, "failures": failures, "metrics": metrics}))
 	print("TESTS PASS" if failures.is_empty() else "TESTS FAIL")
 	get_tree().quit(0 if failures.is_empty() else 1)
@@ -652,3 +653,28 @@ func _test_level_editor_layout() -> void:
 	editor.free()
 	AppSettings.text_size = previous_size
 	AppSettings.apply()
+
+func _test_match_conversation_without_scene_dialogue() -> void:
+	var screen = preload("res://game/match/match.tscn").instantiate()
+	screen.payload = LevelStore.load_level("builtin/tidal_shards")
+	var story: StoryOverlay = screen.get_node("StoryLayer/Story")
+	story.dialogue_resource = null
+	add_child(screen)
+	screen.on_focus()
+	screen.hud.section_requested.emit(&"talk")
+	for frame in range(3):
+		await get_tree().process_frame
+	for button: Button in screen.conversations.get_node("%People").get_children():
+		var character := button.get_meta(&"character") as StoryCharacter
+		if character.id == &"Queen":
+			expect(button.is_visible_in_tree(), "Queen is available in ordinary match conversations")
+			button.pressed.emit()
+			break
+	for frame in range(3):
+		await get_tree().process_frame
+	var line: Label = story.get_node("%Dialogue")
+	expect(story.is_modal and line.text == tr("ui.chapter.resource_question"),
+		"ordinary match opens the Queen's topic with no dialogue assigned in the scene")
+	screen.on_blur()
+	screen.queue_free()
+	await get_tree().process_frame

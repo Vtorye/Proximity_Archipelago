@@ -100,11 +100,14 @@ func _ready() -> void:
 	hud.section_requested.connect(_select_section)
 	hud.construction_bounds_changed.connect(_update_construction_dock)
 	hud.pause_requested.connect(PauseController.toggle_manual)
+	hud.speed_requested.connect(_set_simulation_speed)
 	hud.zoom_in_requested.connect(func(): camera.set_level(camera.level + 1))
 	hud.zoom_out_requested.connect(func(): camera.set_level(camera.level - 1))
 	camera.zoom_changed.connect(hud.set_zoom)
 	var definitions: FirstChapterRules = world.chapter_rules if _chapter_active else load("res://visual_novel/chapters/first/first_chapter_rules.tres")
 	story.characters = definitions.characters
+	if not _chapter_active and story.dialogue_resource == null:
+		story.dialogue_resource = definitions.dialogue
 	conversations.configure(definitions.characters, chapter.topic_available if _chapter_active else Callable())
 	conversations.character_selected.connect(_talk_character)
 	if _chapter_active:
@@ -124,11 +127,15 @@ func on_focus() -> void:
 		_on_completed(MatchSummary.capture(true, &"target_reached", debug_result_time_left, world.inventory))
 
 func on_blur() -> void:
+	Engine.time_scale = 1.0
 	story.finish()
 	_close_nest_popup()
 	_active = false
 	world.stop()
 	selection.clear()
+
+func _set_simulation_speed(multiplier: float) -> void:
+	Engine.time_scale = multiplier
 
 func _on_completed(summary: MatchSummary) -> void:
 	if not _active or Router.is_navigating():

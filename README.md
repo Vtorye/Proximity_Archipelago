@@ -7,8 +7,8 @@
 | Папка | Что в ней редактировать |
 | --- | --- |
 | [`game/`](game/) | Игровые системы, сцены и их настройки. Точка входа — [`boot.tscn`](game/application/boot.tscn). |
-| [`visual_novel/`](visual_novel/) | [Главы](visual_novel/chapters/), [общие персонажи](visual_novel/characters/) и [интерфейс разговоров](visual_novel/ui/). Тексты реплик и интерфейса редактируются в [`keys.csv`](visual_novel/localization/keys.csv). |
-| [`graphics/`](graphics/) | [Портреты](graphics/portraits/), [спрайты](graphics/sprites/), [ландшафт](graphics/terrain/) и [оформление интерфейса](graphics/ui/). Как заменить текстуры, описано в [руководстве по графике](graphics/catalog/README.md). |
+| [`visual_novel/`](visual_novel/) | [Главы](visual_novel/chapters/), [карточки и портреты персонажей](visual_novel/portraits/) и [интерфейс разговоров](visual_novel/ui/). Тексты реплик и интерфейса редактируются в [`keys.csv`](visual_novel/localization/keys.csv). |
+| [`graphics/`](graphics/) | [Спрайты](graphics/sprites/), [ландшафт](graphics/terrain/) и [оформление интерфейса](graphics/ui/). Как заменить текстуры, описано в [руководстве по графике](graphics/catalog/README.md). |
 | [`addons/`](addons/) | Плагины Godot. Dialogue Manager импортирует диалоги, Level Validation открывает инструменты уровня и запускает проверку. |
 | [`dev/`](dev/) | [Автоматические и визуальные проверки](dev/tests/), [команды для запуска проверок и подготовки ресурсов](dev/tools/). В игнорируемой `dev/.local/` хранятся локальные материалы и результаты прогонов. |
 | [`docs/`](docs/) | [Презентации и питч](docs/presentation/). Godot пропускает эту папку при импорте. |
@@ -26,7 +26,8 @@
 | Правила волн, башни и стены | [`game/combat/`](game/combat/) |
 | Колоды, отдельные заказы и карточки заданий | [`game/tasks/`](game/tasks/) |
 | Карту главы, правила и файлы реплик | [Нулевая глава](visual_novel/chapters/zero/), [первая глава](visual_novel/chapters/first/), [материалы обучения](visual_novel/chapters/tutorial/) |
-| Пейзаж, маску и портрет главного меню | [`graphics/ui/backdrop/`](graphics/ui/backdrop/) |
+| Портреты персонажей | [`visual_novel/portraits/`](visual_novel/portraits/). Планировщица использует общий портрет из [`protagonist/`](visual_novel/portraits/protagonist/) со своим оттенком. |
+| Пейзаж и маску главного меню | [`graphics/ui/backdrop/`](graphics/ui/backdrop/) |
 | Тему, шрифты и текстуры кнопок | [`graphics/ui/theme/`](graphics/ui/theme/) |
 | Спрайты построек, ресурсов и обороны, варианты статуй и пиров | [`graphics/sprites/`](graphics/sprites/) |
 
@@ -72,6 +73,12 @@
 Тексты реплик редактируются в `visual_novel/localization/keys.csv`,
 их порядок и переходы — в `visual_novel/chapters/first/first_chapter.dialogue`,
 параметры — в `visual_novel/chapters/first/first_chapter_rules.tres`, карта — в `visual_novel/chapters/first/first_island.tscn`.
+
+Чтобы заменить портрет, откройте карточку персонажа рядом с его ассетами,
+например [`queen.tres`](visual_novel/portraits/queen/queen.tres). В инспекторе
+поле **Default Portrait** задаёт сцену для реплик без тега, а **Portraits**
+связывает теги вроде `[#portrait=thinking]` со сценами. Назначайте сцены
+с корнем `Control`. Изображения, слои и анимации редактируются внутри этих сцен.
 
 Сцены используют версионируемые ресурсы диалогов `.tres` рядом с исходниками `.dialogue` в папках глав.
 После редактирования `.dialogue` обновите импорт и сохраните обе версии в Git.

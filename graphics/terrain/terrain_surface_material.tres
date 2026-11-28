@@ -41,3 +41,5 @@ shader_parameter/waveline_cutoff = 1e-08
 shader_parameter/draw_grass_blades = true
 shader_parameter/grass_blades_hight = 0.003
 shader_parameter/grass_blades_ampletude = 125.815
+shader_parameter/grass_sway_speed = 1.3
+shader_parameter/grass_sway_distance = 0.002

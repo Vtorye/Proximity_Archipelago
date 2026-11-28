@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dcclvlx3ml28p"
-path="res://.godot/imported/ant_queen_angry.png-4b9f9be29fbae9d227232e941bc00664.ctex"
+uid="uid://b7tanslyrdwm0"
+path="res://.godot/imported/ant_worker.png-005eae15fb5a139561e2d6893a9c3e4a.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://graphics/portraits/ant_queen/ant_queen_angry.png"
-dest_files=["res://.godot/imported/ant_queen_angry.png-4b9f9be29fbae9d227232e941bc00664.ctex"]
+source_file="res://visual_novel/portraits/worker/ant_worker.png"
+dest_files=["res://.godot/imported/ant_worker.png-005eae15fb5a139561e2d6893a9c3e4a.ctex"]
 
 [params]
 

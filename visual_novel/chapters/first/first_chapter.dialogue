@@ -1,11 +1,11 @@
 ~ intro
-Queen: ui.story.tutorial.wake [#portrait=res://graphics/portraits/ant_queen/ant_queen_pleased.png]
-Queen: ui.story.tutorial.ask_name [#name_input, portrait=res://graphics/portraits/ant_queen/ant_queen_thinking.png]
-Queen: ui.story.tutorial.never_mind [#portrait=res://graphics/portraits/ant_queen/ant_queen_pleased.png]
-Queen: ui.story.tutorial.given_name [#portrait=res://graphics/portraits/ant_queen/ant_queen_pleased.png]
-Queen: ui.story.tutorial.purpose [#portrait=res://graphics/portraits/ant_queen/ant_queen_pleased.png]
-Protagonist: ui.story.tutorial.before [#portrait=res://graphics/portraits/protagonist/protagonist_ant.png]
-Queen: ui.story.tutorial.my_fault [#portrait=res://graphics/portraits/ant_queen/ant_queen_thinking.png]
+Queen: ui.story.tutorial.wake
+Queen: ui.story.tutorial.ask_name [#name_input, portrait=thinking]
+Queen: ui.story.tutorial.never_mind
+Queen: ui.story.tutorial.given_name
+Queen: ui.story.tutorial.purpose
+Protagonist: ui.story.tutorial.before
+Queen: ui.story.tutorial.my_fault [#portrait=thinking]
 Queen: ui.story.controls.pause_intro
 Queen: ui.story.controls.pause [#action=pause]
 => END
@@ -21,11 +21,11 @@ Queen: ui.story.controls.zoom [#action=zoom]
 => END
 
 ~ after_zoom
-Queen: ui.story.tutorial.colony [#portrait=res://graphics/portraits/ant_queen/ant_queen_thinking.png]
+Queen: ui.story.tutorial.colony [#portrait=thinking]
 Protagonist: ui.chapter.resource_question
 Queen: ui.chapter.resource_answer
 Queen: ui.chapter.infinite_claim
-Protagonist: ui.story.road.ask_advice [#portrait=res://graphics/portraits/protagonist/protagonist_ant.png]
+Protagonist: ui.story.road.ask_advice
 Protagonist: ui.story.controls.talk [#action=talk]
 => END
 
@@ -42,9 +42,9 @@ Courier: ui.story.road.better_fed
 => road
 
 ~ after_road
-Queen: ui.story.tutorial.road_done [#portrait=res://graphics/portraits/ant_queen/ant_queen_pleased.png]
-Queen: ui.story.tutorial.choice [#portrait=res://graphics/portraits/ant_queen/ant_queen_eating_berries.png]
-Protagonist: ui.story.tutorial.choice_cost [#portrait=res://graphics/portraits/protagonist/protagonist_ant.png]
+Queen: ui.story.tutorial.road_done
+Queen: ui.story.tutorial.choice [#portrait=eating]
+Protagonist: ui.story.tutorial.choice_cost
 => order
 
 ~ order
@@ -52,13 +52,13 @@ Queen: ui.story.tutorial.order_hint [#action=order]
 => END
 
 ~ ending_build
-Queen: ui.story.tutorial.feast [#portrait=res://graphics/portraits/ant_queen/ant_queen_eating_berries.png]
+Queen: ui.story.tutorial.feast [#portrait=eating]
 Courier: ui.chapter.feast_expires
 Queen: ui.chapter.distraction
 => handoff
 
 ~ ending_diversion
-Queen: ui.story.tutorial.statue [#portrait=res://graphics/portraits/ant_queen/ant_queen_pleased.png]
+Queen: ui.story.tutorial.statue
 Protagonist: ui.chapter.statue_blocks
 Queen: ui.chapter.statue_whatever
 => handoff
@@ -69,13 +69,13 @@ Queen: ui.chapter.second_order [#action=second_order]
 => END
 
 ~ second_feast
-Queen: ui.story.tutorial.feast [#portrait=res://graphics/portraits/ant_queen/ant_queen_eating_berries.png]
+Queen: ui.story.tutorial.feast [#portrait=eating]
 Courier: ui.chapter.feast_expires
 Queen: ui.chapter.distraction
 => after_both
 
 ~ second_statue
-Queen: ui.story.tutorial.statue [#portrait=res://graphics/portraits/ant_queen/ant_queen_pleased.png]
+Queen: ui.story.tutorial.statue
 Protagonist: ui.chapter.statue_blocks
 Queen: ui.chapter.statue_whatever
 => after_both
@@ -172,7 +172,7 @@ Queen: ui.chapter.depart [#action=depart]
 => END
 
 ~ first_reprimand
-Queen: ui.story.tutorial.first_reprimand [#portrait=res://graphics/portraits/ant_queen/ant_queen_angry.png]
+Queen: ui.story.tutorial.first_reprimand [#portrait=angry]
 => END
 
 ~ queen_topic

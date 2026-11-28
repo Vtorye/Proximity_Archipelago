@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://ckcuau6qo22nl"
-path="res://.godot/imported/protagonist_ant.png-cadb8c1235921b583995636c7bfb5995.ctex"
+uid="uid://bp4l0qe0gn3rj"
+path="res://.godot/imported/main_menu_queen_throne_sideways.png-e33269edf99f1d18008e66432021e719.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://graphics/portraits/protagonist/protagonist_ant.png"
-dest_files=["res://.godot/imported/protagonist_ant.png-cadb8c1235921b583995636c7bfb5995.ctex"]
+source_file="res://visual_novel/portraits/queen/main_menu_queen_throne_sideways.png"
+dest_files=["res://.godot/imported/main_menu_queen_throne_sideways.png-e33269edf99f1d18008e66432021e719.ctex"]
 
 [params]
 

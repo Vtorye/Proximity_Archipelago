@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="StoryCharacter" format=3 uid="uid://br12nyrxoow6n"]
+
+[ext_resource type="PackedScene" path="res://visual_novel/portraits/protagonist/portrait.tscn" id="portrait"]
+[ext_resource type="Script" uid="uid://d2k7ymcr08bl5" path="res://visual_novel/characters/story_character.gd" id="script"]
+
+[resource]
+script = ExtResource("script")
+id = &"Protagonist"
+display_name = "ui.story.protagonist"
+default_portrait = ExtResource("portrait")
+characters_per_second = 42.0
+voice_pitch = 1.24
+topic = &"shuti_topic"

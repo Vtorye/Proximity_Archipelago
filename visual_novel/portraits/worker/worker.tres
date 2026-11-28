@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="StoryCharacter" format=3 uid="uid://d2y324qio0tqh"]
+
+[ext_resource type="PackedScene" path="res://visual_novel/portraits/worker/portrait.tscn" id="portrait"]
+[ext_resource type="Script" uid="uid://d2k7ymcr08bl5" path="res://visual_novel/characters/story_character.gd" id="script"]
+
+[resource]
+script = ExtResource("script")
+id = &"Worker"
+display_name = "ui.chapter.worker"
+default_portrait = ExtResource("portrait")
+characters_per_second = 38.0
+voice_pitch = 0.85
+topic = &"worker_topic"

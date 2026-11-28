@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="StoryCharacter" format=3 uid="uid://bhari4e88unla"]
+
+[ext_resource type="PackedScene" path="res://visual_novel/portraits/queen/pleased.tscn" id="portrait"]
+[ext_resource type="PackedScene" path="res://visual_novel/portraits/queen/angry.tscn" id="angry"]
+[ext_resource type="PackedScene" path="res://visual_novel/portraits/queen/eating.tscn" id="eating"]
+[ext_resource type="PackedScene" path="res://visual_novel/portraits/queen/thinking.tscn" id="thinking"]
+[ext_resource type="Script" uid="uid://d2k7ymcr08bl5" path="res://visual_novel/characters/story_character.gd" id="script"]
+
+[resource]
+script = ExtResource("script")
+id = &"Queen"
+display_name = "ui.story.queen"
+default_portrait = ExtResource("portrait")
+portraits = Dictionary[StringName, PackedScene]({
+&"angry": ExtResource("angry"),
+&"eating": ExtResource("eating"),
+&"thinking": ExtResource("thinking")
+})
+voice_pitch = 0.93
+topic = &"queen_topic"

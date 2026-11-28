@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://b7tanslyrdwm0"
-path="res://.godot/imported/ant_worker.png-813037ad5b07e5c68fbe1354eb8809fe.ctex"
+uid="uid://boc8h7uoygmrs"
+path="res://.godot/imported/main_menu_queen.png-e44da3882f298cdbf8896f0d323826a4.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://graphics/portraits/workers/ant_worker.png"
-dest_files=["res://.godot/imported/ant_worker.png-813037ad5b07e5c68fbe1354eb8809fe.ctex"]
+source_file="res://visual_novel/portraits/queen/main_menu_queen.png"
+dest_files=["res://.godot/imported/main_menu_queen.png-e44da3882f298cdbf8896f0d323826a4.ctex"]
 
 [params]
 

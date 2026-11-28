@@ -1,14 +1,13 @@
 [gd_resource type="Resource" script_class="StoryCharacter" format=3 uid="uid://burjf4nx3lqe5"]
 
-[ext_resource type="Texture2D" uid="uid://ckcuau6qo22nl" path="res://graphics/portraits/protagonist/protagonist_ant.png" id="portrait"]
+[ext_resource type="PackedScene" path="res://visual_novel/portraits/planner/portrait.tscn" id="portrait"]
 [ext_resource type="Script" uid="uid://d2k7ymcr08bl5" path="res://visual_novel/characters/story_character.gd" id="script"]
 
 [resource]
 script = ExtResource("script")
 id = &"Planner"
 display_name = "ui.chapter.planner"
-portrait = ExtResource("portrait")
-portrait_tint = Color(1, 0.6, 0.55, 1)
+default_portrait = ExtResource("portrait")
 characters_per_second = 52.0
 voice_pitch = 1.12
 topic = &"planner_topic"

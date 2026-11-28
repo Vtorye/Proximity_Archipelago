@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bohqd5ek2c3n3"
-path="res://.godot/imported/logistics_advisor.png-f2fa4fb396f55c6229512af0e801b14e.ctex"
+uid="uid://d134lcsnmh3jf"
+path="res://.godot/imported/ant_queen_pleased.png-2a3c5a34444ecaca13afea93d17d4292.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://graphics/portraits/advisors/logistics_advisor.png"
-dest_files=["res://.godot/imported/logistics_advisor.png-f2fa4fb396f55c6229512af0e801b14e.ctex"]
+source_file="res://visual_novel/portraits/queen/ant_queen_pleased.png"
+dest_files=["res://.godot/imported/ant_queen_pleased.png-2a3c5a34444ecaca13afea93d17d4292.ctex"]
 
 [params]
 

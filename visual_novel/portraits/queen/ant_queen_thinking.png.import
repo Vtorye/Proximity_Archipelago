@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://boc8h7uoygmrs"
-path="res://.godot/imported/main_menu_queen.png-3c35849545d0b2fbc2c91605d97ab82b.ctex"
+uid="uid://njlh5wpcxj0r"
+path="res://.godot/imported/ant_queen_thinking.png-d783926240071b0ee96f2dffa67e0dc6.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://graphics/ui/backdrop/main_menu_queen.png"
-dest_files=["res://.godot/imported/main_menu_queen.png-3c35849545d0b2fbc2c91605d97ab82b.ctex"]
+source_file="res://visual_novel/portraits/queen/ant_queen_thinking.png"
+dest_files=["res://.godot/imported/ant_queen_thinking.png-d783926240071b0ee96f2dffa67e0dc6.ctex"]
 
 [params]
 

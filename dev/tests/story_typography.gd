@@ -6,6 +6,7 @@ extends "res://dev/tests/ui_runner.gd"
 func _run() -> void:
 	# This matrix measures layout; the gameplay runner exercises dialogue audio.
 	story.get_node("%Voice").stream = null
+	await _check_portrait_scenes()
 	for rules: FirstChapterRules in [preload("res://visual_novel/chapters/zero/zero_chapter_rules.tres"), preload("res://visual_novel/chapters/first/first_chapter_rules.tres")]:
 		story.characters = rules.characters
 		story.dialogue_resource = rules.dialogue
@@ -35,6 +36,58 @@ func _run() -> void:
 	await frames(8)
 	print("STORY TYPOGRAPHY ", assertions, " assertions, ", failures.size(), " failures")
 	get_tree().quit.call_deferred(0 if failures.is_empty() else 1)
+
+func _check_portrait_scenes() -> void:
+	var rules: FirstChapterRules = preload("res://visual_novel/chapters/zero/zero_chapter_rules.tres")
+	var queen := rules.characters[0].duplicate() as StoryCharacter
+	var courier: StoryCharacter
+	for character in rules.characters:
+		if character.id == &"Courier":
+			courier = character.duplicate() as StoryCharacter
+	expect(queen.get("default_portrait") is PackedScene, "the queen has an editor-authored default portrait scene")
+	if not queen.get("default_portrait") is PackedScene:
+		return
+	var animations: Dictionary[StringName, PackedScene] = {&"thinking": preload("res://dev/tests/animated_portrait.tscn")}
+	queen.set("portraits", animations)
+	var courier_portraits: Dictionary[StringName, PackedScene] = {&"thinking": courier.get("default_portrait")}
+	courier.set("portraits", courier_portraits)
+	story.characters = [queen, courier]
+	story.dialogue_resource = DialogueManager.create_resource_from_text(
+		"~ intro\nQueen: First [#portrait=thinking]\nQueen: Second [#portrait=thinking]\nCourier: Third [#portrait=thinking]\nQueen: Fourth [#portrait=missing]\n=> END"
+	) as DialogueResource
+	story.play("intro")
+	await frames(4)
+	var slot: Control = story.get_node("%Portrait")
+	var animated := slot.get_node_or_null("AnimatedPortrait") as Control
+	expect(animated != null and get_tree().paused, "the assigned portrait scene appears while the world is paused")
+	if animated == null:
+		story.finish()
+		return
+	var player: AnimationPlayer = animated.get_node("AnimationPlayer")
+	var before := player.current_animation_position
+	await frames(4)
+	expect(player.current_animation_position > before, "animation advances during dialogue pause")
+	story._reveal_line()
+	story._advance()
+	await frames(4)
+	expect(slot.get_child(0) == animated, "consecutive lines keep the same portrait instance")
+	story.get_node("%DialogueHeader").set_collapsed(true)
+	expect(not animated.is_visible_in_tree(), "collapsing dialogue hides the portrait")
+	story.get_node("%DialogueHeader").set_collapsed(false)
+	expect(animated.is_visible_in_tree(), "expanding dialogue restores the portrait")
+	story._reveal_line()
+	story._advance()
+	await frames(4)
+	expect(not is_instance_valid(animated) and slot.get_child(0).scene_file_path == courier.get("default_portrait").resource_path,
+		"the same tag resolves to the next speaker's scene and releases the old one")
+	story._reveal_line()
+	story._advance()
+	await frames(4)
+	expect(slot.get_child(0).scene_file_path == queen.get("default_portrait").resource_path,
+		"an unknown tag falls back to the speaker's default scene")
+	story.finish()
+	await frames(2)
+	expect(slot.get_child_count() == 0 and not get_tree().paused, "finishing releases the portrait and unpauses the world")
 
 func _measure_dialogue(chapter: String) -> void:
 	var lines: Dictionary = story.dialogue_resource.lines
@@ -66,6 +119,8 @@ func _measure_dialogue(chapter: String) -> void:
 				expect(get_viewport().get_visible_rect().encloses(window.get_global_rect()), "dialogue and buttons stay inside the viewport")
 				expect(absf(typing_height - window.size.y) <= 1.0, "revealing letters does not resize %s (%s → %s)" % [definition.text, typing_height, window.size.y])
 				var label: Label = story.get_node("%Dialogue")
+				var slot: Control = story.get_node("%Portrait")
+				expect(slot.get_global_rect().end.x <= label.get_global_rect().position.x, "the portrait stays beside the text")
 				if label.get_minimum_size().y > tallest:
 					tallest = label.get_minimum_size().y
 					longest = id

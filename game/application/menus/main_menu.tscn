@@ -4,7 +4,7 @@
 [ext_resource type="Script" uid="uid://be1grw07dbeiw" path="res://game/application/menus/main_menu.gd" id="script"]
 [ext_resource type="Script" path="res://graphics/ui/backdrop/colony_backdrop.gd" id="backdrop"]
 [ext_resource type="PackedScene" path="res://graphics/ui/backdrop/pretty_preview.tscn" id="terrain"]
-[ext_resource type="Texture2D" path="res://graphics/ui/backdrop/main_menu_queen.png" id="queen"]
+[ext_resource type="Texture2D" path="res://visual_novel/portraits/queen/main_menu_queen.png" id="queen"]
 
 [ext_resource type="StyleBox" path="res://graphics/ui/theme/dialog_panel.tres" id="dialog"]
 

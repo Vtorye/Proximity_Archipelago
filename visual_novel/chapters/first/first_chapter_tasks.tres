@@ -1,15 +1,19 @@
-[gd_resource type="Resource" script_class="TaskDeck" format=3]
-[ext_resource type="Script" path="res://game/tasks/task_deck.gd" id="deck"]
-[ext_resource type="Script" path="res://game/tasks/task_stage.gd" id="stage"]
-[ext_resource type="Script" path="res://game/tasks/task_spec.gd" id="task"]
-[ext_resource type="Resource" path="res://game/tasks/requests/request_statue_feast.tres" id="opening"]
-[ext_resource type="Resource" path="res://game/tasks/requests/request_statue_feast_b.tres" id="followup"]
-[ext_resource type="Resource" path="res://game/tasks/requests/request_quarry_feast.tres" id="later"]
+[gd_resource type="Resource" script_class="TaskDeck" format=3 uid="uid://iyd756v2xhew"]
+
+[ext_resource type="Script" uid="uid://bbv8cv7briafs" path="res://game/tasks/task_deck.gd" id="deck"]
+[ext_resource type="Resource" uid="uid://ydqdslbxer1c" path="res://game/tasks/requests/request_statue_feast_b.tres" id="followup"]
+[ext_resource type="Resource" uid="uid://wmybruumrjxc" path="res://game/tasks/requests/request_quarry_feast.tres" id="later"]
+[ext_resource type="Resource" uid="uid://hd7mbi1by4i2" path="res://game/tasks/requests/request_statue_feast.tres" id="opening"]
+[ext_resource type="Script" uid="uid://bwgiil82r4a20" path="res://game/tasks/task_stage.gd" id="stage"]
+[ext_resource type="Script" uid="uid://bmf8btgjq0fm3" path="res://game/tasks/task_spec.gd" id="task"]
+
 [sub_resource type="Resource" id="chapter_stage"]
 script = ExtResource("stage")
 tasks = Array[ExtResource("task")]([ExtResource("opening"), ExtResource("followup"), ExtResource("later")])
 upgrade = 1
+
 [resource]
 script = ExtResource("deck")
 requests = Array[ExtResource("task")]([ExtResource("opening"), ExtResource("followup"), ExtResource("later")])
 stages = Array[ExtResource("stage")]([SubResource("chapter_stage")])
+development_tints = null

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://njlh5wpcxj0r"
-path="res://.godot/imported/ant_queen_thinking.png-eb49f7d5f169bc6c4710fb9699035f63.ctex"
+uid="uid://0taktxol1tqq"
+path="res://.godot/imported/ant_queen_eating_berries.png-0c5e1743825b02f66abba04d29333abc.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://graphics/portraits/ant_queen/ant_queen_thinking.png"
-dest_files=["res://.godot/imported/ant_queen_thinking.png-eb49f7d5f169bc6c4710fb9699035f63.ctex"]
+source_file="res://visual_novel/portraits/queen/ant_queen_eating_berries.png"
+dest_files=["res://.godot/imported/ant_queen_eating_berries.png-0c5e1743825b02f66abba04d29333abc.ctex"]
 
 [params]
 
