@@ -1,21 +1,36 @@
 [gd_scene format=3]
 
-[ext_resource type="Texture2D" path="res://visual_novel/portraits/protagonist/protagonist_ant.png" id="texture"]
+[ext_resource type="AtlasTexture" path="res://visual_novel/portraits/protagonist/portrait_crop.tres" id="texture"]
+[ext_resource type="Script" path="res://visual_novel/portraits/static_portrait.gd" id="layout"]
 
-[node name="PlannerPortrait" type="TextureRect"]
+[node name="PlannerPortrait" type="AspectRatioContainer"]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-self_modulate = Color(1, 0.6, 0.55, 1)
+alignment_horizontal = 0
+alignment_vertical = 2
+script = ExtResource("layout")
 texture = ExtResource("texture")
-expand_mode = 1
-stretch_mode = 5
 
-[node name="PaperHat" type="Polygon2D" parent="."]
-position = Vector2(35, 54)
+[node name="Image" type="TextureRect" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+expand_mode = 1
+self_modulate = Color(1, 0.6, 0.55, 1)
+
+[node name="HatAnchor" type="Control" parent="Image"]
+layout_mode = 1
+anchor_left = 0.35
+anchor_top = 0.25
+anchor_right = 0.35
+anchor_bottom = 0.25
+mouse_filter = 2
+
+[node name="PaperHat" type="Polygon2D" parent="Image/HatAnchor"]
 scale = Vector2(0.38, 0.38)
 color = Color(0.93, 0.9, 0.77, 1)
 polygon = PackedVector2Array(-31, 0, 0, -26, 32, 0, 22, 13, -22, 13)

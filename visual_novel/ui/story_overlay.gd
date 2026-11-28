@@ -34,11 +34,16 @@ var _line_speed := 45.0
 var _portrait_scene: PackedScene
 var _portrait_instance: Control
 var _portrait_tween: Tween
+var _portrait_bob_offset := 0.0:
+	set(offset):
+		_portrait_bob_offset = offset
+		_position_portrait()
 var _name_tween: Tween
 var _name_dismissing := false
 var _dialogue_layout_pending := false
 
 @onready var _shade: ColorRect = %Shade
+@onready var _dialogue_window: Control = %DialogueWindow
 @onready var _dialogue_panel: PanelContainer = %DialoguePanel
 @onready var _dialogue_header: WindowHeader = %DialogueHeader
 @onready var _dialogue: Label = %Dialogue
@@ -46,7 +51,7 @@ var _dialogue_layout_pending := false
 @onready var _dialogue_text: VBoxContainer = %Text
 @onready var _dialogue_contents: VBoxContainer = %DialogueContents
 @onready var _dialogue_actions: HBoxContainer = %DialogueActions
-@onready var _portrait: Control = %Portrait
+@onready var _portrait_frame: Control = %CharacterPortraitFrame
 @onready var _continue: Button = %Continue
 @onready var _hint_panel: PanelContainer = %HintPanel
 @onready var _hint: Label = %Hint
@@ -56,6 +61,9 @@ var _dialogue_layout_pending := false
 @onready var _name_input: LineEdit = %NameInput
 
 func _ready() -> void:
+	var preview: Control = %WorkerPortraitEditorPreview
+	_portrait_frame.remove_child(preview)
+	preview.queue_free()
 	%DialogueHeader.collapsed_changed.connect(func(_collapsed: bool):
 		_layout_dialogue()
 		_refresh_visibility())
@@ -84,9 +92,8 @@ func _queue_dialogue_layout() -> void:
 
 func _layout_dialogue() -> void:
 	_dialogue_layout_pending = false
-	var window: Control = %DialogueWindow
 	var viewport_size := get_viewport_rect().size
-	window.size.x = viewport_size.x - dialogue_inset.x * 2.0
+	_dialogue_window.size.x = viewport_size.x - dialogue_inset.x * 2.0
 	if not _dialogue_header.collapsed:
 		var chrome := _dialogue_panel.get_theme_stylebox(&"panel").get_minimum_size().y
 		chrome += _dialogue_header.get_combined_minimum_size().y + _dialogue_actions.get_combined_minimum_size().y
@@ -94,12 +101,14 @@ func _layout_dialogue() -> void:
 		var height_limit := minf(viewport_size.y * dialogue_max_height_ratio, viewport_size.y - dialogue_inset.y * 2.0)
 		# Native Label shaping measures the whole wrapped line, including unrevealed letters.
 		_dialogue_scroll.custom_minimum_size.y = minf(maxf(dialogue_min_text_height, _dialogue.get_minimum_size().y), maxf(0.0, height_limit - chrome))
-	window.size.y = _dialogue_panel.get_combined_minimum_size().y
-	%DialogueHeader.place(Vector2(dialogue_inset.x, get_viewport_rect().size.y - window.size.y - dialogue_inset.y))
-	var mount: Control = %PortraitMount
-	var portrait_top := window.size.y - mount.size.y - portrait_bottom_inset
+	_dialogue_window.size.y = _dialogue_panel.get_combined_minimum_size().y
+	_dialogue_header.place(Vector2(dialogue_inset.x, viewport_size.y - _dialogue_window.size.y - dialogue_inset.y))
+	_position_portrait()
+
+func _position_portrait() -> void:
+	var portrait_top := _dialogue_window.size.y - _portrait_frame.size.y - portrait_bottom_inset
 	portrait_top = minf(portrait_top, -portrait_protrusion)
-	mount.position.y = maxf(portrait_top, -window.position.y)
+	_portrait_frame.position.y = maxf(portrait_top, -_dialogue_window.position.y) + _portrait_bob_offset
 
 func play(title: String) -> void:
 	if _loading:
@@ -276,12 +285,12 @@ func _set_portrait(scene: PackedScene) -> void:
 	if scene == _portrait_scene:
 		return
 	if _portrait_instance != null:
-		_portrait.remove_child(_portrait_instance)
+		_portrait_frame.remove_child(_portrait_instance)
 		_portrait_instance.queue_free()
 		_portrait_instance = null
 	if _portrait_tween != null and _portrait_tween.is_valid():
 		_portrait_tween.kill()
-	_portrait.position.y = 0.0
+	_portrait_bob_offset = 0.0
 	_portrait_scene = scene
 	if scene == null:
 		return
@@ -292,11 +301,11 @@ func _set_portrait(scene: PackedScene) -> void:
 		push_warning("Portrait scene '%s' must have a Control root." % scene.resource_path)
 		return
 	_portrait_instance = instance as Control
-	_portrait.add_child(_portrait_instance)
+	_portrait_frame.add_child(_portrait_instance)
 	_portrait_instance.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_portrait_tween = create_tween().set_trans(Tween.TRANS_SINE)
-	_portrait_tween.tween_property(_portrait, "position:y", -portrait_bob_height, portrait_bob_seconds * portrait_bob_rise_fraction).set_ease(Tween.EASE_OUT)
-	_portrait_tween.tween_property(_portrait, "position:y", 0.0, portrait_bob_seconds * (1.0 - portrait_bob_rise_fraction)).set_ease(Tween.EASE_IN_OUT)
+	_portrait_tween.tween_property(self, "_portrait_bob_offset", -portrait_bob_height, portrait_bob_seconds * portrait_bob_rise_fraction).set_ease(Tween.EASE_OUT)
+	_portrait_tween.tween_property(self, "_portrait_bob_offset", 0.0, portrait_bob_seconds * (1.0 - portrait_bob_rise_fraction)).set_ease(Tween.EASE_IN_OUT)
 
 func _set_modal(enabled: bool) -> void:
 	if is_modal != enabled:
@@ -313,7 +322,7 @@ func _refresh_visibility() -> void:
 	visible = _active and not _covered
 	_shade.visible = is_modal
 	_dialogue_panel.visible = is_modal
-	%PortraitMount.visible = is_modal and not %DialogueHeader.collapsed
+	_portrait_frame.visible = is_modal and not _dialogue_header.collapsed
 	_layout_dialogue()
 	_hint_panel.visible = not is_modal and not _hint_key.is_empty()
 	if visible and is_modal:

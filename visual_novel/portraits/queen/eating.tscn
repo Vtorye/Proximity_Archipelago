@@ -1,14 +1,26 @@
 [gd_scene format=3]
 
 [ext_resource type="Texture2D" path="res://visual_novel/portraits/queen/ant_queen_eating_berries.png" id="texture"]
+[ext_resource type="Script" path="res://visual_novel/portraits/static_portrait.gd" id="layout"]
 
-[node name="Eating" type="TextureRect"]
+[sub_resource type="AtlasTexture" id="crop"]
+atlas = ExtResource("texture")
+region = Rect2(31, 0, 1407, 1070)
+
+[node name="Eating" type="AspectRatioContainer"]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-texture = ExtResource("texture")
+alignment_horizontal = 0
+alignment_vertical = 2
+script = ExtResource("layout")
+texture = SubResource("crop")
+
+[node name="Image" type="TextureRect" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
 expand_mode = 1
-stretch_mode = 5

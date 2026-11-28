@@ -6,6 +6,8 @@ extends "res://dev/tests/ui_runner.gd"
 func _run() -> void:
 	# This matrix measures layout; the gameplay runner exercises dialogue audio.
 	story.get_node("%Voice").stream = null
+	_check_editor_portrait_preview()
+	await _check_static_portrait_alignment()
 	await _check_portrait_scenes()
 	for rules: FirstChapterRules in [preload("res://visual_novel/chapters/zero/zero_chapter_rules.tres"), preload("res://visual_novel/chapters/first/first_chapter_rules.tres")]:
 		story.characters = rules.characters
@@ -37,6 +39,42 @@ func _run() -> void:
 	print("STORY TYPOGRAPHY ", assertions, " assertions, ", failures.size(), " failures")
 	get_tree().quit.call_deferred(0 if failures.is_empty() else 1)
 
+func _check_editor_portrait_preview() -> void:
+	var authored_overlay := load(story.scene_file_path) as PackedScene
+	var preview_overlay := authored_overlay.instantiate()
+	var frame := preview_overlay.get_node_or_null("%CharacterPortraitFrame") as Control
+	var preview := preview_overlay.get_node_or_null("%WorkerPortraitEditorPreview") as Control
+	expect(frame != null and frame.get_parent().name == &"DialogueWindow"
+		and preview != null and preview.get_parent() == frame and preview.visible,
+		"the dialogue window has one portrait frame with a visible worker preview")
+	expect(preview != null and preview.get_script() == preload("res://visual_novel/portraits/static_portrait.gd"),
+		"the editor preview inherits the portrait's alignment script")
+	expect(story.get_node_or_null("%WorkerPortraitEditorPreview") == null, "the worker preview is removed at runtime")
+	preview_overlay.free()
+
+func _check_static_portrait_alignment() -> void:
+	var scene := preload("res://visual_novel/portraits/worker/portrait.tscn")
+	var portrait := scene.instantiate() as Control
+	add_child(portrait)
+	portrait.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT)
+	var picture := portrait.get_node_or_null("Image") as TextureRect
+	expect(picture != null, "the worker portrait has an aligned image inside its frame")
+	if picture != null:
+		portrait.size = Vector2(100, 180)
+		await frames(3)
+		expect(picture.position.x == 0.0 and is_equal_approx(picture.get_rect().end.y, portrait.size.y),
+			"a wide picture aligns to the bottom and left")
+		var tall_texture := GradientTexture2D.new()
+		tall_texture.width = 80
+		tall_texture.height = 160
+		portrait.set("texture", tall_texture)
+		portrait.size = Vector2(180, 100)
+		await frames(3)
+		expect(picture.position.x == 0.0 and is_equal_approx(picture.get_rect().end.y, portrait.size.y),
+			"a tall replacement aligns to the bottom and left")
+		expect(picture.size.is_equal_approx(Vector2(50, 100)), "a replacement texture keeps its own aspect ratio")
+	portrait.queue_free()
+
 func _check_portrait_scenes() -> void:
 	var rules: FirstChapterRules = preload("res://visual_novel/chapters/zero/zero_chapter_rules.tres")
 	var queen := rules.characters[0].duplicate() as StoryCharacter
@@ -57,12 +95,13 @@ func _check_portrait_scenes() -> void:
 	) as DialogueResource
 	story.play("intro")
 	await frames(4)
-	var slot: Control = story.get_node("%Portrait")
+	var slot: Control = story.get_node("%CharacterPortraitFrame")
 	var animated := slot.get_node_or_null("AnimatedPortrait") as Control
 	expect(animated != null and get_tree().paused, "the assigned portrait scene appears while the world is paused")
 	if animated == null:
 		story.finish()
 		return
+	expect(animated.get_rect() == Rect2(Vector2.ZERO, slot.size), "the live portrait fills the size frame")
 	var player: AnimationPlayer = animated.get_node("AnimationPlayer")
 	var before := player.current_animation_position
 	await frames(4)
@@ -119,7 +158,7 @@ func _measure_dialogue(chapter: String) -> void:
 				expect(get_viewport().get_visible_rect().encloses(window.get_global_rect()), "dialogue and buttons stay inside the viewport")
 				expect(absf(typing_height - window.size.y) <= 1.0, "revealing letters does not resize %s (%s → %s)" % [definition.text, typing_height, window.size.y])
 				var label: Label = story.get_node("%Dialogue")
-				var slot: Control = story.get_node("%Portrait")
+				var slot: Control = story.get_node("%CharacterPortraitFrame")
 				expect(slot.get_global_rect().end.x <= label.get_global_rect().position.x, "the portrait stays beside the text")
 				if label.get_minimum_size().y > tallest:
 					tallest = label.get_minimum_size().y

@@ -1,0 +1,20 @@
+[gd_resource type="ShaderMaterial" format=3 uid="uid://bmps4jy20e8cm"]
+
+[ext_resource type="Shader" path="res://graphics/ui/theme/paper_hatching.gdshader" id="shader"]
+
+[sub_resource type="FastNoiseLite" id="StrokeNoise"]
+frequency = 0.35
+fractal_octaves = 2
+
+[sub_resource type="NoiseTexture2D" id="StrokeTexture"]
+width = 256
+height = 256
+noise = SubResource("StrokeNoise")
+generate_mipmaps = false
+seamless = true
+
+[resource]
+shader = ExtResource("shader")
+shader_parameter/stroke_texture = SubResource("StrokeTexture")
+shader_parameter/hatch_strength = 0.1
+shader_parameter/hatch_spacing = 8.0
