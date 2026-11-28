@@ -2,19 +2,16 @@
 
 [ext_resource type="Shader" path="res://graphics/ui/theme/paper_hatching.gdshader" id="shader"]
 
-[sub_resource type="FastNoiseLite" id="StrokeNoise"]
-frequency = 0.35
-fractal_octaves = 2
-
-[sub_resource type="NoiseTexture2D" id="StrokeTexture"]
-width = 256
-height = 256
-noise = SubResource("StrokeNoise")
-generate_mipmaps = false
-seamless = true
+[ext_resource type="NoiseTexture2D" path="res://graphics/ui/theme/paper_strokes.tres" id="strokes"]
 
 [resource]
 shader = ExtResource("shader")
-shader_parameter/stroke_texture = SubResource("StrokeTexture")
+shader_parameter/stroke_texture = ExtResource("strokes")
 shader_parameter/hatch_strength = 0.1
 shader_parameter/hatch_spacing = 8.0
+shader_parameter/outline_color = Color(0.94, 0.8, 0.58, 0.95)
+shader_parameter/outline_width = 2.3
+shader_parameter/outline_roughness = 1.1
+shader_parameter/outline_corner_radius = 6.0
+shader_parameter/outline_wobble = 0.55
+shader_parameter/outline_wobble_rate = 6.0

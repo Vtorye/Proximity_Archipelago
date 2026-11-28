@@ -1,5 +1,10 @@
 [gd_scene format=3 uid="uid://cne1ax73twcgx"]
 
+[ext_resource type="Texture2D" path="res://graphics/ui/theme/textures/paper_menu.png" id="paper_menu"]
+[ext_resource type="Texture2D" path="res://graphics/ui/theme/textures/paper_focus.png" id="paper_focus"]
+[ext_resource type="Material" path="res://graphics/ui/theme/fine_menu_paper.tres" id="fine_menu_paper"]
+[ext_resource type="Script" path="res://graphics/ui/theme/paper_panel.gd" id="paper_panel"]
+
 [ext_resource type="Script" path="res://game/ui/components/ui_text_binding.gd" id="ui_text_binding"]
 [ext_resource type="Script" uid="uid://be1grw07dbeiw" path="res://game/application/menus/main_menu.gd" id="script"]
 [ext_resource type="Script" path="res://graphics/ui/backdrop/colony_backdrop.gd" id="backdrop"]
@@ -8,31 +13,47 @@
 
 [ext_resource type="StyleBox" path="res://graphics/ui/theme/dialog_panel.tres" id="dialog"]
 
-[sub_resource type="StyleBoxEmpty" id="empty"]
-[sub_resource type="StyleBoxFlat" id="menu_frame"]
-bg_color = Color(0.055, 0.09, 0.078, 0.82)
-border_color = Color(0.78, 0.61, 0.34, 0.9)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-corner_radius_top_left = 5
-corner_radius_top_right = 5
-corner_radius_bottom_right = 5
-corner_radius_bottom_left = 5
+[sub_resource type="StyleBoxTexture" id="menu_frame"]
+texture_margin_left = 6.0
+content_margin_left = 2.0
+texture_margin_top = 6.0
+content_margin_top = 2.0
+texture_margin_right = 6.0
+content_margin_right = 2.0
+texture_margin_bottom = 6.0
+content_margin_bottom = 2.0
+axis_stretch_horizontal = 1
+axis_stretch_vertical = 1
+texture = ExtResource("paper_menu")
 
 [sub_resource type="AtlasTexture" id="queen_closeup"]
 atlas = ExtResource("queen")
 region = Rect2(355, 170, 775, 690)
 filter_clip = true
 
-[sub_resource type="StyleBoxFlat" id="screen_frame"]
+[sub_resource type="StyleBoxFlat" id="fine_menu_face"]
+bg_color = Color(0.055, 0.09, 0.078, 0.88)
+
+[sub_resource type="StyleBoxFlat" id="fine_menu_shadow"]
+bg_color = Color(0.025, 0.024, 0.018, 0.84)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxTexture" id="screen_frame"]
+texture_margin_left = 4.0
+content_margin_left = 0.0
+texture_margin_top = 4.0
+content_margin_top = 0.0
+texture_margin_right = 4.0
+content_margin_right = 0.0
+texture_margin_bottom = 4.0
+content_margin_bottom = 0.0
+axis_stretch_horizontal = 1
+axis_stretch_vertical = 1
 draw_center = false
-border_width_left = 10
-border_width_top = 10
-border_width_right = 10
-border_width_bottom = 10
-border_color = Color(0.79, 0.58, 0.25, 1)
+texture = ExtResource("paper_focus")
 
 [node name="MainMenu" type="Control" unique_id=434943035]
 layout_mode = 3
@@ -85,7 +106,8 @@ stretch_mode = 5
 flip_h = true
 texture_filter = 2
 
-[node name="MenuFrame" type="Panel" parent="."]
+[node name="MenuFrame" type="Control" parent="."]
+editor_description = "Вариант Fine Paper. Shadow задаёт положение и цвет нижней тени. Surface содержит материал со штриховкой и обводкой."
 anchors_preset = 15
 anchor_left = 0.045
 anchor_top = 0.1
@@ -94,7 +116,30 @@ anchor_bottom = 0.9
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-theme_override_styles/panel = SubResource("menu_frame")
+
+[node name="Shadow" type="Panel" parent="MenuFrame"]
+layout_mode = 1
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = -4.0
+offset_right = -4.0
+offset_bottom = 6.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("fine_menu_shadow")
+
+[node name="Surface" type="PanelContainer" parent="MenuFrame"]
+material = ExtResource("fine_menu_paper")
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("fine_menu_face")
+script = ExtResource("paper_panel")
 
 [node name="LeftMenu" type="CenterContainer" parent="."]
 anchor_left = 0.045
@@ -127,11 +172,6 @@ custom_minimum_size = Vector2(176, 29)
 theme_override_font_sizes/font_size = 16
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 2
-theme_override_styles/normal = SubResource("empty")
-theme_override_styles/hover = SubResource("empty")
-theme_override_styles/pressed = SubResource("empty")
-theme_override_styles/disabled = SubResource("empty")
-theme_override_styles/focus = SubResource("empty")
 
 [node name="Maps" type="Button" parent="LeftMenu/Actions"]
 unique_name_in_owner = true
@@ -141,11 +181,6 @@ custom_minimum_size = Vector2(176, 29)
 theme_override_font_sizes/font_size = 16
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 2
-theme_override_styles/normal = SubResource("empty")
-theme_override_styles/hover = SubResource("empty")
-theme_override_styles/pressed = SubResource("empty")
-theme_override_styles/disabled = SubResource("empty")
-theme_override_styles/focus = SubResource("empty")
 
 [node name="Settings" type="Button" parent="LeftMenu/Actions"]
 unique_name_in_owner = true
@@ -155,11 +190,6 @@ custom_minimum_size = Vector2(176, 29)
 theme_override_font_sizes/font_size = 16
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 2
-theme_override_styles/normal = SubResource("empty")
-theme_override_styles/hover = SubResource("empty")
-theme_override_styles/pressed = SubResource("empty")
-theme_override_styles/disabled = SubResource("empty")
-theme_override_styles/focus = SubResource("empty")
 
 [node name="Language" type="Button" parent="LeftMenu/Actions"]
 unique_name_in_owner = true
@@ -169,11 +199,6 @@ custom_minimum_size = Vector2(176, 29)
 theme_override_font_sizes/font_size = 16
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 2
-theme_override_styles/normal = SubResource("empty")
-theme_override_styles/hover = SubResource("empty")
-theme_override_styles/pressed = SubResource("empty")
-theme_override_styles/disabled = SubResource("empty")
-theme_override_styles/focus = SubResource("empty")
 
 [node name="Quit" type="Button" parent="LeftMenu/Actions"]
 unique_name_in_owner = true
@@ -183,11 +208,6 @@ custom_minimum_size = Vector2(176, 29)
 theme_override_font_sizes/font_size = 16
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 2
-theme_override_styles/normal = SubResource("empty")
-theme_override_styles/hover = SubResource("empty")
-theme_override_styles/pressed = SubResource("empty")
-theme_override_styles/disabled = SubResource("empty")
-theme_override_styles/focus = SubResource("empty")
 
 [node name="SaveOverlay" type="ColorRect" parent="."]
 unique_name_in_owner = true

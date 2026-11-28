@@ -7,14 +7,16 @@
 [ext_resource type="Script" path="res://game/ui/map/tile_selection.gd" id="selection"]
 
 [ext_resource type="Texture2D" path="res://graphics/ui/icons/build_cancel.svg" id="editor_close"]
-[ext_resource type="Texture2D" path="res://graphics/ui/theme/textures/opaque_panel.svg" id="options_background"]
+[ext_resource type="Texture2D" path="res://graphics/ui/theme/textures/paper_opaque_panel.png" id="options_background"]
 
 [sub_resource type="StyleBoxTexture" id="dialog_style"]
+axis_stretch_horizontal = 1
+axis_stretch_vertical = 1
 texture = ExtResource("options_background")
-texture_margin_left = 3.0
-texture_margin_top = 3.0
-texture_margin_right = 3.0
-texture_margin_bottom = 3.0
+texture_margin_left = 6.0
+texture_margin_top = 6.0
+texture_margin_right = 6.0
+texture_margin_bottom = 6.0
 content_margin_left = 8.0
 content_margin_top = 6.0
 content_margin_right = 8.0

@@ -168,8 +168,11 @@ func _run() -> void:
 		return
 	expect(panel.visible and not menu.panel.get_global_rect().intersects(task_strip.get_global_rect()), "plan controls leave the task strip unobstructed")
 	expect(not menu.buildings_panel.visible, "task placement only opens plan controls beside the task blocks")
-	var selected_style := card.get_theme_stylebox(&"pressed") as StyleBoxFlat
-	expect(card.button_pressed and selected_style != null and selected_style.border_width_top >= 3 and not _offer_card(panel, 0, 0).button_pressed, "active variant has a thick frame")
+	var selected_style := card.get_theme_stylebox(&"pressed") as StyleBoxTexture
+	var idle_style := card.get_theme_stylebox(&"normal") as StyleBoxTexture
+	expect(card.button_pressed and selected_style != null and idle_style != null
+		and selected_style.texture != idle_style.texture and not _offer_card(panel, 0, 0).button_pressed,
+		"active variant uses its own selected frame")
 	await click(_offer_card(panel, 0, 0)._info)
 	expect(card.button_pressed and menu.order.variant == choice, "using info leaves the active variant selected")
 	await click(_offer_card(panel, 0, 0)._info)

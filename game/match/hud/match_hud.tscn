@@ -207,8 +207,8 @@ unique_name_in_owner = true
 theme_override_styles/panel = ExtResource("bottom_bar")
 
 [node name="Actions" type="HFlowContainer" parent="Footer/Bottom"]
-theme_override_constants/h_separation = 4
-theme_override_constants/v_separation = 2
+theme_override_constants/h_separation = 6
+theme_override_constants/v_separation = 4
 
 [node name="BuildSlot" type="MarginContainer" parent="Footer/Bottom/Actions"]
 mouse_filter = 2

@@ -1,41 +1,47 @@
 [gd_scene format=3]
 
-[ext_resource type="Texture2D" path="res://graphics/ui/theme/textures/button.svg" id="button_texture"]
-[ext_resource type="Texture2D" path="res://graphics/ui/theme/textures/hover.svg" id="hover_texture"]
-[ext_resource type="Texture2D" path="res://graphics/ui/theme/textures/pressed.svg" id="pressed_texture"]
+[ext_resource type="Texture2D" path="res://graphics/ui/theme/textures/paper_fine_button.png" id="button_texture"]
+[ext_resource type="Texture2D" path="res://graphics/ui/theme/textures/paper_fine_hover.png" id="hover_texture"]
+[ext_resource type="Texture2D" path="res://graphics/ui/theme/textures/paper_fine_pressed.png" id="pressed_texture"]
 
 [sub_resource type="StyleBoxTexture" id="button"]
 content_margin_left = 1.0
 content_margin_top = 0.0
 content_margin_right = 1.0
 content_margin_bottom = 0.0
+axis_stretch_horizontal = 1
+axis_stretch_vertical = 1
 texture = ExtResource("button_texture")
-texture_margin_left = 3.0
-texture_margin_top = 3.0
-texture_margin_right = 3.0
-texture_margin_bottom = 3.0
+texture_margin_left = 4.0
+texture_margin_top = 4.0
+texture_margin_right = 4.0
+texture_margin_bottom = 4.0
 
 [sub_resource type="StyleBoxTexture" id="hover"]
 content_margin_left = 1.0
 content_margin_top = 0.0
 content_margin_right = 1.0
 content_margin_bottom = 0.0
+axis_stretch_horizontal = 1
+axis_stretch_vertical = 1
 texture = ExtResource("hover_texture")
-texture_margin_left = 3.0
-texture_margin_top = 3.0
-texture_margin_right = 3.0
-texture_margin_bottom = 3.0
+texture_margin_left = 4.0
+texture_margin_top = 4.0
+texture_margin_right = 4.0
+texture_margin_bottom = 4.0
 
 [sub_resource type="StyleBoxTexture" id="pressed"]
 content_margin_left = 1.0
 content_margin_top = 0.0
 content_margin_right = 1.0
 content_margin_bottom = 0.0
+axis_stretch_horizontal = 1
+axis_stretch_vertical = 1
 texture = ExtResource("pressed_texture")
-texture_margin_left = 3.0
-texture_margin_top = 3.0
-texture_margin_right = 3.0
-texture_margin_bottom = 3.0
+texture_margin_left = 4.0
+texture_margin_top = 4.0
+texture_margin_right = 4.0
+texture_margin_bottom = 4.0
 
 [node name="ConstructionInfoButton" type="Button"]
 custom_minimum_size = Vector2(16, 16)

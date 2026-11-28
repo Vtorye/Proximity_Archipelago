@@ -1,55 +1,49 @@
 [gd_scene format=3]
 
+[ext_resource type="Texture2D" path="res://graphics/ui/theme/textures/paper_fine_button.png" id="paper_button"]
+[ext_resource type="Texture2D" path="res://graphics/ui/theme/textures/paper_fine_hover.png" id="paper_hover"]
+[ext_resource type="Texture2D" path="res://graphics/ui/theme/textures/paper_fine_pressed.png" id="paper_pressed"]
+
 [ext_resource type="Script" path="res://game/ui/components/window_header.gd" id="script"]
 
-[sub_resource type="StyleBoxFlat" id="fold_normal"]
+[sub_resource type="StyleBoxTexture" id="fold_normal"]
+texture_margin_left = 4.0
+texture_margin_top = 4.0
+texture_margin_right = 4.0
+texture_margin_bottom = 4.0
 content_margin_left = 2.0
 content_margin_right = 2.0
 content_margin_top = 0.0
 content_margin_bottom = 0.0
-bg_color = Color(0.14, 0.19, 0.16, 1)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.57, 0.49, 0.31, 1)
+axis_stretch_horizontal = 1
+axis_stretch_vertical = 1
+texture = ExtResource("paper_button")
 
-[sub_resource type="StyleBoxFlat" id="fold_hover"]
+[sub_resource type="StyleBoxTexture" id="fold_hover"]
+texture_margin_left = 4.0
+texture_margin_top = 4.0
+texture_margin_right = 4.0
+texture_margin_bottom = 4.0
 content_margin_left = 2.0
 content_margin_right = 2.0
 content_margin_top = 0.0
 content_margin_bottom = 0.0
-bg_color = Color(0.24, 0.29, 0.21, 1)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.57, 0.49, 0.31, 1)
+axis_stretch_horizontal = 1
+axis_stretch_vertical = 1
+texture = ExtResource("paper_hover")
 
-[sub_resource type="StyleBoxFlat" id="fold_pressed"]
+[sub_resource type="StyleBoxTexture" id="fold_pressed"]
+texture_margin_left = 4.0
+texture_margin_top = 4.0
+texture_margin_right = 4.0
+texture_margin_bottom = 4.0
 content_margin_left = 2.0
 content_margin_right = 2.0
 content_margin_top = 0.0
 content_margin_bottom = 0.0
-bg_color = Color(0.08, 0.12, 0.10, 1)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.57, 0.49, 0.31, 1)
-
-[sub_resource type="StyleBoxFlat" id="fold_focus"]
-content_margin_left = 2.0
-content_margin_right = 2.0
-content_margin_top = 0.0
-content_margin_bottom = 0.0
-bg_color = Color(0.14, 0.19, 0.16, 1)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-draw_center = false
-border_color = Color(0.87, 0.77, 0.55, 1)
+axis_stretch_horizontal = 1
+axis_stretch_vertical = 1
+texture = ExtResource("paper_pressed")
 
 [node name="WindowHeader" type="HBoxContainer"]
 script = ExtResource("script")
@@ -82,7 +76,6 @@ theme_override_font_sizes/font_size = 9
 theme_override_styles/normal = SubResource("fold_normal")
 theme_override_styles/hover = SubResource("fold_hover")
 theme_override_styles/pressed = SubResource("fold_pressed")
-theme_override_styles/focus = SubResource("fold_focus")
 custom_minimum_size = Vector2(18, 12)
 size_flags_vertical = 4
 mouse_default_cursor_shape = 2

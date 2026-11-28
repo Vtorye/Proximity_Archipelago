@@ -35,7 +35,7 @@ func _run() -> void:
 	await key(KEY_SPACE)
 	await key(KEY_N)
 	expect(screen.navigation_overlay.mode == 0, "third N restores the ordinary map")
-	expect(screen.hud.theme.get_stylebox("panel", "PanelContainer").texture == load("res://graphics/ui/theme/textures/panel.svg"), "ordinary HUD transparency returns when navigation is hidden")
+	expect(screen.hud.theme.get_stylebox("panel", "PanelContainer").texture == load("res://graphics/ui/theme/textures/paper_panel.png"), "ordinary HUD transparency returns when navigation is hidden")
 	await _check_paused_navigation()
 	await _check_storage_and_hover()
 	screen.world.population.agents()[0].speed = 30.0

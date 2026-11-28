@@ -1,7 +1,8 @@
 [gd_scene format=3 uid="uid://d28up5ks4fnc2"]
 
 [ext_resource type="AudioStream" uid="uid://dqy6l8u3048of" path="res://visual_novel/ui/dialogue_blip.wav" id="blip"]
-[ext_resource type="Material" uid="uid://bmps4jy20e8cm" path="res://graphics/ui/theme/dialogue_paper.tres" id="dialogue_paper"]
+[ext_resource type="Material" path="res://graphics/ui/theme/fine_dialogue_paper.tres" id="dialogue_paper"]
+[ext_resource type="Script" path="res://graphics/ui/theme/paper_panel.gd" id="paper_panel"]
 [ext_resource type="StyleBox" path="res://graphics/ui/theme/dialog_panel.tres" id="panel"]
 [ext_resource type="Script" uid="uid://dnv2aerko8fqw" path="res://visual_novel/ui/story_overlay.gd" id="script"]
 [ext_resource type="PackedScene" path="res://game/ui/components/window_header.tscn" id="window_header"]
@@ -13,11 +14,6 @@ content_margin_top = 5.0
 content_margin_right = 12.0
 content_margin_bottom = 5.0
 bg_color = Color(0.078, 0.069, 0.075, 0.74)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.82, 0.67, 0.42, 0.59)
 
 [node name="StoryOverlay" type="Control" unique_id=1299976627]
 layout_mode = 3
@@ -56,7 +52,7 @@ mouse_filter = 2
 
 [node name="DialoguePanel" type="PanelContainer" parent="DialogueWindow" unique_id=1354282171]
 unique_name_in_owner = true
-editor_description = "Штриховка настраивается в Material → Shader Parameters. Hatch Strength задаёт яркость штрихов, а Hatch Spacing — расстояние между линиями в логических пикселях. При нулевой яркости заливка ровная. Цвет, прозрачность, рамка и отступы задаются в Theme Overrides → Styles → Panel."
+editor_description = "Штриховка и контур настраиваются в Material → Shader Parameters. В группе Pencil Outline можно задать цвет, толщину, неровность и скругление. Outline Wobble задаёт амплитуду дрожания в логических пикселях, Outline Wobble Rate — число смен рисунка в секунду. Цвет подложки и отступы задаются в Theme Overrides → Styles → Panel."
 material = ExtResource("dialogue_paper")
 layout_mode = 1
 anchors_preset = 15
@@ -65,6 +61,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("dialogue_style")
+script = ExtResource("paper_panel")
 
 [node name="DialogueContents" type="VBoxContainer" parent="DialogueWindow/DialoguePanel" unique_id=178276810]
 unique_name_in_owner = true

@@ -355,7 +355,7 @@ func set_navigation_mode(mode: int) -> void:
 	routes.text = ["ui.hud.routes", "ui.hud.routes_cells", "ui.hud.routes_priority"][mode]
 	if navigation_panel != null:
 		navigation_panel.refresh()
-	var texture: Texture2D = preload("res://graphics/ui/theme/textures/opaque_panel.svg") if mode > 0 else preload("res://graphics/ui/theme/textures/panel.svg")
+	var texture: Texture2D = preload("res://graphics/ui/theme/textures/paper_opaque_panel.png") if mode > 0 else preload("res://graphics/ui/theme/textures/paper_panel.png")
 	# Keep world labels behind readable HUD surfaces without clipping the map layer.
 	for style in [theme.get_stylebox("panel", "PanelContainer"), theme.get_stylebox("panel", "TooltipPanel"), _toast.get_theme_stylebox("normal")]:
 		(style as StyleBoxTexture).texture = texture

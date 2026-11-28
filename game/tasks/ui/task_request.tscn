@@ -1,15 +1,20 @@
 [gd_scene format=3]
 
+[ext_resource type="Texture2D" path="res://graphics/ui/theme/textures/paper_opaque_panel.png" id="paper_opaque_panel"]
+
 [ext_resource type="Script" path="res://game/tasks/ui/task_request.gd" id="script"]
-[sub_resource type="StyleBoxFlat" id="group_style"]
+[sub_resource type="StyleBoxTexture" id="group_style"]
+texture_margin_left = 6.0
+texture_margin_top = 6.0
+texture_margin_right = 6.0
+texture_margin_bottom = 6.0
 content_margin_left = 4.0
 content_margin_top = 0.0
 content_margin_right = 4.0
 content_margin_bottom = 0.0
-bg_color = Color(0.125, 0.125, 0.125, 1)
-border_width_left = 1
-border_width_right = 1
-border_color = Color(0.38, 0.38, 0.38, 1)
+axis_stretch_horizontal = 1
+axis_stretch_vertical = 1
+texture = ExtResource("paper_opaque_panel")
 
 [node name="Request" type="PanelContainer"]
 script = ExtResource("script")
