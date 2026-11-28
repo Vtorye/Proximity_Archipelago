@@ -1,0 +1,13 @@
+[gd_scene format=3]
+
+[ext_resource type="Texture2D" path="res://graphics/ui/icons/build_move.svg" id="pan_icon"]
+
+[node name="Move" type="Button"]
+disabled = true
+custom_minimum_size = Vector2(34, 34)
+icon = ExtResource("pan_icon")
+icon_alignment = 1
+theme_type_variation = &"CompactButton"
+tooltip_text = "ui.construction.inspect_hint"
+toggle_mode = true
+mouse_default_cursor_shape = 2

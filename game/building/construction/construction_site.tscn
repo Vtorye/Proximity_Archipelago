@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://game/building/construction/construction_site.gd" id="site"]
+
+[node name="ConstructionSite" type="Node2D"]
+script = ExtResource("site")

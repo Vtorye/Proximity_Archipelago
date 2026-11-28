@@ -1,18 +1,18 @@
 [gd_resource type="Resource" script_class="Manifest" format=3 uid="uid://cf8dni8ap0fca"]
 
-[ext_resource type="PackedScene" uid="uid://bmqd4ii6sfee0" path="res://game/ui/overlays/pause_menu.tscn" id="1_oj60a"]
-[ext_resource type="PackedScene" uid="uid://cne1ax73twcgx" path="res://game/screens/main_menu.tscn" id="2_1jkm1"]
-[ext_resource type="PackedScene" uid="uid://be2ypvwrx3kfg" path="res://game/screens/match.tscn" id="3_sk4hq"]
+[ext_resource type="PackedScene" uid="uid://bmqd4ii6sfee0" path="res://game/match/pause_menu.tscn" id="1_oj60a"]
+[ext_resource type="PackedScene" uid="uid://cne1ax73twcgx" path="res://game/application/menus/main_menu.tscn" id="2_1jkm1"]
+[ext_resource type="PackedScene" uid="uid://be2ypvwrx3kfg" path="res://game/match/match.tscn" id="3_sk4hq"]
 [ext_resource type="Script" uid="uid://bo82larywjxfv" path="res://game/application/manifest.gd" id="4_oj60a"]
-[ext_resource type="PackedScene" path="res://game/ui/overlays/match_result.tscn" id="match_result"]
+[ext_resource type="PackedScene" path="res://game/match/match_result.tscn" id="match_result"]
 
-[ext_resource type="PackedScene" path="res://game/ui/overlays/settings_menu.tscn" id="settings"]
-[ext_resource type="PackedScene" path="res://game/ui/overlays/construction_menu.tscn" id="construction"]
+[ext_resource type="PackedScene" path="res://game/application/menus/settings_menu.tscn" id="settings"]
+[ext_resource type="PackedScene" path="res://game/building/ui/construction_menu.tscn" id="construction"]
 
 
-[ext_resource type="PackedScene" path="res://game/screens/level_editor.tscn" id="level_editor"]
+[ext_resource type="PackedScene" path="res://game/worlds/editor/level_editor.tscn" id="level_editor"]
 
-[ext_resource type="PackedScene" path="res://game/ui/overlays/nest_menu.tscn" id="nest"]
+[ext_resource type="PackedScene" path="res://game/colony/nests/ui/nest_menu.tscn" id="nest"]
 
 [resource]
 resource_name = "Manifest"

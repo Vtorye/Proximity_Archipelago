@@ -1,6 +1,0 @@
-[gd_scene format=3 uid="uid://cr2fevc0k804t"]
-
-[ext_resource type="Script" uid="uid://bhr6v3hhfgdj5" path="res://tests/nest_test.gd" id="1_cvtea"]
-
-[node name="NestTest" type="Node2D" unique_id=234522342]
-script = ExtResource("1_cvtea")

@@ -1,8 +1,0 @@
-[gd_scene format=3]
-
-[ext_resource type="Script" path="res://game/ui/stock_transfer_feedback.gd" id="1"]
-[ext_resource type="PackedScene" path="res://game/ui/stock_transfer.tscn" id="2"]
-
-[node name="StockTransferOrigin" type="Marker2D"]
-script = ExtResource("1")
-transfer_scene = ExtResource("2")

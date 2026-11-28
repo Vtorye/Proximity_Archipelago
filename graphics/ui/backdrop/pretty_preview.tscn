@@ -1,0 +1,64 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://graphics/ui/backdrop/pretty_preview.gd" id="1_script"]
+[ext_resource type="Shader" path="res://graphics/terrain/pretty_terrain.gdshader" id="2_shader"]
+[ext_resource type="Texture2D" path="res://graphics/ui/backdrop/pretty_preview_mask.png" id="3_mask"]
+
+[sub_resource type="FastNoiseLite" id="MountainNoise"]
+frequency = 0.0396
+fractal_octaves = 10
+
+[sub_resource type="NoiseTexture2D" id="MountainNoiseTexture"]
+width = 200
+height = 200
+noise = SubResource("MountainNoise")
+
+[sub_resource type="ShaderMaterial" id="TerrainShader"]
+shader = ExtResource("2_shader")
+shader_parameter/viewport_side = 50
+shader_parameter/alfa_cutoff = 0.37
+shader_parameter/land_types_cutoff = 0.335
+shader_parameter/dirt_color = Color(0.886, 0.698, 0.69, 1)
+shader_parameter/grass_color = Color(0.612, 0.714, 0.355, 1)
+shader_parameter/mountains_color = Color(0.612, 0.602, 0.844, 1)
+shader_parameter/mountain_pieck_color = Color(0.8, 0.622, 0.697, 1)
+shader_parameter/mountains_noise = SubResource("MountainNoiseTexture")
+shader_parameter/mountain_size = 0.039
+shader_parameter/mountain_density = 1.0
+shader_parameter/mountain_height_variation = 0.622
+shader_parameter/mountains_do_discard_outside_region = true
+shader_parameter/mountains_discard_outside_region_margin = 0.3
+shader_parameter/draw_coast = true
+shader_parameter/coast_offset = Vector2(0.003, 0.003)
+shader_parameter/coast_color = Color(0.15, 0.192, 0.313, 1)
+shader_parameter/waveline_color = Color(0.372, 0.546, 0.597, 1)
+shader_parameter/waveline_wave_scale = 33.0
+shader_parameter/waveline_wave_speed = 1.0
+shader_parameter/waveline_wave_amplitude = 2.0
+shader_parameter/waveline_alpha_power = 2.0
+shader_parameter/draw_grass_blades = true
+shader_parameter/grass_blades_hight = 0.003
+shader_parameter/grass_blades_ampletude = 125.815
+
+[node name="PrettyTerrainPreview" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_script")
+
+[node name="MapView" type="SubViewport" parent="."]
+size = Vector2i(512, 512)
+
+[node name="Mask" type="Sprite2D" parent="MapView"]
+texture = ExtResource("3_mask")
+centered = false
+
+[node name="TerrainDisplay" type="ColorRect" parent="."]
+material = SubResource("TerrainShader")
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2

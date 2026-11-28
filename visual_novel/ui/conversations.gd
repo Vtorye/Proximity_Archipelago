@@ -15,7 +15,7 @@ func configure(definitions: Array[StoryCharacter], can_talk: Callable) -> void:
 	for character in characters:
 		if character.id == &"Protagonist":
 			continue
-		var button: Button = preload("res://game/ui/palette_entry.tscn").instantiate()
+		var button: Button = preload("res://game/ui/components/palette_entry.tscn").instantiate()
 		button.text = character.display_name
 		button.pressed.connect(AppSettings.play_click)
 		button.pressed.connect(character_selected.emit.bind(character))

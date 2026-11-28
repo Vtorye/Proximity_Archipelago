@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="TileBuildOption" format=3 uid="uid://b3bspiavx16wa"]
+
+[ext_resource type="Script" uid="uid://clwif6xxyitqt" path="res://game/economy/price_rule.gd" id="3_jv0kj"]
+[ext_resource type="Script" uid="uid://dohq4yj0b3afb" path="res://game/economy/stock/resource_amount.gd" id="amount"]
+[ext_resource type="Script" uid="uid://d5tyd72woa2w" path="res://game/building/tile_build_option.gd" id="option"]
+[ext_resource type="Resource" uid="uid://btsdqgmh3ee22" path="res://game/economy/stock/resource_types/wood.tres" id="wood"]
+
+[sub_resource type="Resource" id="cost"]
+script = ExtResource("amount")
+type = ExtResource("wood")
+amount = 2
+
+[resource]
+script = ExtResource("option")
+source_id = 3
+atlas_coords = Vector2i(2, 0)
+placement_kind = 1
+id = &"road"
+display_name = "ui.building.road"
+description = "ui.construction.description.road"
+costs = Array[ExtResource("amount")]([SubResource("cost")])
+allow_when_occupied = true

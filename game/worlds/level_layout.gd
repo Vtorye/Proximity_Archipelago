@@ -4,7 +4,7 @@ extends RefCounted
 ## Load lazily because world components also use level layout APIs.
 static var DEFAULT_WORLD: PackedScene:
 	get:
-		return load("res://game/worlds/starter_island.tscn") as PackedScene
+		return load("res://game/worlds/maps/starter_island.tscn") as PackedScene
 const VERSION := 1
 const ZERO_ISLAND_ID := "zero_island"
 const CELL_LIMIT := 32768
@@ -23,7 +23,7 @@ static func editor_prototypes(world: World) -> Dictionary[String, Building]:
 	for building in result.values():
 		if building is House:
 			building.is_main_nest = false
-			building.option = load("res://game/building/options/barracks.tres")
+			building.option = load("res://game/colony/nests/barracks.tres")
 	for option in world.build_controller.initial_options():
 		if not option is SceneBuildOption or option.scene == null:
 			continue
@@ -119,8 +119,8 @@ static func create_world(layout: Dictionary) -> World:
 	var data: LevelData = decode(layout)
 	var template := DEFAULT_WORLD
 	match layout.get("chapter"):
-		"first_island": template = load("res://game/worlds/first_island.tscn")
-		ZERO_ISLAND_ID: template = load("res://game/worlds/zero_island.tscn")
+		"first_island": template = load("res://visual_novel/chapters/first/first_island.tscn")
+		ZERO_ISLAND_ID: template = load("res://visual_novel/chapters/zero/zero_island.tscn")
 	return instantiate_world(data, template) if data != null else null
 
 static func instantiate_world(data: LevelData, template: PackedScene = null) -> World:
@@ -233,7 +233,7 @@ static func _restore_objects(world: World, map: TileMapLayer, objects: Array[Lev
 			# Legacy Home rows mean a starter nest followed by small local nests.
 			if building is House:
 				building.is_main_nest = false
-				building.option = load("res://game/building/options/barracks.tres")
+				building.option = load("res://game/colony/nests/barracks.tres")
 		if placement.remaining_supply >= 0:
 			var workplace := building as Workplace
 			if workplace == null:

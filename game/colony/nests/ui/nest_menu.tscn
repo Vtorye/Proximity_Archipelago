@@ -1,0 +1,180 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://game/ui/components/ui_text_binding.gd" id="ui_text_binding"]
+[ext_resource type="Script" path="res://game/colony/nests/ui/nest_menu.gd" id="script"]
+[ext_resource type="StyleBox" path="res://graphics/ui/theme/dialog_panel.tres" id="dialog_style"]
+[ext_resource type="PackedScene" path="res://game/ui/components/window_header.tscn" id="window_header"]
+
+[sub_resource type="ButtonGroup" id="tabs"]
+resource_local_to_scene = true
+
+[node name="NestMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("script")
+mouse_filter = 2
+
+[node name="Center" type="Control" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Dialog" type="PanelContainer" parent="Center"]
+unique_name_in_owner = true
+metadata/ui_manual_layout = true
+custom_minimum_size = Vector2(340, 0)
+theme_override_styles/panel = ExtResource("dialog_style")
+
+[node name="WindowContents" type="VBoxContainer" parent="Center/Dialog"]
+theme_override_constants/separation = 2
+
+[node name="WindowHeader" parent="Center/Dialog/WindowContents" node_paths=PackedStringArray("panel", "body") instance=ExtResource("window_header")]
+unique_name_in_owner = true
+title = "ui.window.nest"
+action = 2
+dock = 0
+panel_width = 340.0
+inset = Vector2(6, 64)
+panel = NodePath("../..")
+body = NodePath("../Margin")
+
+[node name="Margin" type="MarginContainer" parent="Center/Dialog/WindowContents"]
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 4
+theme_override_constants/margin_bottom = 4
+
+[node name="Content" type="VBoxContainer" parent="Center/Dialog/WindowContents/Margin"]
+unique_name_in_owner = true
+theme_override_constants/separation = 5
+
+[node name="Header" type="HBoxContainer" parent="Center/Dialog/WindowContents/Margin/Content"]
+
+[node name="Title" type="Label" parent="Center/Dialog/WindowContents/Margin/Content/Header"]
+theme_type_variation = &"Heading"
+unique_name_in_owner = true
+mouse_filter = 2
+text = "ui.storage.main"
+theme_override_colors/font_color = Color(0.8745, 0.7765, 0.5451, 1)
+size_flags_horizontal = 3
+
+[node name="Tabs" type="HBoxContainer" parent="Center/Dialog/WindowContents/Margin/Content"]
+theme_override_constants/separation = 3
+
+[node name="Inventory" type="Button" parent="Center/Dialog/WindowContents/Margin/Content/Tabs"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 24)
+mouse_default_cursor_shape = 2
+text = "ui.nest.inventory"
+size_flags_horizontal = 3
+toggle_mode = true
+button_group = SubResource("tabs")
+
+[node name="Orders" type="Button" parent="Center/Dialog/WindowContents/Margin/Content/Tabs"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 24)
+mouse_default_cursor_shape = 2
+text = "ui.nest.orders"
+size_flags_horizontal = 3
+toggle_mode = true
+button_group = SubResource("tabs")
+
+[node name="Residents" type="Button" parent="Center/Dialog/WindowContents/Margin/Content/Tabs"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 24)
+mouse_default_cursor_shape = 2
+text = "ui.nest.residents"
+size_flags_horizontal = 3
+toggle_mode = true
+button_group = SubResource("tabs")
+
+[node name="InventoryTab" type="VBoxContainer" parent="Center/Dialog/WindowContents/Margin/Content"]
+unique_name_in_owner = true
+theme_override_constants/separation = 4
+
+[node name="Capacity" type="Label" parent="Center/Dialog/WindowContents/Margin/Content/InventoryTab"]
+unique_name_in_owner = true
+mouse_filter = 2
+text = "Storage 32 / 100"
+
+[node name="OrdersTab" type="VBoxContainer" parent="Center/Dialog/WindowContents/Margin/Content"]
+unique_name_in_owner = true
+theme_override_constants/separation = 4
+visible = false
+
+[node name="Funds" type="CheckButton" parent="Center/Dialog/WindowContents/Margin/Content/OrdersTab"]
+unique_name_in_owner = true
+text = "ui.nest.funds_construction"
+
+[node name="OrderHeader" type="HBoxContainer" parent="Center/Dialog/WindowContents/Margin/Content/OrdersTab"]
+unique_name_in_owner = true
+theme_override_constants/separation = 6
+
+[node name="Resource" type="Label" parent="Center/Dialog/WindowContents/Margin/Content/OrdersTab/OrderHeader"]
+custom_minimum_size = Vector2(92, 0)
+size_flags_horizontal = 3
+mouse_filter = 2
+text = "ui.nest.inventory"
+
+[node name="Minimum" type="Label" parent="Center/Dialog/WindowContents/Margin/Content/OrdersTab/OrderHeader"]
+theme_type_variation = &"Caption"
+mouse_filter = 2
+text = "ui.order.min"
+theme_override_colors/font_color = Color(0.6667, 0.651, 0.6118, 1)
+custom_minimum_size = Vector2(76, 0)
+horizontal_alignment = 1
+
+[node name="Maximum" type="Label" parent="Center/Dialog/WindowContents/Margin/Content/OrdersTab/OrderHeader"]
+theme_type_variation = &"Caption"
+mouse_filter = 2
+text = "ui.order.max"
+theme_override_colors/font_color = Color(0.6667, 0.651, 0.6118, 1)
+custom_minimum_size = Vector2(72, 0)
+horizontal_alignment = 1
+
+[node name="Owed" type="Label" parent="Center/Dialog/WindowContents/Margin/Content/OrdersTab/OrderHeader"]
+theme_type_variation = &"Caption"
+mouse_filter = 2
+text = "ui.order.once"
+theme_override_colors/font_color = Color(0.6667, 0.651, 0.6118, 1)
+custom_minimum_size = Vector2(72, 0)
+horizontal_alignment = 1
+
+[node name="OrderScroll" type="ScrollContainer" parent="Center/Dialog/WindowContents/Margin/Content/OrdersTab"]
+custom_minimum_size = Vector2(0, 84)
+horizontal_scroll_mode = 0
+vertical_scroll_mode = 1
+
+[node name="OrderRows" type="VBoxContainer" parent="Center/Dialog/WindowContents/Margin/Content/OrdersTab/OrderScroll"]
+unique_name_in_owner = true
+size_flags_horizontal = 3
+theme_override_constants/separation = 3
+
+[node name="ResidentsTab" type="VBoxContainer" parent="Center/Dialog/WindowContents/Margin/Content"]
+unique_name_in_owner = true
+theme_override_constants/separation = 5
+visible = false
+
+[node name="Population" type="Label" parent="Center/Dialog/WindowContents/Margin/Content/ResidentsTab"]
+unique_name_in_owner = true
+mouse_filter = 2
+text = "Residents 12 / 20"
+theme_override_colors/font_color = Color(0.8745, 0.7765, 0.5451, 1)
+
+[node name="Assigned" type="Label" parent="Center/Dialog/WindowContents/Margin/Content/ResidentsTab"]
+theme_type_variation = &"Caption"
+unique_name_in_owner = true
+mouse_filter = 2
+text = "ui.nest.assigned"
+theme_override_colors/font_color = Color(0.6667, 0.651, 0.6118, 1)
+
+[node name="UiText" type="Node" parent="." node_paths=PackedStringArray("target")]
+script = ExtResource("ui_text_binding")
+target = NodePath("..")

@@ -1,0 +1,107 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://game/navigation/ui/navigation_panel.gd" id="script"]
+[ext_resource type="PackedScene" path="res://game/ui/components/window_header.tscn" id="window_header"]
+
+
+[node name="NavigationPanel" type="PanelContainer"]
+script = ExtResource("script")
+metadata/ui_manual_layout = true
+
+[node name="WindowContents" type="VBoxContainer" parent="."]
+theme_override_constants/separation = 3
+
+[node name="WindowHeader" parent="WindowContents" node_paths=PackedStringArray("panel", "body") instance=ExtResource("window_header")]
+unique_name_in_owner = true
+title = "ui.window.navigation"
+action = 1
+dock = 4
+panel_width = 192.0
+inset = Vector2(8, 64)
+panel = NodePath("../..")
+body = NodePath("../Content")
+
+[node name="Content" type="VBoxContainer" parent="WindowContents"]
+theme_override_constants/separation = 3
+mouse_filter = 2
+
+[node name="Legend" type="VBoxContainer" parent="WindowContents/Content"]
+unique_name_in_owner = true
+theme_override_constants/separation = 3
+mouse_filter = 2
+
+[node name="Heading" type="Label" parent="WindowContents/Content/Legend"]
+theme_type_variation = &"Caption"
+unique_name_in_owner = true
+mouse_filter = 2
+text = ""
+theme_override_colors/font_color = Color(0.8745, 0.7765, 0.5451, 1)
+
+[node name="Source" type="Label" parent="WindowContents/Content/Legend"]
+theme_type_variation = &"Caption"
+unique_name_in_owner = true
+mouse_filter = 2
+text = ""
+
+[node name="Help" type="Label" parent="WindowContents/Content/Legend"]
+theme_type_variation = &"Caption"
+mouse_filter = 2
+text = "ui.nav.priority_help"
+
+[node name="Formula" type="Label" parent="WindowContents/Content/Legend"]
+theme_type_variation = &"Caption"
+unique_name_in_owner = true
+mouse_filter = 2
+text = ""
+
+[node name="Keys" type="HBoxContainer" parent="WindowContents/Content/Legend"]
+theme_override_constants/separation = 8
+mouse_filter = 2
+
+[node name="Terrain" type="Label" parent="WindowContents/Content/Legend/Keys"]
+theme_type_variation = &"Caption"
+mouse_filter = 2
+text = "ui.nav.terrain"
+theme_override_colors/font_color = Color(0.725, 0.725, 0.706, 1)
+
+[node name="Work" type="Label" parent="WindowContents/Content/Legend/Keys"]
+theme_type_variation = &"Caption"
+mouse_filter = 2
+text = "ui.nav.work"
+theme_override_colors/font_color = Color(1, 0.569, 0.518, 1)
+
+[node name="Home" type="Label" parent="WindowContents/Content/Legend/Keys"]
+theme_type_variation = &"Caption"
+mouse_filter = 2
+text = "ui.nav.home"
+theme_override_colors/font_color = Color(0.553, 0.741, 1, 1)
+
+[node name="Food" type="Label" parent="WindowContents/Content/Legend/Keys"]
+theme_type_variation = &"Caption"
+mouse_filter = 2
+text = "ui.nav.food"
+theme_override_colors/font_color = Color(0.62, 0.89, 0.627, 1)
+
+[node name="Detail" type="RichTextLabel" parent="WindowContents/Content"]
+theme_type_variation = &"DetailsRichText"
+unique_name_in_owner = true
+mouse_filter = 2
+text = "ui.nav.hover"
+custom_minimum_size = Vector2(172, 0)
+fit_content = true
+scroll_active = false
+
+[node name="TrapPrice" type="RichTextLabel" parent="WindowContents/Content"]
+theme_type_variation = &"DetailsRichText"
+unique_name_in_owner = true
+mouse_filter = 2
+fit_content = true
+scroll_active = false
+visible = false
+
+[node name="ClearTrap" type="Button" parent="WindowContents/Content"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 28)
+mouse_default_cursor_shape = 2
+text = ""
+visible = false

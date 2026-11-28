@@ -1,10 +1,10 @@
 [gd_scene format=3]
 
-[ext_resource type="PackedScene" path="res://game/ui/window_header.tscn" id="window_header"]
+[ext_resource type="PackedScene" path="res://game/ui/components/window_header.tscn" id="window_header"]
 [ext_resource type="Script" path="res://visual_novel/ui/story_overlay.gd" id="script"]
-[ext_resource type="StyleBox" path="res://graphics/ui/dialog_panel.tres" id="panel"]
-[ext_resource type="Resource" path="res://visual_novel/dialogues/first_chapter.tres" id="dialogue"]
-[ext_resource type="AudioStream" path="res://visual_novel/audio/dialogue_blip.wav" id="blip"]
+[ext_resource type="StyleBox" path="res://graphics/ui/theme/dialog_panel.tres" id="panel"]
+[ext_resource type="Resource" path="res://visual_novel/chapters/first/first_chapter.tres" id="dialogue"]
+[ext_resource type="AudioStream" path="res://visual_novel/ui/dialogue_blip.wav" id="blip"]
 
 [sub_resource type="StyleBoxFlat" id="dialogue_style"]
 content_margin_left = 108.0

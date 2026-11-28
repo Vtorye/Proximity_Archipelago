@@ -1,0 +1,64 @@
+[gd_scene format=3 uid="uid://be2ypvwrx3kfg"]
+[ext_resource type="Script" path="res://game/match/match.gd" id="screen"]
+[ext_resource type="Script" path="res://game/ui/map/world_camera.gd" id="camera"]
+[ext_resource type="Script" path="res://game/navigation/ui/navigation_overlay.gd" id="navigation"]
+[ext_resource type="Script" path="res://game/ui/map/tile_selection.gd" id="selection"]
+[ext_resource type="PackedScene" path="res://game/match/hud/match_hud.tscn" id="hud"]
+[ext_resource type="PackedScene" path="res://game/campaign/ui/campaign_panel.tscn" id="campaign"]
+[ext_resource type="PackedScene" path="res://visual_novel/ui/story_overlay.tscn" id="story"]
+[ext_resource type="Script" path="res://visual_novel/chapters/first/first_chapter.gd" id="chapter"]
+[ext_resource type="PackedScene" path="res://visual_novel/ui/conversations.tscn" id="conversations"]
+
+[node name="Match" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("screen")
+pausable = true
+process_mode = 3
+
+[node name="ColonyCamera" type="Camera2D" parent="."]
+process_mode = 3
+script = ExtResource("camera")
+
+[node name="Navigation" type="Node2D" parent="."]
+z_index = 19
+script = ExtResource("navigation")
+
+[node name="Selection" type="Node2D" parent="."]
+z_index = 20
+script = ExtResource("selection")
+
+[node name="Interface" type="CanvasLayer" parent="."]
+layer = 5
+
+[node name="Hud" parent="Interface" instance=ExtResource("hud")]
+
+[node name="Campaign" parent="Interface" instance=ExtResource("campaign")]
+
+[node name="ConstructionLayer" type="CanvasLayer" parent="."]
+layer = 6
+
+[node name="PopupLayer" type="CanvasLayer" parent="."]
+layer = 11
+
+[node name="NestPopups" type="Control" parent="PopupLayer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+
+[node name="StoryLayer" type="CanvasLayer" parent="."]
+layer = 9
+
+[node name="Story" parent="StoryLayer" instance=ExtResource("story")]
+
+[node name="Chapter" type="Node" parent="."]
+script = ExtResource("chapter")
+
+[node name="Conversations" parent="Interface" instance=ExtResource("conversations")]
+

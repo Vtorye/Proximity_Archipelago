@@ -13,7 +13,7 @@ config_version=5
 config/name="archipelago"
 run/main_scene="res://game/application/boot.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
-config/icon="res://graphics/ui/assets/project_icon.svg"
+config/icon="res://graphics/ui/icons/project_icon.svg"
 
 [autoload]
 
@@ -44,7 +44,7 @@ folder_colors={
 
 [gui]
 
-theme/custom="res://graphics/ui/colony_theme.tres"
+theme/custom="res://graphics/ui/theme/colony_theme.tres"
 
 [input]
 
@@ -119,7 +119,7 @@ undo_construction={
 [internationalization]
 
 locale/translations=PackedStringArray("res://visual_novel/localization/keys.en.translation", "res://visual_novel/localization/keys.ru.translation")
-locale/translations_pot_files=PackedStringArray("res://visual_novel/dialogues/tutorial.dialogue", "res://visual_novel/dialogues/first_chapter.dialogue", "res://visual_novel/dialogues/zero_chapter.dialogue", "res://game/assets/dialogue/first_chapter.dialogue", "res://game/assets/dialogue/tutorial.dialogue", "res://game/assets/dialogue/zero_chapter.dialogue")
+locale/translations_pot_files=PackedStringArray("res://visual_novel/chapters/tutorial/tutorial.dialogue", "res://visual_novel/chapters/first/first_chapter.dialogue", "res://visual_novel/chapters/zero/zero_chapter.dialogue")
 
 [physics]
 

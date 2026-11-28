@@ -1,6 +1,6 @@
 # Замена графики
 
-Текстуры ландшафта лежат в `graphics/tiles/`, спрайты построек и ресурсов — в `graphics/sprites/`.
+Текстуры ландшафта лежат в `graphics/terrain/tiles/`, спрайты построек и ресурсов — в `graphics/sprites/`.
 
 ## Быстрая замена
 
@@ -45,8 +45,8 @@ Create one transparent top-down pixel-art game sprite: an ant colony feeding sta
 
 ## Пиксельный интерфейс и шрифты
 
-`graphics/ui/assets/` содержит иконки и SVG для фона панелей и кнопок. Общая тема использует эти фоны в ресурсах `StyleBoxTexture` с фиксированными краями.
+Иконки находятся в [`graphics/ui/icons/`](../ui/icons/). Фоны панелей, кнопок и других элементов темы лежат в [`graphics/ui/theme/textures/`](../ui/theme/textures/) и используются в ресурсах `StyleBoxTexture`.
 
-Основной шрифт Pangolin задаётся полем Default Font в [`colony_theme.tres`](../ui/colony_theme.tres). Размерами текста управляет [`ui_typography.tres`](../ui/ui_typography.tres). Шрифты BoldPixels и Pixuf для предыдущих версий предоставил пользователь.
+Основной шрифт Pangolin задаётся полем Default Font в [`colony_theme.tres`](../ui/theme/colony_theme.tres). Размерами текста управляет [`ui_typography.tres`](../ui/theme/ui_typography.tres). Шрифты BoldPixels и Pixuf для предыдущих версий предоставил пользователь.
 
 При увеличении разрешения текстур базовый viewport и масштаб камеры можно настроить отдельно. Текстура 32×32 сохранит размер клетки, но при сильном отдалении камеры часть детализации естественно теряется.

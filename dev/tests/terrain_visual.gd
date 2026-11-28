@@ -1,0 +1,211 @@
+extends "res://dev/tests/ui_runner.gd"
+## Real editor and construction input; a compact fixture makes all five ground types readable together.
+const ROUNDED_ROCK := Vector2i(9, 8)
+
+func _run() -> void:
+	seed(20261108)
+	AppSettings.reset_defaults()
+	get_viewport().add_child(load("res://game/application/boot.tscn").instantiate())
+	await frames(35)
+	if get_viewport() is Window:
+		await RenderingServer.frame_post_draw
+		var window := Vector2(get_window().size)
+		var base := Vector2(get_window().content_scale_size)
+		var fit := minf(window.x / base.x, window.y / base.y)
+		var rendered := Vector2(get_viewport().get_texture().get_image().get_size())
+		expect(rendered.distance_to(base * fit) < 2.0, "the main canvas renders at the fitted window resolution")
+	await click(Router._current.controls[&"maps"])
+	await frames(15)
+	var editor: Control = Router._current
+	var found := false
+	for index in range(editor._saved.item_count):
+		if editor._saved.get_item_metadata(index) == "builtin/five_soils":
+			editor._saved.select(index)
+			found = true
+	expect(found, "the bundled soil map appears in the ordinary map picker")
+	await click(_button(editor, "ui.map.load"))
+	editor._camera.set_level(editor._camera.settings.minimum_level)
+	expect(editor._title.text == "Пять земель", "the five-soil archipelago loads as an editable painted map")
+	for source in range(5, 10):
+		expect(editor._brushes.has(Vector4i(source, 0, 0, 0)), "the editor exposes each soil as a normal tile brush")
+	await capture("01-five-soil-archipelago", 25)
+	await click(_button(editor, "ui.terrain.generate"))
+	expect(editor._dirty and editor._status.text.contains("Почвы распределены"), "the soil generator explicitly edits the map instead of replacing it during play")
+	await capture("02-editor-soil-distribution", 20)
+	await click(_button(editor, "ui.map.save"))
+	await click(_button(editor, "ui.menu.play"))
+	await frames(35)
+	screen = Router._current
+	expect(Router.current_screen_key() == &"match", "the styled map launches from the editor")
+	screen.camera.set_level(screen.camera.settings.minimum_level)
+	screen.hud.hide()
+	await capture("02a-five-soils-in-play", 60)
+	screen.hud.show()
+	screen.camera.set_level(1)
+	_focus(Vector2i(68, 43))
+	await capture("02b-starter-bay", 45)
+	Router.goto(&"match", _fixture())
+	await frames(35)
+	screen = Router._current
+	var world: World = screen.world
+	world.units.process_mode = Node.PROCESS_MODE_DISABLED
+	await capture("03-readable-soil-fixture", 20)
+	await _check_rounded_soil()
+	var dry := Vector2i(8, 3)
+	var rocky := Vector2i(5, 3)
+	var sand := Vector2i(14, 3)
+	var menu := await _open_construction()
+	_focus(dry)
+	await choose_building(menu, &"house")
+	await hover(dry)
+	expect((menu.get_node("%Price") as Label).text.trim_prefix(tr("ui.construction.price").get_slice("%s", 0)) == "7 Древесина + 14 Камень", "the live palette shows the discounted nest price at the hovered dry tile")
+	await click_at(cell_point(dry))
+	expect(menu._cost.text.contains("7 Древесина + 14 Камень"), "the plan total agrees with the cell-specific palette price")
+	await capture("04-dry-soil-discount", 20)
+	await click(menu.controls[&"cancel"])
+	menu = await _open_construction()
+	_focus(rocky)
+	await choose_building(menu, &"house")
+	await click_at(cell_point(rocky))
+	expect(menu.draft.size() == 0 and menu._status.text == tr("ui.placement.soil_restricted"), "rocky ground rejects nests with visible soil-specific feedback")
+	await capture("05-rocky-soil-restriction", 20)
+	await click(menu.controls[&"cancel"])
+	menu = await _open_construction()
+	_focus(sand)
+	await choose_building(menu, &"road")
+	await hover(sand)
+	expect((menu.get_node("%Price") as Label).text.trim_prefix(tr("ui.construction.price").get_slice("%s", 0)) == "2 Древесина", "sand road pricing is visible before painting")
+	await click_at(cell_point(sand))
+	await capture("06-sand-road-price", 20)
+	await click(menu.controls[&"cancel"])
+	_focus(Vector2i(3, 2))
+	await click_at(cell_point(Vector2i(3, 2)), MOUSE_BUTTON_RIGHT)
+	expect(screen.hud.navigation_panel._detail.get_parsed_text().contains("150%"), "a fertile berry source explains its production modifier")
+	await capture("07-fertile-berry-inspector", 20)
+	_focus(Vector2i(9, 2))
+	await click_at(cell_point(Vector2i(9, 2)), MOUSE_BUTTON_RIGHT)
+	expect(screen.hud.navigation_panel._detail.get_parsed_text().contains("75%"), "a dry berry source explains its lower production")
+	await capture("08-dry-berry-inspector", 20)
+	_focus(world.logistics.main_nest.cell)
+	await click_at(cell_point(world.logistics.main_nest.cell))
+	var nest := screen.nest_popup as NestMenu
+	await click(nest.controls[&"residents"])
+	expect(nest._population.text.contains("5 / 25") and nest._population.tooltip_text.contains("25%"), "the nest window explains extra capacity from adjacent wet ground")
+	await capture("09-wet-ground-nest-capacity", 25)
+	await key(KEY_ESCAPE)
+	world.units.process_mode = Node.PROCESS_MODE_INHERIT
+	var building_cell := Vector2i(10, 4)
+	menu = await _open_construction()
+	_focus(building_cell)
+	await choose_building(menu, &"house")
+	await click_at(cell_point(building_cell))
+	await click(menu.controls[&"apply"])
+	var site: ConstructionSite = world.build_controller.construction.at(building_cell)
+	expect(site != null and world.inventory.quantity(world.inventory.type_by_id(&"wood")) == 53 and world.inventory.quantity(world.inventory.type_by_id(&"stone")) == 26, "applying the dry-soil plan earmarks exactly seven wood and fourteen stone")
+	await capture("10-discounted-material-delivery", 20)
+	for second in range(55):
+		if world.registry.at(building_cell) is House: break
+		await frames(30)
+	var barracks := world.registry.at(building_cell) as House
+	expect(barracks != null and barracks.resident_limit() == 6 and world.population.count() == 10, "real delivery and assembly open a discounted barracks with the adjacent wet-soil capacity bonus")
+	await capture("11-completed-soil-aware-barracks", 30)
+	await frames(300)
+	await click_at(cell_point(Vector2i(9, 2)), MOUSE_BUTTON_RIGHT)
+	await capture("12-working-colony-on-soils", 30)
+	_focus(Vector2i(17, 9))
+	await click_at(cell_point(Vector2i(17, 9)), MOUSE_BUTTON_RIGHT)
+	await frames(8)
+	expect(screen.hud.navigation_panel._detail.get_parsed_text().contains(tr("ui.terrain.impassable")), "water still displays impassability rather than an infinite movement time")
+	await capture("13-water-is-impassable", 20)
+	await _check_built_road(world, sand)
+	Router.goto(&"main_menu")
+	await frames(25)
+	_finish()
+
+func _check_rounded_soil() -> void:
+	var cell := ROUNDED_ROCK
+	screen.camera.set_level(3)
+	_focus(cell)
+	screen.hud.hide()
+	await RenderingServer.frame_post_draw
+	var image := get_viewport().get_texture().get_image()
+	var scale := Vector2(image.get_size()) / get_viewport().get_visible_rect().size
+	var center := cell_point(cell) * scale
+	var tile_span := (cell_point(cell + Vector2i.ONE) - cell_point(cell)) * scale
+	var corners_in_ground := 0
+	for direction in [Vector2(-1, -1), Vector2(1, -1), Vector2(-1, 1), Vector2(1, 1)]:
+		var point := Vector2i(center + Vector2(direction) * tile_span * 0.45)
+		var corner := image.get_pixelv(point)
+		if corner.r > corner.b:
+			corners_in_ground += 1
+	var rock := image.get_pixelv(Vector2i(center))
+	expect(rock.b > rock.r and corners_in_ground >= 3, "the rocky cell has a stone center and rounded corners at high zoom")
+	await capture("03a-rounded-soil-closeup", 20)
+	screen.hud.show()
+	screen.camera.set_level(2)
+
+func _check_built_road(world: World, cell: Vector2i) -> void:
+	var menu := await _open_construction()
+	_focus(cell)
+	await choose_building(menu, &"road")
+	await click_at(cell_point(cell))
+	await click(menu.controls[&"apply"])
+	var map := world.map as TerrainMap
+	expect(world.build_controller.construction.at(cell, true) != null, "the road begins as a physical construction site")
+	for second in range(45):
+		if map.surface_at(cell).kind == TerrainType.Kind.ROAD:
+			break
+		await frames(30)
+	expect(map.surface_at(cell).kind == TerrainType.Kind.ROAD, "the carriers complete the road")
+	_focus(cell)
+	screen.hud.hide()
+	world.units.hide()
+	var rendered := await _surface_pixel(cell)
+	var landscape := map.get_node("TerrainSurface") as Node2D
+	landscape.hide()
+	var native := await _surface_pixel(cell)
+	landscape.show()
+	world.units.show()
+	screen.hud.show()
+	expect(rendered.is_equal_approx(native), "completed road pixels match the TileSet with the terrain shader enabled")
+	await capture("14-built-road-visible", 25)
+
+func _surface_pixel(cell: Vector2i) -> Color:
+	await RenderingServer.frame_post_draw
+	var image := get_viewport().get_texture().get_image()
+	var scale := Vector2(image.get_size()) / get_viewport().get_visible_rect().size
+	return image.get_pixelv(Vector2i(cell_point(cell) * scale))
+
+func _focus(cell: Vector2i) -> void:
+	screen.camera.position = screen.world.route_service.cell_to_world(cell)
+	if is_instance_valid(screen._construction):
+		# Keep the target above the bottom-docked construction palette.
+		screen.camera.position.y += 35.0 / screen.camera.zoom.y
+	screen.camera.force_update_scroll()
+
+func _open_construction() -> ConstructionMenu:
+	await click(screen.hud.controls[&"build"])
+	return screen._construction
+
+func _button(editor: Control, text: String) -> Button:
+	for button in editor.find_children("*", "Button", true, false):
+		if button.text == text: return button
+	return null
+
+func _fixture() -> Dictionary:
+	var tiles: Array = []
+	for x in range(18):
+		for y in range(10):
+			var source: int = 5 + clampi((x - 2) / 3, 0, 4) if x >= 2 and x <= 16 else 3
+			if Vector2i(x, y) == ROUNDED_ROCK:
+				source = 6
+			tiles.append([x, y, source, 0, 0, 0])
+	tiles[tiles.size() - 1] = [17, 9, 3, 3, 0, 0]
+	return {"version": 1, "tiles": tiles, "objects": [[10, 6, "build/base_nest"], [10, 8, "Food"], [3, 2, "AppleTree"], [9, 2, "AppleTree"]]}
+
+func hover(cell: Vector2i) -> void:
+	var event := InputEventMouseMotion.new()
+	event.position = cell_point(cell)
+	event.global_position = event.position
+	get_viewport().push_input(event, true)
+	await frames(6)

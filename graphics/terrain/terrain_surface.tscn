@@ -1,7 +1,7 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://graphics/terrain/terrain_surface.gd" id="1_surface"]
-[ext_resource type="Texture2D" path="res://graphics/tiles/road_pebbles.svg" id="2_road"]
+[ext_resource type="Texture2D" path="res://graphics/terrain/tiles/road_pebbles.svg" id="2_road"]
 
 [node name="TerrainSurface" type="Node2D"]
 script = ExtResource("1_surface")

@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="WorkplaceUpgradeOption" format=3 uid="uid://bkba8o70hl54c"]
+
+[ext_resource type="Script" uid="uid://clwif6xxyitqt" path="res://game/economy/price_rule.gd" id="5_65qmu"]
+[ext_resource type="Script" uid="uid://dohq4yj0b3afb" path="res://game/economy/stock/resource_amount.gd" id="amount"]
+[ext_resource type="Texture2D" uid="uid://dch1d8qhbwefo" path="res://graphics/sprites/buildings/quarry_simple.png" id="art"]
+[ext_resource type="Script" uid="uid://h1ws6w2g6pxi" path="res://game/building/workplace_upgrade_option.gd" id="option"]
+[ext_resource type="Resource" uid="uid://dnvvlsc4kjs1t" path="res://game/economy/stock/resource_types/stone.tres" id="stone"]
+[ext_resource type="Resource" uid="uid://btsdqgmh3ee22" path="res://game/economy/stock/resource_types/wood.tres" id="wood"]
+
+[sub_resource type="Resource" id="cost_wood"]
+script = ExtResource("amount")
+type = ExtResource("wood")
+amount = 12
+
+[sub_resource type="Resource" id="cost_stone"]
+script = ExtResource("amount")
+type = ExtResource("stone")
+amount = 12
+
+[sub_resource type="AtlasTexture" id="icon"]
+atlas = ExtResource("art")
+region = Rect2(188, 180, 920, 920)
+filter_clip = true
+
+[resource]
+script = ExtResource("option")
+source_type = ExtResource("stone")
+id = &"quarry"
+display_name = "ui.building.quarry"
+description = "ui.construction.description.quarry"
+icon = SubResource("icon")
+costs = Array[ExtResource("amount")]([SubResource("cost_wood"), SubResource("cost_stone")])

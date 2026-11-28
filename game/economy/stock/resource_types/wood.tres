@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="ResourceType" format=3 uid="uid://btsdqgmh3ee22"]
+
+[ext_resource type="Script" uid="uid://cbbq05pxmjloa" path="res://game/economy/stock/resource_type.gd" id="1"]
+[ext_resource type="Texture2D" uid="uid://bjd1cqgllffqf" path="res://graphics/ui/icons/resource_wood.svg" id="icon"]
+
+[resource]
+script = ExtResource("1")
+id = &"wood"
+display_name = "ui.resource.wood"
+icon = ExtResource("icon")

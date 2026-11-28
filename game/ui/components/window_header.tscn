@@ -1,0 +1,90 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://game/ui/components/window_header.gd" id="script"]
+
+[sub_resource type="StyleBoxFlat" id="fold_normal"]
+content_margin_left = 2.0
+content_margin_right = 2.0
+content_margin_top = 0.0
+content_margin_bottom = 0.0
+bg_color = Color(0.14, 0.19, 0.16, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.57, 0.49, 0.31, 1)
+
+[sub_resource type="StyleBoxFlat" id="fold_hover"]
+content_margin_left = 2.0
+content_margin_right = 2.0
+content_margin_top = 0.0
+content_margin_bottom = 0.0
+bg_color = Color(0.24, 0.29, 0.21, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.57, 0.49, 0.31, 1)
+
+[sub_resource type="StyleBoxFlat" id="fold_pressed"]
+content_margin_left = 2.0
+content_margin_right = 2.0
+content_margin_top = 0.0
+content_margin_bottom = 0.0
+bg_color = Color(0.08, 0.12, 0.10, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.57, 0.49, 0.31, 1)
+
+[sub_resource type="StyleBoxFlat" id="fold_focus"]
+content_margin_left = 2.0
+content_margin_right = 2.0
+content_margin_top = 0.0
+content_margin_bottom = 0.0
+bg_color = Color(0.14, 0.19, 0.16, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+draw_center = false
+border_color = Color(0.87, 0.77, 0.55, 1)
+
+[node name="WindowHeader" type="HBoxContainer"]
+script = ExtResource("script")
+theme_override_constants/separation = 4
+
+[node name="Handle" type="Label" parent="."]
+theme_type_variation = &"Caption"
+unique_name_in_owner = true
+mouse_filter = 0
+text = ""
+theme_override_colors/font_color = Color(0.8745, 0.7765, 0.5451, 1)
+size_flags_horizontal = 3
+mouse_default_cursor_shape = 13
+text_overrun_behavior = 3
+
+[node name="Toggle" type="Button" parent="."]
+visible = false
+theme_type_variation = &"CompactButton"
+unique_name_in_owner = true
+mouse_default_cursor_shape = 2
+expand_icon = true
+theme_override_constants/icon_max_width = 14
+custom_minimum_size = Vector2(27, 27)
+
+[node name="FoldToggle" type="Button" parent="."]
+visible = false
+unique_name_in_owner = true
+theme_type_variation = &"CompactButton"
+theme_override_font_sizes/font_size = 9
+theme_override_styles/normal = SubResource("fold_normal")
+theme_override_styles/hover = SubResource("fold_hover")
+theme_override_styles/pressed = SubResource("fold_pressed")
+theme_override_styles/focus = SubResource("fold_focus")
+custom_minimum_size = Vector2(18, 12)
+size_flags_vertical = 4
+mouse_default_cursor_shape = 2
+text = "−"
+tooltip_text = "ui.window.collapse"

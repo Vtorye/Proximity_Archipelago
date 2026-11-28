@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="SatietyRules" format=3]
+
+[ext_resource type="Script" path="res://game/colony/ants/satiety_rules.gd" id="rules"]
+
+[resource]
+script = ExtResource("rules")
+walk_rate = 1.0
+work_rate = 1.2
+rest_rate = 0.8
+eat_rate = 0.25
+meal_seconds = 2.0
+safety_margin = 8.0
+travel_reserve = 2.0
+construction_reserve = 1.0
+combat_reserve = 4.0

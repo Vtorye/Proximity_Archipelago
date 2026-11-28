@@ -1,0 +1,50 @@
+[gd_resource type="Resource" script_class="IslandGenerationRules" format=3]
+
+[ext_resource type="Script" path="res://game/worlds/generation/island_generation_rules.gd" id="rules"]
+
+[resource]
+script = ExtResource("rules")
+default_extent = 80
+extent_limits = Vector2i(40, 160)
+editor_extents = PackedInt32Array(50, 80, 120, 160)
+coast_noise_frequency = 0.1
+coast_noise_strength = 0.28
+central_radius_ratio = 0.24
+outer_island_count = 7
+outer_distance_ratio = 0.4
+outer_radius_ratios = Vector2(0.045, 0.08)
+outer_angle_jitter = 0.2
+vertical_scale = 1.12
+guaranteed_land_radius = 9
+canteen_distance = 3
+deposit_budgets = Vector3i(900, 900, 900)
+starter_deposits_per_resource = 2
+deposit_distance = Vector2i(7, 12)
+favored_deposit_distance = 6
+max_distance_difficulty = 2
+starter_supply_range = Vector2i(130, 220)
+minimum_starter_supply = 60
+starter_supply_loss_per_island = 10
+favored_supply_bonus = 55
+wide_timber_threshold = 200
+extra_deposit_chance = 0.025
+extra_deposit_supply = 140
+minimum_extra_supply = 20
+extra_supply_loss_per_island = 12
+fertile_bias = 0.06
+dry_bias = 0.22
+rocky_bias = 0.08
+fertile_favored_deposit = 2
+dry_favored_deposit = 0
+rocky_favored_deposit = 1
+biome_protection_radius = 6
+soil_seed = 814
+soil_noise_frequency = 0.09
+soil_noise_octaves = 2
+wet_shore_depth = 2
+dry_inland_distance = 5
+dry_nest_distance = 4
+quarry_soil_radius = 1.4142135623730951
+sand_threshold = 0.1
+dry_threshold = 0.08
+fertile_threshold = -0.45

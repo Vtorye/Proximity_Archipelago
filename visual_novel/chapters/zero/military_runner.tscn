@@ -1,6 +1,6 @@
 [gd_scene format=3]
 
-[ext_resource type="PackedScene" path="res://game/ants/warrior.tscn" id="warrior"]
+[ext_resource type="PackedScene" path="res://game/colony/ants/warrior.tscn" id="warrior"]
 [ext_resource type="Script" path="res://visual_novel/chapters/zero/military_runner.gd" id="runner"]
 
 [node name="MilitaryRunner" instance=ExtResource("warrior")]

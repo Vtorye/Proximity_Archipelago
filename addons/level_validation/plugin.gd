@@ -1,6 +1,6 @@
 @tool
 extends EditorPlugin
-const DEFAULT_LEVEL := "res://game/worlds/world_1.tscn"
+const DEFAULT_LEVEL := "res://game/worlds/maps/world_1.tscn"
 var _dock: ScrollContainer
 var _content: VBoxContainer
 var _status: Label
@@ -106,7 +106,7 @@ func _validate() -> void:
 		_output.text = "Сначала сохраните сцену уровня."
 		return
 	var output: Array = []
-	var result: int = OS.execute(OS.get_executable_path(), ["--headless", "--path", ProjectSettings.globalize_path("res://"), "--script", "res://tools/validate_level.gd", "--", scene.scene_file_path], output, true)
+	var result: int = OS.execute(OS.get_executable_path(), ["--headless", "--path", ProjectSettings.globalize_path("res://"), "--script", "res://dev/tools/validate_level.gd", "--", scene.scene_file_path], output, true)
 	_output.text = "Уровень корректен.\n" if result == 0 else "Найдены ошибки. Исправьте данные перед запуском.\n"
 	for chunk in output:
 		for line in str(chunk).split("\n"):

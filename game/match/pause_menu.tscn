@@ -1,0 +1,101 @@
+[gd_scene format=3 uid="uid://bmqd4ii6sfee0"]
+[ext_resource type="Script" path="res://game/ui/components/ui_text_binding.gd" id="ui_text_binding"]
+[ext_resource type="Script" path="res://game/match/pause_menu.gd" id="script"]
+[ext_resource type="StyleBox" path="res://graphics/ui/theme/dialog_panel.tres" id="dialog_style"]
+[ext_resource type="PackedScene" path="res://game/ui/components/window_header.tscn" id="window_header"]
+
+[node name="PauseMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("script")
+
+mouse_filter = 2
+
+[node name="Shade" type="ColorRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 0.5)
+
+[node name="Center" type="Control" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Dialog" type="PanelContainer" parent="Center"]
+unique_name_in_owner = true
+metadata/ui_manual_layout = true
+theme_override_styles/panel = ExtResource("dialog_style")
+
+[node name="WindowContents" type="VBoxContainer" parent="Center/Dialog"]
+theme_override_constants/separation = 2
+
+[node name="WindowHeader" parent="Center/Dialog/WindowContents" node_paths=PackedStringArray("panel", "body") instance=ExtResource("window_header")]
+unique_name_in_owner = true
+title = "ui.pause.title"
+action = 2
+dock = 0
+panel_width = 288.0
+inset = Vector2(8, 8)
+panel = NodePath("../..")
+body = NodePath("../Margin")
+
+[node name="Margin" type="MarginContainer" parent="Center/Dialog/WindowContents"]
+theme_override_constants/margin_left = 6
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 6
+theme_override_constants/margin_bottom = 6
+
+[node name="Content" type="VBoxContainer" parent="Center/Dialog/WindowContents/Margin"]
+unique_name_in_owner = true
+theme_override_constants/separation = 8
+
+[node name="Resume" type="Button" parent="Center/Dialog/WindowContents/Margin/Content"]
+unique_name_in_owner = true
+theme_type_variation = &"CompactButton"
+custom_minimum_size = Vector2(0, 28)
+mouse_default_cursor_shape = 2
+text = "ui.pause.resume"
+theme_override_colors/font_color = Color(0.8745, 0.7765, 0.5451, 1)
+
+[node name="Save" type="Button" parent="Center/Dialog/WindowContents/Margin/Content"]
+unique_name_in_owner = true
+theme_type_variation = &"CompactButton"
+custom_minimum_size = Vector2(0, 28)
+mouse_default_cursor_shape = 2
+text = "ui.voyage.save"
+
+[node name="Restart" type="Button" parent="Center/Dialog/WindowContents/Margin/Content"]
+unique_name_in_owner = true
+theme_type_variation = &"CompactButton"
+custom_minimum_size = Vector2(0, 28)
+mouse_default_cursor_shape = 2
+text = "ui.pause.restart"
+
+[node name="Settings" type="Button" parent="Center/Dialog/WindowContents/Margin/Content"]
+unique_name_in_owner = true
+theme_type_variation = &"CompactButton"
+custom_minimum_size = Vector2(0, 28)
+mouse_default_cursor_shape = 2
+text = "ui.menu.settings"
+
+[node name="MainMenu" type="Button" parent="Center/Dialog/WindowContents/Margin/Content"]
+unique_name_in_owner = true
+theme_type_variation = &"CompactButton"
+custom_minimum_size = Vector2(0, 28)
+mouse_default_cursor_shape = 2
+text = "ui.common.main_menu"
+
+[node name="UiText" type="Node" parent="." node_paths=PackedStringArray("target")]
+script = ExtResource("ui_text_binding")
+target = NodePath("..")

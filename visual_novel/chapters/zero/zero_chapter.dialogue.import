@@ -1,0 +1,16 @@
+[remap]
+
+importer="dialogue_manager"
+importer_version=18
+type="Resource"
+uid="uid://dsumveja7nuis"
+path="res://.godot/imported/zero_chapter.dialogue-17594e7052b8f759c319329a1aba7626.tres"
+
+[deps]
+
+source_file="res://visual_novel/chapters/zero/zero_chapter.dialogue"
+dest_files=["res://.godot/imported/zero_chapter.dialogue-17594e7052b8f759c319329a1aba7626.tres"]
+
+[params]
+
+defaults=true

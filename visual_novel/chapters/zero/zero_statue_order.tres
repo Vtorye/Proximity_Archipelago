@@ -1,6 +1,6 @@
 [gd_resource type="Resource" script_class="TaskSpec" format=3 uid="uid://bx0kgbpahyrw5"]
 
-[ext_resource type="Script" uid="uid://dohq4yj0b3afb" path="res://game/resources/resource_amount.gd" id="1_jvhmv"]
+[ext_resource type="Script" uid="uid://dohq4yj0b3afb" path="res://game/economy/stock/resource_amount.gd" id="1_jvhmv"]
 [ext_resource type="Script" uid="uid://cdmimrfnsanfy" path="res://game/building/build_option.gd" id="3_rwb6m"]
 [ext_resource type="Script" uid="uid://bmf8btgjq0fm3" path="res://game/tasks/task_spec.gd" id="spec"]
 [ext_resource type="Resource" uid="uid://boo7rtsdh605o" path="res://visual_novel/chapters/zero/zero_statue.tres" id="statue"]

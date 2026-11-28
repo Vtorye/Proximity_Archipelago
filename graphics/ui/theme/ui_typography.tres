@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="UiTypography" format=3]
+
+[ext_resource type="Script" path="res://graphics/ui/theme/ui_typography.gd" id="typography"]
+
+[resource]
+script = ExtResource("typography")
+minimum_sizes = Array[int]([12, 16, 20])
+default_index = 0
+caption_size = 10
+compact_button_size = 10
+body_size = 14
+heading_size = 20
+details_body_size = 12
+details_heading_size = 14
+details_size_step = 1
